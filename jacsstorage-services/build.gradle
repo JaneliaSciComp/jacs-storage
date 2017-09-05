@@ -1,0 +1,11 @@
+project(":jacsstorage-services") {
+    dependencies {
+        compile CDI_API_LIB,
+                JACKSON_ANNOTATIONS_LIB,
+                JACKSON_CORE_LIB,
+                JACKSON_DATABIND_LIB,
+                JACKSON_DATATYPE_JODA_LIB,
+                MONGODB_DRIVER_LIB,
+                REFLECTIONS_LIB
+    }
+}

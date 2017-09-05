@@ -1,0 +1,4 @@
+rootProject.name = 'jacsstorage'
+
+include 'jacsstorage-services'
+include 'jacsstorage-commonweb'
