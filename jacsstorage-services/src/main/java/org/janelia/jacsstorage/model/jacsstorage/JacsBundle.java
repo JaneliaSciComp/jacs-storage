@@ -17,8 +17,8 @@ public class JacsBundle extends AbstractEntity {
     private String permissions;
     private JacsStorageFormat storageFormat;
     private Long usedSpaceInKB;
-    private Date created;
-    private Date modified;
+    private Date created = new Date();
+    private Date modified = new Date();
     private Map<String, Object> metadata = new LinkedHashMap<>();
     private Number volumeId;
 

@@ -4,6 +4,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.AbstractEntity;
 import org.janelia.jacsstorage.model.support.MongoMapping;
 
+import java.util.Date;
+
 @MongoMapping(collectionName="jacsVolume", label="JacsVolume")
 public class JacsVolume extends AbstractEntity {
 
@@ -11,6 +13,7 @@ public class JacsVolume extends AbstractEntity {
     private String mountPoint;
     private Long capacityInMB;
     private Long availableInMB;
+    private Date created = new Date();
     private Number storageId;
 
     public String getName() {
@@ -43,6 +46,14 @@ public class JacsVolume extends AbstractEntity {
 
     public void setAvailableInMB(Long availableInMB) {
         this.availableInMB = availableInMB;
+    }
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
     }
 
     public Number getStorageId() {
