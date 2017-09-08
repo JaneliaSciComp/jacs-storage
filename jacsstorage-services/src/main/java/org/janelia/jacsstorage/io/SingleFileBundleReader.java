@@ -1,29 +1,29 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.io;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.EnumSet;
+import java.util.Set;
 
 public class SingleFileBundleReader extends AbstractBundleReader {
 
     @Override
+    public Set<JacsStorageFormat> getSupportedFormats() {
+        return EnumSet.of(JacsStorageFormat.SINGLE_DATA_FILE);
+    }
+
+    @Override
     protected long readBundleBytes(String source, OutputStream stream) throws Exception {
-        TarArchiveOutputStream outputStream = new TarArchiveOutputStream(stream);
         File sourcePath = new File(source);
         if (!sourcePath.exists()) {
             throw new IllegalArgumentException("No file found for " + source);
         } else if (!sourcePath.isFile()) {
             throw new IllegalArgumentException("Source " + source + " expected to be a file");
         }
-        TarArchiveEntry entry = new TarArchiveEntry(sourcePath);
-        outputStream.putArchiveEntry(entry);
-        long nBytes = Files.copy(sourcePath.toPath(), outputStream);
-        outputStream.closeArchiveEntry();
-        outputStream.finish();
+        long nBytes = Files.copy(sourcePath.toPath(), stream);
         return nBytes;
     }
 

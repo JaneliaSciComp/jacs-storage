@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.io;
 
 public class TransferInfo {
     private final long numBytes;

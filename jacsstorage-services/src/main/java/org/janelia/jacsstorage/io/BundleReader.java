@@ -1,8 +1,13 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.io;
+
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.io.OutputStream;
+import java.util.Set;
 
 public interface BundleReader {
+    Set<JacsStorageFormat> getSupportedFormats();
+
     /**
      * Reads the data bundle from the specified source and writes it to the given output stream.
      *

@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.io;
 
 import com.google.common.hash.Hashing;
 import com.google.common.hash.HashingOutputStream;

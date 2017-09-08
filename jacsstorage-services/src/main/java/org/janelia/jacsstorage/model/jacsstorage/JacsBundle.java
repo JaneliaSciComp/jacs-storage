@@ -1,17 +1,20 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.AbstractEntity;
 import org.janelia.jacsstorage.model.support.MongoMapping;
 
+import javax.swing.text.html.Option;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @MongoMapping(collectionName="jacsBundle", label="JacsBundle")
 public class JacsBundle extends AbstractEntity {
 
-    private String name; // volume name
+    private String name;
     private String owner;
     private String path;
     private String permissions;
@@ -21,6 +24,10 @@ public class JacsBundle extends AbstractEntity {
     private Date modified = new Date();
     private Map<String, Object> metadata = new LinkedHashMap<>();
     private Number volumeId;
+    @JsonIgnore
+    private JacsStorage storage;
+    @JsonIgnore
+    private JacsVolume volume;
 
     public String getName() {
         return name;
@@ -108,6 +115,26 @@ public class JacsBundle extends AbstractEntity {
 
     public void setVolumeId(Number volumeId) {
         this.volumeId = volumeId;
+    }
+
+    @JsonIgnore
+    public Optional<JacsStorage> getStorage() {
+        return storage != null ? Optional.of(storage) : Optional.empty();
+    }
+
+    public Optional<JacsStorage> setStorage(JacsStorage storage) {
+        this.storage = storage;
+        return getStorage();
+    }
+
+    @JsonIgnore
+    public Optional<JacsVolume> getVolume() {
+        return volume != null ? Optional.of(volume) : Optional.empty();
+    }
+
+    public Optional<JacsVolume> setVolume(JacsVolume volume) {
+        this.volume = volume;
+        return getVolume();
     }
 
     @Override

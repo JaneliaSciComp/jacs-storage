@@ -1,11 +1,10 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.io;
 
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
@@ -14,6 +13,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
+import java.util.Set;
 
 public class ExpandedArchiveBundleReader extends AbstractBundleReader {
 
@@ -48,6 +49,12 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
             outputStream.putArchiveEntry(entry);
         }
     }
+
+    @Override
+    public Set<JacsStorageFormat> getSupportedFormats() {
+        return EnumSet.of(JacsStorageFormat.DATA_DIRECTORY);
+    }
+
     @Override
     protected long readBundleBytes(String source, OutputStream stream) throws Exception {
         TarArchiveOutputStream outputStream = new TarArchiveOutputStream(stream);
@@ -63,24 +70,4 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
         return archiver.nBytes;
     }
 
-    private long addFileToArchive(TarArchiveOutputStream tOut, File f, String base) throws IOException {
-        String separator = StringUtils.isBlank(base) ? "" : "/";
-        String entryName = base + separator + f.getName();
-        TarArchiveEntry entry = new TarArchiveEntry(f, entryName);
-        tOut.putArchiveEntry(entry);
-        long nBytes = 0;
-        if (f.isFile()) {
-            nBytes = Files.copy(f.toPath(), tOut);
-            tOut.closeArchiveEntry();
-        } else {
-            tOut.closeArchiveEntry();
-            File[] dirContent = f.listFiles();
-            if (dirContent != null) {
-                for (File child : dirContent) {
-                    nBytes += addFileToArchive(tOut, child, entryName);
-                }
-            }
-        }
-        return nBytes;
-    }
 }

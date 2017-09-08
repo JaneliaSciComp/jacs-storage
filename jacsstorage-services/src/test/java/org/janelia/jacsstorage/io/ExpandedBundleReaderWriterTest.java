@@ -1,17 +1,12 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.io;
 
 import org.apache.commons.compress.utils.IOUtils;
-import org.janelia.jacsstorage.service.ExpandedArchiveBundleReader;
-import org.janelia.jacsstorage.service.ExpandedArchiveBundleWriter;
-import org.janelia.jacsstorage.service.TarArchiveBundleReader;
-import org.janelia.jacsstorage.service.TarArchiveBundleWriter;
-import org.janelia.jacsstorage.service.TransferInfo;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedInputStream;
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -24,28 +19,25 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class BundleReadersWritersTest {
+public class ExpandedBundleReaderWriterTest {
 
     private static final String TEST_DATA_DIRECTORY = "src/test/resources/testdata/bundletransfer";
 
     private Path testDirectory;
     private ExpandedArchiveBundleReader expandedBundleReader;
     private ExpandedArchiveBundleWriter expandedArchiveBundleWriter;
-    private TarArchiveBundleReader tarBundleReader;
-    private TarArchiveBundleWriter tarBundleWriter;
 
     @Before
     public void setUp() throws IOException {
-        tarBundleReader = new TarArchiveBundleReader();
-        tarBundleWriter = new TarArchiveBundleWriter();
         expandedBundleReader = new ExpandedArchiveBundleReader();
         expandedArchiveBundleWriter = new ExpandedArchiveBundleWriter();
-        testDirectory = Files.createTempDirectory("testTarBundleRW");
+        testDirectory = Files.createTempDirectory("ExpandedBundleReaderWriterTest");
     }
 
     @After
@@ -66,7 +58,7 @@ public class BundleReadersWritersTest {
     }
 
     @Test
-    public void readBundleToStream() throws Exception {
+    public void readWriteCheck() throws Exception {
         Path testDataDir = Paths.get(TEST_DATA_DIRECTORY);
         Path testFilePath = testDirectory.resolve("readBundleToStream");
         Path testExpandedPath = testDirectory.resolve("expandedArchiveBundle");
@@ -102,5 +94,23 @@ public class BundleReadersWritersTest {
             IOUtils.closeQuietly(testOutputStream);
             IOUtils.closeQuietly(testInputStream);
         }
+    }
+
+    @Test
+    public void bundleReadFailureBecauseSourceIsNotDir() {
+        Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
+
+        assertThatThrownBy(() -> expandedBundleReader.readBundle(testDataPath.toString(), new ByteArrayOutputStream()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("java.lang.IllegalArgumentException: Source " + testDataPath.toString() + " expected to be a directory");
+    }
+
+    @Test
+    public void bundleReadFailureBecauseSourceIsMissing() {
+        Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "missing");
+
+        assertThatThrownBy(() -> expandedBundleReader.readBundle(testDataPath.toString(), new ByteArrayOutputStream()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("java.lang.IllegalArgumentException: No path found for " + testDataPath.toString());
     }
 }
