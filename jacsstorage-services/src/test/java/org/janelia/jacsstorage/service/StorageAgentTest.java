@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -71,11 +72,12 @@ public class StorageAgentTest {
     public void writeData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
         Path testTargetPath = testDirectory.resolve("testWriteData");
-        storageAgent.beginWritingData(JacsStorageFormat.SINGLE_DATA_FILE, testTargetPath.toString());
+        CountDownLatch done = new CountDownLatch(1);
+        storageAgent.beginWritingData(JacsStorageFormat.SINGLE_DATA_FILE, testTargetPath.toString(), () ->  done.countDown());
         FileInputStream testInput = new FileInputStream(testDataPath.toFile());
         try {
             FileChannel channel = testInput.getChannel();
-            ByteBuffer buffer = ByteBuffer.allocate(512);
+            ByteBuffer buffer = ByteBuffer.allocate(2048);
             while (channel.read(buffer) != -1) {
                 buffer.flip();
                 storageAgent.writeData(buffer.array(), buffer.position(), buffer.limit());
@@ -85,6 +87,11 @@ public class StorageAgentTest {
         } finally {
             testInput.close();
         }
+        try {
+            done.await();
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
         assertTrue(Files.exists(testTargetPath));
         assertEquals(Files.size(testDataPath), Files.size(testTargetPath));
     }
@@ -92,8 +99,8 @@ public class StorageAgentTest {
     @Test
     public void readData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
-        storageAgent.beginReadingData(JacsStorageFormat.SINGLE_DATA_FILE, testDataPath.toString());
-        byte[] buffer = new byte[512];
+        storageAgent.beginReadingData(JacsStorageFormat.SINGLE_DATA_FILE, testDataPath.toString(), null);
+        byte[] buffer = new byte[2048];
         int nbytes;
         byte[] expectedResult = Files.readAllBytes(testDataPath);
         ByteArrayOutputStream result = new ByteArrayOutputStream();

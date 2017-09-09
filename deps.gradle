@@ -53,6 +53,9 @@ dependencies {
         JACKSON_DATATYPE_JODA_LIB = "com.fasterxml.jackson.datatype:jackson-datatype-joda:${JACKSON_VERSION}"
         JACKSON_JAXRS_JSON_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${JACKSON_VERSION}"
 
+        // data
+        MESSAGEPACK_LIB = "org.msgpack:msgpack-core:0.8.13"
+
         // testing
         JUNIT_VERSION = "4.12"
     }
