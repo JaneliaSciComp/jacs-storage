@@ -6,6 +6,8 @@ import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoDatabase;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
+import org.janelia.jacsstorage.dao.IdGenerator;
+import org.janelia.jacsstorage.dao.TimebasedIdGenerator;
 import org.janelia.jacsstorage.dao.mongo.utils.RegistryHelper;
 
 import javax.enterprise.context.ApplicationScoped;

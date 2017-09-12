@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
-import org.janelia.jacsstorage.io.ExpandedArchiveBundleReader;
 import org.janelia.jacsstorage.io.SingleFileBundleReader;
 import org.janelia.jacsstorage.io.SingleFileBundleWriter;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -33,12 +32,12 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class StorageAgentTest {
+public class StorageAgentImplTest {
 
     private static final String TEST_DATA_DIRECTORY = "src/test/resources/testdata/bundletransfer";
 
     private Path testDirectory;
-    private StorageAgent storageAgent;
+    private StorageAgentImpl storageAgentImpl;
 
     @SuppressWarnings("unchecked")
     @Before
@@ -47,7 +46,7 @@ public class StorageAgentTest {
         Instance<BundleWriter> bundleWriterSource = mock(Instance.class);
         when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader()).iterator());
         when(bundleWriterSource.iterator()).thenReturn(ImmutableList.<BundleWriter>of(new SingleFileBundleWriter()).iterator());
-        storageAgent = new StorageAgent(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource));
+        storageAgentImpl = new StorageAgentImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource));
         testDirectory = Files.createTempDirectory("StorageAgentTest");
     }
 
@@ -73,17 +72,20 @@ public class StorageAgentTest {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
         Path testTargetPath = testDirectory.resolve("testWriteData");
         CountDownLatch done = new CountDownLatch(1);
-        storageAgent.beginWritingData(JacsStorageFormat.SINGLE_DATA_FILE, testTargetPath.toString(), () ->  done.countDown());
+        byte[] headerBuffer = storageAgentImpl.getHeaderBuffer(StorageAgent.StorageAgentOperation.PERSIST_DATA,
+                JacsStorageFormat.SINGLE_DATA_FILE,
+                testTargetPath.toString());
         FileInputStream testInput = new FileInputStream(testDataPath.toFile());
         try {
-            FileChannel channel = testInput.getChannel();
+            storageAgentImpl.readHeader(ByteBuffer.wrap(headerBuffer));
             ByteBuffer buffer = ByteBuffer.allocate(2048);
+            FileChannel channel = testInput.getChannel();
             while (channel.read(buffer) != -1) {
                 buffer.flip();
-                storageAgent.writeData(buffer.array(), buffer.position(), buffer.limit());
+                storageAgentImpl.writeData(buffer);
                 buffer.clear();
             }
-            storageAgent.endWritingData();
+            storageAgentImpl.endWritingData(() ->  done.countDown());
         } finally {
             testInput.close();
         }
@@ -99,13 +101,17 @@ public class StorageAgentTest {
     @Test
     public void readData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
-        storageAgent.beginReadingData(JacsStorageFormat.SINGLE_DATA_FILE, testDataPath.toString(), null);
-        byte[] buffer = new byte[2048];
-        int nbytes;
+        byte[] headerBuffer = storageAgentImpl.getHeaderBuffer(StorageAgent.StorageAgentOperation.RETRIEVE_DATA,
+                JacsStorageFormat.SINGLE_DATA_FILE,
+                testDataPath.toString());
+        storageAgentImpl.readHeader(ByteBuffer.wrap(headerBuffer));
+        ByteBuffer buffer = ByteBuffer.allocate(2048);
         byte[] expectedResult = Files.readAllBytes(testDataPath);
         ByteArrayOutputStream result = new ByteArrayOutputStream();
-        while((nbytes = storageAgent.readData(buffer, 0, buffer.length)) != -1) {
-            result.write(buffer, 0, nbytes);
+        while(storageAgentImpl.readData(buffer) != -1) {
+            buffer.flip();
+            result.write(buffer.array(), buffer.position(), buffer.limit());
+            buffer.clear();
         }
         assertArrayEquals(expectedResult, result.toByteArray());
     }

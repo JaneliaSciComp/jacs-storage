@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.io;
 
 import org.apache.commons.compress.utils.IOUtils;
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,10 +21,13 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.AdditionalMatchers.gt;
 
 public class ExpandedBundleReaderWriterTest {
 
@@ -58,7 +62,7 @@ public class ExpandedBundleReaderWriterTest {
     }
 
     @Test
-    public void readWriteCheck() throws Exception {
+    public void directoryReadWriteCheck() throws Exception {
         Path testDataDir = Paths.get(TEST_DATA_DIRECTORY);
         Path testFilePath = testDirectory.resolve("readBundleToStream");
         Path testExpandedPath = testDirectory.resolve("expandedArchiveBundle");
@@ -97,12 +101,13 @@ public class ExpandedBundleReaderWriterTest {
     }
 
     @Test
-    public void bundleReadFailureBecauseSourceIsNotDir() {
+    public void fileBundleRead() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
-
-        assertThatThrownBy(() -> expandedBundleReader.readBundle(testDataPath.toString(), new ByteArrayOutputStream()))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("java.lang.IllegalArgumentException: Source " + testDataPath.toString() + " expected to be a directory");
+        byte[] testDataBytes = Files.readAllBytes(testDataPath);
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        TransferInfo info = expandedBundleReader.readBundle(testDataPath.toString(), output);
+        assertThat(info.getNumBytes(), Matchers.equalTo((long) testDataBytes.length));
+        assertThat(output.toByteArray().length, Matchers.greaterThan(testDataBytes.length));
     }
 
     @Test

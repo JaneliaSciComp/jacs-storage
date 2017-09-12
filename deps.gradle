@@ -11,10 +11,12 @@ dependencies {
         LOGBACK_CLASSIC_LIB = "ch.qos.logback:logback-classic:${LOGBACK_VERSION}"
 
         // dependency injection
-        JAVAX_ENTERPRISE_VERSION = "1.2"
-        WELD_VERSION = "2.4.3.Final"
+        JAVAX_ENTERPRISE_VERSION = "2.0"
+        WELD_VERSION = "3.0.1.Final"
         CDI_API_LIB = "javax.enterprise:cdi-api:${JAVAX_ENTERPRISE_VERSION}"
         CDI_IMPL_LIB = "org.jboss.weld:weld-core:${WELD_VERSION}"
+        CDI_SE_CORE_LIB = "org.jboss.weld.se:weld-se-shaded:${WELD_VERSION}"
+        CDI_SE_SHADED_LIB = "org.jboss.weld.se:weld-se-shaded:${WELD_VERSION}"
         CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
 
         // database drivers
@@ -37,7 +39,7 @@ dependencies {
         JAX_RS_CDI_EXT_LIB = "org.glassfish.jersey.ext.cdi:jersey-cdi1x-servlet:${JERSEY_VERSION}"
 
         // command line args
-        CMDLINE_ARG_LIB = "com.beust:jcommander:1.58"
+        CMDLINE_ARG_LIB = "com.beust:jcommander:1.72"
 
         // servlet engine
         JAVAX_SERVLET_API_LIB = "javax.servlet:javax.servlet-api:3.1.0"

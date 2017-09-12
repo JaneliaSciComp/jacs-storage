@@ -11,6 +11,8 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @ApplicationScoped
 public class ApplicationProducer {
@@ -55,5 +57,10 @@ public class ApplicationProducer {
                 .fromEnvVar("JACSSTORAGE_CONFIG")
                 .fromMap(ApplicationConfigProvider.applicationArgs())
                 .build();
+    }
+
+    @Produces
+    public ExecutorService createStorageAgentExecutor() {
+        return Executors.newSingleThreadExecutor();
     }
 }

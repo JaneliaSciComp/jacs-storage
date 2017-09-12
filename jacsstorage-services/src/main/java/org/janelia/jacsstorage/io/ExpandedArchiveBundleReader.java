@@ -61,8 +61,6 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
         Path sourcePath = Paths.get(source);
         if (Files.notExists(sourcePath)) {
             throw new IllegalArgumentException("No path found for " + source);
-        } else if (!Files.isDirectory(sourcePath)) {
-            throw new IllegalArgumentException("Source " + source + " expected to be a directory");
         }
         ArchiveFileVisitor archiver = new ArchiveFileVisitor(sourcePath, outputStream);
         Files.walkFileTree(sourcePath, archiver);

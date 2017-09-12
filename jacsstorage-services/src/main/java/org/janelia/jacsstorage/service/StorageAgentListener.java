@@ -2,9 +2,9 @@ package org.janelia.jacsstorage.service;
 
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
+import org.slf4j.Logger;
 
 import javax.inject.Inject;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -12,31 +12,33 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 public class StorageAgentListener {
 
     private final String bindingIP;
     private final int portNo;
-    private final Executor agentExecutor;
+    private final ExecutorService agentExecutor;
     private final DataBundleIOProvider dataIOProvider;
     private final Map<SocketChannel, StorageAgent> socketStorageAgents = new HashMap<>();
+    private final Logger logger;
 
     private Selector selector;
 
     @Inject
     public StorageAgentListener(@PropertyValue(name = "StorageAgent.bindingIP") String bindingIP,
                                 @PropertyValue(name = "StorageAgent.portNo") int portNo,
-                                Executor agentExecutor,
-                                DataBundleIOProvider dataIOProvider) {
+                                ExecutorService agentExecutor,
+                                DataBundleIOProvider dataIOProvider,
+                                Logger logger) {
         this.bindingIP = bindingIP;
         this.portNo = portNo;
         this.agentExecutor = agentExecutor;
         this.dataIOProvider = dataIOProvider;
+        this.logger = logger;
     }
 
     public void startServer() throws Exception {
@@ -49,6 +51,7 @@ public class StorageAgentListener {
         agentSocket.socket().bind(agentAddr);
 
         agentSocket.register(selector, SelectionKey.OP_ACCEPT, null);
+        logger.info("Started an agent listener at {}:{}", bindingIP, portNo);
 
         // keep listener running
         while (true) {
@@ -59,11 +62,9 @@ public class StorageAgentListener {
             while (agentKeys.hasNext()) {
                 SelectionKey currentKey = agentKeys.next();
                 agentKeys.remove();
-
                 if (!currentKey.isValid()) {
                     continue;
                 }
-
                 if (currentKey.isAcceptable()) {
                     // key is ready to accept a new socket connection
                     accept(currentKey);
@@ -82,7 +83,7 @@ public class StorageAgentListener {
         ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
         SocketChannel channel = serverChannel.accept();
         channel.configureBlocking(false);
-        socketStorageAgents.put(channel, new StorageAgent(agentExecutor, dataIOProvider));
+        socketStorageAgents.put(channel, new StorageAgentImpl(agentExecutor, dataIOProvider));
         // register channel with selector for further IO
         channel.register(this.selector, SelectionKey.OP_READ);
     }
@@ -90,55 +91,32 @@ public class StorageAgentListener {
     private void read(SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
         StorageAgent storageAgent = socketStorageAgents.get(channel);
-        int numRead;
-        if (storageAgent.getState() == StorageAgent.StorageAgentState.IDLE) {
-            ByteBuffer cmdSizeBuffer = storageAgent.getCmdSizeValueBuffer();
-            int remainingCmdSizeBytes = cmdSizeBuffer.remaining();
-            numRead = channel.read(cmdSizeBuffer);
-            if (numRead == -1) {
-                socketStorageAgents.remove(channel);
-                channel.close();
-                key.cancel();
-                throw new IllegalStateException("Stream closed before reading the size of the agent command");
-            } else if (numRead < remainingCmdSizeBytes) {
-                return; // not enough bytes could be read from the channel to read the entire cmd size so we'll have to come back
-            } else {
-                storageAgent.beginReadingAction();
-            }
-        }
-        if (storageAgent.getState() == StorageAgent.StorageAgentState.READ_ACTION) {
-            ByteBuffer cmdBuffer = storageAgent.getCmdBuffer();
-            int remainingCmdBytes = cmdBuffer.remaining();
-            numRead = channel.read(cmdBuffer);
+        ByteBuffer buffer = ByteBuffer.allocate(2048);
+        int numRead = channel.read(buffer);
+        buffer.flip();
+        if (storageAgent.getState() == StorageAgentImpl.StorageAgentState.IDLE ||
+                storageAgent.getState() == StorageAgentImpl.StorageAgentState.READ_HEADER) {
             if (numRead == -1) {
                 socketStorageAgents.remove(channel);
                 channel.close();
                 key.cancel();
                 throw new IllegalStateException("Stream closed before reading the agent command");
-            } else if (numRead < remainingCmdBytes) {
-                return; // not enough bytes could be read from the channel to read the entire cmd so we'll have to come back
-            } else {
-                storageAgent.readAction();
-                if (storageAgent.getState() == StorageAgent.StorageAgentState.READ_DATA) {
-                    key.interestOps(SelectionKey.OP_WRITE);
-                    return;
-                }
             }
         }
-        if (storageAgent.getState() != StorageAgent.StorageAgentState.WRITE_DATA) {
-            throw new IllegalStateException(); // the agent should be in write data state here
-        }
-        ByteBuffer buffer = ByteBuffer.allocate(2048);
-        numRead = channel.read(buffer);
-        if (numRead == -1) {
-            socketStorageAgents.remove(channel);
-            channel.close();
-            key.cancel();
-            storageAgent.endWritingData();
+        if (storageAgent.getState() == StorageAgentImpl.StorageAgentState.READ_DATA) {
+            key.interestOps(SelectionKey.OP_WRITE);
+            buffer.clear();
             return;
-        } else {
-            buffer.flip();
-            storageAgent.writeData(buffer.array(), buffer.position(), buffer.limit());
+        } else if (storageAgent.getState() == StorageAgentImpl.StorageAgentState.WRITE_DATA) {
+            if (numRead == -1) {
+                socketStorageAgents.remove(channel);
+                channel.close();
+                key.cancel();
+                buffer.clear();
+                storageAgent.endWritingData(null);
+                return;
+            }
+            storageAgent.writeData(buffer);
             buffer.clear();
         }
     }
@@ -146,13 +124,11 @@ public class StorageAgentListener {
     private void write(SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
         StorageAgent storageAgent = socketStorageAgents.get(channel);
-        byte[] buffer = new byte[2048];
-        ByteBuffer byteBuffer = ByteBuffer.wrap(buffer);
-        int nbytes;
-        while((nbytes = storageAgent.readData(buffer, 0, buffer.length)) != -1) {
-            byteBuffer.position(0);
-            byteBuffer.limit(nbytes);
-            while (byteBuffer.hasRemaining()) channel.write(byteBuffer);
+        ByteBuffer buffer = ByteBuffer.allocate(2048);
+        while(storageAgent.readData(buffer) != -1) {
+            buffer.flip();
+            while (buffer.hasRemaining()) channel.write(buffer);
+            buffer.clear();
         }
         key.interestOps(SelectionKey.OP_READ);
     }

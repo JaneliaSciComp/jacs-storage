@@ -39,11 +39,6 @@ public class TimebasedIdGenerator implements IdGenerator {
 
     }
 
-    TimebasedIdGenerator() {
-        // constructor needed by CDI so that the bean can be injected as a singleton with ApplicationScope
-        this(0);
-    }
-
     public TimebasedIdGenerator(Integer deploymentContext) {
         Preconditions.checkArgument(deploymentContext >= 0 && deploymentContext <= MAX_DEPLOYMENT_CONTEXT,
                 "Deployment context value is out of range. It's current value is "
