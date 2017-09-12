@@ -4,19 +4,23 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
+import org.janelia.jacsstorage.cdi.ApplicationProducer;
+import org.janelia.jacsstorage.dao.Dao;
+import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
-import javax.inject.Inject;
 
 public class StorageClientLauncher {
 
     private static abstract class AbstractCommand {
-        @Parameter(names = "-src", description = "Source")
-        protected String srcFile;
-        @Parameter(names = "-dest", description = "Destination")
-        protected String destFile;
+        @Parameter(names = "-localPath", description = "Local path")
+        protected String localPath;
+        @Parameter(names = "-remotePath", description = "Remote path")
+        protected String remotePath;
+        @Parameter(names = "-dataFormat", description = "Data bundle format", required = true)
+        protected JacsStorageFormat dataFormat;
     }
 
     private static class CommandMain {
@@ -24,8 +28,6 @@ public class StorageClientLauncher {
         private String serverIP = "localhost";
         @Parameter(names = "-serverPort", description = "Server port number")
         private int serverPortNo = 10000;
-        @Parameter(names = "-dataFormat", description = "Data bundle format", required = true)
-        private JacsStorageFormat dataFormat;
     }
 
     @Parameters(commandDescription = "Send data to the storage server")
@@ -61,25 +63,33 @@ public class StorageClientLauncher {
             usage(jc);
         }
 
-        SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
-        SeContainer container = containerInit.initialize();
-
-        StorageClient socketStorageClient = new SocketStorageClient(
-                container.select(StorageAgent.class).get(),
-                container.select(StorageAgent.class).get(),
-                cm.serverIP,
-                cm.serverPortNo
-        );
-        StorageClientLauncher storageClientLauncher = new StorageClientLauncher(socketStorageClient);
-        switch (jc.getParsedCommand()) {
-            case "get":
-                storageClientLauncher.storageClient.retrieveData(cmdGet.srcFile, cmdGet.destFile, cm.dataFormat);
-                return;
-            case "put":
-                storageClientLauncher.storageClient.persistData(cmdPut.srcFile, cmdPut.destFile, cm.dataFormat);
-                return;
-            default:
-                usage(jc);
+        SeContainerInitializer containerInit = SeContainerInitializer.newInstance()
+                .disableDiscovery()
+                .addPackages(true,
+                        Dao.class,
+                        StorageClientLauncher.class,
+                        DataBundleIOProvider.class,
+                        ApplicationProducer.class
+                )
+                ;
+        try (SeContainer container = containerInit.initialize()) {
+            StorageClient socketStorageClient = new SocketStorageClient(
+                    container.select(StorageAgent.class).get(),
+                    container.select(StorageAgent.class).get(),
+                    cm.serverIP,
+                    cm.serverPortNo
+            );
+            StorageClientLauncher storageClientLauncher = new StorageClientLauncher(socketStorageClient);
+            switch (jc.getParsedCommand()) {
+                case "get":
+                    storageClientLauncher.storageClient.retrieveData(cmdGet.localPath, cmdGet.remotePath, cmdGet.dataFormat);
+                    return;
+                case "put":
+                    storageClientLauncher.storageClient.persistData(cmdPut.localPath, cmdPut.remotePath, cmdPut.dataFormat);
+                    return;
+                default:
+                    usage(jc);
+            }
         }
     }
 

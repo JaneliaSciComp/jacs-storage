@@ -102,6 +102,7 @@ public class StorageAgentListener {
                 key.cancel();
                 throw new IllegalStateException("Stream closed before reading the agent command");
             }
+            storageAgent.readHeader(buffer);
         }
         if (storageAgent.getState() == StorageAgentImpl.StorageAgentState.READ_DATA) {
             key.interestOps(SelectionKey.OP_WRITE);

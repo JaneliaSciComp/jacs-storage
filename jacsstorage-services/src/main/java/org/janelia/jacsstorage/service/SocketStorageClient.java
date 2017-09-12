@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.service;
 
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -30,20 +29,20 @@ public class SocketStorageClient implements StorageClient {
         this.portNo = portNo;
     }
 
-    public void persistData(String source, String target, JacsStorageFormat remoteDataFormat) throws IOException {
+    public void persistData(String localPath, String remotePath, JacsStorageFormat remoteDataFormat) throws IOException {
         // initialize the transfer operation - tell the remote party what we want
         byte[] remoteOpBytes = localAgentProxy.getHeaderBuffer(StorageAgent.StorageAgentOperation.PERSIST_DATA,
                 remoteDataFormat,
-                target);
+                remotePath);
         ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
         openChannel(remoteOpBuffer, SelectionKey.OP_WRITE); // open the channel for writing the data
 
         // figure out the best local data format
-        Path sourcePath = Paths.get(source);
+        Path sourcePath = Paths.get(localPath);
         JacsStorageFormat localDataFormat;
         if (Files.isDirectory(sourcePath)) {
             if (remoteDataFormat == JacsStorageFormat.SINGLE_DATA_FILE) {
-                throw new IllegalArgumentException("Cannot persist directory " + source + " as a single file");
+                throw new IllegalArgumentException("Cannot persist directory " + localPath + " as a single file");
             }
             localDataFormat = JacsStorageFormat.DATA_DIRECTORY;
         } else {
@@ -56,20 +55,20 @@ public class SocketStorageClient implements StorageClient {
         // initiate the local data read operation
         byte[] localHeaderBytes = localAgentProxy.getHeaderBuffer(StorageAgent.StorageAgentOperation.RETRIEVE_DATA,
                 localDataFormat,
-                source);
+                localPath);
         ByteBuffer localHeaderBuffer = ByteBuffer.wrap(localHeaderBytes);
-        localAgentProxy.readData(localHeaderBuffer);
+        localAgentProxy.readHeader(localHeaderBuffer);
 
         ByteBuffer dataTransferBuffer = ByteBuffer.allocate(2048);
         dataTransferBuffer.limit(0); // the data buffer is empty
         sendData(dataTransferBuffer);
     }
 
-    public void retrieveData(String source, String target, JacsStorageFormat remoteDataFormat) throws IOException {
+    public void retrieveData(String localPath, String remotePath, JacsStorageFormat remoteDataFormat) throws IOException {
         // initialize the transfer operation - tell the remote party what we want
         byte[] remoteOpBytes = localAgentProxy.getHeaderBuffer(StorageAgent.StorageAgentOperation.RETRIEVE_DATA,
                 remoteDataFormat,
-                source); // in this case the source is the remote path from where to get the data
+                remotePath);
         ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
         openChannel(remoteOpBuffer, SelectionKey.OP_READ); // open the channel for reading the data
 
@@ -84,9 +83,9 @@ public class SocketStorageClient implements StorageClient {
         // initiate the local data read operation
         byte[] localHeaderBytes = localAgentProxy.getHeaderBuffer(StorageAgent.StorageAgentOperation.PERSIST_DATA,
                 localDataFormat,
-                target);
+                localPath);
         ByteBuffer localHeaderBuffer = ByteBuffer.wrap(localHeaderBytes);
-        localAgentProxy.readData(localHeaderBuffer);
+        localAgentProxy.readHeader(localHeaderBuffer);
 
         ByteBuffer dataTransferBuffer = ByteBuffer.allocate(2048);
         dataTransferBuffer.limit(0); // the data buffer is empty

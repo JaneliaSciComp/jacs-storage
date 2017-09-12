@@ -13,6 +13,7 @@ import javax.enterprise.inject.spi.InjectionPoint;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 @ApplicationScoped
 public class ApplicationProducer {
@@ -61,6 +62,10 @@ public class ApplicationProducer {
 
     @Produces
     public ExecutorService createStorageAgentExecutor() {
-        return Executors.newSingleThreadExecutor();
+        return Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
     }
 }
