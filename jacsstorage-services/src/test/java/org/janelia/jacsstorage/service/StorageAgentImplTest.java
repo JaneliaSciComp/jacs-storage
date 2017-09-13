@@ -10,6 +10,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
 import java.io.ByteArrayOutputStream;
@@ -39,15 +40,17 @@ public class StorageAgentImplTest {
 
     private Path testDirectory;
     private StorageAgentImpl storageAgentImpl;
+    private Logger logger;
 
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws IOException {
         Instance<BundleReader> bundleReaderSource = mock(Instance.class);
         Instance<BundleWriter> bundleWriterSource = mock(Instance.class);
+        logger = mock(Logger.class);
         when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader()).iterator());
         when(bundleWriterSource.iterator()).thenReturn(ImmutableList.<BundleWriter>of(new SingleFileBundleWriter()).iterator());
-        storageAgentImpl = new StorageAgentImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource));
+        storageAgentImpl = new StorageAgentImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource), logger);
         testDirectory = Files.createTempDirectory("StorageAgentTest");
     }
 

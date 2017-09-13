@@ -78,14 +78,13 @@ public class StorageAgentListener {
                 }
             }
         }
-
     }
 
     private void accept(SelectionKey key) throws IOException {
         ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
         SocketChannel channel = serverChannel.accept();
         channel.configureBlocking(false);
-        socketStorageAgents.put(channel, new StorageAgentImpl(agentExecutor, dataIOProvider));
+        socketStorageAgents.put(channel, new StorageAgentImpl(agentExecutor, dataIOProvider, logger));
         // register channel with selector for further IO
         channel.register(this.selector, SelectionKey.OP_READ);
     }

@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service;
 
+import org.apache.commons.compress.utils.IOUtils;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
@@ -9,6 +10,7 @@ import org.janelia.jacsstorage.utils.BufferUtils;
 import org.msgpack.core.MessageBufferPacker;
 import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessageUnpacker;
+import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -25,6 +27,7 @@ public class StorageAgentImpl implements StorageAgent {
 
     private final ExecutorService agentExecutor;
     private final DataBundleIOProvider dataIOProvider;
+    private final Logger logger;
 
     private StorageAgentState state;
     private ByteBuffer cmdSizeValueBuffer;
@@ -34,9 +37,10 @@ public class StorageAgentImpl implements StorageAgent {
     private OperationCompleteCallback writerCompletedCallback;
 
     @Inject
-    public StorageAgentImpl(ExecutorService agentExecutor, DataBundleIOProvider dataIOProvider) {
+    public StorageAgentImpl(ExecutorService agentExecutor, DataBundleIOProvider dataIOProvider, Logger logger) {
         this.agentExecutor = agentExecutor;
         this.dataIOProvider = dataIOProvider;
+        this.logger = logger;
         state = StorageAgentState.IDLE;
     }
 
@@ -115,6 +119,7 @@ public class StorageAgentImpl implements StorageAgent {
     }
 
     private void beginReadingData(JacsDataLocation dataLocation) throws IOException {
+        logger.info("Begin reading data from: {}", dataLocation);
         state = StorageAgentState.READ_DATA;
         readerPipe = Pipe.open();
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataLocation.getStorageFormat());
@@ -151,6 +156,7 @@ public class StorageAgentImpl implements StorageAgent {
     }
 
     private void beginWritingData(JacsDataLocation dataLocation) throws IOException {
+        logger.info("Begin writing data to: {}", dataLocation);
         state = StorageAgentState.WRITE_DATA;
         writerPipe = Pipe.open();
         BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataLocation.getStorageFormat());
@@ -159,11 +165,11 @@ public class StorageAgentImpl implements StorageAgent {
             try {
                 bundleWriter.writeBundle(receiverStream, dataLocation.getPath());
                 state = StorageAgentState.DATA_TRANSFER_COMPLETED;
-                writerPipe.source().close();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 state = StorageAgentState.DATA_TRANSFER_ERROR;
-                throw new UncheckedIOException(e);
+                throw new IllegalStateException(e);
             } finally {
+                IOUtils.closeQuietly(writerPipe.source());
                 if (writerCompletedCallback != null) {
                     writerCompletedCallback.onDone();
                 }
