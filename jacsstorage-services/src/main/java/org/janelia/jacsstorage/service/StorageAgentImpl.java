@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
+import org.janelia.jacsstorage.model.jacsstorage.JacsDataLocation;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.utils.BufferUtils;
 import org.msgpack.core.MessageBufferPacker;
@@ -17,6 +18,7 @@ import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.Pipe;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 public class StorageAgentImpl implements StorageAgent {
@@ -44,7 +46,7 @@ public class StorageAgentImpl implements StorageAgent {
     }
 
     @Override
-    public byte[] getHeaderBuffer(StorageAgentOperation op, JacsStorageFormat format, String location) throws IOException {
+    public byte[] createHeader(StorageAgentOperation op, JacsStorageFormat format, String location) throws IOException {
         MessageBufferPacker cmdPacker = MessagePack.newDefaultBufferPacker();
         cmdPacker.packString(op.name())
                 .packString(format.name())
@@ -61,15 +63,18 @@ public class StorageAgentImpl implements StorageAgent {
     }
 
     @Override
-    public void readHeader(ByteBuffer buffer) throws IOException {
+    public int readHeader(ByteBuffer buffer, Optional<StorageAgentState> nextState) throws IOException {
         if (cmdSizeValueBuffer == null) {
             cmdSizeValueBuffer = ByteBuffer.allocate(4);
             state = StorageAgentState.READ_HEADER;
-            BufferUtils.copyBuffers(buffer, cmdSizeValueBuffer);
         }
         if (cmdSizeValueBuffer.hasRemaining()) {
             BufferUtils.copyBuffers(buffer, cmdSizeValueBuffer);
-        } else if (cmdBuffer == null) {
+            if (cmdSizeValueBuffer.hasRemaining()) {
+                return 0;
+            }
+        }
+        if (cmdBuffer == null) {
             cmdSizeValueBuffer.flip();
             int cmdSize = cmdSizeValueBuffer.getInt();
             cmdBuffer = ByteBuffer.allocate(cmdSize);
@@ -77,39 +82,51 @@ public class StorageAgentImpl implements StorageAgent {
         if (cmdBuffer.hasRemaining()) {
             BufferUtils.copyBuffers(buffer, cmdBuffer);
             if (!cmdBuffer.hasRemaining()) {
-                cmdBuffer.flip();
-                MessageUnpacker cmdUnpacker = MessagePack.newDefaultUnpacker(cmdBuffer);
-                StorageAgentOperation op = StorageAgentOperation.valueOf(cmdUnpacker.unpackString());
-                JacsStorageFormat format = JacsStorageFormat.valueOf(cmdUnpacker.unpackString());
-                String path = cmdUnpacker.unpackString();
-                cmdUnpacker.close();
-                switch (op) {
-                    case PERSIST_DATA:
-                        beginWritingData(format, path);
-                        break;
-                    case RETRIEVE_DATA:
-                        beginReadingData(format, path);
-                        break;
-                    default:
-                        throw new UnsupportedOperationException("Operation " + op + " is not supported");
-                }
+                nextState.map(s -> state = s);
+                return 1;
+            } else {
+                return 0;
+            }
+        } else {
+            return -1;
+        }
+    }
+
+    @Override
+    public void beginDataTransfer() throws IOException {
+        if (cmdBuffer != null && !cmdBuffer.hasRemaining()) {
+            cmdBuffer.flip();
+            MessageUnpacker cmdUnpacker = MessagePack.newDefaultUnpacker(cmdBuffer);
+            StorageAgentOperation op = StorageAgentOperation.valueOf(cmdUnpacker.unpackString());
+            JacsStorageFormat format = JacsStorageFormat.valueOf(cmdUnpacker.unpackString());
+            String path = cmdUnpacker.unpackString();
+            cmdUnpacker.close();
+            switch (op) {
+                case PERSIST_DATA:
+                    beginWritingData(new JacsDataLocation(path, format));
+                    break;
+                case RETRIEVE_DATA:
+                    beginReadingData(new JacsDataLocation(path, format));
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Operation " + op + " is not supported");
             }
         }
     }
 
-    private void beginReadingData(JacsStorageFormat format, String source) throws IOException {
+    private void beginReadingData(JacsDataLocation dataLocation) throws IOException {
         state = StorageAgentState.READ_DATA;
         readerPipe = Pipe.open();
-        BundleReader bundleReader = dataIOProvider.getBundleReader(format);
+        BundleReader bundleReader = dataIOProvider.getBundleReader(dataLocation.getStorageFormat());
         OutputStream senderStream = Channels.newOutputStream(readerPipe.sink());
         agentExecutor.execute(() -> {
             try {
-                bundleReader.readBundle(source, senderStream);
+                bundleReader.readBundle(dataLocation.getPath(), senderStream);
+                state = StorageAgentState.DATA_TRANSFER_COMPLETED;
                 readerPipe.sink().close();
             } catch (IOException e) {
+                state = StorageAgentState.DATA_TRANSFER_ERROR;
                 throw new UncheckedIOException(e);
-            } finally {
-                state = StorageAgentState.IDLE;
             }
         });
     }
@@ -133,20 +150,21 @@ public class StorageAgentImpl implements StorageAgent {
         return totalBytesRead;
     }
 
-    private void beginWritingData(JacsStorageFormat format, String target) throws IOException {
+    private void beginWritingData(JacsDataLocation dataLocation) throws IOException {
         state = StorageAgentState.WRITE_DATA;
         writerPipe = Pipe.open();
-        BundleWriter bundleWriter = dataIOProvider.getBundleWriter(format);
+        BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataLocation.getStorageFormat());
         InputStream receiverStream = Channels.newInputStream(writerPipe.source());
         agentExecutor.execute(() -> {
             try {
-                bundleWriter.writeBundle(receiverStream, target);
+                bundleWriter.writeBundle(receiverStream, dataLocation.getPath());
+                state = StorageAgentState.DATA_TRANSFER_COMPLETED;
                 writerPipe.source().close();
             } catch (IOException e) {
+                state = StorageAgentState.DATA_TRANSFER_ERROR;
                 throw new UncheckedIOException(e);
             } finally {
                 writerPipe = null;
-                state = StorageAgentState.IDLE;
                 if (writerCompletedCallback != null) {
                     writerCompletedCallback.onDone();
                 }
@@ -172,7 +190,7 @@ public class StorageAgentImpl implements StorageAgent {
     }
 
     @Override
-    public void endWritingData(OperationCompleteCallback cb) throws IOException {
+    public void terminateDataTransfer(OperationCompleteCallback cb) throws IOException {
         writerCompletedCallback = cb;
         // when it's done writing close the writer pipe so that the receiver on the other end of the pipe knows we are done
         writerPipe.sink().close();

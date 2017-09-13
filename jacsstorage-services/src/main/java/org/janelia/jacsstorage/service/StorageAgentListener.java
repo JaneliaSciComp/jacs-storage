@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.service;
 
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -15,6 +16,7 @@ import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 public class StorageAgentListener {
@@ -94,27 +96,36 @@ public class StorageAgentListener {
         ByteBuffer buffer = ByteBuffer.allocate(2048);
         int numRead = channel.read(buffer);
         buffer.flip();
-        if (storageAgent.getState() == StorageAgentImpl.StorageAgentState.IDLE ||
-                storageAgent.getState() == StorageAgentImpl.StorageAgentState.READ_HEADER) {
+        if (storageAgent.getState() == StorageAgent.StorageAgentState.IDLE ||
+                storageAgent.getState() == StorageAgent.StorageAgentState.READ_HEADER) {
             if (numRead == -1) {
                 socketStorageAgents.remove(channel);
                 channel.close();
                 key.cancel();
-                throw new IllegalStateException("Stream closed before reading the agent command");
+                logger.error("Stream closed before reading the agent command");
             }
-            storageAgent.readHeader(buffer);
+            if (storageAgent.readHeader(buffer, Optional.empty()) == 1) {
+                storageAgent.beginDataTransfer();
+            }
         }
-        if (storageAgent.getState() == StorageAgentImpl.StorageAgentState.READ_DATA) {
+        if (storageAgent.getState() == StorageAgent.StorageAgentState.READ_DATA) {
+            // switch to sending data to the channel
             key.interestOps(SelectionKey.OP_WRITE);
+            // create a header and send it to the caller
+            byte[] headerBytes = storageAgent.createHeader(StorageAgent.StorageAgentOperation.PERSIST_DATA,
+                    JacsStorageFormat.ARCHIVE_DATA_FILE,
+                    "");
+            ByteBuffer headerBuffer = ByteBuffer.wrap(headerBytes);
+            writeBuffer(headerBuffer, channel);
             buffer.clear();
             return;
-        } else if (storageAgent.getState() == StorageAgentImpl.StorageAgentState.WRITE_DATA) {
+        } else if (storageAgent.getState() == StorageAgent.StorageAgentState.WRITE_DATA) {
             if (numRead == -1) {
                 socketStorageAgents.remove(channel);
                 channel.close();
                 key.cancel();
                 buffer.clear();
-                storageAgent.endWritingData(null);
+                storageAgent.terminateDataTransfer(null);
                 return;
             }
             storageAgent.writeData(buffer);
@@ -126,12 +137,18 @@ public class StorageAgentListener {
         SocketChannel channel = (SocketChannel) key.channel();
         StorageAgent storageAgent = socketStorageAgents.get(channel);
         ByteBuffer buffer = ByteBuffer.allocate(2048);
-        while(storageAgent.readData(buffer) != -1) {
-            buffer.flip();
-            while (buffer.hasRemaining()) channel.write(buffer);
-            buffer.clear();
+        if (storageAgent.readData(buffer) == -1) {
+            // nothing to write anymore
+            socketStorageAgents.remove(channel);
+            key.cancel();
+            channel.close();
+            return;
         }
-        key.interestOps(SelectionKey.OP_READ);
+        buffer.flip();
+        writeBuffer(buffer, channel);
     }
 
+    private void writeBuffer(ByteBuffer buffer, SocketChannel channel) throws IOException {
+        while (buffer.hasRemaining()) channel.write(buffer);
+    }
 }

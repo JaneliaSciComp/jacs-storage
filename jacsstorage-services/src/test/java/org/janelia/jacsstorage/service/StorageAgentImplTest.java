@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 
@@ -72,12 +73,14 @@ public class StorageAgentImplTest {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
         Path testTargetPath = testDirectory.resolve("testWriteData");
         CountDownLatch done = new CountDownLatch(1);
-        byte[] headerBuffer = storageAgentImpl.getHeaderBuffer(StorageAgent.StorageAgentOperation.PERSIST_DATA,
+        byte[] headerBuffer = storageAgentImpl.createHeader(StorageAgent.StorageAgentOperation.PERSIST_DATA,
                 JacsStorageFormat.SINGLE_DATA_FILE,
                 testTargetPath.toString());
         FileInputStream testInput = new FileInputStream(testDataPath.toFile());
         try {
-            storageAgentImpl.readHeader(ByteBuffer.wrap(headerBuffer));
+            if (storageAgentImpl.readHeader(ByteBuffer.wrap(headerBuffer), Optional.empty()) == 1) {
+                storageAgentImpl.beginDataTransfer();
+            }
             ByteBuffer buffer = ByteBuffer.allocate(2048);
             FileChannel channel = testInput.getChannel();
             while (channel.read(buffer) != -1) {
@@ -85,7 +88,7 @@ public class StorageAgentImplTest {
                 storageAgentImpl.writeData(buffer);
                 buffer.clear();
             }
-            storageAgentImpl.endWritingData(() ->  done.countDown());
+            storageAgentImpl.terminateDataTransfer(() -> done.countDown());
         } finally {
             testInput.close();
         }
@@ -101,10 +104,12 @@ public class StorageAgentImplTest {
     @Test
     public void readData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
-        byte[] headerBuffer = storageAgentImpl.getHeaderBuffer(StorageAgent.StorageAgentOperation.RETRIEVE_DATA,
+        byte[] headerBuffer = storageAgentImpl.createHeader(StorageAgent.StorageAgentOperation.RETRIEVE_DATA,
                 JacsStorageFormat.SINGLE_DATA_FILE,
                 testDataPath.toString());
-        storageAgentImpl.readHeader(ByteBuffer.wrap(headerBuffer));
+        if (storageAgentImpl.readHeader(ByteBuffer.wrap(headerBuffer), Optional.empty()) == 1) {
+            storageAgentImpl.beginDataTransfer();
+        }
         ByteBuffer buffer = ByteBuffer.allocate(2048);
         byte[] expectedResult = Files.readAllBytes(testDataPath);
         ByteArrayOutputStream result = new ByteArrayOutputStream();

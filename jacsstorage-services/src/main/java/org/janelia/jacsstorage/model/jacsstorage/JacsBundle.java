@@ -5,7 +5,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.AbstractEntity;
 import org.janelia.jacsstorage.model.support.MongoMapping;
 
-import javax.swing.text.html.Option;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
