@@ -164,10 +164,10 @@ public class StorageAgentImpl implements StorageAgent {
                 state = StorageAgentState.DATA_TRANSFER_ERROR;
                 throw new UncheckedIOException(e);
             } finally {
-                writerPipe = null;
                 if (writerCompletedCallback != null) {
                     writerCompletedCallback.onDone();
                 }
+                writerPipe = null;
             }
         });
     }
