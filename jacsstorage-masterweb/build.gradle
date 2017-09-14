@@ -7,6 +7,5 @@ project(":jacsstorage-masterweb") {
         compile project(":jacsstorage-commonweb"),
                 JAX_RS_CDI_EXT_LIB,
                 JERSEY_INJECT_LIB
-
     }
 }

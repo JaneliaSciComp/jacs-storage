@@ -17,13 +17,14 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.servlet.ServletProperties;
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 import org.janelia.jacsstorage.filter.CORSResponseFilter;
+import org.jboss.weld.environment.servlet.Listener;
+import org.jboss.weld.module.web.servlet.WeldInitialListener;
+import org.jboss.weld.module.web.servlet.WeldTerminalListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.ws.rs.core.Application;
 
 import java.util.Map;
 
@@ -87,7 +88,10 @@ public abstract class AbstractStorageApp {
                         .setEagerFilterInit(true)
                         .addFilter(new FilterInfo("corsFilter", CORSResponseFilter.class))
                         .addFilterUrlMapping("corsFilter", "/*", DispatcherType.REQUEST)
-                        .addListeners(getListeners())
+                        .addListener(Servlets.listener(WeldInitialListener.class))
+                        .addListener(Servlets.listener(Listener.class))
+                        .addListeners(getAppListeners())
+                        .addListener(Servlets.listener(WeldTerminalListener.class))
                         .addServlets(restApiServlet)
                 ;
 
@@ -115,5 +119,5 @@ public abstract class AbstractStorageApp {
 
     protected abstract String getRestApiMapping();
 
-    protected abstract ListenerInfo[] getListeners();
+    protected abstract ListenerInfo[] getAppListeners();
 }

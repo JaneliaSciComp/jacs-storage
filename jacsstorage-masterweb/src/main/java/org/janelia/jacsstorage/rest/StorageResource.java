@@ -7,19 +7,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @RequestScoped
-@Path("/storage")
+@Produces(MediaType.APPLICATION_JSON)
+@Path("storage")
 public class StorageResource {
 
-    @Produces(MediaType.TEXT_PLAIN)
     @GET
-    public String get1() {
-        return "OK 1";
+    @Path("status")
+    public String getStatus() {
+        return "OK";
     }
 
-    @Produces(MediaType.TEXT_PLAIN)
-    @GET
-    @Path("tttt")
-    public String get2() {
-        return "OK 2";
-    }
 }

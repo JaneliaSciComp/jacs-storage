@@ -6,7 +6,6 @@ project(":jacsstorage-commonweb") {
                 JACKSON_JAXRS_JSON_PROVIDER,
                 JAVAX_SERVLET_API_LIB,
                 JAX_RS_API_LIB,
-                JAX_RS_CDI_EXT_LIB,
                 JAX_RS_CONTAINERS_LIB,
                 JAX_RS_CORE_LIB,
                 JAX_RS_SERVER_LIB,
