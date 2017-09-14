@@ -14,7 +14,7 @@ public class CORSResponseFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse resp = (HttpServletResponse) servletResponse;
         resp.addHeader("Access-Control-Allow-Origin","*");
-        resp.addHeader("Access-Control-Allow-Methods","GET,POST");
+        resp.addHeader("Access-Control-Allow-Methods","GET,POST,PUT");
         resp.addHeader("Access-Control-Allow-Headers","Origin, X-Requested-With, Content-Type, Accept");
 
         chain.doFilter(request, servletResponse);
