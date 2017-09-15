@@ -69,8 +69,8 @@ public abstract class AbstractStorageApp {
     }
 
     protected void initializeApp(AppArgs appArgs) throws ServletException {
+        appArgs.applicationArgs.put("App.PortNumber", String.valueOf(appArgs.portNumber));
         String contextPath = "/" + appArgs.baseContextPath;
-
         ServletInfo restApiServlet =
                 Servlets.servlet("restApiServlet", ServletContainer.class)
                         .setLoadOnStartup(1)
@@ -79,7 +79,6 @@ public abstract class AbstractStorageApp {
                         .addInitParam(ServletProperties.JAXRS_APPLICATION_CLASS, getJaxConfigName())
                         .addMapping(getRestApiMapping())
                 ;
-
         DeploymentInfo servletBuilder =
                 Servlets.deployment()
                         .setClassLoader(this.getClass().getClassLoader())

@@ -3,6 +3,8 @@ package org.janelia.jacsstorage.dao.mongo;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
 import org.bson.conversions.Bson;
@@ -20,10 +22,13 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
     @Inject
     public JacsStorageVolumeMongoDao(MongoDatabase mongoDatabase, IdGenerator idGenerator) {
         super(mongoDatabase, idGenerator);
+        IndexOptions indexOptions = new IndexOptions();
+        indexOptions.unique(true);
+        mongoCollection.createIndex(Indexes.ascending("location"), indexOptions);
     }
 
     @Override
-    public JacsStorageVolume findOrCreateByLocation(String location) {
+    public JacsStorageVolume getStorageByLocation(String location) {
         FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
         updateOptions.returnDocument(ReturnDocument.AFTER);
         updateOptions.upsert(true);

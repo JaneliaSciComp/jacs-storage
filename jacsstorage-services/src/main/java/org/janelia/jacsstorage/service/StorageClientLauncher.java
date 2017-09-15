@@ -5,7 +5,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.janelia.jacsstorage.utils.SeContainerShutdownHook;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
@@ -80,7 +79,6 @@ public class StorageClientLauncher {
             default:
                 usage(jc);
         }
-        Runtime.getRuntime().addShutdownHook(new SeContainerShutdownHook(container)); // add the SE shutdown hook
     }
 
     private static void usage(JCommander jc) {

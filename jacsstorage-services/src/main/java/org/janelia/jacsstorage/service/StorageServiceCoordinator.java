@@ -24,7 +24,7 @@ public class StorageServiceCoordinator implements StorageService {
     public Optional<JacsBundle> allocateStorage(JacsBundle dataBundle) {
         return agentManager.findRandomRegisteredAgent()
                 .map(storageAgentInfo -> {
-                    JacsStorageVolume storageVolume = storageVolumeDao.findOrCreateByLocation(storageAgentInfo.getLocation());
+                    JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocation(storageAgentInfo.getLocation());
                     dataBundle.setStorageVolumeId(storageVolume.getId());
                     dataBundle.setStorageVolume(storageVolume);
                     bundleDao.save(dataBundle);

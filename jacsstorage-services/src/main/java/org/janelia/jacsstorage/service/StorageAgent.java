@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.service;
 
-import org.janelia.jacsstorage.model.jacsstorage.JacsDataLocation;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.io.IOException;

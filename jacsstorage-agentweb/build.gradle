@@ -1,0 +1,11 @@
+apply plugin: 'application'
+
+mainClassName = 'org.janelia.jacsstorage.app.JacsAgentStorageApp'
+
+project(":jacsstorage-agentweb") {
+    dependencies {
+        compile project(":jacsstorage-commonweb"),
+                JAX_RS_CDI_EXT_LIB,
+                JERSEY_INJECT_LIB
+    }
+}
