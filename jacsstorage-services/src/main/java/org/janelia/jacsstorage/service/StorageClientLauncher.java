@@ -4,10 +4,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
-import org.janelia.jacsstorage.cdi.ApplicationProducer;
-import org.janelia.jacsstorage.dao.Dao;
-import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.utils.SeContainerShutdownHook;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
@@ -63,34 +61,26 @@ public class StorageClientLauncher {
             usage(jc);
         }
 
-        SeContainerInitializer containerInit = SeContainerInitializer.newInstance()
-                .disableDiscovery()
-                .addPackages(true,
-                        Dao.class,
-                        StorageClientLauncher.class,
-                        DataBundleIOProvider.class,
-                        ApplicationProducer.class
-                )
-                ;
-        try (SeContainer container = containerInit.initialize()) {
-            StorageClient socketStorageClient = new SocketStorageClient(
-                    container.select(StorageAgent.class).get(),
-                    container.select(StorageAgent.class).get(),
-                    cm.serverIP,
-                    cm.serverPortNo
-            );
-            StorageClientLauncher storageClientLauncher = new StorageClientLauncher(socketStorageClient);
-            switch (jc.getParsedCommand()) {
-                case "get":
-                    storageClientLauncher.storageClient.retrieveData(cmdGet.localPath, cmdGet.remotePath, cmdGet.dataFormat);
-                    return;
-                case "put":
-                    storageClientLauncher.storageClient.persistData(cmdPut.localPath, cmdPut.remotePath, cmdPut.dataFormat);
-                    return;
-                default:
-                    usage(jc);
-            }
+        SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
+        SeContainer container = containerInit.initialize();
+        StorageClient socketStorageClient = new SocketStorageClient(
+                container.select(StorageAgent.class).get(),
+                container.select(StorageAgent.class).get(),
+                cm.serverIP,
+                cm.serverPortNo
+        );
+        StorageClientLauncher storageClientLauncher = new StorageClientLauncher(socketStorageClient);
+        switch (jc.getParsedCommand()) {
+            case "get":
+                storageClientLauncher.storageClient.retrieveData(cmdGet.localPath, cmdGet.remotePath, cmdGet.dataFormat);
+                return;
+            case "put":
+                storageClientLauncher.storageClient.persistData(cmdPut.localPath, cmdPut.remotePath, cmdPut.dataFormat);
+                return;
+            default:
+                usage(jc);
         }
+        Runtime.getRuntime().addShutdownHook(new SeContainerShutdownHook(container)); // add the SE shutdown hook
     }
 
     private static void usage(JCommander jc) {

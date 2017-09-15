@@ -6,15 +6,15 @@ import org.janelia.jacsstorage.model.support.MongoMapping;
 
 import java.util.Date;
 
-@MongoMapping(collectionName="jacsVolume", label="JacsVolume")
-public class JacsVolume extends AbstractEntity {
+@MongoMapping(collectionName="jacsStorageVolume", label="JacsStorageVolume")
+public class JacsStorageVolume extends AbstractEntity {
 
     private String name; // volume name
+    private String location; // location (hostname or IP)
     private String mountPoint;
     private Long capacityInMB;
     private Long availableInMB;
     private Date created = new Date();
-    private Number storageId;
 
     public String getName() {
         return name;
@@ -22,6 +22,14 @@ public class JacsVolume extends AbstractEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public String getMountPoint() {
@@ -54,14 +62,6 @@ public class JacsVolume extends AbstractEntity {
 
     public void setCreated(Date created) {
         this.created = created;
-    }
-
-    public Number getStorageId() {
-        return storageId;
-    }
-
-    public void setStorageId(Number storageId) {
-        this.storageId = storageId;
     }
 
     @Override

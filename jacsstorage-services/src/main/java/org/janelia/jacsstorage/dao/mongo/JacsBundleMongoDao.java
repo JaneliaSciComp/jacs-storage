@@ -38,7 +38,7 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
     }
 
     @Override
-    public JacsBundle findByNameAndOwner(String owner, String name) {
+    public JacsBundle findByOwnerAndName(String owner, String name) {
         ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
         filtersBuilder.add(eq("owner", owner));
         filtersBuilder.add(eq("name", name));

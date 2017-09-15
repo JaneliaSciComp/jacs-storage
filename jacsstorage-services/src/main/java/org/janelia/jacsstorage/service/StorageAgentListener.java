@@ -53,7 +53,7 @@ public class StorageAgentListener {
         agentSocket.socket().bind(agentAddr);
 
         agentSocket.register(selector, SelectionKey.OP_ACCEPT, null);
-        logger.info("Started an agent listener at {}:{}", bindingIP, portNo);
+        logger.info("Started an agent listener on {}:{}", bindingIP, portNo);
 
         // keep listener running
         while (true) {

@@ -51,6 +51,9 @@ subprojects {
 
     idea {
         module {
+	    downloadSources = true
+	    downloadJavadoc = true
+            outputDir = file("${buildDir}/classes/java")
             testSourceDirs += [file('src/integration-test/java'), file('src/integration-test/resources')]
             scopes.TEST.plus += [configurations.integrationTestRuntime, configurations.integrationTestCompile]
         }

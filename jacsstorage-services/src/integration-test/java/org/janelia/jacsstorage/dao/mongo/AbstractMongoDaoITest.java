@@ -12,7 +12,6 @@ import org.janelia.jacsstorage.dao.ReadWriteDao;
 import org.janelia.jacsstorage.dao.mongo.utils.RegistryHelper;
 import org.janelia.jacsstorage.dao.TimebasedIdGenerator;
 import org.janelia.jacsstorage.model.BaseEntity;
-import org.janelia.jacsstorage.model.jacsstorage.JacsVolume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 

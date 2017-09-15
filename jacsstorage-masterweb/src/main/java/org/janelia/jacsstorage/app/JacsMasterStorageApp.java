@@ -6,8 +6,6 @@ import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
 import javax.servlet.ServletException;
 
-import static io.undertow.servlet.Servlets.listener;
-
 /**
  * This is the master storage application.
  */

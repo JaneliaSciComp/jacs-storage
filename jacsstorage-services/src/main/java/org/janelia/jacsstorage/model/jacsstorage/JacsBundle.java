@@ -22,11 +22,9 @@ public class JacsBundle extends AbstractEntity {
     private Date created = new Date();
     private Date modified = new Date();
     private Map<String, Object> metadata = new LinkedHashMap<>();
-    private Number volumeId;
+    private Number storageVolumeId;
     @JsonIgnore
-    private JacsStorage storage;
-    @JsonIgnore
-    private JacsVolume volume;
+    private JacsStorageVolume storageVolume;
 
     public String getName() {
         return name;
@@ -108,32 +106,22 @@ public class JacsBundle extends AbstractEntity {
         metadata.remove(name);
     }
 
-    public Number getVolumeId() {
-        return volumeId;
+    public Number getStorageVolumeId() {
+        return storageVolumeId;
     }
 
-    public void setVolumeId(Number volumeId) {
-        this.volumeId = volumeId;
-    }
-
-    @JsonIgnore
-    public Optional<JacsStorage> getStorage() {
-        return storage != null ? Optional.of(storage) : Optional.empty();
-    }
-
-    public Optional<JacsStorage> setStorage(JacsStorage storage) {
-        this.storage = storage;
-        return getStorage();
+    public void setStorageVolumeId(Number storageVolumeId) {
+        this.storageVolumeId = storageVolumeId;
     }
 
     @JsonIgnore
-    public Optional<JacsVolume> getVolume() {
-        return volume != null ? Optional.of(volume) : Optional.empty();
+    public Optional<JacsStorageVolume> getStorageVolume() {
+        return storageVolume != null ? Optional.of(storageVolume) : Optional.empty();
     }
 
-    public Optional<JacsVolume> setVolume(JacsVolume volume) {
-        this.volume = volume;
-        return getVolume();
+    public Optional<JacsStorageVolume> setStorageVolume(JacsStorageVolume storageVolume) {
+        this.storageVolume = storageVolume;
+        return getStorageVolume();
     }
 
     @Override

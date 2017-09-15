@@ -1,8 +1,6 @@
 package org.janelia.jacsstorage.service;
 
-import org.janelia.jacsstorage.cdi.ApplicationProducer;
-import org.janelia.jacsstorage.dao.Dao;
-import org.janelia.jacsstorage.io.DataBundleIOProvider;
+import org.janelia.jacsstorage.utils.SeContainerShutdownHook;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
@@ -18,18 +16,10 @@ public class StorageServerLauncher {
     }
 
     public static void main(String[] args) throws Exception {
-        SeContainerInitializer containerInit = SeContainerInitializer.newInstance()
-                .disableDiscovery()
-                .addPackages(true,
-                        Dao.class,
-                        StorageServerLauncher.class,
-                        DataBundleIOProvider.class,
-                        ApplicationProducer.class
-                )
-                ;
-        try (SeContainer container = containerInit.initialize()) {
-            StorageServerLauncher storageServerLauncher = container.select(StorageServerLauncher.class).get();
-            storageServerLauncher.agentListener.startServer();
-        }
+        SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
+        SeContainer container = containerInit.initialize();
+        StorageServerLauncher storageServerLauncher = container.select(StorageServerLauncher.class).get();
+        Runtime.getRuntime().addShutdownHook(new SeContainerShutdownHook(container)); // add the SE shutdown hook
+        storageServerLauncher.agentListener.startServer();
     }
 }
