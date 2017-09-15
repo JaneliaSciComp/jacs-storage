@@ -17,13 +17,13 @@ import java.util.concurrent.CountDownLatch;
 
 public class SocketStorageClient implements StorageClient {
 
-    private final StorageAgent localAgentProxy;
-    private final StorageAgent remoteAgentProxy;
+    private final StorageProtocol localAgentProxy;
+    private final StorageProtocol remoteAgentProxy;
     private final String serverIP;
     private final int portNo;
     private Selector selector;
 
-    public SocketStorageClient(StorageAgent localAgentProxy, StorageAgent remoteAgentProxy, String serverIP, int portNo) {
+    public SocketStorageClient(StorageProtocol localAgentProxy, StorageProtocol remoteAgentProxy, String serverIP, int portNo) {
         this.localAgentProxy = localAgentProxy;
         this.remoteAgentProxy = remoteAgentProxy;
         this.serverIP = serverIP;
@@ -32,7 +32,7 @@ public class SocketStorageClient implements StorageClient {
 
     public void persistData(String localPath, String remotePath, JacsStorageFormat remoteDataFormat) throws IOException {
         // initialize the transfer operation - tell the remote party what we want
-        byte[] remoteOpBytes = localAgentProxy.createHeader(StorageAgent.StorageAgentOperation.PERSIST_DATA,
+        byte[] remoteOpBytes = localAgentProxy.createHeader(StorageProtocol.Operation.PERSIST_DATA,
                 remoteDataFormat,
                 remotePath);
         ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
@@ -54,7 +54,7 @@ public class SocketStorageClient implements StorageClient {
             }
         }
         // initiate the local data read operation
-        byte[] localHeaderBytes = localAgentProxy.createHeader(StorageAgent.StorageAgentOperation.RETRIEVE_DATA,
+        byte[] localHeaderBytes = localAgentProxy.createHeader(StorageProtocol.Operation.RETRIEVE_DATA,
                 localDataFormat,
                 localPath);
         ByteBuffer localHeaderBuffer = ByteBuffer.wrap(localHeaderBytes);
@@ -69,7 +69,7 @@ public class SocketStorageClient implements StorageClient {
 
     public void retrieveData(String localPath, String remotePath, JacsStorageFormat remoteDataFormat) throws IOException {
         // initialize the transfer operation - tell the remote party what we want
-        byte[] remoteOpBytes = remoteAgentProxy.createHeader(StorageAgent.StorageAgentOperation.RETRIEVE_DATA,
+        byte[] remoteOpBytes = remoteAgentProxy.createHeader(StorageProtocol.Operation.RETRIEVE_DATA,
                 remoteDataFormat,
                 remotePath);
         ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
@@ -84,7 +84,7 @@ public class SocketStorageClient implements StorageClient {
             localDataFormat = JacsStorageFormat.DATA_DIRECTORY;
         }
         // initiate the local data write operation
-        byte[] localHeaderBytes = localAgentProxy.createHeader(StorageAgent.StorageAgentOperation.PERSIST_DATA,
+        byte[] localHeaderBytes = localAgentProxy.createHeader(StorageProtocol.Operation.PERSIST_DATA,
                 localDataFormat,
                 localPath);
         ByteBuffer localHeaderBuffer = ByteBuffer.wrap(localHeaderBytes);
@@ -196,16 +196,16 @@ public class SocketStorageClient implements StorageClient {
         SocketChannel channel = (SocketChannel) key.channel();
         int numRead = channel.read(buffer);
         buffer.flip();
-        if (remoteAgentProxy.getState() == StorageAgentImpl.StorageAgentState.IDLE ||
-                remoteAgentProxy.getState() == StorageAgentImpl.StorageAgentState.READ_HEADER) {
+        if (remoteAgentProxy.getState() == StorageProtocol.State.IDLE ||
+                remoteAgentProxy.getState() == StorageProtocol.State.READ_HEADER) {
             if (numRead == -1) {
                 channel.close();
                 key.cancel();
                 throw new IllegalStateException("Stream closed before reading the agent command");
             }
-            remoteAgentProxy.readHeader(buffer, Optional.of(StorageAgentImpl.StorageAgentState.READ_DATA));
+            remoteAgentProxy.readHeader(buffer, Optional.of(StorageProtocol.State.READ_DATA));
         }
-        if (remoteAgentProxy.getState() == StorageAgentImpl.StorageAgentState.READ_DATA) {
+        if (remoteAgentProxy.getState() == StorageProtocol.State.READ_DATA) {
             if (numRead == -1) {
                 // done so tell the local agent we are done and and wait for it to complete as well
                 CountDownLatch done = new CountDownLatch(1);
@@ -221,7 +221,7 @@ public class SocketStorageClient implements StorageClient {
             } else {
                 localAgentProxy.writeData(buffer);
             }
-        } else if (remoteAgentProxy.getState() == StorageAgentImpl.StorageAgentState.WRITE_DATA) {
+        } else if (remoteAgentProxy.getState() == StorageProtocol.State.WRITE_DATA) {
             channel.close();
             key.cancel();
             throw new IllegalStateException("The remote operation cannot be a write");

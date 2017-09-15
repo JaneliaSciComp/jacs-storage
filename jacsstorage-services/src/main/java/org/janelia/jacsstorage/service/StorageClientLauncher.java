@@ -63,8 +63,8 @@ public class StorageClientLauncher {
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
         SeContainer container = containerInit.initialize();
         StorageClient socketStorageClient = new SocketStorageClient(
-                container.select(StorageAgent.class).get(),
-                container.select(StorageAgent.class).get(),
+                container.select(StorageProtocol.class).get(),
+                container.select(StorageProtocol.class).get(),
                 cm.serverIP,
                 cm.serverPortNo
         );

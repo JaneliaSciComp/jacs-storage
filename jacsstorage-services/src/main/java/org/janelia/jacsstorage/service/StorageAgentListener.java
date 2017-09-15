@@ -25,7 +25,7 @@ public class StorageAgentListener {
     private final int portNo;
     private final ExecutorService agentExecutor;
     private final DataBundleIOProvider dataIOProvider;
-    private final Map<SocketChannel, StorageAgent> socketStorageAgents = new HashMap<>();
+    private final Map<SocketChannel, StorageProtocol> activeSocketChannels = new HashMap<>();
     private final Logger logger;
 
     private Selector selector;
@@ -84,61 +84,61 @@ public class StorageAgentListener {
         ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();
         SocketChannel channel = serverChannel.accept();
         channel.configureBlocking(false);
-        socketStorageAgents.put(channel, new StorageAgentImpl(agentExecutor, dataIOProvider, logger));
+        activeSocketChannels.put(channel, new StorageProtocolImpl(agentExecutor, dataIOProvider, logger));
         // register channel with selector for further IO
         channel.register(this.selector, SelectionKey.OP_READ);
     }
 
     private void read(SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
-        StorageAgent storageAgent = socketStorageAgents.get(channel);
+        StorageProtocol storageProtocol = activeSocketChannels.get(channel);
         ByteBuffer buffer = ByteBuffer.allocate(2048);
         int numRead = channel.read(buffer);
         buffer.flip();
-        if (storageAgent.getState() == StorageAgent.StorageAgentState.IDLE ||
-                storageAgent.getState() == StorageAgent.StorageAgentState.READ_HEADER) {
+        if (storageProtocol.getState() == StorageProtocol.State.IDLE ||
+                storageProtocol.getState() == StorageProtocol.State.READ_HEADER) {
             if (numRead == -1) {
-                socketStorageAgents.remove(channel);
+                activeSocketChannels.remove(channel);
                 channel.close();
                 key.cancel();
                 logger.error("Stream closed before reading the agent command");
             }
-            if (storageAgent.readHeader(buffer, Optional.empty()) == 1) {
-                storageAgent.beginDataTransfer();
+            if (storageProtocol.readHeader(buffer, Optional.empty()) == 1) {
+                storageProtocol.beginDataTransfer();
             }
         }
-        if (storageAgent.getState() == StorageAgent.StorageAgentState.READ_DATA) {
+        if (storageProtocol.getState() == StorageProtocol.State.READ_DATA) {
             // switch to sending data to the channel
             key.interestOps(SelectionKey.OP_WRITE);
             // create a header and send it to the caller
-            byte[] headerBytes = storageAgent.createHeader(StorageAgent.StorageAgentOperation.PERSIST_DATA,
+            byte[] headerBytes = storageProtocol.createHeader(StorageProtocol.Operation.PERSIST_DATA,
                     JacsStorageFormat.ARCHIVE_DATA_FILE,
                     "");
             ByteBuffer headerBuffer = ByteBuffer.wrap(headerBytes);
             writeBuffer(headerBuffer, channel);
             buffer.clear();
             return;
-        } else if (storageAgent.getState() == StorageAgent.StorageAgentState.WRITE_DATA) {
+        } else if (storageProtocol.getState() == StorageProtocol.State.WRITE_DATA) {
             if (numRead == -1) {
-                socketStorageAgents.remove(channel);
+                activeSocketChannels.remove(channel);
                 channel.close();
                 key.cancel();
                 buffer.clear();
-                storageAgent.terminateDataTransfer(null);
+                storageProtocol.terminateDataTransfer(null);
                 return;
             }
-            storageAgent.writeData(buffer);
+            storageProtocol.writeData(buffer);
             buffer.clear();
         }
     }
 
     private void write(SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
-        StorageAgent storageAgent = socketStorageAgents.get(channel);
+        StorageProtocol storageProtocol = activeSocketChannels.get(channel);
         ByteBuffer buffer = ByteBuffer.allocate(2048);
-        if (storageAgent.readData(buffer) == -1) {
+        if (storageProtocol.readData(buffer) == -1) {
             // nothing to write anymore
-            socketStorageAgents.remove(channel);
+            activeSocketChannels.remove(channel);
             key.cancel();
             channel.close();
             return;

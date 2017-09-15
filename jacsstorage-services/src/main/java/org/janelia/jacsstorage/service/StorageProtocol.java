@@ -6,18 +6,18 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
-public interface StorageAgent {
+public interface StorageProtocol {
 
     interface OperationCompleteCallback {
         void onDone();
     }
 
-    enum StorageAgentOperation {
+    enum Operation {
         PERSIST_DATA,
         RETRIEVE_DATA
     }
 
-    enum StorageAgentState {
+    enum State {
         IDLE,
         READ_HEADER,
         READ_DATA,
@@ -26,7 +26,7 @@ public interface StorageAgent {
         DATA_TRANSFER_ERROR
     }
 
-    StorageAgentState getState();
+    State getState();
 
     /**
      * Create the header buffer
@@ -36,7 +36,7 @@ public interface StorageAgent {
      * @return
      * @throws IOException
      */
-    byte[] createHeader(StorageAgentOperation op, JacsStorageFormat format, String location) throws IOException;
+    byte[] createHeader(Operation op, JacsStorageFormat format, String location) throws IOException;
     /**
      * Consume the header from the buffer and return a value that specifies if the header has been consumed or not.
      * @param buffer to read from.
@@ -44,7 +44,7 @@ public interface StorageAgent {
      * @return 1 if the header has just been consumed; 0 if the header has not been consumed yet; -1 if the header has been consumed in a previous call.
      * @throws IOException
      */
-    int readHeader(ByteBuffer buffer, Optional<StorageAgentState> nextState) throws IOException;
+    int readHeader(ByteBuffer buffer, Optional<State> nextState) throws IOException;
     /**
      * Initiate the data transfer.
      * @throws IOException

@@ -34,12 +34,12 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class StorageAgentImplTest {
+public class StorageProtocolImplTest {
 
     private static final String TEST_DATA_DIRECTORY = "src/test/resources/testdata/bundletransfer";
 
     private Path testDirectory;
-    private StorageAgentImpl storageAgentImpl;
+    private StorageProtocolImpl storageAgentImpl;
     private Logger logger;
 
     @SuppressWarnings("unchecked")
@@ -50,7 +50,7 @@ public class StorageAgentImplTest {
         logger = mock(Logger.class);
         when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader()).iterator());
         when(bundleWriterSource.iterator()).thenReturn(ImmutableList.<BundleWriter>of(new SingleFileBundleWriter()).iterator());
-        storageAgentImpl = new StorageAgentImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource), logger);
+        storageAgentImpl = new StorageProtocolImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource), logger);
         testDirectory = Files.createTempDirectory("StorageAgentTest");
     }
 
@@ -76,7 +76,7 @@ public class StorageAgentImplTest {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
         Path testTargetPath = testDirectory.resolve("testWriteData");
         CountDownLatch done = new CountDownLatch(1);
-        byte[] headerBuffer = storageAgentImpl.createHeader(StorageAgent.StorageAgentOperation.PERSIST_DATA,
+        byte[] headerBuffer = storageAgentImpl.createHeader(StorageProtocol.Operation.PERSIST_DATA,
                 JacsStorageFormat.SINGLE_DATA_FILE,
                 testTargetPath.toString());
         FileInputStream testInput = new FileInputStream(testDataPath.toFile());
@@ -107,7 +107,7 @@ public class StorageAgentImplTest {
     @Test
     public void readData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
-        byte[] headerBuffer = storageAgentImpl.createHeader(StorageAgent.StorageAgentOperation.RETRIEVE_DATA,
+        byte[] headerBuffer = storageAgentImpl.createHeader(StorageProtocol.Operation.RETRIEVE_DATA,
                 JacsStorageFormat.SINGLE_DATA_FILE,
                 testDataPath.toString());
         if (storageAgentImpl.readHeader(ByteBuffer.wrap(headerBuffer), Optional.empty()) == 1) {

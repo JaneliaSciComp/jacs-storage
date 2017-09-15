@@ -23,13 +23,13 @@ import java.nio.channels.Pipe;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
-public class StorageAgentImpl implements StorageAgent {
+public class StorageProtocolImpl implements StorageProtocol {
 
-    private final ExecutorService agentExecutor;
+    private final ExecutorService backgroundTransferExecutor;
     private final DataBundleIOProvider dataIOProvider;
     private final Logger logger;
 
-    private StorageAgentState state;
+    private State state;
     private ByteBuffer cmdSizeValueBuffer;
     private ByteBuffer cmdBuffer;
     private Pipe writerPipe;
@@ -37,20 +37,20 @@ public class StorageAgentImpl implements StorageAgent {
     private OperationCompleteCallback writerCompletedCallback;
 
     @Inject
-    public StorageAgentImpl(ExecutorService agentExecutor, DataBundleIOProvider dataIOProvider, Logger logger) {
-        this.agentExecutor = agentExecutor;
+    public StorageProtocolImpl(ExecutorService backgroundTransferExecutor, DataBundleIOProvider dataIOProvider, Logger logger) {
+        this.backgroundTransferExecutor = backgroundTransferExecutor;
         this.dataIOProvider = dataIOProvider;
         this.logger = logger;
-        state = StorageAgentState.IDLE;
+        state = State.IDLE;
     }
 
     @Override
-    public StorageAgentState getState() {
+    public State getState() {
         return state;
     }
 
     @Override
-    public byte[] createHeader(StorageAgentOperation op, JacsStorageFormat format, String location) throws IOException {
+    public byte[] createHeader(Operation op, JacsStorageFormat format, String location) throws IOException {
         MessageBufferPacker cmdPacker = MessagePack.newDefaultBufferPacker();
         cmdPacker.packString(op.name())
                 .packString(format.name())
@@ -67,10 +67,10 @@ public class StorageAgentImpl implements StorageAgent {
     }
 
     @Override
-    public int readHeader(ByteBuffer buffer, Optional<StorageAgentState> nextState) throws IOException {
+    public int readHeader(ByteBuffer buffer, Optional<State> nextState) throws IOException {
         if (cmdSizeValueBuffer == null) {
             cmdSizeValueBuffer = ByteBuffer.allocate(4);
-            state = StorageAgentState.READ_HEADER;
+            state = State.READ_HEADER;
         }
         if (cmdSizeValueBuffer.hasRemaining()) {
             BufferUtils.copyBuffers(buffer, cmdSizeValueBuffer);
@@ -101,7 +101,7 @@ public class StorageAgentImpl implements StorageAgent {
         if (cmdBuffer != null && !cmdBuffer.hasRemaining()) {
             cmdBuffer.flip();
             MessageUnpacker cmdUnpacker = MessagePack.newDefaultUnpacker(cmdBuffer);
-            StorageAgentOperation op = StorageAgentOperation.valueOf(cmdUnpacker.unpackString());
+            Operation op = Operation.valueOf(cmdUnpacker.unpackString());
             JacsStorageFormat format = JacsStorageFormat.valueOf(cmdUnpacker.unpackString());
             String path = cmdUnpacker.unpackString();
             cmdUnpacker.close();
@@ -120,17 +120,17 @@ public class StorageAgentImpl implements StorageAgent {
 
     private void beginReadingData(JacsDataLocation dataLocation) throws IOException {
         logger.info("Begin reading data from: {}", dataLocation);
-        state = StorageAgentState.READ_DATA;
+        state = State.READ_DATA;
         readerPipe = Pipe.open();
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataLocation.getStorageFormat());
         OutputStream senderStream = Channels.newOutputStream(readerPipe.sink());
-        agentExecutor.execute(() -> {
+        backgroundTransferExecutor.execute(() -> {
             try {
                 bundleReader.readBundle(dataLocation.getPath(), senderStream);
-                state = StorageAgentState.DATA_TRANSFER_COMPLETED;
+                state = State.DATA_TRANSFER_COMPLETED;
                 readerPipe.sink().close();
             } catch (IOException e) {
-                state = StorageAgentState.DATA_TRANSFER_ERROR;
+                state = State.DATA_TRANSFER_ERROR;
                 throw new UncheckedIOException(e);
             }
         });
@@ -157,16 +157,16 @@ public class StorageAgentImpl implements StorageAgent {
 
     private void beginWritingData(JacsDataLocation dataLocation) throws IOException {
         logger.info("Begin writing data to: {}", dataLocation);
-        state = StorageAgentState.WRITE_DATA;
+        state = State.WRITE_DATA;
         writerPipe = Pipe.open();
         BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataLocation.getStorageFormat());
         InputStream receiverStream = Channels.newInputStream(writerPipe.source());
-        agentExecutor.execute(() -> {
+        backgroundTransferExecutor.execute(() -> {
             try {
                 bundleWriter.writeBundle(receiverStream, dataLocation.getPath());
-                state = StorageAgentState.DATA_TRANSFER_COMPLETED;
+                state = State.DATA_TRANSFER_COMPLETED;
             } catch (Exception e) {
-                state = StorageAgentState.DATA_TRANSFER_ERROR;
+                state = State.DATA_TRANSFER_ERROR;
                 throw new IllegalStateException(e);
             } finally {
                 IOUtils.closeQuietly(writerPipe.source());
