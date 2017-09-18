@@ -1,6 +1,8 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -10,7 +12,10 @@ public class StorageAgentInfo {
     private final String storagePath;
     private Long storageSpaceAvailableInMB;
 
-    public StorageAgentInfo(String location, String connectionInfo, String storagePath) {
+    @JsonCreator
+    public StorageAgentInfo(@JsonProperty("location") String location,
+                            @JsonProperty("connectionInfo") String connectionInfo,
+                            @JsonProperty("storagePath") String storagePath) {
         this.location = location;
         this.connectionInfo = connectionInfo;
         this.storagePath = storagePath;

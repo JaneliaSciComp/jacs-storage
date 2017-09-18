@@ -29,6 +29,7 @@ public class StorageAgentListener {
     private final Logger logger;
 
     private Selector selector;
+    private boolean running;
 
     @Inject
     public StorageAgentListener(@PropertyValue(name = "StorageAgent.bindingIP") String bindingIP,
@@ -56,7 +57,8 @@ public class StorageAgentListener {
         logger.info("Started an agent listener on {}:{}", bindingIP, portNo);
 
         // keep listener running
-        while (true) {
+        boolean running = true;
+        while (running) {
             // selects a set of keys whose corresponding channels are ready for I/O operations
             selector.select();
             Iterator<SelectionKey> agentKeys = selector.selectedKeys().iterator();
@@ -78,6 +80,11 @@ public class StorageAgentListener {
                 }
             }
         }
+    }
+
+    public void stopServer() throws Exception {
+        running = false;
+        selector.close();
     }
 
     private void accept(SelectionKey key) throws IOException {

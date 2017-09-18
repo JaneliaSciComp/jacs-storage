@@ -1,7 +1,6 @@
 package org.janelia.jacsstorage.app;
 
 import com.beust.jcommander.DynamicParameter;
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -47,29 +46,21 @@ public abstract class AbstractStorageApp {
         @Parameter(names = "-context-path", description = "Base context path", required = false)
         protected String baseContextPath = "jacsstorage";
         @Parameter(names = "-h", description = "Display help", arity = 0, required = false)
-        private boolean displayUsage = false;
+        protected boolean displayUsage = false;
         @DynamicParameter(names = "-D", description = "Dynamic application parameters that could override application properties")
         private Map<String, String> applicationArgs = ApplicationConfigProvider.applicationArgs();
     }
 
-    protected void start(String[] args) {
-        final AppArgs appArgs = new AppArgs();
-        JCommander cmdline = new JCommander(appArgs);
-        cmdline.parse(args);
-        if (appArgs.displayUsage) {
-            cmdline.usage();
-        } else {
-            try {
-                initializeApp(appArgs);
-                run();
-            } catch (ServletException e) {
-                LOG.error("Error starting the application", e);
-            }
+    protected void start(AppArgs appArgs) {
+        try {
+            initializeApp(appArgs);
+            run();
+        } catch (ServletException e) {
+            LOG.error("Error starting the application", e);
         }
     }
 
     protected void initializeApp(AppArgs appArgs) throws ServletException {
-        appArgs.applicationArgs.put("App.PortNumber", String.valueOf(appArgs.portNumber));
         String contextPath = "/" + appArgs.baseContextPath;
         ServletInfo restApiServlet =
                 Servlets.servlet("restApiServlet", ServletContainer.class)
