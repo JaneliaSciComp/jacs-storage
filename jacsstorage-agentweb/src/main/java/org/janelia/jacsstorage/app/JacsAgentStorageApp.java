@@ -4,8 +4,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import io.undertow.servlet.api.ListenerInfo;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.agent.AgentState;
-import org.janelia.jacsstorage.cdi.ObjectMapperFactory;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.janelia.jacsstorage.service.StorageAgentListener;
 import org.slf4j.Logger;
@@ -56,6 +56,12 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
                 System.err.println("Could not register agent with " + agentArgs.connectTo);
                 return;
             }
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                @Override
+                public void run() {
+                    app.deregisterAgent(agentArgs.connectTo, agentState);
+                }
+            });
         }
         StorageAgentListener storageAgentListener = container.select(StorageAgentListener.class).get();
         ExecutorService agentExecutor = container.select(ExecutorService.class).get();
@@ -88,9 +94,8 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
 
             StorageAgentInfo agentInfo = new StorageAgentInfo(agentState.getAgentLocation(), agentState.getConnectionInfo(), agentState.getStorageRootDir());
             agentInfo.setStorageSpaceAvailableInMB(agentState.getAvailableStorageSpaceInMB());
-            String agentInfoJson = ObjectMapperFactory.instance().getDefaultObjectMapper().writeValueAsString(agentInfo);
             Response response = target.request()
-                    .post(Entity.json(agentInfoJson))
+                    .post(Entity.json(agentInfo))
                     ;
 
             if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -104,6 +109,27 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
             }
         }
         return false;
+    }
+
+    private void deregisterAgent(String masterServiceUrl, AgentState agentState) {
+        String registrationEndpoint = String.format("/agents/%s", agentState.getConnectionInfo());
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(masterServiceUrl).path(registrationEndpoint);
+            Response response = target.request()
+                    .delete()
+                    ;
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                LOG.warn("Agent deregistration returned {}", response.getStatus());
+            }
+        } catch (Exception e) {
+            LOG.warn("Error raised during agent deregistration", e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
     }
 
     private Client createHttpClient() throws Exception {
@@ -128,6 +154,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         return ClientBuilder.newBuilder()
                 .sslContext(sslContext)
                 .hostnameVerifier((s, sslSession) -> true)
+                .register(new JacksonFeature())
                 .build();
     }
 

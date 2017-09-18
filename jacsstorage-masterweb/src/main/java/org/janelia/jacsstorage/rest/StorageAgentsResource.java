@@ -41,7 +41,7 @@ public class StorageAgentsResource {
 
     @Path("{connInfo}")
     @DELETE
-    public Response unregisterAgent(@PathParam("connInfo") String connectionInfo) {
+    public Response deregisterAgent(@PathParam("connInfo") String connectionInfo) {
         agentManager.unregisterAgent(connectionInfo);
         return Response
                 .noContent()
