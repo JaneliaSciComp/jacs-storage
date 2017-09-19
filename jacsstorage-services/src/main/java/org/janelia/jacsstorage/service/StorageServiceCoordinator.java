@@ -27,6 +27,7 @@ public class StorageServiceCoordinator implements StorageService {
                     JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocation(storageAgentInfo.getLocation());
                     dataBundle.setStorageVolumeId(storageVolume.getId());
                     dataBundle.setStorageVolume(storageVolume);
+                    dataBundle.setConnectionInfo(storageAgentInfo.getConnectionInfo());
                     bundleDao.save(dataBundle);
                     return dataBundle;
                 });

@@ -2,8 +2,8 @@ package org.janelia.jacsstorage.dao.mongo;
 
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.page.PageRequest;
-import org.janelia.jacsstorage.model.page.PageResult;
+import org.janelia.jacsstorage.datarequest.PageRequest;
+import org.janelia.jacsstorage.datarequest.PageResult;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -5,11 +5,9 @@ import com.google.common.collect.ImmutableList;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
-import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -19,14 +17,14 @@ import org.janelia.jacsstorage.dao.AbstractDao;
 import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.ReadWriteDao;
 import org.janelia.jacsstorage.model.BaseEntity;
-import org.janelia.jacsstorage.model.page.PageRequest;
-import org.janelia.jacsstorage.model.page.PageResult;
-import org.janelia.jacsstorage.model.page.SortCriteria;
-import org.janelia.jacsstorage.model.page.SortDirection;
+import org.janelia.jacsstorage.datarequest.PageRequest;
+import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.jacsstorage.datarequest.SortCriteria;
+import org.janelia.jacsstorage.datarequest.SortDirection;
 import org.janelia.jacsstorage.model.support.AppendFieldValueHandler;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.EntityUtils;
-import org.janelia.jacsstorage.model.support.MongoMapping;
+import org.janelia.jacsstorage.model.support.PersistenceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,9 +59,9 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
 
     private String getEntityCollectionName() {
         Class<T> entityClass = getEntityType();
-        MongoMapping mongoMapping = EntityUtils.getMongoMapping(entityClass);
-        Preconditions.checkArgument(mongoMapping != null, "Entity class " + entityClass.getName() + " is not annotated with MongoMapping");
-        return mongoMapping.collectionName();
+        PersistenceInfo persistenceInfo = EntityUtils.getMongoMapping(entityClass);
+        Preconditions.checkArgument(persistenceInfo != null, "Entity class " + entityClass.getName() + " is not annotated with MongoMapping");
+        return persistenceInfo.storeName();
     }
 
     @Override

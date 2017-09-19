@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.collect.ImmutableMap;
+import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.service.StorageService;
 
@@ -51,14 +52,14 @@ public class StorageResource {
 
     @Consumes("application/json")
     @POST
-    public Response createBundleInfo(DataStorageRequest dataStorageRequest) {
-        JacsBundle dataBundle = dataStorageRequest.asDataBundle();
+    public Response createBundleInfo(DataStorageInfo dataStorageInfo) {
+        JacsBundle dataBundle = dataStorageInfo.asDataBundle();
 
         Optional<JacsBundle> dataBundleInfo = storageService.allocateStorage(dataBundle);
         return dataBundleInfo
                 .map(bi -> Response
                         .created(resourceURI.getBaseUriBuilder().path(dataBundle.getId().toString()).build())
-                        .entity(dataBundle)
+                        .entity(DataStorageInfo.fromBundle(bi))
                         .build())
                 .orElse(Response
                         .status(Response.Status.NOT_FOUND)

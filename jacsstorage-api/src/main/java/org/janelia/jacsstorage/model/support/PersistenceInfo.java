@@ -6,13 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation for mapping a class hierarchy to a given collection in MongoDB.
- * Only the top-level class should be mapped using this annotation -
- * the subclasses will be instantiated using JsonTypeInfo.
+ * Persistence annotation for an entity. It defines where the entity is persisted and it is somehow related to the JPA Entity annotation.
+ * Only the top-level class should be mapped using this annotation.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-public @interface MongoMapping {
-    String collectionName();
+public @interface PersistenceInfo {
+    String storeName();
     String label();
 }

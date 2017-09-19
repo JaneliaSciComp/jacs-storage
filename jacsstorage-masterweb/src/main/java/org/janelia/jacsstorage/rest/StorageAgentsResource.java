@@ -4,7 +4,6 @@ import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.janelia.jacsstorage.service.StorageAgentManager;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;

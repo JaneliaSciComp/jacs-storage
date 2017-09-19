@@ -1,0 +1,88 @@
+package org.janelia.jacsstorage.client;
+
+import org.glassfish.jersey.jackson.JacksonFeature;
+import org.janelia.jacsstorage.datarequest.DataStorageInfo;
+import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
+public class StorageClientImpl {
+    private static final Logger LOG = LoggerFactory.getLogger(StorageClientImpl.class);
+
+
+    public void copyDataTo(String localPath, String serverURL, JacsStorageFormat remoteDataFormat) throws IOException {
+        DataStorageInfo storageRequest = new DataStorageInfo();
+        storageRequest.setStorageFormat(remoteDataFormat);
+        JacsBundle dataBundle = allocateStorage(serverURL, storageRequest);
+    }
+
+    private JacsBundle allocateStorage(String serverURL, DataStorageInfo storageRequest) {
+        String storageEndpoint = "/storage";
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(serverURL).path(storageEndpoint);
+
+            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .post(Entity.json(storageRequest))
+                    ;
+
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.CREATED.getStatusCode()) {
+                return response.readEntity(JacsBundle.class);
+            } else {
+                LOG.warn("Allocate storage request returned with status {}", responseStatus);
+                throw new IllegalStateException("Error while trying to allocate data storage - returned status: " + responseStatus);
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    private Client createHttpClient() throws Exception {
+        SSLContext sslContext = SSLContext.getInstance("TLSv1");
+        TrustManager[] trustManagers = {
+                new X509TrustManager() {
+                    @Override
+                    public void checkClientTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
+                        // Everyone is trusted
+                    }
+                    @Override
+                    public void checkServerTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
+                        // Everyone is trusted
+                    }
+                    @Override
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+                }
+        };
+        sslContext.init(null, trustManagers, new SecureRandom());
+        return ClientBuilder.newBuilder()
+                .sslContext(sslContext)
+                .hostnameVerifier((s, sslSession) -> true)
+                .register(new JacksonFeature())
+                .build();
+    }
+
+
+}

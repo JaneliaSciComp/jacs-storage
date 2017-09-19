@@ -2,11 +2,11 @@ package org.janelia.jacsstorage.model.jacsstorage;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.AbstractEntity;
-import org.janelia.jacsstorage.model.support.MongoMapping;
+import org.janelia.jacsstorage.model.support.PersistenceInfo;
 
 import java.util.Date;
 
-@MongoMapping(collectionName="jacsStorageVolume", label="JacsStorageVolume")
+@PersistenceInfo(storeName ="jacsStorageVolume", label="JacsStorageVolume")
 public class JacsStorageVolume extends AbstractEntity {
 
     private String name; // volume name

@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.model.page;
+package org.janelia.jacsstorage.datarequest;
 
 public enum SortDirection {
     ASC,

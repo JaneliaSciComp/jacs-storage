@@ -1,17 +1,15 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.client;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
-import org.janelia.jacsstorage.client.StorageClient;
-import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
 
-public class StorageClientLauncher {
+public class StorageClientApp {
 
     private static abstract class AbstractCommand {
         @Parameter(names = "-localPath", description = "Local path")
@@ -23,10 +21,8 @@ public class StorageClientLauncher {
     }
 
     private static class CommandMain {
-        @Parameter(names = "-serverIP", description = "Server IP address")
-        private String serverIP = "localhost";
-        @Parameter(names = "-serverPort", description = "Server port number")
-        private int serverPortNo = 10000;
+        @Parameter(names = "-server", description = "Storage (master) server URL")
+        private String serverURL = "http://localhost:8081/jacsstorage/master-api";
     }
 
     @Parameters(commandDescription = "Send data to the storage server")
@@ -39,7 +35,7 @@ public class StorageClientLauncher {
 
     private final StorageClient storageClient;
 
-    public StorageClientLauncher(StorageClient storageClient) {
+    public StorageClientApp(StorageClient storageClient) {
         this.storageClient = storageClient;
     }
 
@@ -64,24 +60,10 @@ public class StorageClientLauncher {
 
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
         SeContainer container = containerInit.initialize();
-        StorageClient socketStorageClient = new SocketStorageClient(
-                container.select(StorageProtocol.class).get(),
-                container.select(StorageProtocol.class).get()
-        );
-        DataStorageInfo storageInfo;
-        StorageClientLauncher storageClientLauncher = new StorageClientLauncher(socketStorageClient);
         switch (jc.getParsedCommand()) {
             case "get":
-                storageInfo = new DataStorageInfo()
-                        .setStorageFormat(cmdGet.dataFormat)
-                        .setPath(cmdGet.remotePath);
-                storageClientLauncher.storageClient.retrieveData(cmdGet.localPath, storageInfo);
                 return;
             case "put":
-                storageInfo = new DataStorageInfo()
-                        .setStorageFormat(cmdPut.dataFormat)
-                        .setPath(cmdPut.remotePath);
-                storageClientLauncher.storageClient.persistData(cmdPut.localPath, storageInfo);
                 return;
             default:
                 usage(jc);

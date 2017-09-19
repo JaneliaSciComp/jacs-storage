@@ -3,14 +3,14 @@ package org.janelia.jacsstorage.model.jacsstorage;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.AbstractEntity;
-import org.janelia.jacsstorage.model.support.MongoMapping;
+import org.janelia.jacsstorage.model.support.PersistenceInfo;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@MongoMapping(collectionName="jacsBundle", label="JacsBundle")
+@PersistenceInfo(storeName ="jacsBundle", label="JacsBundle")
 public class JacsBundle extends AbstractEntity {
 
     private String name;
@@ -23,6 +23,8 @@ public class JacsBundle extends AbstractEntity {
     private Date modified = new Date();
     private Map<String, Object> metadata = new LinkedHashMap<>();
     private Number storageVolumeId;
+    @JsonIgnore
+    private String connectionInfo;
     @JsonIgnore
     private JacsStorageVolume storageVolume;
 
@@ -116,6 +118,14 @@ public class JacsBundle extends AbstractEntity {
 
     public void setStorageVolumeId(Number storageVolumeId) {
         this.storageVolumeId = storageVolumeId;
+    }
+
+    public String getConnectionInfo() {
+        return connectionInfo;
+    }
+
+    public void setConnectionInfo(String connectionInfo) {
+        this.connectionInfo = connectionInfo;
     }
 
     @JsonIgnore

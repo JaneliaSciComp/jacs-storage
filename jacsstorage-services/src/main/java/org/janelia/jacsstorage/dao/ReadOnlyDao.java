@@ -1,8 +1,8 @@
 package org.janelia.jacsstorage.dao;
 
 import org.janelia.jacsstorage.model.BaseEntity;
-import org.janelia.jacsstorage.model.page.PageRequest;
-import org.janelia.jacsstorage.model.page.PageResult;
+import org.janelia.jacsstorage.datarequest.PageRequest;
+import org.janelia.jacsstorage.datarequest.PageResult;
 
 import java.util.Collection;
 import java.util.List;

@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
-import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.JacsBundleDao;

@@ -1,0 +1,15 @@
+apply plugin: 'application'
+
+mainClassName = 'org.janelia.jacsstorage.clients.JacsAgentStorageApp'
+
+project(":jacsstorage-utils") {
+    dependencies {
+        compile project(":jacsstorage-api"),
+	        CDI_API_LIB,
+	        CDI_SE_CORE_LIB,
+	        CMDLINE_ARG_LIB,
+                JAX_RS_CLIENT_LIB,
+                JERSEY_INJECT_LIB,
+                JERSEY_MEDIA_JSON_LIB
+    }
+}
