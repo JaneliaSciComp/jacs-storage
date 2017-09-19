@@ -7,9 +7,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import org.janelia.jacsstorage.dao.mongo.utils.MongoModule;
 
-import javax.enterprise.inject.Vetoed;
+import javax.enterprise.context.ApplicationScoped;
 
-@Vetoed
+@ApplicationScoped
 public class ObjectMapperFactory {
     private static final ObjectMapperFactory INSTANCE = new ObjectMapperFactory();
 

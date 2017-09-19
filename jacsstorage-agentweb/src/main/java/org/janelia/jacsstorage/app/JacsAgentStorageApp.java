@@ -21,6 +21,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
@@ -52,6 +53,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         }
         if (StringUtils.isNotBlank(agentArgs.connectTo)) {
             AgentState agentState = container.select(AgentState.class).get();
+            LOG.info("Register agent with {}", agentArgs.connectTo);
             if (!app.registerAgent(agentArgs.connectTo, agentState)) {
                 System.err.println("Could not register agent with " + agentArgs.connectTo);
                 return;
@@ -94,13 +96,15 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
 
             StorageAgentInfo agentInfo = new StorageAgentInfo(agentState.getAgentLocation(), agentState.getConnectionInfo(), agentState.getStorageRootDir());
             agentInfo.setStorageSpaceAvailableInMB(agentState.getAvailableStorageSpaceInMB());
-            Response response = target.request()
+            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .post(Entity.json(agentInfo))
                     ;
 
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return true;
             }
+            LOG.warn("Register agent returned {}", responseStatus);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
@@ -120,7 +124,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
             Response response = target.request()
                     .delete()
                     ;
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+            if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
                 LOG.warn("Agent deregistration returned {}", response.getStatus());
             }
         } catch (Exception e) {

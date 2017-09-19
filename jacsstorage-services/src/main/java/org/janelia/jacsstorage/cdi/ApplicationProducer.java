@@ -1,6 +1,6 @@
 package org.janelia.jacsstorage.cdi;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind. ObjectMapper;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.config.ApplicationConfig;
@@ -16,12 +16,6 @@ import java.util.concurrent.Executors;
 
 @ApplicationScoped
 public class ApplicationProducer {
-
-    @Produces
-    @ApplicationScoped
-    public ObjectMapperFactory objectMapperFactory() {
-        return ObjectMapperFactory.instance();
-    }
 
     @Produces
     public ObjectMapper objectMapper(ObjectMapperFactory objectMapperFactory) {
