@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
+import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import javax.enterprise.inject.se.SeContainer;
@@ -14,10 +15,10 @@ public class StorageClientApp {
     private static abstract class AbstractCommand {
         @Parameter(names = "-localPath", description = "Local path")
         protected String localPath;
-        @Parameter(names = "-remotePath", description = "Remote path")
-        protected String remotePath;
-        @Parameter(names = "-dataFormat", description = "Data bundle format", required = true)
-        protected JacsStorageFormat dataFormat;
+        @Parameter(names = "-name", description = "Data bundle name")
+        protected String name;
+        @Parameter(names = "-dataFormat", description = "Data bundle format")
+        protected JacsStorageFormat dataFormat = JacsStorageFormat.DATA_DIRECTORY;
     }
 
     private static class CommandMain {
@@ -60,10 +61,17 @@ public class StorageClientApp {
 
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
         SeContainer container = containerInit.initialize();
+        DataStorageInfo storageInfo;
+        StorageClientImpl storageClientImpl = new StorageClientImpl();
         switch (jc.getParsedCommand()) {
             case "get":
                 return;
             case "put":
+                storageInfo = new DataStorageInfo()
+                        .setConnectionInfo(cm.serverURL)
+                        .setStorageFormat(cmdPut.dataFormat)
+                        .setPath(cmdPut.name);
+                storageClientImpl.persistData(cmdPut.localPath, storageInfo);
                 return;
             default:
                 usage(jc);

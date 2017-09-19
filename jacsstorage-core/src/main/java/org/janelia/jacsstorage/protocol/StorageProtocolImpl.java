@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.protocol;
 
 import org.apache.commons.compress.utils.IOUtils;
 import org.janelia.jacsstorage.io.BundleReader;

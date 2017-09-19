@@ -1,6 +1,6 @@
 package org.janelia.jacsstorage.datarequest;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class DataStorageInfo {
+    private Number id;
     private String name;
     private String owner;
     private String path;
@@ -19,13 +20,24 @@ public class DataStorageInfo {
 
     public static DataStorageInfo fromBundle(JacsBundle dataBundle) {
         return new DataStorageInfo()
+                .setId(dataBundle.getId())
                 .setName(dataBundle.getName())
                 .setOwner(dataBundle.getOwner())
+                .setPath(dataBundle.getPath())
                 .setStorageFormat(dataBundle.getStorageFormat())
                 .setPermissions(dataBundle.getPermissions())
                 .setRequestedSpaceInKB(dataBundle.getUsedSpaceInKB())
                 .addMetadata(dataBundle.getMetadata())
                 .setConnectionInfo(dataBundle.getConnectionInfo());
+    }
+
+    public Number getId() {
+        return id;
+    }
+
+    public DataStorageInfo setId(Number id) {
+        this.id = id;
+        return this;
     }
 
     public String getName() {
@@ -105,32 +117,6 @@ public class DataStorageInfo {
         return this;
     }
 
-    public String getConnectionHost() {
-        if (StringUtils.isNotBlank(connectionInfo)) {
-            int separatorIndex = connectionInfo.indexOf(':');
-            if (separatorIndex != -1) {
-                return connectionInfo.substring(0, separatorIndex).trim();
-            } else {
-                return connectionInfo;
-            }
-        } else {
-            return null;
-        }
-    }
-
-    public int getConnectionPort() {
-        if (StringUtils.isNotBlank(connectionInfo)) {
-            int separatorIndex = connectionInfo.indexOf(':');
-            if (separatorIndex != -1) {
-                return Integer.parseInt(connectionInfo.substring(separatorIndex + 1).trim());
-            } else {
-                return -1;
-            }
-        } else {
-            return -1;
-        }
-    }
-
     public JacsBundle asDataBundle() {
         JacsBundle dataBundle = new JacsBundle();
         dataBundle.setName(this.name);
@@ -140,5 +126,16 @@ public class DataStorageInfo {
         dataBundle.setUsedSpaceInKB(this.requestedSpaceInKB);
         dataBundle.addMetadataFields(this.metadata);
         return dataBundle;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("id", id)
+                .append("name", name)
+                .append("path", path)
+                .append("connectionInfo", connectionInfo)
+                .append("storageFormat", storageFormat)
+                .toString();
     }
 }

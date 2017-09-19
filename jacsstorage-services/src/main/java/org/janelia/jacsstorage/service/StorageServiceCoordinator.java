@@ -1,11 +1,18 @@
 package org.janelia.jacsstorage.service;
 
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
+import org.janelia.jacsstorage.utils.PathUtils;
 
 import javax.inject.Inject;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 
 public class StorageServiceCoordinator implements StorageService {
@@ -25,10 +32,18 @@ public class StorageServiceCoordinator implements StorageService {
         return agentManager.findRandomRegisteredAgent()
                 .map(storageAgentInfo -> {
                     JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocation(storageAgentInfo.getLocation());
+                    if (StringUtils.isBlank(storageVolume.getMountPoint())) {
+                        storageVolume.setMountPoint(storageAgentInfo.getStoragePath());
+                        storageVolumeDao.update(storageVolume, ImmutableMap.of("mountPoint", new SetFieldValueHandler<>(storageVolume.getMountPoint())));
+                    }
                     dataBundle.setStorageVolumeId(storageVolume.getId());
                     dataBundle.setStorageVolume(storageVolume);
                     dataBundle.setConnectionInfo(storageAgentInfo.getConnectionInfo());
                     bundleDao.save(dataBundle);
+                    List<String> dataSubpath = PathUtils.getTreePathComponentsForId(dataBundle.getId());
+                    Path dataPath = Paths.get(storageVolume.getMountPoint(), dataSubpath.toArray(new String[dataSubpath.size()]));
+                    dataBundle.setPath(dataPath.toString());
+                    bundleDao.update(dataBundle, ImmutableMap.of("path", new SetFieldValueHandler<>(dataBundle.getPath())));
                     return dataBundle;
                 });
     }

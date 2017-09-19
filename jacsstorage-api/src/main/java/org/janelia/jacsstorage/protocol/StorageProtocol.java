@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.protocol;
 
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 

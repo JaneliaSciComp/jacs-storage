@@ -1,6 +1,7 @@
 rootProject.name = 'jacsstorage'
 
 include 'jacsstorage-api'
+include 'jacsstorage-core'
 include 'jacsstorage-services'
 include 'jacsstorage-commonweb'
 include 'jacsstorage-masterweb'

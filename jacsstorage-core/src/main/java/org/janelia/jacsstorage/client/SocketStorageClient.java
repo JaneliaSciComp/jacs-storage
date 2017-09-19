@@ -1,8 +1,9 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.client;
 
-import org.janelia.jacsstorage.client.StorageClient;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.protocol.StorageProtocol;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -35,7 +36,7 @@ public class SocketStorageClient implements StorageClient {
                 storageInfo.getStorageFormat(),
                 storageInfo.getPath());
         ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
-        openChannel(remoteOpBuffer, storageInfo.getConnectionHost(), storageInfo.getConnectionPort(), SelectionKey.OP_WRITE); // open the channel for writing the data
+        openChannel(remoteOpBuffer, getConnectionHost(storageInfo.getConnectionInfo()), getConnectionPort(storageInfo.getConnectionInfo()), SelectionKey.OP_WRITE); // open the channel for writing the data
 
         // figure out the best local data format
         Path sourcePath = Paths.get(localPath);
@@ -72,7 +73,7 @@ public class SocketStorageClient implements StorageClient {
                 storageInfo.getStorageFormat(),
                 storageInfo.getPath());
         ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
-        openChannel(remoteOpBuffer, storageInfo.getConnectionHost(), storageInfo.getConnectionPort(), SelectionKey.OP_READ); // open the channel for reading the data
+        openChannel(remoteOpBuffer, getConnectionHost(storageInfo.getConnectionInfo()), getConnectionPort(storageInfo.getConnectionInfo()), SelectionKey.OP_READ); // open the channel for reading the data
 
         // figure out how to write the local data
         JacsStorageFormat localDataFormat;
@@ -93,6 +94,32 @@ public class SocketStorageClient implements StorageClient {
 
         ByteBuffer dataTransferBuffer = ByteBuffer.allocate(2048);
         retrieveData(dataTransferBuffer);
+    }
+
+    private String getConnectionHost(String connectionInfo) {
+        if (StringUtils.isNotBlank(connectionInfo)) {
+            int separatorIndex = connectionInfo.indexOf(':');
+            if (separatorIndex != -1) {
+                return connectionInfo.substring(0, separatorIndex).trim();
+            } else {
+                return connectionInfo;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    private int getConnectionPort(String connectionInfo) {
+        if (StringUtils.isNotBlank(connectionInfo)) {
+            int separatorIndex = connectionInfo.indexOf(':');
+            if (separatorIndex != -1) {
+                return Integer.parseInt(connectionInfo.substring(separatorIndex + 1).trim());
+            } else {
+                return -1;
+            }
+        } else {
+            return -1;
+        }
     }
 
     private void openChannel(ByteBuffer headerBuffer, String serverAddress, int serverPort, int channelIOOp) throws IOException {

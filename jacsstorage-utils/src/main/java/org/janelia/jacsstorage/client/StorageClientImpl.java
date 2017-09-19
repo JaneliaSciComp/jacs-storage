@@ -2,8 +2,6 @@ package org.janelia.jacsstorage.client;
 
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
-import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,19 +22,17 @@ import java.security.cert.X509Certificate;
 public class StorageClientImpl {
     private static final Logger LOG = LoggerFactory.getLogger(StorageClientImpl.class);
 
-
-    public void copyDataTo(String localPath, String serverURL, JacsStorageFormat remoteDataFormat) throws IOException {
-        DataStorageInfo storageRequest = new DataStorageInfo();
-        storageRequest.setStorageFormat(remoteDataFormat);
-        JacsBundle dataBundle = allocateStorage(serverURL, storageRequest);
+    public void persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
+        DataStorageInfo allocatedStorage = allocateStorage(storageInfo);
+        System.out.println("!!!!!!!!!!!!!! ALLOCATED " + allocatedStorage);
     }
 
-    private JacsBundle allocateStorage(String serverURL, DataStorageInfo storageRequest) {
+    private DataStorageInfo  allocateStorage(DataStorageInfo storageRequest) {
         String storageEndpoint = "/storage";
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
-            WebTarget target = httpClient.target(serverURL).path(storageEndpoint);
+            WebTarget target = httpClient.target(storageRequest.getConnectionInfo()).path(storageEndpoint);
 
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .post(Entity.json(storageRequest))
@@ -44,7 +40,7 @@ public class StorageClientImpl {
 
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.CREATED.getStatusCode()) {
-                return response.readEntity(JacsBundle.class);
+                return response.readEntity(DataStorageInfo.class);
             } else {
                 LOG.warn("Allocate storage request returned with status {}", responseStatus);
                 throw new IllegalStateException("Error while trying to allocate data storage - returned status: " + responseStatus);

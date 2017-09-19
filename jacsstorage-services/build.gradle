@@ -5,39 +5,10 @@ applicationName = "storageServer"
 
 project(":jacsstorage-services") {
     dependencies {
-        compile project(":jacsstorage-api"),
-                CDI_API_LIB,
+        compile project(":jacsstorage-core"),
                 CDI_SE_CORE_LIB,
                 CMDLINE_ARG_LIB,
-                COMMONS_COMPRESS_LIB,
-                JACKSON_ANNOTATIONS_LIB,
-                JACKSON_CORE_LIB,
-                JACKSON_DATABIND_LIB,
-                JACKSON_DATATYPE_JODA_LIB,
-                MESSAGEPACK_LIB,
                 MONGODB_DRIVER_LIB,
                 REFLECTIONS_LIB
     }
-
-    task createStorageClientApp(type: CreateStartScripts) {
-         mainClassName = "org.janelia.jacsstorage.service.StorageClientLauncher"
-         classpath = startScripts.classpath
-         outputDir = startScripts.outputDir
-         applicationName = "storageClient"
-    }
-
-    task createStorageServerApp(type: CreateStartScripts) {
-         mainClassName = "org.janelia.jacsstorage.service.StorageServerLauncher"
-         classpath = startScripts.classpath
-         outputDir = startScripts.outputDir
-         applicationName = "storageServer"
-    }
-
-    applicationDistribution.into("bin") {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        from(createStorageClientApp)
-        from(createStorageServerApp)
-        fileMode = 0755
-    }
-
 }

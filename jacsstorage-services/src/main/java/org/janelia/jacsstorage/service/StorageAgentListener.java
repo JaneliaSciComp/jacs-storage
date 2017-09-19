@@ -3,6 +3,8 @@ package org.janelia.jacsstorage.service;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.protocol.StorageProtocol;
+import org.janelia.jacsstorage.protocol.StorageProtocolImpl;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
