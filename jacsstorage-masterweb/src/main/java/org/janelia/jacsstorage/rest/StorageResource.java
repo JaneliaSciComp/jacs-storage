@@ -51,11 +51,14 @@ public class StorageResource {
 
     @Consumes("application/json")
     @POST
-    public Response createBundleInfo(JacsBundle dataBundle) {
+    public Response createBundleInfo(DataStorageRequest dataStorageRequest) {
+        JacsBundle dataBundle = dataStorageRequest.asDataBundle();
+
         Optional<JacsBundle> dataBundleInfo = storageService.allocateStorage(dataBundle);
         return dataBundleInfo
                 .map(bi -> Response
                         .created(resourceURI.getBaseUriBuilder().path(dataBundle.getId().toString()).build())
+                        .entity(dataBundle)
                         .build())
                 .orElse(Response
                         .status(Response.Status.NOT_FOUND)

@@ -106,6 +106,10 @@ public class JacsBundle extends AbstractEntity {
         metadata.remove(name);
     }
 
+    public void addMetadataFields(Map<String, Object> metadataFields) {
+        this.metadata.putAll(metadataFields);
+    }
+
     public Number getStorageVolumeId() {
         return storageVolumeId;
     }
