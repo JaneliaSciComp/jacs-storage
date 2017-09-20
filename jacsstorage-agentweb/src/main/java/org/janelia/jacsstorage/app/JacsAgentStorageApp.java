@@ -116,7 +116,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     }
 
     private void deregisterAgent(String masterServiceUrl, AgentState agentState) {
-        String registrationEndpoint = String.format("/agents/%s", agentState.getConnectionInfo());
+        String registrationEndpoint = String.format("/agents/%s", agentState.getAgentLocation());
         Client httpClient = null;
         try {
             httpClient = createHttpClient();

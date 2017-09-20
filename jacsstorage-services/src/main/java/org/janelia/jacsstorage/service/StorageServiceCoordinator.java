@@ -51,7 +51,7 @@ public class StorageServiceCoordinator implements StorageService {
     public JacsBundle getDataBundleById(Number id) {
         JacsBundle bundle = bundleDao.findById(id);
         if (bundle != null) {
-            bundle.setStorageVolume(storageVolumeDao.findById(bundle.getStorageVolumeId()));
+            updateStorageVolume(bundle);
         }
         return bundle;
     }
@@ -59,9 +59,17 @@ public class StorageServiceCoordinator implements StorageService {
     public JacsBundle findDataBundleByOwnerAndName(String owner, String name) {
         JacsBundle bundle = bundleDao.findByOwnerAndName(owner, name);
         if (bundle != null) {
-            bundle.setStorageVolume(storageVolumeDao.findById(bundle.getStorageVolumeId()));
+            updateStorageVolume(bundle);
         }
         return bundle;
     }
 
+    private void updateStorageVolume(JacsBundle bundle) {
+        bundle.setStorageVolume(storageVolumeDao.findById(bundle.getStorageVolumeId()))
+                .flatMap(storageVolume -> agentManager.findRegisteredAgentByLocationOrConnectionInfo(storageVolume.getLocation()))
+                .map(storageAgent -> {
+                    bundle.setConnectionInfo(storageAgent.getConnectionInfo());
+                    return bundle;
+                });
+    }
 }

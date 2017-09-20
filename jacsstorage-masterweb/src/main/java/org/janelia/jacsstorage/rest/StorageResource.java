@@ -45,7 +45,22 @@ public class StorageResource {
                     .build();
         } else {
             return Response
-                    .ok(jacsBundle)
+                    .ok(DataStorageInfo.fromBundle(jacsBundle))
+                    .build();
+        }
+    }
+
+    @GET
+    @Path("{owner}/{name}")
+    public Response getBundleInfoByOwnerAndName(@PathParam("owner") String owner, @PathParam("name") String name) {
+        JacsBundle jacsBundle = storageService.findDataBundleByOwnerAndName(owner, name);
+        if (jacsBundle == null) {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .build();
+        } else {
+            return Response
+                    .ok(DataStorageInfo.fromBundle(jacsBundle))
                     .build();
         }
     }

@@ -8,5 +8,6 @@ public interface StorageAgentManager {
     List<StorageAgentInfo> getCurrentRegisteredAgents();
     StorageAgentInfo registerAgent(StorageAgentInfo agentInfo);
     void deregisterAgent(String agentConnectionInfo);
+    Optional<StorageAgentInfo> findRegisteredAgentByLocationOrConnectionInfo(String agentInfo);
     Optional<StorageAgentInfo> findRandomRegisteredAgent();
 }

@@ -39,10 +39,10 @@ public class StorageAgentsResource {
                 .build();
     }
 
-    @Path("{connInfo}")
+    @Path("{agentLocationInfo}")
     @DELETE
-    public Response deregisterAgent(@PathParam("connInfo") String connectionInfo) {
-        agentManager.deregisterAgent(connectionInfo);
+    public Response deregisterAgent(@PathParam("agentLocationInfo") String agentLocationInfo) {
+        agentManager.deregisterAgent(agentLocationInfo);
         return Response
                 .noContent()
                 .build();

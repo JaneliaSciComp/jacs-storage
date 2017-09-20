@@ -32,7 +32,7 @@ public class StorageClientImpl implements StorageClient {
         storageClient.persistData(localPath, allocatedStorage);
     }
 
-    private DataStorageInfo  allocateStorage(DataStorageInfo storageRequest) {
+    private DataStorageInfo allocateStorage(DataStorageInfo storageRequest) {
         String storageEndpoint = "/storage";
         Client httpClient = null;
         try {
@@ -61,7 +61,35 @@ public class StorageClientImpl implements StorageClient {
 
     @Override
     public void retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
-        // TODO
+        DataStorageInfo allocatedStorage = retrieveStorageInfo(storageInfo);
+        storageClient.retrieveData(localPath, allocatedStorage);
+    }
+
+    private DataStorageInfo retrieveStorageInfo(DataStorageInfo storageRequest) {
+        String storageEndpoint = String.format("/storage/%s/%s", storageRequest.getOwner(), storageRequest.getName());
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(storageRequest.getConnectionInfo()).path(storageEndpoint);
+
+            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .get()
+                    ;
+
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return response.readEntity(DataStorageInfo.class);
+            } else {
+                LOG.warn("Retrieve storage info request returned with status {}", responseStatus);
+                throw new IllegalStateException("Error while trying to retrieve data storage - returned status: " + responseStatus);
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
     }
 
     private Client createHttpClient() throws Exception {

@@ -26,7 +26,7 @@ public class AgentState {
     private String storageRootDir;
 
     public String getAgentLocation() {
-        return StringUtils.isBlank(agentLocation) ? getCurrentHostIP() : agentLocation;
+        return StringUtils.isBlank(agentLocation) ? getCurrentHostIP() + "/" + getStorageRootDir() : agentLocation;
     }
 
     private String getCurrentHostIP() {
