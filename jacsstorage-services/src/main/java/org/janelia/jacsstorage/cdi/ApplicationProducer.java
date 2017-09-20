@@ -52,13 +52,4 @@ public class ApplicationProducer {
                 .fromMap(ApplicationConfigProvider.applicationArgs())
                 .build();
     }
-
-    @Produces
-    public ExecutorService createStorageAgentExecutor() {
-        return Executors.newSingleThreadExecutor(r -> {
-            Thread t = new Thread(r);
-            t.setDaemon(true);
-            return t;
-        });
-    }
 }

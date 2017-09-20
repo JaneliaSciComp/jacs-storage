@@ -6,6 +6,7 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.protocol.StorageProtocol;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
@@ -15,10 +16,10 @@ public class StorageClientApp {
     private static abstract class AbstractCommand {
         @Parameter(names = "-localPath", description = "Local path")
         protected String localPath;
+        @Parameter(names = "-owner", description = "Data bundle owner")
+        protected String owner;
         @Parameter(names = "-name", description = "Data bundle name")
         protected String name;
-        @Parameter(names = "-dataFormat", description = "Data bundle format")
-        protected JacsStorageFormat dataFormat = JacsStorageFormat.DATA_DIRECTORY;
     }
 
     private static class CommandMain {
@@ -32,6 +33,8 @@ public class StorageClientApp {
 
     @Parameters(commandDescription = "Retrieve data from the storage server")
     private static class CommandPut extends AbstractCommand {
+        @Parameter(names = "-dataFormat", description = "Data bundle format")
+        private JacsStorageFormat dataFormat = JacsStorageFormat.DATA_DIRECTORY;
     }
 
     private final StorageClient storageClient;
@@ -61,16 +64,26 @@ public class StorageClientApp {
 
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
         SeContainer container = containerInit.initialize();
+        StorageClient socketStorageClient = new SocketStorageClient(
+                container.select(StorageProtocol.class).get(),
+                container.select(StorageProtocol.class).get()
+        );
         DataStorageInfo storageInfo;
-        StorageClientImpl storageClientImpl = new StorageClientImpl();
+        StorageClientImpl storageClientImpl = new StorageClientImpl(socketStorageClient);
         switch (jc.getParsedCommand()) {
             case "get":
+                storageInfo = new DataStorageInfo()
+                        .setConnectionInfo(cm.serverURL)
+                        .setOwner(cmdGet.owner)
+                        .setName(cmdGet.name);
+                storageClientImpl.retrieveData(cmdGet.localPath, storageInfo);
                 return;
             case "put":
                 storageInfo = new DataStorageInfo()
                         .setConnectionInfo(cm.serverURL)
                         .setStorageFormat(cmdPut.dataFormat)
-                        .setPath(cmdPut.name);
+                        .setOwner(cmdPut.owner)
+                        .setName(cmdPut.name);
                 storageClientImpl.persistData(cmdPut.localPath, storageInfo);
                 return;
             default:

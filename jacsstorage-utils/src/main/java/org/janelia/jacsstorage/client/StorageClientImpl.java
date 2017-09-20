@@ -19,12 +19,17 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
-public class StorageClientImpl {
+public class StorageClientImpl implements StorageClient {
     private static final Logger LOG = LoggerFactory.getLogger(StorageClientImpl.class);
+    private StorageClient storageClient;
+
+    public StorageClientImpl(StorageClient storageClient) {
+        this.storageClient = storageClient;
+    }
 
     public void persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
         DataStorageInfo allocatedStorage = allocateStorage(storageInfo);
-        System.out.println("!!!!!!!!!!!!!! ALLOCATED " + allocatedStorage);
+        storageClient.persistData(localPath, allocatedStorage);
     }
 
     private DataStorageInfo  allocateStorage(DataStorageInfo storageRequest) {
@@ -54,6 +59,11 @@ public class StorageClientImpl {
         }
     }
 
+    @Override
+    public void retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
+        // TODO
+    }
+
     private Client createHttpClient() throws Exception {
         SSLContext sslContext = SSLContext.getInstance("TLSv1");
         TrustManager[] trustManagers = {
@@ -79,6 +89,5 @@ public class StorageClientImpl {
                 .register(new JacksonFeature())
                 .build();
     }
-
 
 }

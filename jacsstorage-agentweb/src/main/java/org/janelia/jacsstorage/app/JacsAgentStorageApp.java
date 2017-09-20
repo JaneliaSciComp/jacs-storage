@@ -41,9 +41,6 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     }
 
     public static void main(String[] args) throws ServletException {
-        SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
-        SeContainer container = containerInit.initialize();
-        JacsAgentStorageApp app = container.select(JacsAgentStorageApp.class).get();
         final AgentArgs agentArgs = new AgentArgs();
         JCommander cmdline = new JCommander(agentArgs);
         cmdline.parse(args);
@@ -51,6 +48,9 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
             cmdline.usage();
             return;
         }
+        SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
+        SeContainer container = containerInit.initialize();
+        JacsAgentStorageApp app = container.select(JacsAgentStorageApp.class).get();
         if (StringUtils.isNotBlank(agentArgs.connectTo)) {
             AgentState agentState = container.select(AgentState.class).get();
             LOG.info("Register agent with {}", agentArgs.connectTo);

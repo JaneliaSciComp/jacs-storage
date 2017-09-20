@@ -13,9 +13,6 @@ import javax.servlet.ServletException;
 public class JacsMasterStorageApp extends AbstractStorageApp {
 
     public static void main(String[] args) throws ServletException {
-        SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
-        SeContainer container = containerInit.initialize();
-        JacsMasterStorageApp app = container.select(JacsMasterStorageApp.class).get();
         final AppArgs appArgs = new AppArgs();
         JCommander cmdline = new JCommander(appArgs);
         cmdline.parse(args);
@@ -23,6 +20,9 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
             cmdline.usage();
             return;
         }
+        SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
+        SeContainer container = containerInit.initialize();
+        JacsMasterStorageApp app = container.select(JacsMasterStorageApp.class).get();
         app.start(appArgs);
     }
 
