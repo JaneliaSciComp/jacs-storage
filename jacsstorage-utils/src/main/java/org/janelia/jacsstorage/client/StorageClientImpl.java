@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.client;
 
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
+import org.janelia.jacsstorage.protocol.StorageMessageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,9 +28,9 @@ public class StorageClientImpl implements StorageClient {
         this.storageClient = storageClient;
     }
 
-    public void persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
+    public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
         DataStorageInfo allocatedStorage = allocateStorage(storageInfo);
-        storageClient.persistData(localPath, allocatedStorage);
+        return storageClient.persistData(localPath, allocatedStorage);
     }
 
     private DataStorageInfo allocateStorage(DataStorageInfo storageRequest) {
@@ -60,9 +61,9 @@ public class StorageClientImpl implements StorageClient {
     }
 
     @Override
-    public void retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
+    public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
         DataStorageInfo allocatedStorage = retrieveStorageInfo(storageInfo);
-        storageClient.retrieveData(localPath, allocatedStorage);
+        return storageClient.retrieveData(localPath, allocatedStorage);
     }
 
     private DataStorageInfo retrieveStorageInfo(DataStorageInfo storageRequest) {
