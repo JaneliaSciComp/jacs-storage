@@ -4,19 +4,20 @@ import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
 import javax.inject.Inject;
 
-public class StorageServerLauncher {
+public class StorageAgentListenerLauncher {
 
     private final StorageAgentListener agentListener;
 
     @Inject
-    public StorageServerLauncher(StorageAgentListener agentListener) {
+    public StorageAgentListenerLauncher(StorageAgentListener agentListener) {
         this.agentListener = agentListener;
     }
 
     public static void main(String[] args) throws Exception {
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
         SeContainer container = containerInit.initialize();
-        StorageServerLauncher storageServerLauncher = container.select(StorageServerLauncher.class).get();
-        storageServerLauncher.agentListener.startServer();
+        StorageAgentListenerLauncher storageAgentListenerLauncher = container.select(StorageAgentListenerLauncher.class).get();
+        storageAgentListenerLauncher.agentListener.open();
+        storageAgentListenerLauncher.agentListener.startServer();
     }
 }

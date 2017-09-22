@@ -5,9 +5,15 @@ import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -20,15 +26,13 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
 
     @Override
     protected long readBundleBytes(String source, OutputStream stream) throws Exception {
-        File sourcePath = new File(source);
-        if (!sourcePath.exists()) {
+        Path sourcePath = Paths.get(source);
+        if (Files.notExists(sourcePath)) {
             throw new IllegalArgumentException("No file found for " + source);
-        } else if (!sourcePath.isFile()) {
+        } else if (!Files.isRegularFile(sourcePath)) {
             throw new IllegalArgumentException("Source " + source + " expected to be a file");
         } else {
-            try (ArchiveInputStream inputStream = new ArchiveStreamFactory().createArchiveInputStream(new FileInputStream(sourcePath))) {
-                return ByteStreams.copy(inputStream, stream);
-            }
+            return Files.copy(sourcePath, stream);
         }
     }
 

@@ -1,7 +1,7 @@
 apply plugin: "application"
 
-mainClassName = "org.janelia.jacsstorage.service.StorageServerLauncher"
-applicationName = "storageServer"
+mainClassName = "org.janelia.jacsstorage.service.StorageAgentListenerLauncher"
+applicationName = "storageListener"
 
 project(":jacsstorage-services") {
     dependencies {

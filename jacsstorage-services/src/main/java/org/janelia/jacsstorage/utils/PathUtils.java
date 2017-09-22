@@ -2,8 +2,6 @@ package org.janelia.jacsstorage.utils;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.compress.archivers.ArchiveOutputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -48,10 +46,29 @@ public class PathUtils {
     }
 
     public static long getSize(String fn) throws IOException {
-        Path fp = Paths.get(fn);
-        Preconditions.checkArgument(Files.exists(fp), "No path found for " + fn);
+        return getSize(Paths.get(fn));
+    }
+
+    public static long getSize(Path fp) throws IOException {
+        Preconditions.checkArgument(Files.exists(fp), "No path found for " + fp);
         FileSizeVisitor pathVisitor = new FileSizeVisitor();
         Files.walkFileTree(fp, pathVisitor);
         return pathVisitor.totalSize;
+    }
+
+    public static void deletePath(Path fp) throws IOException {
+        Files.walkFileTree(fp, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 }

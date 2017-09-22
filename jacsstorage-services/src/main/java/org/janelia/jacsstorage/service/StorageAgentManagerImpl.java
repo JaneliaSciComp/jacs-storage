@@ -3,9 +3,9 @@ package org.janelia.jacsstorage.service;
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.enterprise.inject.Vetoed;
-import javax.inject.Inject;
+import javax.enterprise.context.ApplicationScoped;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,16 +16,12 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * This class is explicitly excluded from CDI because it's created using the method from the @ServicesProducer.
  */
-@Vetoed
+@ApplicationScoped
 public class StorageAgentManagerImpl implements StorageAgentManager {
+    private static final Logger LOG = LoggerFactory.getLogger(StorageAgentManagerImpl.class);
+
     private final Random randomSelector = new Random(System.currentTimeMillis());
     private final ConcurrentMap<String, StorageAgentInfo> registeredAgents = new ConcurrentHashMap<>();
-    private final Logger logger;
-
-    @Inject
-    public StorageAgentManagerImpl(Logger logger) {
-        this.logger = logger;
-    }
 
     @Override
     public List<StorageAgentInfo> getCurrentRegisteredAgents() {
@@ -34,14 +30,14 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
 
     @Override
     public StorageAgentInfo registerAgent(StorageAgentInfo agentInfo) {
-        logger.info("Register {}", agentInfo);
+        LOG.info("Register {}", agentInfo);
         registeredAgents.putIfAbsent(agentInfo.getLocation(), agentInfo);
         return agentInfo;
     }
 
     @Override
     public void deregisterAgent(String agentLocationInfo) {
-        logger.info("Deregister agent serving {}", agentLocationInfo);
+        LOG.info("Deregister agent serving {}", agentLocationInfo);
         registeredAgents.remove(agentLocationInfo);
     }
 

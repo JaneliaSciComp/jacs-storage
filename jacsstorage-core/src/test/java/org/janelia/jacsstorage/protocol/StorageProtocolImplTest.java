@@ -10,7 +10,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
 
 import javax.enterprise.inject.Instance;
 import java.io.ByteArrayOutputStream;
@@ -24,12 +23,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
+import java.util.EnumSet;
 import java.util.concurrent.Executors;
 
+import static org.hamcrest.collection.IsIn.isIn;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -40,17 +40,15 @@ public class StorageProtocolImplTest {
 
     private Path testDirectory;
     private StorageProtocolImpl storageAgentImpl;
-    private Logger logger;
 
     @SuppressWarnings("unchecked")
     @Before
     public void setUp() throws IOException {
         Instance<BundleReader> bundleReaderSource = mock(Instance.class);
         Instance<BundleWriter> bundleWriterSource = mock(Instance.class);
-        logger = mock(Logger.class);
         when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader()).iterator());
         when(bundleWriterSource.iterator()).thenReturn(ImmutableList.<BundleWriter>of(new SingleFileBundleWriter()).iterator());
-        storageAgentImpl = new StorageProtocolImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource), logger);
+        storageAgentImpl = new StorageProtocolImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource));
         testDirectory = Files.createTempDirectory("StorageAgentTest");
     }
 
@@ -75,15 +73,17 @@ public class StorageProtocolImplTest {
     public void writeData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
         Path testTargetPath = testDirectory.resolve("testWriteData");
-        CountDownLatch done = new CountDownLatch(1);
-        byte[] headerBuffer = storageAgentImpl.createHeader(StorageProtocol.Operation.PERSIST_DATA,
+        byte[] headerBuffer = storageAgentImpl.encodeRequest(new StorageMessageHeader(
+                StorageProtocol.Operation.PERSIST_DATA,
                 JacsStorageFormat.SINGLE_DATA_FILE,
-                testTargetPath.toString());
+                testTargetPath.toString()));
         FileInputStream testInput = new FileInputStream(testDataPath.toFile());
         try {
-            if (storageAgentImpl.readHeader(ByteBuffer.wrap(headerBuffer), Optional.empty()) == 1) {
-                storageAgentImpl.beginDataTransfer();
-            }
+            StorageProtocol.Holder<StorageMessageHeader> requestHolder = new StorageProtocol.Holder<>();
+            while (!storageAgentImpl.readRequest(ByteBuffer.wrap(headerBuffer), requestHolder))
+                ; // keep reading until it finishes the header
+            storageAgentImpl.beginDataTransfer(requestHolder.getData());
+
             ByteBuffer buffer = ByteBuffer.allocate(2048);
             FileChannel channel = testInput.getChannel();
             while (channel.read(buffer) != -1) {
@@ -91,14 +91,17 @@ public class StorageProtocolImplTest {
                 storageAgentImpl.writeData(buffer);
                 buffer.clear();
             }
-            storageAgentImpl.terminateDataTransfer(() -> done.countDown());
+
+            try {
+                storageAgentImpl.endDataTransfer();
+                assertThat(storageAgentImpl.getState(), isIn(EnumSet.of(StorageProtocol.State.WRITE_DATA, StorageProtocol.State.WRITE_DATA_COMPLETE, StorageProtocol.State.WRITE_DATA_ERROR)));
+                while (storageAgentImpl.getState() != StorageProtocol.State.WRITE_DATA_COMPLETE && storageAgentImpl.getState() != StorageProtocol.State.WRITE_DATA_ERROR) {
+                    Thread.sleep(1); // wait until the data transfer is completed
+                }
+            } catch (InterruptedException e) {
+            }
         } finally {
             testInput.close();
-        }
-        try {
-            done.await();
-        } catch (InterruptedException e) {
-            throw new IllegalStateException(e);
         }
         assertTrue(Files.exists(testTargetPath));
         assertEquals(Files.size(testDataPath), Files.size(testTargetPath));
@@ -107,12 +110,16 @@ public class StorageProtocolImplTest {
     @Test
     public void readData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
-        byte[] headerBuffer = storageAgentImpl.createHeader(StorageProtocol.Operation.RETRIEVE_DATA,
+        byte[] headerBuffer = storageAgentImpl.encodeRequest(new StorageMessageHeader(
+                StorageProtocol.Operation.RETRIEVE_DATA,
                 JacsStorageFormat.SINGLE_DATA_FILE,
-                testDataPath.toString());
-        if (storageAgentImpl.readHeader(ByteBuffer.wrap(headerBuffer), Optional.empty()) == 1) {
-            storageAgentImpl.beginDataTransfer();
-        }
+                testDataPath.toString()));
+        StorageProtocol.Holder<StorageMessageHeader> requestHolder = new StorageProtocol.Holder<>();
+        while (!storageAgentImpl.readRequest(ByteBuffer.wrap(headerBuffer), requestHolder))
+            ; // keep reading until it finishes the header
+
+        storageAgentImpl.beginDataTransfer(requestHolder.getData());
+
         ByteBuffer buffer = ByteBuffer.allocate(2048);
         byte[] expectedResult = Files.readAllBytes(testDataPath);
         ByteArrayOutputStream result = new ByteArrayOutputStream();
@@ -122,5 +129,6 @@ public class StorageProtocolImplTest {
             buffer.clear();
         }
         assertArrayEquals(expectedResult, result.toByteArray());
+        assertThat(storageAgentImpl.getState(), isIn(EnumSet.of(StorageProtocol.State.READ_DATA, StorageProtocol.State.READ_DATA_COMPLETE, StorageProtocol.State.READ_DATA_ERROR)));
     }
 }

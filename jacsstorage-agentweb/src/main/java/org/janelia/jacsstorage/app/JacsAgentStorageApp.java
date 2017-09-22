@@ -165,6 +165,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     private void startAgentListener(ExecutorService agentExecutor, StorageAgentListener storageAgentListener) {
         agentExecutor.execute(() -> {
             try {
+                storageAgentListener.open();
                 storageAgentListener.startServer();
             } catch (Exception e) {
                 LOG.error("Error while running the agent listener", e);

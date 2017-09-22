@@ -28,6 +28,7 @@ public class StorageServiceCoordinator implements StorageService {
         this.bundleDao = bundleDao;
     }
 
+    @Override
     public Optional<JacsBundle> allocateStorage(JacsBundle dataBundle) {
         return agentManager.findRandomRegisteredAgent()
                 .map(storageAgentInfo -> {
@@ -48,6 +49,7 @@ public class StorageServiceCoordinator implements StorageService {
                 });
     }
 
+    @Override
     public JacsBundle getDataBundleById(Number id) {
         JacsBundle bundle = bundleDao.findById(id);
         if (bundle != null) {
@@ -56,6 +58,7 @@ public class StorageServiceCoordinator implements StorageService {
         return bundle;
     }
 
+    @Override
     public JacsBundle findDataBundleByOwnerAndName(String owner, String name) {
         JacsBundle bundle = bundleDao.findByOwnerAndName(owner, name);
         if (bundle != null) {
@@ -66,7 +69,7 @@ public class StorageServiceCoordinator implements StorageService {
 
     private void updateStorageVolume(JacsBundle bundle) {
         bundle.setStorageVolume(storageVolumeDao.findById(bundle.getStorageVolumeId()))
-                .flatMap(storageVolume -> agentManager.findRegisteredAgentByLocationOrConnectionInfo(storageVolume.getLocation()))
+                .flatMap(storageVolume -> agentManager.findRegisteredAgentByLocationOrConnectionInfo(storageVolume.getLocation())) // find a registered agent that serves the given location
                 .map(storageAgent -> {
                     bundle.setConnectionInfo(storageAgent.getConnectionInfo());
                     return bundle;

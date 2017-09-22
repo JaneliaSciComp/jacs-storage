@@ -11,36 +11,36 @@ import org.msgpack.core.MessageBufferPacker;
 import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessageUnpacker;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.Pipe;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 public class StorageProtocolImpl implements StorageProtocol {
+    private final Logger LOG = LoggerFactory.getLogger(StorageProtocolImpl.class);
 
     private final ExecutorService backgroundTransferExecutor;
     private final DataBundleIOProvider dataIOProvider;
-    private final Logger logger;
 
     private State state;
-    private ByteBuffer cmdSizeValueBuffer;
-    private ByteBuffer cmdBuffer;
+    private String errormessage;
+    private ByteBuffer requestSizeValueBuffer;
+    private ByteBuffer requestBuffer;
+    private ByteBuffer responseSizeValueBuffer;
+    private ByteBuffer responseBuffer;
     private Pipe writerPipe;
     private Pipe readerPipe;
-    private OperationCompleteCallback writerCompletedCallback;
 
     @Inject
-    public StorageProtocolImpl(ExecutorService backgroundTransferExecutor, DataBundleIOProvider dataIOProvider, Logger logger) {
+    public StorageProtocolImpl(ExecutorService backgroundTransferExecutor, DataBundleIOProvider dataIOProvider) {
         this.backgroundTransferExecutor = backgroundTransferExecutor;
         this.dataIOProvider = dataIOProvider;
-        this.logger = logger;
         state = State.IDLE;
     }
 
@@ -50,88 +50,145 @@ public class StorageProtocolImpl implements StorageProtocol {
     }
 
     @Override
-    public byte[] createHeader(Operation op, JacsStorageFormat format, String location) throws IOException {
-        MessageBufferPacker cmdPacker = MessagePack.newDefaultBufferPacker();
-        cmdPacker.packString(op.name())
-                .packString(format.name())
-                .packString(location);
-        cmdPacker.close();
-        byte[] msgBytes = cmdPacker.toByteArray();
-        ByteBuffer buffer = ByteBuffer.allocate(4 + msgBytes.length);
+    public String getLastErrorMessage() {
+        return errormessage;
+    }
+
+    @Override
+    public byte[] encodeRequest(StorageMessageHeader request) throws IOException {
+        MessageBufferPacker requestPacker = MessagePack.newDefaultBufferPacker();
+        requestPacker.packString(request.getOperation().name())
+                .packString(request.getFormat().name())
+                .packString(request.getLocation());
+        requestPacker.close();
+        byte[] msgBytes = requestPacker.toByteArray();
+        byte[] requestBuffer = new byte[4 + msgBytes.length];
+        ByteBuffer buffer = ByteBuffer.wrap(requestBuffer);
         buffer.putInt(msgBytes.length);
         buffer.put(msgBytes);
-        buffer.flip();
-        byte[] headerBuffer = new byte[buffer.remaining()];
-        buffer.get(headerBuffer);
-        return headerBuffer;
+        return requestBuffer;
     }
 
     @Override
-    public int readHeader(ByteBuffer buffer, Optional<State> nextState) throws IOException {
-        if (cmdSizeValueBuffer == null) {
-            cmdSizeValueBuffer = ByteBuffer.allocate(4);
-            state = State.READ_HEADER;
+    public byte[] encodeResponse(StorageMessageResponse response) throws IOException {
+        MessageBufferPacker responsePacker = MessagePack.newDefaultBufferPacker();
+        responsePacker
+                .packInt(response.getStatus())
+                .packString(response.getMessage())
+                .packLong(response.getSize())
+                ;
+        responsePacker.close();
+        byte[] msgBytes = responsePacker.toByteArray();
+        byte[] responseBuffer = new byte[4 + msgBytes.length];
+        ByteBuffer buffer = ByteBuffer.wrap(responseBuffer);
+        buffer.putInt(msgBytes.length);
+        buffer.put(msgBytes);
+        return responseBuffer;
+    }
+
+    @Override
+    public boolean readRequest(ByteBuffer buffer, Holder<StorageMessageHeader> requestHolder) throws IOException {
+        if (requestSizeValueBuffer == null) {
+            requestSizeValueBuffer = ByteBuffer.allocate(4);
+            state = State.READ_REQUEST;
         }
-        if (cmdSizeValueBuffer.hasRemaining()) {
-            BufferUtils.copyBuffers(buffer, cmdSizeValueBuffer);
-            if (cmdSizeValueBuffer.hasRemaining()) {
-                return 0;
+        if (requestSizeValueBuffer.hasRemaining()) {
+            BufferUtils.copyBuffers(buffer, requestSizeValueBuffer);
+            if (requestSizeValueBuffer.hasRemaining()) {
+                return false;
             }
         }
-        if (cmdBuffer == null) {
-            cmdSizeValueBuffer.flip();
-            int cmdSize = cmdSizeValueBuffer.getInt();
-            cmdBuffer = ByteBuffer.allocate(cmdSize);
+        if (requestBuffer == null) {
+            requestSizeValueBuffer.flip();
+            int requestSize = requestSizeValueBuffer.getInt();
+            requestBuffer = ByteBuffer.allocate(requestSize);
         }
-        if (cmdBuffer.hasRemaining()) {
-            BufferUtils.copyBuffers(buffer, cmdBuffer);
-            if (!cmdBuffer.hasRemaining()) {
-                nextState.map(s -> state = s);
-                return 1;
+        if (requestBuffer.hasRemaining()) {
+            BufferUtils.copyBuffers(buffer, requestBuffer);
+            if (!requestBuffer.hasRemaining()) {
+                requestBuffer.flip();
+                MessageUnpacker requestUnpacker = MessagePack.newDefaultUnpacker(requestBuffer);
+                Operation op = Operation.valueOf(requestUnpacker.unpackString());
+                JacsStorageFormat format = JacsStorageFormat.valueOf(requestUnpacker.unpackString());
+                String path = requestUnpacker.unpackString();
+                requestUnpacker.close();
+                requestHolder.setData(new StorageMessageHeader(op, format, path));
+                return true;
             } else {
-                return 0;
+                return false;
             }
         } else {
-            return -1;
+            // nothing left to read from the requestBuffer so it must've finished it before
+            return true;
         }
     }
 
     @Override
-    public void beginDataTransfer() throws IOException {
-        if (cmdBuffer != null && !cmdBuffer.hasRemaining()) {
-            cmdBuffer.flip();
-            MessageUnpacker cmdUnpacker = MessagePack.newDefaultUnpacker(cmdBuffer);
-            Operation op = Operation.valueOf(cmdUnpacker.unpackString());
-            JacsStorageFormat format = JacsStorageFormat.valueOf(cmdUnpacker.unpackString());
-            String path = cmdUnpacker.unpackString();
-            cmdUnpacker.close();
-            switch (op) {
-                case PERSIST_DATA:
-                    beginWritingData(new JacsDataLocation(path, format));
-                    break;
-                case RETRIEVE_DATA:
-                    beginReadingData(new JacsDataLocation(path, format));
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Operation " + op + " is not supported");
+    public boolean readResponse(ByteBuffer buffer, Holder<StorageMessageResponse> responseHolder) throws IOException {
+        if (responseSizeValueBuffer == null) {
+            responseSizeValueBuffer = ByteBuffer.allocate(4);
+        }
+        if (responseSizeValueBuffer.hasRemaining()) {
+            BufferUtils.copyBuffers(buffer, responseSizeValueBuffer);
+            if (responseSizeValueBuffer.hasRemaining()) {
+                return false;
             }
+        }
+        if (responseBuffer == null) {
+            responseSizeValueBuffer.flip();
+            int responseSize = responseSizeValueBuffer.getInt();
+            responseBuffer = ByteBuffer.allocate(responseSize);
+        }
+        if (responseBuffer.hasRemaining()) {
+            BufferUtils.copyBuffers(buffer, responseBuffer);
+            if (!responseBuffer.hasRemaining()) {
+                responseBuffer.flip();
+                MessageUnpacker responseUnpacker = MessagePack.newDefaultUnpacker(responseBuffer);
+                int status = responseUnpacker.unpackInt();
+                String message = responseUnpacker.unpackString();
+                long size = responseUnpacker.unpackLong();
+                responseHolder.setData(new StorageMessageResponse(status, message, size));
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            // nothing left to read from the responseBuffer so it must've finished it before
+            return true;
+        }
+    }
+
+    @Override
+    public void beginDataTransfer(StorageMessageHeader request) throws IOException {
+        switch (request.getOperation()) {
+            case PERSIST_DATA:
+                beginWritingData(new JacsDataLocation(request.getLocation(), request.getFormat()));
+                break;
+            case RETRIEVE_DATA:
+                beginReadingData(new JacsDataLocation(request.getLocation(), request.getFormat()));
+                break;
+            default:
+                throw new UnsupportedOperationException("Operation " + request.getOperation() + " is not supported");
         }
     }
 
     private void beginReadingData(JacsDataLocation dataLocation) throws IOException {
-        logger.info("Begin reading data from: {}", dataLocation);
-        state = State.READ_DATA;
+        LOG.info("Begin reading data from: {}", dataLocation);
+        state = State.READ_DATA_STARTED;
         readerPipe = Pipe.open();
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataLocation.getStorageFormat());
         OutputStream senderStream = Channels.newOutputStream(readerPipe.sink());
         backgroundTransferExecutor.execute(() -> {
             try {
+                state = State.READ_DATA;
                 bundleReader.readBundle(dataLocation.getPath(), senderStream);
-                state = State.DATA_TRANSFER_COMPLETED;
-                readerPipe.sink().close();
-            } catch (IOException e) {
-                state = State.DATA_TRANSFER_ERROR;
-                throw new UncheckedIOException(e);
+                state = State.READ_DATA_COMPLETE;
+            } catch (Exception e) {
+                LOG.error("Error while reading {}", dataLocation, e);
+                state = State.READ_DATA_ERROR;
+                errormessage = "Error reading data: " + e.getMessage();
+            } finally {
+                IOUtils.closeQuietly(readerPipe.sink());
             }
         });
     }
@@ -156,23 +213,22 @@ public class StorageProtocolImpl implements StorageProtocol {
     }
 
     private void beginWritingData(JacsDataLocation dataLocation) throws IOException {
-        logger.info("Begin writing data to: {}", dataLocation);
-        state = State.WRITE_DATA;
+        LOG.info("Begin writing data to: {}", dataLocation);
+        state = State.WRITE_DATA_STARTED;
         writerPipe = Pipe.open();
         BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataLocation.getStorageFormat());
         InputStream receiverStream = Channels.newInputStream(writerPipe.source());
         backgroundTransferExecutor.execute(() -> {
             try {
+                state = State.WRITE_DATA;
                 bundleWriter.writeBundle(receiverStream, dataLocation.getPath());
-                state = State.DATA_TRANSFER_COMPLETED;
+                state = State.WRITE_DATA_COMPLETE;
             } catch (Exception e) {
-                state = State.DATA_TRANSFER_ERROR;
-                throw new IllegalStateException(e);
+                LOG.error("Error while writing {}", dataLocation, e);
+                state = State.WRITE_DATA_ERROR;
+                errormessage = "Error writing data: " + e.getMessage();
             } finally {
                 IOUtils.closeQuietly(writerPipe.source());
-                if (writerCompletedCallback != null) {
-                    writerCompletedCallback.onDone();
-                }
                 writerPipe = null;
             }
         });
@@ -196,10 +252,11 @@ public class StorageProtocolImpl implements StorageProtocol {
     }
 
     @Override
-    public void terminateDataTransfer(OperationCompleteCallback cb) throws IOException {
-        writerCompletedCallback = cb;
-        // when it's done writing close the writer pipe so that the receiver on the other end of the pipe knows we are done
-        writerPipe.sink().close();
+    public void endDataTransfer() throws IOException {
+        if (writerPipe != null) {
+            // when it's done writing close the writer pipe so that the receiver on the other end of the pipe knows we are done
+            writerPipe.sink().close();
+        }
     }
 
 }

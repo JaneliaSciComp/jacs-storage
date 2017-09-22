@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.io;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.HashingOutputStream;
 
+import java.io.BufferedOutputStream;
 import java.io.OutputStream;
 
 public abstract class AbstractBundleReader implements BundleReader {
