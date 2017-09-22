@@ -20,17 +20,14 @@ import org.janelia.jacsstorage.protocol.StorageProtocolImpl;
 import org.janelia.jacsstorage.utils.PathUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import javax.enterprise.inject.Instance;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -48,12 +45,12 @@ public class StorageAgentListenerITest {
     private static final String TEST_DATA_DIRECTORY = "src/integration-test/resources/testdata/bundletransfer";
     private Path testDirectory;
 
-    private DataBundleIOProvider dataBundleIOProvider;
-    private StorageAgentListener socketStorageListener;
-    private String listenerSocketAddr;
+    private static StorageAgentListener socketStorageListener;
+    private static DataBundleIOProvider dataBundleIOProvider;
+    private static String listenerSocketAddr;
 
-    @Before
-    public void setUp() throws IOException {
+    @BeforeClass
+    public static void startListener() {
         Instance<BundleReader> bundleReaderSource = mock(Instance.class);
         Instance<BundleWriter> bundleWriterSource = mock(Instance.class);
         List<BundleReader> dataReaders = ImmutableList.<BundleReader>of(
@@ -70,14 +67,13 @@ public class StorageAgentListenerITest {
                 .then(invocation -> dataReaders.iterator());
         when(bundleWriterSource.iterator())
                 .then(invocation -> dataWriters.iterator());
-        CoreCdiProducer cdiProducer = new CoreCdiProducer();
         dataBundleIOProvider = new DataBundleIOProvider(bundleReaderSource, bundleWriterSource);
-        socketStorageListener = new StorageAgentListener("localhost", 10000, Executors.newSingleThreadExecutor(), dataBundleIOProvider);
-        testDirectory = Files.createTempDirectory("StorageListenerITest");
-        startListener(cdiProducer.createStorageAgentExecutor());
+        socketStorageListener = new StorageAgentListener("localhost", 0, Executors.newSingleThreadExecutor(), dataBundleIOProvider);
+        CoreCdiProducer cdiProducer = new CoreCdiProducer();
+        startListener(cdiProducer.createSingleExecutorService());
     }
 
-    private void startListener(ExecutorService agentExecutor) {
+    private static void startListener(ExecutorService agentExecutor) {
         CountDownLatch started = new CountDownLatch(1);
         agentExecutor.execute(() -> {
             try {
@@ -95,6 +91,11 @@ public class StorageAgentListenerITest {
         }
     }
 
+    @Before
+    public void setUp() throws IOException {
+        testDirectory = Files.createTempDirectory("StorageListenerITest");
+    }
+
     private StorageClient createStorageClient() {
         return new SocketStorageClient(
                 new StorageProtocolImpl(Executors.newSingleThreadExecutor(), dataBundleIOProvider),
@@ -110,34 +111,29 @@ public class StorageAgentListenerITest {
     @Test
     public void sendDataDirectory() throws IOException {
         class TestData {
-            final StorageClient storageClient;
             final DataStorageInfo persistedDataStorageInfo;
             final DataStorageInfo retrievedDataStorageInfo;
 
-            public TestData(StorageClient storageClient, DataStorageInfo persistedDataStorageInfo, DataStorageInfo retrievedDataStorageInfo) {
-                this.storageClient = storageClient;
+            public TestData(DataStorageInfo persistedDataStorageInfo, DataStorageInfo retrievedDataStorageInfo) {
                 this.persistedDataStorageInfo = persistedDataStorageInfo;
                 this.retrievedDataStorageInfo = retrievedDataStorageInfo;
             }
         }
+        StorageClient storageClient = createStorageClient();
         List<TestData> testData = ImmutableList.<TestData>builder()
                 .add(new TestData(
-                                createStorageClient(),
                                 storageInfo(testDirectory.resolve("td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
                                 storageInfo(testDirectory.resolve("td1.local"), JacsStorageFormat.ARCHIVE_DATA_FILE))
                 )
                 .add(new TestData(
-                                createStorageClient(),
                                 storageInfo(testDirectory.resolve("td2.remote"), JacsStorageFormat.DATA_DIRECTORY),
                                 storageInfo(testDirectory.resolve("td2.local"), JacsStorageFormat.DATA_DIRECTORY))
                 )
                 .add(new TestData(
-                                createStorageClient(),
                                 storageInfo(testDirectory.resolve("td3.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
                                 storageInfo(testDirectory.resolve("td3.local"), JacsStorageFormat.DATA_DIRECTORY))
                 )
                 .add(new TestData(
-                                createStorageClient(),
                                 storageInfo(testDirectory.resolve("td4.remote"), JacsStorageFormat.DATA_DIRECTORY),
                                 storageInfo(testDirectory.resolve("td4.local"), JacsStorageFormat.ARCHIVE_DATA_FILE))
                 )
@@ -145,12 +141,63 @@ public class StorageAgentListenerITest {
         Path sourceTestDataDirectory = Paths.get(TEST_DATA_DIRECTORY);
         long sourceTestDataDirSize = PathUtils.getSize(sourceTestDataDirectory);
         for (TestData td : testData) {
-            StorageMessageResponse persistenceResponse = td.storageClient.persistData(TEST_DATA_DIRECTORY, td.persistedDataStorageInfo);
+            StorageMessageResponse persistenceResponse = storageClient.persistData(sourceTestDataDirectory.toString(), td.persistedDataStorageInfo);
             Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
             assertThat(persistenceResponse.getStatus(), equalTo(1));
             assertTrue(Files.exists(targetPath));
             assertThat(PathUtils.getSize(targetPath), lessThanOrEqualTo(persistenceResponse.getSize()));
-            StorageMessageResponse retrievalResponse = td.storageClient.retrieveData(td.retrievedDataStorageInfo.getPath(), td.persistedDataStorageInfo);
+            StorageMessageResponse retrievalResponse = storageClient.retrieveData(td.retrievedDataStorageInfo.getPath(), td.persistedDataStorageInfo);
+            Path localPath = Paths.get(td.retrievedDataStorageInfo.getPath());
+            assertThat(retrievalResponse.getStatus(), equalTo(1));
+            assertTrue(Files.exists(localPath));
+            assertThat(PathUtils.getSize(localPath), equalTo(sourceTestDataDirSize));
+            assertThat(retrievalResponse.getSize(), equalTo(persistenceResponse.getSize()));
+        }
+    }
+
+    @Test
+    public void sendDataFile() throws IOException {
+        class TestData {
+            final DataStorageInfo persistedDataStorageInfo;
+            final DataStorageInfo retrievedDataStorageInfo;
+
+            public TestData(DataStorageInfo persistedDataStorageInfo, DataStorageInfo retrievedDataStorageInfo) {
+                this.persistedDataStorageInfo = persistedDataStorageInfo;
+                this.retrievedDataStorageInfo = retrievedDataStorageInfo;
+            }
+        }
+        StorageClient storageClient = createStorageClient();
+        List<TestData> testData = ImmutableList.<TestData>builder()
+                .add(new TestData(
+                                storageInfo(testDirectory.resolve("td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
+                                storageInfo(testDirectory.resolve("td1.local"), JacsStorageFormat.ARCHIVE_DATA_FILE))
+                )
+                .add(new TestData(
+                                storageInfo(testDirectory.resolve("td2.remote"), JacsStorageFormat.SINGLE_DATA_FILE),
+                                storageInfo(testDirectory.resolve("td2.local"), JacsStorageFormat.SINGLE_DATA_FILE))
+                )
+                .add(new TestData(
+                                storageInfo(testDirectory.resolve("td3.remote"), JacsStorageFormat.SINGLE_DATA_FILE),
+                                storageInfo(testDirectory.resolve("td3.local"), JacsStorageFormat.DATA_DIRECTORY))
+                )
+                .add(new TestData(
+                                storageInfo(testDirectory.resolve("td4.remote"), JacsStorageFormat.SINGLE_DATA_FILE),
+                                storageInfo(testDirectory.resolve("td4.local"), JacsStorageFormat.ARCHIVE_DATA_FILE))
+                )
+                .add(new TestData(
+                                storageInfo(testDirectory.resolve("td5.remote"), JacsStorageFormat.DATA_DIRECTORY),
+                                storageInfo(testDirectory.resolve("td5.local"), JacsStorageFormat.SINGLE_DATA_FILE))
+                )
+                .build();
+        Path sourceTestDataFile = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
+        long sourceTestDataDirSize = PathUtils.getSize(sourceTestDataFile);
+        for (TestData td : testData) {
+            StorageMessageResponse persistenceResponse = storageClient.persistData(sourceTestDataFile.toString(), td.persistedDataStorageInfo);
+            Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
+            assertThat(persistenceResponse.getStatus(), equalTo(1));
+            assertTrue(Files.exists(targetPath));
+            assertThat(PathUtils.getSize(targetPath), lessThanOrEqualTo(persistenceResponse.getSize()));
+            StorageMessageResponse retrievalResponse = storageClient.retrieveData(td.retrievedDataStorageInfo.getPath(), td.persistedDataStorageInfo);
             Path localPath = Paths.get(td.retrievedDataStorageInfo.getPath());
             assertThat(retrievalResponse.getStatus(), equalTo(1));
             assertTrue(Files.exists(localPath));

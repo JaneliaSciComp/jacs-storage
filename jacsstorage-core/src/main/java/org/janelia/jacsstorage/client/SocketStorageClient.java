@@ -32,7 +32,7 @@ public class SocketStorageClient implements StorageClient {
     @Override
     public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
         // initialize the transfer operation - tell the remote party what we want
-        byte[] remoteOpBytes = localAgentProxy.encodeRequest(new StorageMessageHeader(
+        byte[] remoteOpBytes = remoteAgentProxy.encodeMessageHeader(new StorageMessageHeader(
                 StorageProtocol.Operation.PERSIST_DATA,
                 storageInfo.getStorageFormat(),
                 storageInfo.getPath()));
@@ -70,7 +70,7 @@ public class SocketStorageClient implements StorageClient {
 
     public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
         // initialize the transfer operation - tell the remote party what we want
-        byte[] remoteOpBytes = remoteAgentProxy.encodeRequest(new StorageMessageHeader(
+        byte[] remoteOpBytes = remoteAgentProxy.encodeMessageHeader(new StorageMessageHeader(
                 StorageProtocol.Operation.RETRIEVE_DATA,
                 storageInfo.getStorageFormat(),
                 storageInfo.getPath()));
@@ -218,7 +218,7 @@ public class SocketStorageClient implements StorageClient {
                         channel.close();
                         return responseHolder.getData();
                     }
-                    if (remoteAgentProxy.readResponse(dataBuffer, responseHolder)) {
+                    if (remoteAgentProxy.readMessageResponse(dataBuffer, responseHolder)) {
                         channel.close();
                         return responseHolder.getData();
                     }
@@ -241,7 +241,7 @@ public class SocketStorageClient implements StorageClient {
                 if (key.isReadable()) {
                     SocketChannel channel = (SocketChannel) key.channel();
                     if (dataBuffer.hasRemaining()) {
-                        if (remoteAgentProxy.readRequest(dataBuffer, requestHolder)) {
+                        if (remoteAgentProxy.readMessageHeader(dataBuffer, requestHolder)) {
                             return requestHolder.getData();
                         }
                     } else {

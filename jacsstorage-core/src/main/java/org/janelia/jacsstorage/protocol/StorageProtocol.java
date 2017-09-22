@@ -14,7 +14,7 @@ public interface StorageProtocol {
 
     enum State {
         IDLE,
-        READ_REQUEST,
+        READ_MESSAGE_HEADER,
         READ_DATA_STARTED,
         WRITE_DATA_STARTED,
         READ_DATA,
@@ -57,40 +57,40 @@ public interface StorageProtocol {
      */
     String getLastErrorMessage();
     /**
-     * Encode the request
-     * @param request
+     * Encode the message header.
+     * @param messageHeader
      * @return
      * @throws IOException
      */
-    byte[] encodeRequest(StorageMessageHeader request) throws IOException;
+    byte[] encodeMessageHeader(StorageMessageHeader messageHeader) throws IOException;
     /**
      * Encode the response
-     * @param response
+     * @param messageResponse
      * @return
      * @throws IOException
      */
-    byte[] encodeResponse(StorageMessageResponse response) throws IOException;
+    byte[] encodeMessageResponse(StorageMessageResponse messageResponse) throws IOException;
     /**
-     * Consume the request from the buffer and return a value that specifies if the entire request has been consumed or not.
+     * Consume the message header from the buffer and return a value that specifies if the entire message header has been consumed or not.
      * @param buffer to read from.
-     * @param requestHolder request read
-     * @return true if it finished reading the request false otherwise
+     * @param messageHeaderHolder holder for the read message header
+     * @return true if it finished reading the header false otherwise
      * @throws IOException
      */
-    boolean readRequest(ByteBuffer buffer, Holder<StorageMessageHeader> requestHolder) throws IOException;
+    boolean readMessageHeader(ByteBuffer buffer, Holder<StorageMessageHeader> messageHeaderHolder) throws IOException;
     /**
      * Consume the response buffer
      * @param buffer
-     * @param responseHolder request read
+     * @param messageResponseHolder holder for the read response
      * @return true if it finished reading the response false otherwise
      * @throws IOException
      */
-    boolean readResponse(ByteBuffer buffer, Holder<StorageMessageResponse> responseHolder) throws IOException;
+    boolean readMessageResponse(ByteBuffer buffer, Holder<StorageMessageResponse> messageResponseHolder) throws IOException;
     /**
      * Initiate the data transfer.
      * @throws IOException
      */
-    void beginDataTransfer(StorageMessageHeader request) throws IOException;
+    void beginDataTransfer(StorageMessageHeader messageHeader) throws IOException;
     /**
      * Terminate the data transfer.
      * @throws IOException

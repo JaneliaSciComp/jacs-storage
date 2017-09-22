@@ -2,15 +2,21 @@ package org.janelia.jacsstorage.cdi;
 
 import com.fasterxml.jackson.databind. ObjectMapper;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
+import org.janelia.jacsstorage.cdi.qualifier.PooledExecutor;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.TimebasedIdGenerator;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
 public class ApplicationProducer {
@@ -49,5 +55,20 @@ public class ApplicationProducer {
                 .fromEnvVar("JACSSTORAGE_CONFIG")
                 .fromMap(ApplicationConfigProvider.applicationArgs())
                 .build();
+    }
+
+    @PooledExecutor
+    @Produces
+    public ExecutorService createPooledExecutorService(@PropertyValue(name = "Pooled") Integer deploymentContext) {
+        return Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
+    }
+
+    public void shutdownExecutor(@Disposes @PooledExecutor ExecutorService executorService) throws InterruptedException {
+        executorService.shutdown();
+        executorService.awaitTermination(1, TimeUnit.MINUTES);
     }
 }

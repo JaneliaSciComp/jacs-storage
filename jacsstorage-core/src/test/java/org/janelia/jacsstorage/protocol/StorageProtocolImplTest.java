@@ -73,14 +73,14 @@ public class StorageProtocolImplTest {
     public void writeData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
         Path testTargetPath = testDirectory.resolve("testWriteData");
-        byte[] headerBuffer = storageAgentImpl.encodeRequest(new StorageMessageHeader(
+        byte[] headerBuffer = storageAgentImpl.encodeMessageHeader(new StorageMessageHeader(
                 StorageProtocol.Operation.PERSIST_DATA,
                 JacsStorageFormat.SINGLE_DATA_FILE,
                 testTargetPath.toString()));
         FileInputStream testInput = new FileInputStream(testDataPath.toFile());
         try {
             StorageProtocol.Holder<StorageMessageHeader> requestHolder = new StorageProtocol.Holder<>();
-            while (!storageAgentImpl.readRequest(ByteBuffer.wrap(headerBuffer), requestHolder))
+            while (!storageAgentImpl.readMessageHeader(ByteBuffer.wrap(headerBuffer), requestHolder))
                 ; // keep reading until it finishes the header
             storageAgentImpl.beginDataTransfer(requestHolder.getData());
 
@@ -110,12 +110,12 @@ public class StorageProtocolImplTest {
     @Test
     public void readData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
-        byte[] headerBuffer = storageAgentImpl.encodeRequest(new StorageMessageHeader(
+        byte[] headerBuffer = storageAgentImpl.encodeMessageHeader(new StorageMessageHeader(
                 StorageProtocol.Operation.RETRIEVE_DATA,
                 JacsStorageFormat.SINGLE_DATA_FILE,
                 testDataPath.toString()));
         StorageProtocol.Holder<StorageMessageHeader> requestHolder = new StorageProtocol.Holder<>();
-        while (!storageAgentImpl.readRequest(ByteBuffer.wrap(headerBuffer), requestHolder))
+        while (!storageAgentImpl.readMessageHeader(ByteBuffer.wrap(headerBuffer), requestHolder))
             ; // keep reading until it finishes the header
 
         storageAgentImpl.beginDataTransfer(requestHolder.getData());

@@ -62,7 +62,13 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
         if (Files.notExists(sourcePath)) {
             throw new IllegalArgumentException("No path found for " + source);
         }
-        ArchiveFileVisitor archiver = new ArchiveFileVisitor(sourcePath, outputStream);
+        Path archiverRootDir;
+        if (Files.isRegularFile(sourcePath)) {
+            archiverRootDir = sourcePath.getParent();
+        } else {
+            archiverRootDir = sourcePath;
+        }
+        ArchiveFileVisitor archiver = new ArchiveFileVisitor(archiverRootDir, outputStream);
         Files.walkFileTree(sourcePath, archiver);
         outputStream.finish();
         return archiver.nBytes;

@@ -30,8 +30,8 @@ public class StorageProtocolImpl implements StorageProtocol {
 
     private State state;
     private String errormessage;
-    private ByteBuffer requestSizeValueBuffer;
-    private ByteBuffer requestBuffer;
+    private ByteBuffer headerSizeValueBuffer;
+    private ByteBuffer headerBuffer;
     private ByteBuffer responseSizeValueBuffer;
     private ByteBuffer responseBuffer;
     private Pipe writerPipe;
@@ -55,13 +55,13 @@ public class StorageProtocolImpl implements StorageProtocol {
     }
 
     @Override
-    public byte[] encodeRequest(StorageMessageHeader request) throws IOException {
-        MessageBufferPacker requestPacker = MessagePack.newDefaultBufferPacker();
-        requestPacker.packString(request.getOperation().name())
-                .packString(request.getFormat().name())
-                .packString(request.getLocation());
-        requestPacker.close();
-        byte[] msgBytes = requestPacker.toByteArray();
+    public byte[] encodeMessageHeader(StorageMessageHeader messageHeader) throws IOException {
+        MessageBufferPacker messageHeaderPacker = MessagePack.newDefaultBufferPacker();
+        messageHeaderPacker.packString(messageHeader.getOperation().name())
+                .packString(messageHeader.getFormat().name())
+                .packString(messageHeader.getLocation());
+        messageHeaderPacker.close();
+        byte[] msgBytes = messageHeaderPacker.toByteArray();
         byte[] requestBuffer = new byte[4 + msgBytes.length];
         ByteBuffer buffer = ByteBuffer.wrap(requestBuffer);
         buffer.putInt(msgBytes.length);
@@ -70,7 +70,7 @@ public class StorageProtocolImpl implements StorageProtocol {
     }
 
     @Override
-    public byte[] encodeResponse(StorageMessageResponse response) throws IOException {
+    public byte[] encodeMessageResponse(StorageMessageResponse response) throws IOException {
         MessageBufferPacker responsePacker = MessagePack.newDefaultBufferPacker();
         responsePacker
                 .packInt(response.getStatus())
@@ -87,44 +87,47 @@ public class StorageProtocolImpl implements StorageProtocol {
     }
 
     @Override
-    public boolean readRequest(ByteBuffer buffer, Holder<StorageMessageHeader> requestHolder) throws IOException {
-        if (requestSizeValueBuffer == null) {
-            requestSizeValueBuffer = ByteBuffer.allocate(4);
-            state = State.READ_REQUEST;
+    public boolean readMessageHeader(ByteBuffer buffer, Holder<StorageMessageHeader> messageHeaderHolder) throws IOException {
+        if (headerSizeValueBuffer == null) {
+            headerSizeValueBuffer = ByteBuffer.allocate(4);
+            state = State.READ_MESSAGE_HEADER;
         }
-        if (requestSizeValueBuffer.hasRemaining()) {
-            BufferUtils.copyBuffers(buffer, requestSizeValueBuffer);
-            if (requestSizeValueBuffer.hasRemaining()) {
+        if (headerSizeValueBuffer.hasRemaining()) {
+            BufferUtils.copyBuffers(buffer, headerSizeValueBuffer);
+            if (headerSizeValueBuffer.hasRemaining()) {
                 return false;
             }
         }
-        if (requestBuffer == null) {
-            requestSizeValueBuffer.flip();
-            int requestSize = requestSizeValueBuffer.getInt();
-            requestBuffer = ByteBuffer.allocate(requestSize);
+        if (headerBuffer == null) {
+            headerSizeValueBuffer.flip();
+            int requestSize = headerSizeValueBuffer.getInt();
+            headerBuffer = ByteBuffer.allocate(requestSize);
         }
-        if (requestBuffer.hasRemaining()) {
-            BufferUtils.copyBuffers(buffer, requestBuffer);
-            if (!requestBuffer.hasRemaining()) {
-                requestBuffer.flip();
-                MessageUnpacker requestUnpacker = MessagePack.newDefaultUnpacker(requestBuffer);
+        if (headerBuffer.hasRemaining()) {
+            BufferUtils.copyBuffers(buffer, headerBuffer);
+            if (!headerBuffer.hasRemaining()) {
+                headerBuffer.flip();
+                MessageUnpacker requestUnpacker = MessagePack.newDefaultUnpacker(headerBuffer);
                 Operation op = Operation.valueOf(requestUnpacker.unpackString());
                 JacsStorageFormat format = JacsStorageFormat.valueOf(requestUnpacker.unpackString());
                 String path = requestUnpacker.unpackString();
                 requestUnpacker.close();
-                requestHolder.setData(new StorageMessageHeader(op, format, path));
+                messageHeaderHolder.setData(new StorageMessageHeader(op, format, path));
+                // reset request buffers
+                headerSizeValueBuffer = null;
+                headerBuffer = null;
                 return true;
             } else {
                 return false;
             }
         } else {
-            // nothing left to read from the requestBuffer so it must've finished it before
+            // nothing left to read from the headerBuffer so it must've finished it before
             return true;
         }
     }
 
     @Override
-    public boolean readResponse(ByteBuffer buffer, Holder<StorageMessageResponse> responseHolder) throws IOException {
+    public boolean readMessageResponse(ByteBuffer buffer, Holder<StorageMessageResponse> messageResponseHolder) throws IOException {
         if (responseSizeValueBuffer == null) {
             responseSizeValueBuffer = ByteBuffer.allocate(4);
         }
@@ -147,7 +150,10 @@ public class StorageProtocolImpl implements StorageProtocol {
                 int status = responseUnpacker.unpackInt();
                 String message = responseUnpacker.unpackString();
                 long size = responseUnpacker.unpackLong();
-                responseHolder.setData(new StorageMessageResponse(status, message, size));
+                messageResponseHolder.setData(new StorageMessageResponse(status, message, size));
+                // reset response buffers
+                responseSizeValueBuffer = null;
+                responseBuffer = null;
                 return true;
             } else {
                 return false;
@@ -175,6 +181,7 @@ public class StorageProtocolImpl implements StorageProtocol {
     private void beginReadingData(JacsDataLocation dataLocation) throws IOException {
         LOG.info("Begin reading data from: {}", dataLocation);
         state = State.READ_DATA_STARTED;
+        errormessage = null; // reset error
         readerPipe = Pipe.open();
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataLocation.getStorageFormat());
         OutputStream senderStream = Channels.newOutputStream(readerPipe.sink());
@@ -215,6 +222,7 @@ public class StorageProtocolImpl implements StorageProtocol {
     private void beginWritingData(JacsDataLocation dataLocation) throws IOException {
         LOG.info("Begin writing data to: {}", dataLocation);
         state = State.WRITE_DATA_STARTED;
+        errormessage = null; // reset error
         writerPipe = Pipe.open();
         BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataLocation.getStorageFormat());
         InputStream receiverStream = Channels.newInputStream(writerPipe.source());

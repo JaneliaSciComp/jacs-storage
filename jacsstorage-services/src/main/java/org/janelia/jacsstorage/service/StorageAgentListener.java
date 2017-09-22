@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service;
 
+import org.janelia.jacsstorage.cdi.qualifier.PooledExecutor;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -49,7 +50,7 @@ public class StorageAgentListener {
     @Inject
     public StorageAgentListener(@PropertyValue(name = "StorageAgent.bindingIP") String bindingIP,
                                 @PropertyValue(name = "StorageAgent.portNo") int portNo,
-                                ExecutorService agentExecutor,
+                                @PooledExecutor ExecutorService agentExecutor,
                                 DataBundleIOProvider dataIOProvider) {
         this.bindingIP = bindingIP;
         this.portNo = portNo;
@@ -129,7 +130,7 @@ public class StorageAgentListener {
             if (numRead == -1) {
                 // stream closed - still attempt to write the response and then close the channel
                 LOG.error("Stream closed before reading the request");
-                byte[] response = channelState.serverProxy.encodeRequest(new StorageMessageHeader(
+                byte[] response = channelState.serverProxy.encodeMessageHeader(new StorageMessageHeader(
                         StorageProtocol.Operation.PROCESS_ERROR,
                         JacsStorageFormat.ARCHIVE_DATA_FILE,
                         "Stream closed before the request was read"));
@@ -142,7 +143,7 @@ public class StorageAgentListener {
                 return;
             }
             StorageProtocol.Holder<StorageMessageHeader> requestHolder = new StorageProtocol.Holder<>();
-            if (channelState.serverProxy.readRequest(channelState.readBuffer, requestHolder)) {
+            if (channelState.serverProxy.readMessageHeader(channelState.readBuffer, requestHolder)) {
                 channelState.request = requestHolder.getData();
                 channelState.serverProxy.beginDataTransfer(channelState.request);
             } else {
@@ -166,7 +167,7 @@ public class StorageAgentListener {
             key.interestOps(SelectionKey.OP_WRITE);
         } else {
             LOG.error("Invalid operation {} sent by {}", channelState.request.getOperation(), channel.getRemoteAddress());
-            byte[] response = channelState.serverProxy.encodeRequest(new StorageMessageHeader(
+            byte[] response = channelState.serverProxy.encodeMessageHeader(new StorageMessageHeader(
                     StorageProtocol.Operation.PROCESS_ERROR,
                     JacsStorageFormat.ARCHIVE_DATA_FILE,
                     "Invalid operation"));
@@ -193,7 +194,7 @@ public class StorageAgentListener {
                 case WRITE_DATA_COMPLETE:
                 case WRITE_DATA_ERROR:
                     // write the response
-                    responseBytes = channelState.serverProxy.encodeResponse(
+                    responseBytes = channelState.serverProxy.encodeMessageResponse(
                             new StorageMessageResponse(
                                     channelState.serverProxy.getState() == StorageProtocol.State.WRITE_DATA_COMPLETE ? 1 : 0,
                                     channelState.serverProxy.getLastErrorMessage(),
@@ -219,11 +220,11 @@ public class StorageAgentListener {
                             // nothing read
                             byte[] responseHeaderBytes;
                             if (channelState.serverProxy.getState() == StorageProtocol.State.READ_DATA_ERROR) {
-                                responseHeaderBytes = channelState.serverProxy.encodeRequest(
+                                responseHeaderBytes = channelState.serverProxy.encodeMessageHeader(
                                         new StorageMessageHeader(StorageProtocol.Operation.PROCESS_ERROR, JacsStorageFormat.ARCHIVE_DATA_FILE, channelState.serverProxy.getLastErrorMessage())
                                 );
                             } else {
-                                responseHeaderBytes = channelState.serverProxy.encodeRequest(
+                                responseHeaderBytes = channelState.serverProxy.encodeMessageHeader(
                                         new StorageMessageHeader(StorageProtocol.Operation.PROCESS_RESPONSE, JacsStorageFormat.ARCHIVE_DATA_FILE, "")
                                 );
                             }
@@ -232,7 +233,7 @@ public class StorageAgentListener {
                             return;
                         } else {
                             channelState.responseBuffer.flip();
-                            byte[] responseHeaderBytes = channelState.serverProxy.encodeRequest(
+                            byte[] responseHeaderBytes = channelState.serverProxy.encodeMessageHeader(
                                     new StorageMessageHeader(StorageProtocol.Operation.PROCESS_RESPONSE, JacsStorageFormat.ARCHIVE_DATA_FILE, "")
                             );
                             writeBuffer(ByteBuffer.wrap(responseHeaderBytes), channel);
@@ -252,7 +253,7 @@ public class StorageAgentListener {
                     return;
                 case READ_DATA_ERROR:
                     if (channelState.responseBuffer == null) {
-                        byte[] response = channelState.serverProxy.encodeRequest(new StorageMessageHeader(
+                        byte[] response = channelState.serverProxy.encodeMessageHeader(new StorageMessageHeader(
                                 StorageProtocol.Operation.PROCESS_ERROR,
                                 JacsStorageFormat.ARCHIVE_DATA_FILE,
                                 channelState.serverProxy.getLastErrorMessage()));
