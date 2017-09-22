@@ -10,7 +10,8 @@ import java.util.Date;
 public class JacsStorageVolume extends AbstractEntity {
 
     private String name; // volume name
-    private String location; // location (hostname or IP)
+    private String location; // name that uniquely identifies the location
+    private String mountHostIP; // IP of the host where the storage volume resides
     private String mountPoint;
     private Long capacityInMB;
     private Long availableInMB;
@@ -30,6 +31,14 @@ public class JacsStorageVolume extends AbstractEntity {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public String getMountHostIP() {
+        return mountHostIP;
+    }
+
+    public void setMountHostIP(String mountHostIP) {
+        this.mountHostIP = mountHostIP;
     }
 
     public String getMountPoint() {

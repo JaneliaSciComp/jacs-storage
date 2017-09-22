@@ -6,6 +6,7 @@ import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.utils.PathUtils;
 
@@ -34,8 +35,12 @@ public class StorageServiceCoordinator implements StorageService {
                 .map(storageAgentInfo -> {
                     JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocation(storageAgentInfo.getLocation());
                     if (StringUtils.isBlank(storageVolume.getMountPoint())) {
+                        storageVolume.setMountHostIP(storageAgentInfo.getConnectionInfo());
                         storageVolume.setMountPoint(storageAgentInfo.getStoragePath());
-                        storageVolumeDao.update(storageVolume, ImmutableMap.of("mountPoint", new SetFieldValueHandler<>(storageVolume.getMountPoint())));
+                        storageVolumeDao.update(storageVolume, ImmutableMap.of(
+                                        "mountHostIP", new SetFieldValueHandler<>(storageVolume.getMountHostIP()),
+                                        "mountPoint", new SetFieldValueHandler<>(storageVolume.getMountPoint()))
+                        );
                     }
                     dataBundle.setStorageVolumeId(storageVolume.getId());
                     dataBundle.setStorageVolume(storageVolume);
@@ -74,5 +79,24 @@ public class StorageServiceCoordinator implements StorageService {
                     bundle.setConnectionInfo(storageAgent.getConnectionInfo());
                     return bundle;
                 });
+    }
+
+    @Override
+    public JacsBundle updateDataBundle(JacsBundle dataBundle) {
+        JacsBundle existingBundle = bundleDao.findById(dataBundle.getId());
+        if (existingBundle == null) {
+            return null;
+        }
+        ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedFieldsBuilder = ImmutableMap.<String, EntityFieldValueHandler<?>>builder();
+        if (dataBundle.hasUsedSpaceInKBSet()) {
+            if (existingBundle.hasUsedSpaceInKBSet()) {
+                existingBundle.setUsedSpaceInKB(existingBundle.getUsedSpaceInKB() + dataBundle.getUsedSpaceInKB());
+            } else {
+                existingBundle.setUsedSpaceInKB(dataBundle.getUsedSpaceInKB());
+            }
+            updatedFieldsBuilder.put("usedSpaceInKB", new SetFieldValueHandler<>(existingBundle.getUsedSpaceInKB()));
+        }
+        bundleDao.update(dataBundle, updatedFieldsBuilder.build());
+        return existingBundle;
     }
 }

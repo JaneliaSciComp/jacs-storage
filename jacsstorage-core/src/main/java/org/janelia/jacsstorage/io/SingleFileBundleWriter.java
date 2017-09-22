@@ -19,6 +19,9 @@ public class SingleFileBundleWriter extends AbstractBundleWriter {
     @Override
     protected long writeBundleBytes(InputStream stream, String target) throws Exception {
         Path targetPath = Paths.get(target);
+        if (Files.exists(targetPath)) {
+            throw new IllegalArgumentException("Target path " + target + " already exists");
+        }
         Files.createDirectories(targetPath.getParent());
         return Files.copy(stream, targetPath);
     }

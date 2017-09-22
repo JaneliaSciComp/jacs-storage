@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Optional;
 
 public class StorageClientImpl implements StorageClient {
     private static final Logger LOG = LoggerFactory.getLogger(StorageClientImpl.class);
@@ -30,7 +31,11 @@ public class StorageClientImpl implements StorageClient {
 
     public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
         DataStorageInfo allocatedStorage = allocateStorage(storageInfo);
-        return storageClient.persistData(localPath, allocatedStorage);
+        StorageMessageResponse storageResponse = storageClient.persistData(localPath, allocatedStorage);
+        if (storageResponse.getStatus() == StorageMessageResponse.OK) {
+            updateStorageInfo(storageResponse.getSize(), allocatedStorage);
+        }
+        return storageResponse;
     }
 
     private DataStorageInfo allocateStorage(DataStorageInfo storageRequest) {
@@ -58,6 +63,35 @@ public class StorageClientImpl implements StorageClient {
                 httpClient.close();
             }
         }
+    }
+
+    private Optional<DataStorageInfo> updateStorageInfo(long messageSize, DataStorageInfo storageInfo) {
+        String storageEndpoint = String.format("/storage/%d", storageInfo.getId());
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(storageInfo.getConnectionInfo()).path(storageEndpoint);
+
+            DataStorageInfo storageUpdate = new DataStorageInfo();
+            storageUpdate.setRequestedSpaceInKB(messageSize);
+            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .put(Entity.json(storageUpdate))
+                    ;
+
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return Optional.of(response.readEntity(DataStorageInfo.class));
+            } else {
+                LOG.warn("Update storage info returned with status {}", responseStatus);
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+        return Optional.empty();
     }
 
     @Override

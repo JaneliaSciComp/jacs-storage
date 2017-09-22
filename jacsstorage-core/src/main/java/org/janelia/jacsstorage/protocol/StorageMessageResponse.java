@@ -1,6 +1,9 @@
 package org.janelia.jacsstorage.protocol;
 
 public class StorageMessageResponse {
+    public static final int OK = 0;
+    public static final int ERROR = 1;
+
     private final int status;
     private final String message;
     private final long size;
@@ -11,6 +14,10 @@ public class StorageMessageResponse {
         this.size = size;
     }
 
+    /**
+     * Message status
+     * @return 0 for OK - non zero for errors
+     */
     public int getStatus() {
         return status;
     }

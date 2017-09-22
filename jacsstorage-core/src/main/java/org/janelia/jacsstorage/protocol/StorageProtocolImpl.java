@@ -28,7 +28,7 @@ public class StorageProtocolImpl implements StorageProtocol {
     private final ExecutorService backgroundTransferExecutor;
     private final DataBundleIOProvider dataIOProvider;
 
-    private State state;
+    private volatile State state;
     private String errormessage;
     private ByteBuffer headerSizeValueBuffer;
     private ByteBuffer headerBuffer;
@@ -192,8 +192,8 @@ public class StorageProtocolImpl implements StorageProtocol {
                 state = State.READ_DATA_COMPLETE;
             } catch (Exception e) {
                 LOG.error("Error while reading {}", dataLocation, e);
-                state = State.READ_DATA_ERROR;
                 errormessage = "Error reading data: " + e.getMessage();
+                state = State.READ_DATA_ERROR;
             } finally {
                 IOUtils.closeQuietly(readerPipe.sink());
             }
@@ -233,8 +233,8 @@ public class StorageProtocolImpl implements StorageProtocol {
                 state = State.WRITE_DATA_COMPLETE;
             } catch (Exception e) {
                 LOG.error("Error while writing {}", dataLocation, e);
-                state = State.WRITE_DATA_ERROR;
                 errormessage = "Error writing data: " + e.getMessage();
+                state = State.WRITE_DATA_ERROR;
             } finally {
                 IOUtils.closeQuietly(writerPipe.source());
                 writerPipe = null;
@@ -244,6 +244,9 @@ public class StorageProtocolImpl implements StorageProtocol {
 
     @Override
     public int writeData(ByteBuffer buffer) throws IOException {
+        if (writerPipe == null) {
+            return 0;
+        }
         Pipe.SinkChannel writeChannel = writerPipe.sink();
         int totalBytesWritten = 0;
         while (buffer.hasRemaining()) {

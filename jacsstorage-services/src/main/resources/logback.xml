@@ -22,9 +22,9 @@
         </triggeringPolicy>
     </appender>
 
-    <logger name="io.undertow" level="debug" />
-    <logger name="org.jboss" level="debug" />
-    <logger name="org.glassfish" level="debug" />
+    <logger name="io.undertow" level="error" />
+    <logger name="org.jboss" level="error" />
+    <logger name="org.glassfish" level="error" />
     <logger name="org.mongodb.driver" level="error" />
     <logger name="org.xnio.nio" level="error" />
     <logger name="org.janelia.jacsstorage" level="debug" />

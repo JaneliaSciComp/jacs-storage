@@ -21,6 +21,6 @@ public class CoreCdiProducer {
 
     public void shutdownExecutor(@Disposes @Default ExecutorService executorService) throws InterruptedException {
         executorService.shutdown();
-        executorService.awaitTermination(1, TimeUnit.MINUTES);
+        executorService.awaitTermination(1, TimeUnit.SECONDS);
     }
 }

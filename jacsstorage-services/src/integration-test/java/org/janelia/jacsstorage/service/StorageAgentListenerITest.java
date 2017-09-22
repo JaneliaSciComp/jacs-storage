@@ -33,6 +33,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertThat;
@@ -68,8 +69,8 @@ public class StorageAgentListenerITest {
         when(bundleWriterSource.iterator())
                 .then(invocation -> dataWriters.iterator());
         dataBundleIOProvider = new DataBundleIOProvider(bundleReaderSource, bundleWriterSource);
-        socketStorageListener = new StorageAgentListener("localhost", 0, Executors.newSingleThreadExecutor(), dataBundleIOProvider);
         CoreCdiProducer cdiProducer = new CoreCdiProducer();
+        socketStorageListener = new StorageAgentListener("localhost", 0, Executors.newFixedThreadPool(3), dataBundleIOProvider);
         startListener(cdiProducer.createSingleExecutorService());
     }
 
@@ -78,9 +79,14 @@ public class StorageAgentListenerITest {
         agentExecutor.execute(() -> {
             try {
                 listenerSocketAddr = socketStorageListener.open();
-                started.countDown();
-                socketStorageListener.startServer();
             } catch (Exception e) {
+                throw new IllegalStateException(e);
+            } finally {
+                started.countDown();
+            }
+            try {
+                socketStorageListener.startServer();
+            } catch (IOException e) {
                 throw new IllegalStateException(e);
             }
         });
@@ -121,8 +127,8 @@ public class StorageAgentListenerITest {
         }
         StorageClient storageClient = createStorageClient();
         List<TestData> testData = ImmutableList.<TestData>builder()
-                .add(new TestData(
-                                storageInfo(testDirectory.resolve("td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
+                .add(new TestData(storageInfo(
+                                testDirectory.resolve("td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
                                 storageInfo(testDirectory.resolve("td1.local"), JacsStorageFormat.ARCHIVE_DATA_FILE))
                 )
                 .add(new TestData(
@@ -143,12 +149,12 @@ public class StorageAgentListenerITest {
         for (TestData td : testData) {
             StorageMessageResponse persistenceResponse = storageClient.persistData(sourceTestDataDirectory.toString(), td.persistedDataStorageInfo);
             Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
-            assertThat(persistenceResponse.getStatus(), equalTo(1));
+            assertThat(persistenceResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(targetPath));
             assertThat(PathUtils.getSize(targetPath), lessThanOrEqualTo(persistenceResponse.getSize()));
             StorageMessageResponse retrievalResponse = storageClient.retrieveData(td.retrievedDataStorageInfo.getPath(), td.persistedDataStorageInfo);
             Path localPath = Paths.get(td.retrievedDataStorageInfo.getPath());
-            assertThat(retrievalResponse.getStatus(), equalTo(1));
+            assertThat(retrievalResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(localPath));
             assertThat(PathUtils.getSize(localPath), equalTo(sourceTestDataDirSize));
             assertThat(retrievalResponse.getSize(), equalTo(persistenceResponse.getSize()));
@@ -194,16 +200,71 @@ public class StorageAgentListenerITest {
         for (TestData td : testData) {
             StorageMessageResponse persistenceResponse = storageClient.persistData(sourceTestDataFile.toString(), td.persistedDataStorageInfo);
             Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
-            assertThat(persistenceResponse.getStatus(), equalTo(1));
+            assertThat(persistenceResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(targetPath));
             assertThat(PathUtils.getSize(targetPath), lessThanOrEqualTo(persistenceResponse.getSize()));
             StorageMessageResponse retrievalResponse = storageClient.retrieveData(td.retrievedDataStorageInfo.getPath(), td.persistedDataStorageInfo);
             Path localPath = Paths.get(td.retrievedDataStorageInfo.getPath());
-            assertThat(retrievalResponse.getStatus(), equalTo(1));
+            assertThat(retrievalResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(localPath));
             assertThat(PathUtils.getSize(localPath), equalTo(sourceTestDataDirSize));
             assertThat(retrievalResponse.getSize(), equalTo(persistenceResponse.getSize()));
         }
+    }
+
+    @Test
+    public void sendError() throws IOException {
+        class TestData {
+            final Path sourceDataPath;
+            final DataStorageInfo persistedDataStorageInfo;
+            final String expectedErrorMessage;
+
+            public TestData(Path sourceDataPath,
+                            DataStorageInfo persistedDataStorageInfo,
+                            String expectedErrorMessage) {
+                this.sourceDataPath = sourceDataPath;
+                this.persistedDataStorageInfo = persistedDataStorageInfo;
+                this.expectedErrorMessage = expectedErrorMessage;
+            }
+        }
+        Path sourceTestData = Paths.get(TEST_DATA_DIRECTORY);
+        StorageClient storageClient = createStorageClient();
+        List<TestData> testData = ImmutableList.<TestData>builder()
+                .add(new TestData(
+                                sourceTestData,
+                                storageInfo(testDirectory.resolve("td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
+                                "Target path %s already exists")
+                )
+                .add(new TestData(
+                                sourceTestData,
+                                storageInfo(testDirectory.resolve("td2.remote"), JacsStorageFormat.DATA_DIRECTORY),
+                                "Error writing data: java.nio.file.FileAlreadyExistsException: %s")
+                )
+                .add(new TestData(
+                                sourceTestData.resolve("f_1_1"),
+                                storageInfo(testDirectory.resolve("td3.remote"), JacsStorageFormat.SINGLE_DATA_FILE),
+                                "Target path %s already exists")
+                )
+                .build();
+        for (TestData td : testData) {
+            StorageMessageResponse persistenceOKResponse = storageClient.persistData(td.sourceDataPath.toString(), td.persistedDataStorageInfo);
+            Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
+            assertThat(td.persistedDataStorageInfo.getPath(), persistenceOKResponse.getStatus(), equalTo(StorageMessageResponse.OK));
+            assertTrue(Files.exists(targetPath));
+            StorageMessageResponse persistenceErrorResponse = storageClient.persistData(td.sourceDataPath.toString(), td.persistedDataStorageInfo);
+            assertThat(persistenceErrorResponse.getStatus(), equalTo(StorageMessageResponse.ERROR));
+            assertThat(persistenceErrorResponse.getMessage(), containsString(String.format(td.expectedErrorMessage, td.persistedDataStorageInfo.getPath())));
+        }
+    }
+
+    @Test
+    public void retrieveError() throws IOException {
+        DataStorageInfo remoteStorageInfo = storageInfo(testDirectory.resolve("td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE);
+        DataStorageInfo localStorageInfo = storageInfo(testDirectory.resolve("td1.local"), JacsStorageFormat.ARCHIVE_DATA_FILE);
+        StorageClient storageClient = createStorageClient();
+        StorageMessageResponse retrieveErrorResponse = storageClient.retrieveData(localStorageInfo.getPath(), remoteStorageInfo);
+        assertThat(retrieveErrorResponse.getStatus(), equalTo(StorageMessageResponse.ERROR));
+        assertThat(retrieveErrorResponse.getMessage(), containsString(String.format("No file found for %s", remoteStorageInfo.getPath())));
     }
 
     private DataStorageInfo storageInfo(Path targetPath, JacsStorageFormat storageFormat) throws IOException {

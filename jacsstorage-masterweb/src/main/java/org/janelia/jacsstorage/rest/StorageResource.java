@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -81,4 +82,23 @@ public class StorageResource {
                         .entity(ImmutableMap.of("errormessage", "Metadata could not be created. Usually the reason is that no agent is available"))
                         .build());
     }
+
+    @Consumes("application/json")
+    @PUT
+    @Path("{id}")
+    public Response updateBundleInfo(@PathParam("id") Long id, DataStorageInfo dataStorageInfo) {
+        JacsBundle dataBundle = dataStorageInfo.asDataBundle();
+        dataBundle.setId(id);
+        JacsBundle updatedDataBundleInfo = storageService.updateDataBundle(dataBundle);
+        if (updatedDataBundleInfo == null) {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .build();
+        } else {
+            return Response
+                    .ok(DataStorageInfo.fromBundle(updatedDataBundleInfo))
+                    .build();
+        }
+    }
+
 }

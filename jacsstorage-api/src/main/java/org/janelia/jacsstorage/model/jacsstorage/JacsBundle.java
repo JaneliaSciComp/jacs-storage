@@ -76,6 +76,10 @@ public class JacsBundle extends AbstractEntity {
         this.usedSpaceInKB = usedSpaceInKB;
     }
 
+    public boolean hasUsedSpaceInKBSet() {
+        return usedSpaceInKB != null && usedSpaceInKB != 0L;
+    }
+
     public Date getCreated() {
         return created;
     }

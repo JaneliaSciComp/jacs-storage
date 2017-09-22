@@ -9,7 +9,6 @@ import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.TimebasedIdGenerator;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
@@ -59,8 +58,8 @@ public class ApplicationProducer {
 
     @PooledExecutor
     @Produces
-    public ExecutorService createPooledExecutorService(@PropertyValue(name = "Pooled") Integer deploymentContext) {
-        return Executors.newSingleThreadExecutor(r -> {
+    public ExecutorService createPooledExecutorService(@PropertyValue(name = "StorageAgent.ThreadPoolSize") Integer poolSize) {
+        return Executors.newFixedThreadPool(poolSize, r -> {
             Thread t = new Thread(r);
             t.setDaemon(true);
             return t;
@@ -69,6 +68,6 @@ public class ApplicationProducer {
 
     public void shutdownExecutor(@Disposes @PooledExecutor ExecutorService executorService) throws InterruptedException {
         executorService.shutdown();
-        executorService.awaitTermination(1, TimeUnit.MINUTES);
+        executorService.awaitTermination(1, TimeUnit.SECONDS);
     }
 }

@@ -20,6 +20,8 @@ import java.util.Iterator;
 
 public class SocketStorageClient implements StorageClient {
 
+    private static final long SELECTOR_TIMEOUT = 10000;
+
     private final StorageProtocol localAgentProxy;
     private final StorageProtocol remoteAgentProxy;
     private Selector selector;
@@ -31,77 +33,85 @@ public class SocketStorageClient implements StorageClient {
 
     @Override
     public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
-        // initialize the transfer operation - tell the remote party what we want
-        byte[] remoteOpBytes = remoteAgentProxy.encodeMessageHeader(new StorageMessageHeader(
-                StorageProtocol.Operation.PERSIST_DATA,
-                storageInfo.getStorageFormat(),
-                storageInfo.getPath()));
-        ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
-        openChannel(remoteOpBuffer, getConnectionHost(storageInfo.getConnectionInfo()), getConnectionPort(storageInfo.getConnectionInfo()), SelectionKey.OP_WRITE); // open the channel for writing the data
+        try {
+            // initialize the transfer operation - tell the remote party what we want
+            byte[] remoteOpBytes = remoteAgentProxy.encodeMessageHeader(new StorageMessageHeader(
+                    StorageProtocol.Operation.PERSIST_DATA,
+                    storageInfo.getStorageFormat(),
+                    storageInfo.getPath()));
+            ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
+            openChannel(remoteOpBuffer, getConnectionHost(storageInfo.getConnectionInfo()), getConnectionPort(storageInfo.getConnectionInfo()), SelectionKey.OP_WRITE); // open the channel for writing the data
 
-        // figure out the best local data format
-        Path sourcePath = Paths.get(localPath);
-        JacsStorageFormat localDataFormat;
-        if (Files.isDirectory(sourcePath)) {
-            if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
-                throw new IllegalArgumentException("Cannot persist directory " + localPath + " as a single file");
-            }
-            localDataFormat = JacsStorageFormat.DATA_DIRECTORY;
-        } else {
-            if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
-                localDataFormat = JacsStorageFormat.SINGLE_DATA_FILE;
-            } else {
+            // figure out the best local data format
+            Path sourcePath = Paths.get(localPath);
+            JacsStorageFormat localDataFormat;
+            if (Files.isDirectory(sourcePath)) {
+                if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
+                    throw new IllegalArgumentException("Cannot persist directory " + localPath + " as a single file");
+                }
                 localDataFormat = JacsStorageFormat.DATA_DIRECTORY;
+            } else {
+                if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
+                    localDataFormat = JacsStorageFormat.SINGLE_DATA_FILE;
+                } else {
+                    localDataFormat = JacsStorageFormat.DATA_DIRECTORY;
+                }
             }
-        }
-        // initiate the local data read operation
-        localAgentProxy.beginDataTransfer(new StorageMessageHeader(
-                StorageProtocol.Operation.RETRIEVE_DATA,
-                localDataFormat,
-                localPath));
+            // initiate the local data read operation
+            localAgentProxy.beginDataTransfer(new StorageMessageHeader(
+                    StorageProtocol.Operation.RETRIEVE_DATA,
+                    localDataFormat,
+                    localPath));
 
-        ByteBuffer dataTransferBuffer = ByteBuffer.allocate(2048);
-        dataTransferBuffer.limit(0); // the data buffer is empty
-        sendData(dataTransferBuffer);
-        dataTransferBuffer.position(0);
-        dataTransferBuffer.limit(0);
-        return retrieveResponse(dataTransferBuffer);
+            ByteBuffer dataTransferBuffer = ByteBuffer.allocate(2048);
+            dataTransferBuffer.limit(0); // the data buffer is empty
+            sendData(dataTransferBuffer);
+            dataTransferBuffer.position(0);
+            dataTransferBuffer.limit(0);
+            return retrieveResponse(dataTransferBuffer);
+        } finally {
+            closeChannel();
+        }
     }
 
     public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
-        // initialize the transfer operation - tell the remote party what we want
-        byte[] remoteOpBytes = remoteAgentProxy.encodeMessageHeader(new StorageMessageHeader(
-                StorageProtocol.Operation.RETRIEVE_DATA,
-                storageInfo.getStorageFormat(),
-                storageInfo.getPath()));
-        ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
-        openChannel(remoteOpBuffer, getConnectionHost(storageInfo.getConnectionInfo()), getConnectionPort(storageInfo.getConnectionInfo()), SelectionKey.OP_READ); // open the channel for reading the data
+        try {
+            // initialize the transfer operation - tell the remote party what we want
+            byte[] remoteOpBytes = remoteAgentProxy.encodeMessageHeader(new StorageMessageHeader(
+                    StorageProtocol.Operation.RETRIEVE_DATA,
+                    storageInfo.getStorageFormat(),
+                    storageInfo.getPath()));
+            ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
+            openChannel(remoteOpBuffer, getConnectionHost(storageInfo.getConnectionInfo()), getConnectionPort(storageInfo.getConnectionInfo()), SelectionKey.OP_READ); // open the channel for reading the data
 
-        // figure out how to write the local data
-        JacsStorageFormat localDataFormat;
-        if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
-            Files.createDirectories(Paths.get(localPath).getParent());
-            localDataFormat = JacsStorageFormat.SINGLE_DATA_FILE;
-        } else {
-            // expand everything locally
-            Files.createDirectories(Paths.get(localPath));
-            localDataFormat = JacsStorageFormat.DATA_DIRECTORY;
-        }
-        // initiate the local data write operation
-        localAgentProxy.beginDataTransfer(new StorageMessageHeader(
-                StorageProtocol.Operation.PERSIST_DATA,
-                localDataFormat,
-                localPath));
-        ByteBuffer dataTransferBuffer = ByteBuffer.allocate(2048);
-        dataTransferBuffer.position(0);
-        dataTransferBuffer.limit(0);
-        StorageMessageHeader responseHeader = retrieveResponseHeader(dataTransferBuffer);
-        if (responseHeader.getOperation() == StorageProtocol.Operation.PROCESS_RESPONSE) {
-            return retrieveData(dataTransferBuffer);
-        } else if (responseHeader.getOperation() == StorageProtocol.Operation.PROCESS_ERROR) {
-            return new StorageMessageResponse(0, responseHeader.getLocation(), 0);
-        } else {
-            throw new IllegalStateException("Invalid response operation");
+            // figure out how to write the local data
+            JacsStorageFormat localDataFormat;
+            if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
+                Files.createDirectories(Paths.get(localPath).getParent());
+                localDataFormat = JacsStorageFormat.SINGLE_DATA_FILE;
+            } else {
+                // expand everything locally
+                Files.createDirectories(Paths.get(localPath));
+                localDataFormat = JacsStorageFormat.DATA_DIRECTORY;
+            }
+            // initiate the local data write operation
+            localAgentProxy.beginDataTransfer(new StorageMessageHeader(
+                    StorageProtocol.Operation.PERSIST_DATA,
+                    localDataFormat,
+                    localPath));
+            ByteBuffer dataTransferBuffer = ByteBuffer.allocate(2048);
+            dataTransferBuffer.position(0);
+            dataTransferBuffer.limit(0);
+            StorageMessageHeader responseHeader = retrieveResponseHeader(dataTransferBuffer);
+            if (responseHeader.getOperation() == StorageProtocol.Operation.PROCESS_RESPONSE) {
+                return retrieveData(dataTransferBuffer);
+            } else if (responseHeader.getOperation() == StorageProtocol.Operation.PROCESS_ERROR) {
+                return new StorageMessageResponse(StorageMessageResponse.ERROR, responseHeader.getLocation(), 0);
+            } else {
+                throw new IllegalStateException("Invalid response operation");
+            }
+        } finally {
+            closeChannel();
         }
     }
 
@@ -141,9 +151,17 @@ public class SocketStorageClient implements StorageClient {
         sendRequest(headerBuffer, channelIOOp);
     }
 
+    private void closeChannel() throws IOException {
+        try {
+            if (selector != null && selector.isOpen()) selector.close();
+        } finally {
+            selector = null;
+        }
+    }
+
     private void sendRequest(ByteBuffer headerBuffer, int nextOp) throws IOException {
         while (true) {
-            selector.select();
+            selector.select(SELECTOR_TIMEOUT);
             Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
             while (keys.hasNext()) {
                 SelectionKey key = keys.next();
@@ -169,7 +187,7 @@ public class SocketStorageClient implements StorageClient {
 
     private void sendData(ByteBuffer dataBuffer) throws IOException {
         while (true) {
-            selector.select();
+            selector.select(SELECTOR_TIMEOUT);
             Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
             while (keys.hasNext()) {
                 SelectionKey key = keys.next();
@@ -203,7 +221,7 @@ public class SocketStorageClient implements StorageClient {
     private StorageMessageResponse retrieveResponse(ByteBuffer dataBuffer) throws IOException {
         StorageProtocol.Holder<StorageMessageResponse> responseHolder = new StorageProtocol.Holder<>();
         while (true) {
-            selector.select();
+            selector.select(SELECTOR_TIMEOUT);
             Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
             while (keys.hasNext()) {
                 SelectionKey key = keys.next();
@@ -230,7 +248,7 @@ public class SocketStorageClient implements StorageClient {
     private StorageMessageHeader retrieveResponseHeader(ByteBuffer dataBuffer) throws IOException {
         StorageProtocol.Holder<StorageMessageHeader> requestHolder = new StorageProtocol.Holder<>();
         while (true) {
-            selector.select();
+            selector.select(SELECTOR_TIMEOUT);
             Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
             while (keys.hasNext()) {
                 SelectionKey key = keys.next();
@@ -259,7 +277,7 @@ public class SocketStorageClient implements StorageClient {
     private StorageMessageResponse retrieveData(ByteBuffer dataBuffer) throws IOException {
         long nTransferredBytes = 0L;
         while (true) {
-            selector.select();
+            selector.select(SELECTOR_TIMEOUT);
             Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
             while (keys.hasNext()) {
                 SelectionKey key = keys.next();
@@ -284,7 +302,7 @@ public class SocketStorageClient implements StorageClient {
                             } finally {
                                 channel.close();
                             }
-                            return new StorageMessageResponse(1, null, nTransferredBytes);
+                            return new StorageMessageResponse(StorageMessageResponse.OK, null, nTransferredBytes);
                         }
                     }
                 }
