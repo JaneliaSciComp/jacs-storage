@@ -6,6 +6,8 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.protocol.StorageProtocol;
 import org.janelia.jacsstorage.protocol.StorageMessageHeader;
 import org.janelia.jacsstorage.protocol.StorageMessageResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -20,6 +22,7 @@ import java.util.Iterator;
 
 public class SocketStorageClient implements StorageClient {
 
+    private static final Logger LOG = LoggerFactory.getLogger(SocketStorageClient.class);
     private static final long SELECTOR_TIMEOUT = 10000;
 
     private final StorageProtocol localAgentProxy;
@@ -65,7 +68,8 @@ public class SocketStorageClient implements StorageClient {
 
             ByteBuffer dataTransferBuffer = ByteBuffer.allocate(2048);
             dataTransferBuffer.limit(0); // the data buffer is empty
-            sendData(dataTransferBuffer);
+            long nbytesSent = sendData(dataTransferBuffer);
+            LOG.info("Sent {} bytes", nbytesSent);
             dataTransferBuffer.position(0);
             dataTransferBuffer.limit(0);
             return retrieveResponse(dataTransferBuffer);
@@ -185,8 +189,10 @@ public class SocketStorageClient implements StorageClient {
         }
     }
 
-    private void sendData(ByteBuffer dataBuffer) throws IOException {
-        while (true) {
+    private long sendData(ByteBuffer dataBuffer) throws IOException {
+        long totalBytesSent = 0;
+        boolean done = false;
+        while (!done) {
             selector.select(SELECTOR_TIMEOUT);
             Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
             while (keys.hasNext()) {
@@ -208,20 +214,35 @@ public class SocketStorageClient implements StorageClient {
                             channel.shutdownOutput();
                             // get ready to read the response
                             key.interestOps(SelectionKey.OP_READ);
-                            return;
+                            done = true;
                         } else {
+                            totalBytesSent += nbytes;
                             dataBuffer.flip(); // prepare the buffer for reading again
                         }
                     }
                 }
             }
         }
+        return totalBytesSent;
     }
 
     private StorageMessageResponse retrieveResponse(ByteBuffer dataBuffer) throws IOException {
         StorageProtocol.Holder<StorageMessageResponse> responseHolder = new StorageProtocol.Holder<>();
+        int timeoutCount = 0;
         while (true) {
-            selector.select(SELECTOR_TIMEOUT);
+            int nkeys = selector.select(SELECTOR_TIMEOUT);
+            if (nkeys == 0) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                }
+                timeoutCount++;
+                if (timeoutCount > 5) {
+                    throw new IllegalStateException("Timeout waiting for the response");
+                }
+            } else {
+                timeoutCount = 0;
+            }
             Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
             while (keys.hasNext()) {
                 SelectionKey key = keys.next();
@@ -288,7 +309,13 @@ public class SocketStorageClient implements StorageClient {
                 if (key.isReadable()) {
                     SocketChannel channel = (SocketChannel) key.channel();
                     if (dataBuffer.hasRemaining()) {
-                        nTransferredBytes += localAgentProxy.writeData(dataBuffer);
+                        int numWritten = localAgentProxy.writeData(dataBuffer);
+                        if (numWritten == -1) {
+                            channel.close();
+                            return new StorageMessageResponse(StorageMessageResponse.ERROR, localAgentProxy.getLastErrorMessage(), nTransferredBytes);
+                        } else {
+                            nTransferredBytes += numWritten;
+                        }
                     } else {
                         int numRead = read(channel, dataBuffer);
                         if (numRead == -1) {

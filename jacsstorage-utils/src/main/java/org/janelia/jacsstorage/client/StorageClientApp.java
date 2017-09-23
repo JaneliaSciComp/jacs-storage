@@ -24,7 +24,7 @@ public class StorageClientApp {
 
     private static class CommandMain {
         @Parameter(names = "-server", description = "Storage (master) server URL")
-        private String serverURL = "http://localhost:8081/jacsstorage/master-api";
+        private String serverURL = "http://localhost:8080/jacsstorage/master-api";
     }
 
     @Parameters(commandDescription = "Send data to the storage server")

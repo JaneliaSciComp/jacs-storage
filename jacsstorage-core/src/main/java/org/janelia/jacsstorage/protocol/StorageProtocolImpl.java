@@ -180,11 +180,11 @@ public class StorageProtocolImpl implements StorageProtocol {
 
     private void beginReadingData(JacsDataLocation dataLocation) throws IOException {
         LOG.info("Begin reading data from: {}", dataLocation);
-        state = State.READ_DATA_STARTED;
         errormessage = null; // reset error
         readerPipe = Pipe.open();
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataLocation.getStorageFormat());
         OutputStream senderStream = Channels.newOutputStream(readerPipe.sink());
+        state = State.READ_DATA_STARTED;
         backgroundTransferExecutor.execute(() -> {
             try {
                 state = State.READ_DATA;
@@ -221,11 +221,11 @@ public class StorageProtocolImpl implements StorageProtocol {
 
     private void beginWritingData(JacsDataLocation dataLocation) throws IOException {
         LOG.info("Begin writing data to: {}", dataLocation);
-        state = State.WRITE_DATA_STARTED;
         errormessage = null; // reset error
         writerPipe = Pipe.open();
         BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataLocation.getStorageFormat());
         InputStream receiverStream = Channels.newInputStream(writerPipe.source());
+        state = State.WRITE_DATA_STARTED;
         backgroundTransferExecutor.execute(() -> {
             try {
                 state = State.WRITE_DATA;
@@ -245,7 +245,7 @@ public class StorageProtocolImpl implements StorageProtocol {
     @Override
     public int writeData(ByteBuffer buffer) throws IOException {
         if (writerPipe == null) {
-            return 0;
+            return -1;
         }
         Pipe.SinkChannel writeChannel = writerPipe.sink();
         int totalBytesWritten = 0;

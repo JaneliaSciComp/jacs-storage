@@ -155,18 +155,25 @@ public class StorageAgentListener {
         if (channelState.request.getOperation() == StorageProtocol.Operation.PERSIST_DATA) {
             if (numRead == -1) {
                 // nothing left to read
-                channelState.serverProxy.endDataTransfer();
                 // prepare to write the response
                 key.interestOps(SelectionKey.OP_WRITE);
-                channelState.readBuffer.clear();
+                channel.shutdownInput();
+                channelState.serverProxy.endDataTransfer();
             } else {
                 // persist the data
-                channelState.nTransferredBytes  += channelState.serverProxy.writeData(channelState.readBuffer);
+                int numWritten = channelState.serverProxy.writeData(channelState.readBuffer);
+                if (numWritten == -1) {
+                    key.interestOps(SelectionKey.OP_WRITE);
+                    channel.shutdownInput();
+                } else {
+                    channelState.nTransferredBytes  += numWritten;
+                }
             }
         } else if (channelState.request.getOperation() == StorageProtocol.Operation.RETRIEVE_DATA) {
             // prepare to send the data
             key.interestOps(SelectionKey.OP_WRITE);
         } else {
+            key.interestOps(SelectionKey.OP_WRITE);
             LOG.error("Invalid operation {} sent by {}", channelState.request.getOperation(), channel.getRemoteAddress());
             byte[] response = channelState.serverProxy.encodeMessageHeader(new StorageMessageHeader(
                     StorageProtocol.Operation.PROCESS_ERROR,
@@ -187,9 +194,8 @@ public class StorageAgentListener {
         SocketChannel channel = (SocketChannel) key.channel();
         ChannelState channelState = (ChannelState) key.attachment();
 
-        StorageProtocol.State serverProxyState = channelState.serverProxy.getState();
         if (channelState.request.getOperation() == StorageProtocol.Operation.PERSIST_DATA) {
-            switch (serverProxyState) {
+            switch (channelState.serverProxy.getState()) {
                 case WRITE_DATA_STARTED:
                 case WRITE_DATA:
                     // still writing the data to the file system
@@ -199,19 +205,24 @@ public class StorageAgentListener {
                     // write the response
                     responseBytes = channelState.serverProxy.encodeMessageResponse(
                             new StorageMessageResponse(
-                                    serverProxyState == StorageProtocol.State.WRITE_DATA_COMPLETE ? StorageMessageResponse.OK : StorageMessageResponse.ERROR,
+                                    channelState.serverProxy.getState() == StorageProtocol.State.WRITE_DATA_COMPLETE ? StorageMessageResponse.OK : StorageMessageResponse.ERROR,
                                     channelState.serverProxy.getLastErrorMessage(),
                                     channelState.nTransferredBytes));
                     writeBuffer(ByteBuffer.wrap(responseBytes), channel);
                     channel.close();
                     return;
                 default:
-                    LOG.warn("Invalid state {} while persisting data from {}", serverProxyState, channel.getRemoteAddress());
+                    LOG.warn("Invalid state {} while persisting data from {}", channelState.serverProxy.getState(), channel.getRemoteAddress());
+                    responseBytes = channelState.serverProxy.encodeMessageResponse(
+                            new StorageMessageResponse(
+                                    StorageMessageResponse.ERROR,
+                                    "Invalid state " + channelState.serverProxy.getState() + "while persisting data from " + channel.getRemoteAddress(),
+                                    channelState.nTransferredBytes));
+                    writeBuffer(ByteBuffer.wrap(responseBytes), channel);
                     channel.close();
-                    throw new IllegalStateException("Invalid state " + serverProxyState + " while persisting data");
             }
         } else if (channelState.request.getOperation() == StorageProtocol.Operation.RETRIEVE_DATA) {
-            switch (serverProxyState) {
+            switch (channelState.serverProxy.getState()) {
                 case READ_DATA_STARTED:
                     return;
                 case READ_DATA:
@@ -265,8 +276,7 @@ public class StorageAgentListener {
                     channel.close();
                     return;
                 default:
-                    LOG.warn("Invalid state {} while persisting data from {}", serverProxyState, channel.getRemoteAddress());
-                    channel.close();
+                    LOG.warn("Invalid state {} while persisting data from {}", channelState.serverProxy.getState(), channel.getRemoteAddress());
                     return;
             }
         } else {

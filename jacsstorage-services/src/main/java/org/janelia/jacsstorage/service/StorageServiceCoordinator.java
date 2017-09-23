@@ -6,6 +6,7 @@ import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.utils.PathUtils;
@@ -31,8 +32,8 @@ public class StorageServiceCoordinator implements StorageService {
 
     @Override
     public Optional<JacsBundle> allocateStorage(JacsBundle dataBundle) {
-        return agentManager.findRandomRegisteredAgent()
-                .map(storageAgentInfo -> {
+        return agentManager.findRandomRegisteredAgent((StorageAgentInfo sai) -> dataBundle.getUsedSpaceInKB() == null || sai.getStorageSpaceAvailableInMB() * 1000 > dataBundle.getUsedSpaceInKB())
+                .map((StorageAgentInfo  storageAgentInfo) -> {
                     JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocation(storageAgentInfo.getLocation());
                     if (StringUtils.isBlank(storageVolume.getMountPoint())) {
                         storageVolume.setMountHostIP(storageAgentInfo.getConnectionInfo());

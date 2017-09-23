@@ -33,7 +33,7 @@ public class StorageClientImpl implements StorageClient {
         DataStorageInfo allocatedStorage = allocateStorage(storageInfo);
         StorageMessageResponse storageResponse = storageClient.persistData(localPath, allocatedStorage);
         if (storageResponse.getStatus() == StorageMessageResponse.OK) {
-            updateStorageInfo(storageResponse.getSize(), allocatedStorage);
+            updateStorageInfo(storageInfo.getConnectionInfo(), storageResponse.getSize(), storageInfo);
         }
         return storageResponse;
     }
@@ -65,14 +65,15 @@ public class StorageClientImpl implements StorageClient {
         }
     }
 
-    private Optional<DataStorageInfo> updateStorageInfo(long messageSize, DataStorageInfo storageInfo) {
+    private Optional<DataStorageInfo> updateStorageInfo(String connectionInfo, long messageSize, DataStorageInfo storageInfo) {
         String storageEndpoint = String.format("/storage/%d", storageInfo.getId());
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
-            WebTarget target = httpClient.target(storageInfo.getConnectionInfo()).path(storageEndpoint);
-
+            WebTarget target = httpClient.target(connectionInfo).path(storageEndpoint);
+            // set the fields to update
             DataStorageInfo storageUpdate = new DataStorageInfo();
+            storageUpdate.setId(storageInfo.getId());
             storageUpdate.setRequestedSpaceInKB(messageSize);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .put(Entity.json(storageUpdate))

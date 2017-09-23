@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 
 /**
  * This class is explicitly excluded from CDI because it's created using the method from the @ServicesProducer.
@@ -19,8 +20,8 @@ import java.util.concurrent.ConcurrentMap;
 @ApplicationScoped
 public class StorageAgentManagerImpl implements StorageAgentManager {
     private static final Logger LOG = LoggerFactory.getLogger(StorageAgentManagerImpl.class);
+    private static final Random RANDOM_SELECTOR = new Random(System.currentTimeMillis());
 
-    private final Random randomSelector = new Random(System.currentTimeMillis());
     private final ConcurrentMap<String, StorageAgentInfo> registeredAgents = new ConcurrentHashMap<>();
 
     @Override
@@ -52,14 +53,22 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     }
 
     @Override
-    public Optional<StorageAgentInfo> findRandomRegisteredAgent() {
+    public Optional<StorageAgentInfo> findRandomRegisteredAgent(Predicate<StorageAgentInfo> agentFilter) {
         while (true) {
-            if (registeredAgents.size() == 0) {
+            long count = registeredAgents.entrySet().stream()
+                    .filter(agentEntry -> agentFilter.test(agentEntry.getValue()))
+                    .count();
+            if (count == 0) {
                 return Optional.empty();
             }
-            int pos = randomSelector.nextInt(registeredAgents.size());
-            StorageAgentInfo selectedAgentInfo = registeredAgents.entrySet().stream().skip(pos).findFirst().map(Map.Entry::getValue).orElse(null);
+            long pos = RANDOM_SELECTOR.nextInt(registeredAgents.size());
+            StorageAgentInfo selectedAgentInfo = registeredAgents.entrySet().stream()
+                    .filter(agentEntry -> agentFilter.test(agentEntry.getValue()))
+                    .skip(pos)
+                    .findFirst()
+                    .map(Map.Entry::getValue).orElse(null);
             if (selectedAgentInfo != null) {
+                LOG.info("Select {} for storage", selectedAgentInfo);
                 return Optional.of(selectedAgentInfo);
             }
         }

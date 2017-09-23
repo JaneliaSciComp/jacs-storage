@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.protocol;
 
+import javax.enterprise.inject.Vetoed;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -25,6 +26,7 @@ public interface StorageProtocol {
         WRITE_DATA_ERROR
     }
 
+    @Vetoed
     class Holder<D> {
         private D data;
 
