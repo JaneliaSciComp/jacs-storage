@@ -266,6 +266,13 @@ public class StorageAgentListenerITest {
         assertThat(retrieveErrorResponse.getMessage(), containsString(String.format("No file found for %s", remoteStorageInfo.getPath())));
     }
 
+    @Test
+    public void ping() throws IOException {
+        StorageClient storageClient = createStorageClient();
+        StorageMessageResponse pingResponse = storageClient.ping(listenerSocketAddr);
+        assertThat(pingResponse.getStatus(), equalTo(StorageMessageResponse.OK));
+    }
+
     private DataStorageInfo storageInfo(Path targetPath, JacsStorageFormat storageFormat) throws IOException {
         return new DataStorageInfo()
                 .setConnectionInfo(listenerSocketAddr)

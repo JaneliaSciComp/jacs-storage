@@ -37,6 +37,12 @@ public class StorageClientApp {
         private JacsStorageFormat dataFormat = JacsStorageFormat.DATA_DIRECTORY;
     }
 
+    @Parameters(commandDescription = "Ping an agent listener")
+    private static class CommandPing extends AbstractCommand {
+        @Parameter(names = "-connectionInfo", description = "Connection info", required = true)
+        private String connectionInfo;
+    }
+
     private final StorageClient storageClient;
 
     public StorageClientApp(StorageClient storageClient) {
@@ -47,10 +53,12 @@ public class StorageClientApp {
         CommandMain cm = new CommandMain();
         CommandGet cmdGet = new CommandGet();
         CommandPut cmdPut = new CommandPut();
+        CommandPing cmdPing = new CommandPing();
         JCommander jc = JCommander.newBuilder()
                 .addObject(cm)
                 .addCommand("get", cmdGet)
                 .addCommand("put", cmdPut)
+                .addCommand("ping", cmdPing)
                 .build();
 
         try {
@@ -85,6 +93,8 @@ public class StorageClientApp {
                         .setName(cmdPut.name);
                 storageClientImpl.persistData(cmdPut.localPath, storageInfo);
                 return;
+            case "ping":
+                storageClientImpl.ping(cmdPing.connectionInfo);
             default:
                 usage(jc);
         }

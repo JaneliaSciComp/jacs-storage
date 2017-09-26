@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 public interface StorageService {
 
     enum Operation {
+        PING,
         PERSIST_DATA,
         RETRIEVE_DATA,
         PROCESS_RESPONSE,

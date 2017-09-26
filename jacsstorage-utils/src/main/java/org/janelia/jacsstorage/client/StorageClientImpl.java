@@ -29,6 +29,11 @@ public class StorageClientImpl implements StorageClient {
         this.storageClient = storageClient;
     }
 
+    @Override
+    public StorageMessageResponse ping(String connectionInfo) throws IOException {
+        return storageClient.ping(connectionInfo);
+    }
+
     public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
         DataStorageInfo allocatedStorage = allocateStorage(storageInfo);
         StorageMessageResponse storageResponse = storageClient.persistData(localPath, allocatedStorage);

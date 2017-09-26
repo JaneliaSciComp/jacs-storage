@@ -153,43 +153,76 @@ public class StorageAgentListener {
         if (channelState.transferState.getMessageType().getOperation() == StorageService.Operation.PERSIST_DATA) {
             if (numRead == -1) {
                 // nothing left to read
-                // prepare to write the response
-                key.interestOps(SelectionKey.OP_WRITE);
-                try {
-                    agentStorageProxy.endDataTransfer(channelState.transferState);
-                } finally {
-                    channel.shutdownInput();
-                }
+                handlePersistDataCompleted(key, channel, channelState);
             } else {
                 // persist the data
-                int numWritten = agentStorageProxy.writeData(channelState.channelInputBuffer, channelState.transferState);
-                if (numWritten == -1) {
-                    key.interestOps(SelectionKey.OP_WRITE);
-                    channel.shutdownInput();
-                } else {
-                    channelState.nTransferredBytes += numWritten;
-                }
+                handlePersistData(key, channel, channelState);
             }
         } else if (channelState.transferState.getMessageType().getOperation() == StorageService.Operation.RETRIEVE_DATA) {
-            // prepare to send the data
+            // switch mode to sending the data
             key.interestOps(SelectionKey.OP_WRITE);
+        } else if (channelState.transferState.getMessageType().getOperation() == StorageService.Operation.PING) {
+            handlePing(key, channel, channelState);
         } else {
-            key.interestOps(SelectionKey.OP_WRITE);
-            LOG.error("Invalid operation {} sent by {}", channelState.transferState.getMessageType().getOperation(), channel.getRemoteAddress());
-            StorageMessageHeader invalidOperationResponse = new StorageMessageHeader(
-                    StorageService.Operation.PROCESS_ERROR,
-                    JacsStorageFormat.ARCHIVE_DATA_FILE,
-                    "",
-                    "Invalid operation " + channelState.transferState.getMessageType().getOperation());
-            TransferState<StorageMessageHeader> responseTransfer = new TransferState<>();
-            byte[] invalidOperationResponseBytes = responseTransfer.writeMessageType(invalidOperationResponse, new StorageMessageHeaderCodec());
-            try {
-                writeBuffer(ByteBuffer.wrap(invalidOperationResponseBytes), channel);
-            } catch (IOException e) {
-                LOG.warn("Error writing the sending invalid operation {} message to the other end: {}", channelState.transferState.getMessageType().getOperation(), channel.getRemoteAddress());
-            }
-            channel.close();
+            handleInvalidOperationError(key, channel, channelState);
             return;
+        }
+    }
+
+    private void handlePersistData(SelectionKey key, SocketChannel channel, ChannelState channelState) throws IOException {
+        int numWritten = agentStorageProxy.writeData(channelState.channelInputBuffer, channelState.transferState);
+        if (numWritten == -1) {
+            key.interestOps(SelectionKey.OP_WRITE);
+            channel.shutdownInput();
+        } else {
+            channelState.nTransferredBytes += numWritten;
+        }
+    }
+
+    private void handlePersistDataCompleted(SelectionKey key, SocketChannel channel, ChannelState channelState) throws IOException {
+        // prepare to write the response
+        key.interestOps(SelectionKey.OP_WRITE);
+        try {
+            agentStorageProxy.endDataTransfer(channelState.transferState);
+        } finally {
+            channel.shutdownInput();
+        }
+    }
+
+    private void handlePing(SelectionKey key, SocketChannel channel, ChannelState channelState) throws IOException {
+        key.interestOps(SelectionKey.OP_WRITE);
+        StorageMessageHeader pingOperationResponse = new StorageMessageHeader(
+                StorageService.Operation.PROCESS_RESPONSE,
+                JacsStorageFormat.ARCHIVE_DATA_FILE,
+                "",
+                "OK");
+        TransferState<StorageMessageHeader> responseTransfer = new TransferState<>();
+        byte[] pingOperationResponseBytes = responseTransfer.writeMessageType(pingOperationResponse, new StorageMessageHeaderCodec());
+        try {
+            writeBuffer(ByteBuffer.wrap(pingOperationResponseBytes), channel);
+        } catch (IOException e) {
+            LOG.warn("Error writing the sending invalid operation {} message to the other end: {}", channelState.transferState.getMessageType().getOperation(), channel.getRemoteAddress());
+        } finally {
+            channel.close();
+        }
+    }
+
+    private void handleInvalidOperationError(SelectionKey key, SocketChannel channel, ChannelState channelState) throws IOException {
+        key.interestOps(SelectionKey.OP_WRITE);
+        LOG.error("Invalid operation {} sent by {}", channelState.transferState.getMessageType().getOperation(), channel.getRemoteAddress());
+        StorageMessageHeader invalidOperationResponse = new StorageMessageHeader(
+                StorageService.Operation.PROCESS_ERROR,
+                JacsStorageFormat.ARCHIVE_DATA_FILE,
+                "",
+                "Invalid operation " + channelState.transferState.getMessageType().getOperation());
+        TransferState<StorageMessageHeader> responseTransfer = new TransferState<>();
+        byte[] invalidOperationResponseBytes = responseTransfer.writeMessageType(invalidOperationResponse, new StorageMessageHeaderCodec());
+        try {
+            writeBuffer(ByteBuffer.wrap(invalidOperationResponseBytes), channel);
+        } catch (IOException e) {
+            LOG.warn("Error writing the sending invalid operation {} message to the other end: {}", channelState.transferState.getMessageType().getOperation(), channel.getRemoteAddress());
+        } finally {
+            channel.close();
         }
     }
 

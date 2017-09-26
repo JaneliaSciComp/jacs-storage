@@ -37,18 +37,32 @@ public class SocketStorageClient implements StorageClient {
     }
 
     @Override
+    public StorageMessageResponse ping(String connectionInfo) throws IOException {
+        try {
+            initTransfer(StorageService.Operation.PING, null, null, connectionInfo, SelectionKey.OP_READ);
+            ByteBuffer dataTransferBuffer = allocateTransferBuffer();
+            StorageMessageHeader responseHeader = retrieveResponseHeader(dataTransferBuffer);
+            if (responseHeader.getOperation() == StorageService.Operation.PROCESS_RESPONSE) {
+                return new StorageMessageResponse(StorageMessageResponse.OK, null, 0, 0);
+            } else if (responseHeader.getOperation() == StorageService.Operation.PROCESS_ERROR) {
+                return new StorageMessageResponse(StorageMessageResponse.ERROR, responseHeader.getMessageOrDefault(), 0, 0);
+            } else {
+                throw new IllegalStateException("Invalid response operation");
+            }
+        } finally {
+            closeChannel();
+        }
+    }
+
+    @Override
     public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
         try {
-            // initialize the transfer operation - tell the remote party what we want
-            byte[] remoteOpBytes = createRemoteMessageHeaderBytes(StorageService.Operation.PERSIST_DATA,
-                    storageInfo.getStorageFormat(),
-                    storageInfo.getPath());
-            ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
-            openChannel(remoteOpBuffer, getConnectionHost(storageInfo.getConnectionInfo()), getConnectionPort(storageInfo.getConnectionInfo()), SelectionKey.OP_WRITE); // open the channel for writing the data
-
-            // figure out the best local data format
             Path sourcePath = Paths.get(localPath);
             JacsStorageFormat localDataFormat;
+            if (Files.notExists(sourcePath)) {
+                throw new IllegalArgumentException("No path found for " + localPath);
+            }
+            // figure out the best local data format
             if (Files.isDirectory(sourcePath)) {
                 if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
                     throw new IllegalArgumentException("Cannot persist directory " + localPath + " as a single file");
@@ -61,6 +75,12 @@ public class SocketStorageClient implements StorageClient {
                     localDataFormat = JacsStorageFormat.DATA_DIRECTORY;
                 }
             }
+            initTransfer(
+                    StorageService.Operation.PERSIST_DATA,
+                    storageInfo.getStorageFormat(),
+                    storageInfo.getPath(),
+                    storageInfo.getConnectionInfo(),
+                    SelectionKey.OP_WRITE);
             TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
                     StorageService.Operation.RETRIEVE_DATA,
                     localDataFormat,
@@ -69,8 +89,8 @@ public class SocketStorageClient implements StorageClient {
             // initiate the local data read operation
             clientStorageProxy.beginDataTransfer(localDataTransfer);
 
-            ByteBuffer dataTransferBuffer = ByteBuffer.allocate(2048);
-            dataTransferBuffer.limit(0); // the data buffer is empty
+            ByteBuffer dataTransferBuffer = allocateTransferBuffer();
+
             long nbytesSent = sendData(dataTransferBuffer, localDataTransfer);
             LOG.info("Sent {} bytes", nbytesSent);
             // wait for the response
@@ -84,13 +104,12 @@ public class SocketStorageClient implements StorageClient {
 
     public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
         try {
-            // initialize the transfer operation - tell the remote party what we want
-            byte[] remoteOpBytes = createRemoteMessageHeaderBytes(StorageService.Operation.RETRIEVE_DATA,
+            initTransfer(
+                    StorageService.Operation.RETRIEVE_DATA,
                     storageInfo.getStorageFormat(),
-                    storageInfo.getPath());
-            ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
-            openChannel(remoteOpBuffer, getConnectionHost(storageInfo.getConnectionInfo()), getConnectionPort(storageInfo.getConnectionInfo()), SelectionKey.OP_READ); // open the channel for reading the data
-
+                    storageInfo.getPath(),
+                    storageInfo.getConnectionInfo(),
+                    SelectionKey.OP_READ);
             // figure out how to write the local data
             JacsStorageFormat localDataFormat;
             if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
@@ -101,9 +120,8 @@ public class SocketStorageClient implements StorageClient {
                 Files.createDirectories(Paths.get(localPath));
                 localDataFormat = JacsStorageFormat.DATA_DIRECTORY;
             }
-            ByteBuffer dataTransferBuffer = ByteBuffer.allocate(2048);
-            dataTransferBuffer.position(0);
-            dataTransferBuffer.limit(0);
+            ByteBuffer dataTransferBuffer = allocateTransferBuffer();
+
             StorageMessageHeader responseHeader = retrieveResponseHeader(dataTransferBuffer);
             if (responseHeader.getOperation() == StorageService.Operation.PROCESS_RESPONSE) {
                 TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
@@ -160,6 +178,18 @@ public class SocketStorageClient implements StorageClient {
         } else {
             return -1;
         }
+    }
+
+    private void initTransfer(StorageService.Operation op, JacsStorageFormat format, String pathName, String connectionInfo, int channelIOOp) throws IOException {
+        byte[] remoteOpBytes = createRemoteMessageHeaderBytes(op, format, pathName);
+        ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
+        openChannel(remoteOpBuffer, getConnectionHost(connectionInfo), getConnectionPort(connectionInfo), channelIOOp);
+    }
+
+    private ByteBuffer allocateTransferBuffer() {
+        ByteBuffer dataTransferBuffer = ByteBuffer.allocate(2048);
+        dataTransferBuffer.limit(0); // the data buffer is empty
+        return dataTransferBuffer;
     }
 
     private void openChannel(ByteBuffer headerBuffer, String serverAddress, int serverPort, int channelIOOp) throws IOException {

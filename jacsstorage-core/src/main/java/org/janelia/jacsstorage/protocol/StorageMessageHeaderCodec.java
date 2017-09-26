@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.protocol;
 
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.msgpack.core.MessageBufferPacker;
 import org.msgpack.core.MessagePack;
@@ -14,7 +15,7 @@ public class StorageMessageHeaderCodec implements MessageDataCodec<StorageMessag
     public ByteBuffer encodeMessage(StorageMessageHeader data) throws IOException {
         MessageBufferPacker messageHeaderPacker = MessagePack.newDefaultBufferPacker();
         messageHeaderPacker.packString(data.getOperation().name())
-                .packString(data.getFormat().name())
+                .packString(data.getFormat() == null ? "" : data.getFormat().name())
                 .packString(data.getLocationOrDefault())
                 .packString(data.getMessageOrDefault());
         messageHeaderPacker.close();
@@ -25,12 +26,13 @@ public class StorageMessageHeaderCodec implements MessageDataCodec<StorageMessag
 
     @Override
     public StorageMessageHeader decodeMessage(ByteBuffer buffer) throws IOException {
-        MessageUnpacker requestUnpacker = MessagePack.newDefaultUnpacker(buffer);
-        StorageService.Operation op = StorageService.Operation.valueOf(requestUnpacker.unpackString());
-        JacsStorageFormat format = JacsStorageFormat.valueOf(requestUnpacker.unpackString());
-        String path = requestUnpacker.unpackString();
-        String message = requestUnpacker.unpackString();
-        requestUnpacker.close();
+        MessageUnpacker messageHeaderUnpacker = MessagePack.newDefaultUnpacker(buffer);
+        StorageService.Operation op = StorageService.Operation.valueOf(messageHeaderUnpacker.unpackString());
+        String formatString = messageHeaderUnpacker.unpackString();
+        JacsStorageFormat format = StringUtils.isBlank(formatString) ? null : JacsStorageFormat.valueOf(formatString);
+        String path = messageHeaderUnpacker.unpackString();
+        String message = messageHeaderUnpacker.unpackString();
+        messageHeaderUnpacker.close();
         return new StorageMessageHeader(op, format, path, message);
     }
 }
