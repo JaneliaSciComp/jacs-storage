@@ -66,7 +66,7 @@ public class StorageAgentListener {
         ServerSocket serverSocket = agentSocketChannel.socket();
         serverSocket.bind(agentAddr);
         agentSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-        LOG.info("Started an agent listener on {}:{}", bindingIP, portNo);
+        LOG.info("Started an agent listener on {}:{} ({})", bindingIP, portNo, serverSocket.getLocalSocketAddress());
         return serverSocket.getInetAddress().getHostAddress() + ":" + serverSocket.getLocalPort();
     }
 

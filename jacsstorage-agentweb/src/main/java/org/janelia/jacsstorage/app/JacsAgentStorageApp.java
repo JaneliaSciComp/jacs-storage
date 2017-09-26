@@ -53,7 +53,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         JacsAgentStorageApp app = container.select(JacsAgentStorageApp.class).get();
         if (StringUtils.isNotBlank(agentArgs.connectTo)) {
             AgentState agentState = container.select(AgentState.class).get();
-            LOG.info("Register agent with {}", agentArgs.connectTo);
+            LOG.info("Register agent on {} with {}", agentState, agentArgs.connectTo);
             if (!app.registerAgent(agentArgs.connectTo, agentState)) {
                 System.err.println("Could not register agent with " + agentArgs.connectTo);
                 return;

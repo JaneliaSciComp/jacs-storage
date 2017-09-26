@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.agent;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -15,6 +16,9 @@ public class AgentState {
 
     private static final long _1_M = 1024 * 1024;
 
+    @PropertyValue(name = "StorageAgent.IPAddress")
+    @Inject
+    private String storageIPAddress;
     @PropertyValue(name = "StorageAgent.agentLocation")
     @Inject
     private String agentLocation;
@@ -26,7 +30,7 @@ public class AgentState {
     private String storageRootDir;
 
     public String getAgentLocation() {
-        return StringUtils.isBlank(agentLocation) ? getCurrentHostIP() + "/" + getStorageRootDir() : agentLocation;
+        return StringUtils.isBlank(agentLocation) ? getStorageIPAddress() + "/" + getStorageRootDir() : agentLocation;
     }
 
     private String getCurrentHostIP() {
@@ -38,8 +42,12 @@ public class AgentState {
         }
     }
 
+    public String getStorageIPAddress() {
+        return StringUtils.isBlank(storageIPAddress) ? getCurrentHostIP() : storageIPAddress;
+    }
+
     public String getConnectionInfo() {
-        return getCurrentHostIP() + ":" + agentPortNumber;
+        return getStorageIPAddress() + ":" + agentPortNumber;
     }
 
     public String getStorageRootDir() {
@@ -55,5 +63,15 @@ public class AgentState {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("agentLocation", agentLocation)
+                .append("connectionInfo", getConnectionInfo())
+                .append("storageIPAddress", storageIPAddress)
+                .append("storageRootDir", storageRootDir)
+                .build();
     }
 }
