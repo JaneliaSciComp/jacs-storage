@@ -33,7 +33,7 @@ public class StorageClientImpl implements StorageClient {
         DataStorageInfo allocatedStorage = allocateStorage(storageInfo);
         StorageMessageResponse storageResponse = storageClient.persistData(localPath, allocatedStorage);
         if (storageResponse.getStatus() == StorageMessageResponse.OK) {
-            updateStorageInfo(storageInfo.getConnectionInfo(), storageResponse.getSize(), storageInfo);
+            updateStorageInfo(storageInfo.getConnectionInfo(), storageResponse.getPersistedBytes(), allocatedStorage);
         }
         return storageResponse;
     }

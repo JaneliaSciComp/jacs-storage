@@ -34,12 +34,12 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class StorageProtocolImplTest {
+public class StorageServiceImplTest {
 
     private static final String TEST_DATA_DIRECTORY = "src/test/resources/testdata/bundletransfer";
 
     private Path testDirectory;
-    private StorageProtocolImpl storageAgentImpl;
+    private StorageServiceImpl storageService;
 
     @SuppressWarnings("unchecked")
     @Before
@@ -48,7 +48,7 @@ public class StorageProtocolImplTest {
         Instance<BundleWriter> bundleWriterSource = mock(Instance.class);
         when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader()).iterator());
         when(bundleWriterSource.iterator()).thenReturn(ImmutableList.<BundleWriter>of(new SingleFileBundleWriter()).iterator());
-        storageAgentImpl = new StorageProtocolImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource));
+        storageService = new StorageServiceImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource));
         testDirectory = Files.createTempDirectory("StorageAgentTest");
     }
 
@@ -73,29 +73,25 @@ public class StorageProtocolImplTest {
     public void writeData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
         Path testTargetPath = testDirectory.resolve("testWriteData");
-        byte[] headerBuffer = storageAgentImpl.encodeMessageHeader(new StorageMessageHeader(
-                StorageProtocol.Operation.PERSIST_DATA,
-                JacsStorageFormat.SINGLE_DATA_FILE,
-                testTargetPath.toString()));
         FileInputStream testInput = new FileInputStream(testDataPath.toFile());
         try {
-            StorageProtocol.Holder<StorageMessageHeader> requestHolder = new StorageProtocol.Holder<>();
-            while (!storageAgentImpl.readMessageHeader(ByteBuffer.wrap(headerBuffer), requestHolder))
-                ; // keep reading until it finishes the header
-            storageAgentImpl.beginDataTransfer(requestHolder.getData());
+            TransferState<StorageMessageHeader> transferState = createMessageHeaderTransferState(StorageService.Operation.PERSIST_DATA, JacsStorageFormat.SINGLE_DATA_FILE, testTargetPath.toString());
+            storageService.beginDataTransfer(transferState);
 
             ByteBuffer buffer = ByteBuffer.allocate(2048);
             FileChannel channel = testInput.getChannel();
             while (channel.read(buffer) != -1) {
                 buffer.flip();
-                storageAgentImpl.writeData(buffer);
+                storageService.writeData(buffer, transferState);
                 buffer.clear();
             }
 
             try {
-                storageAgentImpl.endDataTransfer();
-                assertThat(storageAgentImpl.getState(), isIn(EnumSet.of(StorageProtocol.State.WRITE_DATA, StorageProtocol.State.WRITE_DATA_COMPLETE, StorageProtocol.State.WRITE_DATA_ERROR)));
-                while (storageAgentImpl.getState() != StorageProtocol.State.WRITE_DATA_COMPLETE && storageAgentImpl.getState() != StorageProtocol.State.WRITE_DATA_ERROR) {
+                storageService.endDataTransfer(transferState);
+
+                assertThat(transferState.getState(), isIn(EnumSet.of(State.WRITE_DATA, State.WRITE_DATA_COMPLETE, State.WRITE_DATA_ERROR)));
+
+                while (transferState.getState() != State.WRITE_DATA_COMPLETE && transferState.getState() != State.WRITE_DATA_ERROR) {
                     Thread.sleep(1); // wait until the data transfer is completed
                 }
             } catch (InterruptedException e) {
@@ -110,25 +106,32 @@ public class StorageProtocolImplTest {
     @Test
     public void readData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
-        byte[] headerBuffer = storageAgentImpl.encodeMessageHeader(new StorageMessageHeader(
-                StorageProtocol.Operation.RETRIEVE_DATA,
-                JacsStorageFormat.SINGLE_DATA_FILE,
-                testDataPath.toString()));
-        StorageProtocol.Holder<StorageMessageHeader> requestHolder = new StorageProtocol.Holder<>();
-        while (!storageAgentImpl.readMessageHeader(ByteBuffer.wrap(headerBuffer), requestHolder))
-            ; // keep reading until it finishes the header
-
-        storageAgentImpl.beginDataTransfer(requestHolder.getData());
+        TransferState<StorageMessageHeader> transferState = createMessageHeaderTransferState(StorageService.Operation.RETRIEVE_DATA, JacsStorageFormat.SINGLE_DATA_FILE, testDataPath.toString());
+        storageService.beginDataTransfer(transferState);
 
         ByteBuffer buffer = ByteBuffer.allocate(2048);
         byte[] expectedResult = Files.readAllBytes(testDataPath);
         ByteArrayOutputStream result = new ByteArrayOutputStream();
-        while(storageAgentImpl.readData(buffer) != -1) {
+        while(storageService.readData(buffer, transferState) != -1) {
             buffer.flip();
             result.write(buffer.array(), buffer.position(), buffer.limit());
             buffer.clear();
         }
         assertArrayEquals(expectedResult, result.toByteArray());
-        assertThat(storageAgentImpl.getState(), isIn(EnumSet.of(StorageProtocol.State.READ_DATA, StorageProtocol.State.READ_DATA_COMPLETE, StorageProtocol.State.READ_DATA_ERROR)));
+        assertThat(transferState.getState(), isIn(EnumSet.of(State.READ_DATA, State.READ_DATA_COMPLETE, State.READ_DATA_ERROR)));
+    }
+
+    private TransferState<StorageMessageHeader> createMessageHeaderTransferState(StorageService.Operation op, JacsStorageFormat format, String dataFile) throws IOException {
+        StorageMessageHeader messageHeader = new StorageMessageHeader(
+                op,
+                format,
+                dataFile,
+                "");
+        TransferState<StorageMessageHeader> transferState = new TransferState<>();
+        StorageMessageHeaderCodec messageHeaderCodec = new StorageMessageHeaderCodec();
+        assertTrue(transferState.readMessageType(
+                ByteBuffer.wrap(transferState.writeMessageType(messageHeader, messageHeaderCodec)),
+                messageHeaderCodec));
+        return transferState;
     }
 }

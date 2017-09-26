@@ -3,17 +3,19 @@ package org.janelia.jacsstorage.protocol;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 public class StorageMessageHeader {
-    private final StorageProtocol.Operation operation;
+    private final StorageService.Operation operation;
     private final JacsStorageFormat format;
     private final String location;
+    private final String message;
 
-    public StorageMessageHeader(StorageProtocol.Operation operation, JacsStorageFormat format, String location) {
+    public StorageMessageHeader(StorageService.Operation operation, JacsStorageFormat format, String location, String message) {
         this.operation = operation;
         this.format = format;
         this.location = location;
+        this.message = message;
     }
 
-    public StorageProtocol.Operation getOperation() {
+    public StorageService.Operation getOperation() {
         return operation;
     }
 
@@ -21,7 +23,11 @@ public class StorageMessageHeader {
         return format;
     }
 
-    public String getLocation() {
-        return location;
+    public String getLocationOrDefault() {
+        return location == null ? "" : location;
+    }
+
+    public String getMessageOrDefault() {
+        return message == null ? "" : message;
     }
 }

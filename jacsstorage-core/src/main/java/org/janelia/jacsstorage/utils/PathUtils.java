@@ -5,18 +5,27 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiPredicate;
 
 public class PathUtils {
     private static class FileSizeVisitor extends SimpleFileVisitor<Path> {
         private long totalSize = 0L;
+
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            totalSize += Files.size(dir); // add the size for the directory (inode) entry
+            return FileVisitResult.CONTINUE;
+        }
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
@@ -54,6 +63,19 @@ public class PathUtils {
         FileSizeVisitor pathVisitor = new FileSizeVisitor();
         Files.walkFileTree(fp, pathVisitor);
         return pathVisitor.totalSize;
+    }
+
+    public static long getSize(Path fp, BiPredicate<Path, BasicFileAttributes> matcher) throws IOException {
+        Preconditions.checkArgument(Files.exists(fp), "No path found for " + fp);
+        return Files.find(fp, Integer.MAX_VALUE, matcher)
+                .map(p -> {
+                    try {
+                        return Files.size(p);
+                    } catch (IOException e) {
+                        return 0L;
+                    }
+                })
+                .reduce(0L, (s1, s2) -> s1 + s2);
     }
 
     public static void deletePath(Path fp) throws IOException {

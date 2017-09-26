@@ -16,7 +16,7 @@ import org.janelia.jacsstorage.io.TarArchiveBundleReader;
 import org.janelia.jacsstorage.io.TarArchiveBundleWriter;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.protocol.StorageMessageResponse;
-import org.janelia.jacsstorage.protocol.StorageProtocolImpl;
+import org.janelia.jacsstorage.protocol.StorageServiceImpl;
 import org.janelia.jacsstorage.utils.PathUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -70,7 +70,7 @@ public class StorageAgentListenerITest {
                 .then(invocation -> dataWriters.iterator());
         dataBundleIOProvider = new DataBundleIOProvider(bundleReaderSource, bundleWriterSource);
         CoreCdiProducer cdiProducer = new CoreCdiProducer();
-        socketStorageListener = new StorageAgentListener("localhost", 0, Executors.newFixedThreadPool(3), dataBundleIOProvider);
+        socketStorageListener = new StorageAgentListener("localhost", 0, new StorageServiceImpl(Executors.newFixedThreadPool(3), dataBundleIOProvider));
         startListener(cdiProducer.createSingleExecutorService());
     }
 
@@ -104,8 +104,7 @@ public class StorageAgentListenerITest {
 
     private StorageClient createStorageClient() {
         return new SocketStorageClient(
-                new StorageProtocolImpl(Executors.newSingleThreadExecutor(), dataBundleIOProvider),
-                new StorageProtocolImpl(Executors.newSingleThreadExecutor(), dataBundleIOProvider)
+                new StorageServiceImpl(Executors.newSingleThreadExecutor(), dataBundleIOProvider)
         );
     }
 
@@ -151,13 +150,13 @@ public class StorageAgentListenerITest {
             Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
             assertThat(persistenceResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(targetPath));
-            assertThat(PathUtils.getSize(targetPath), lessThanOrEqualTo(persistenceResponse.getSize()));
+            assertThat(PathUtils.getSize(targetPath), lessThanOrEqualTo(persistenceResponse.getPersistedBytes()));
             StorageMessageResponse retrievalResponse = storageClient.retrieveData(td.retrievedDataStorageInfo.getPath(), td.persistedDataStorageInfo);
             Path localPath = Paths.get(td.retrievedDataStorageInfo.getPath());
             assertThat(retrievalResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(localPath));
             assertThat(PathUtils.getSize(localPath), equalTo(sourceTestDataDirSize));
-            assertThat(retrievalResponse.getSize(), equalTo(persistenceResponse.getSize()));
+            assertThat(retrievalResponse.getTransferredBytes(), equalTo(persistenceResponse.getTransferredBytes()));
         }
     }
 
@@ -200,15 +199,15 @@ public class StorageAgentListenerITest {
         for (TestData td : testData) {
             StorageMessageResponse persistenceResponse = storageClient.persistData(sourceTestDataFile.toString(), td.persistedDataStorageInfo);
             Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
-            assertThat(persistenceResponse.getStatus(), equalTo(StorageMessageResponse.OK));
+            assertThat(targetPath.toString(), persistenceResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(targetPath));
-            assertThat(PathUtils.getSize(targetPath), lessThanOrEqualTo(persistenceResponse.getSize()));
+            assertThat(targetPath.toString(), PathUtils.getSize(targetPath), lessThanOrEqualTo(persistenceResponse.getPersistedBytes()));
             StorageMessageResponse retrievalResponse = storageClient.retrieveData(td.retrievedDataStorageInfo.getPath(), td.persistedDataStorageInfo);
             Path localPath = Paths.get(td.retrievedDataStorageInfo.getPath());
             assertThat(retrievalResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(localPath));
-            assertThat(PathUtils.getSize(localPath), equalTo(sourceTestDataDirSize));
-            assertThat(retrievalResponse.getSize(), equalTo(persistenceResponse.getSize()));
+            assertThat(localPath.toString(), PathUtils.getSize(localPath, (p, a) -> a.isRegularFile()), equalTo(sourceTestDataDirSize));
+            assertThat(localPath.toString(), retrievalResponse.getTransferredBytes(), equalTo(persistenceResponse.getTransferredBytes()));
         }
     }
 

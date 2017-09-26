@@ -2,11 +2,14 @@ package org.janelia.jacsstorage.cdi;
 
 import com.fasterxml.jackson.databind. ObjectMapper;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
-import org.janelia.jacsstorage.cdi.qualifier.PooledExecutor;
+import org.janelia.jacsstorage.cdi.qualifier.PooledResource;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.TimebasedIdGenerator;
+import org.janelia.jacsstorage.io.DataBundleIOProvider;
+import org.janelia.jacsstorage.protocol.StorageService;
+import org.janelia.jacsstorage.protocol.StorageServiceImpl;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
@@ -56,7 +59,7 @@ public class ApplicationProducer {
                 .build();
     }
 
-    @PooledExecutor
+    @PooledResource
     @Produces
     public ExecutorService createPooledExecutorService(@PropertyValue(name = "StorageAgent.ThreadPoolSize") Integer poolSize) {
         return Executors.newFixedThreadPool(poolSize, r -> {
@@ -66,8 +69,14 @@ public class ApplicationProducer {
         });
     }
 
-    public void shutdownExecutor(@Disposes @PooledExecutor ExecutorService executorService) throws InterruptedException {
+    public void shutdownExecutor(@Disposes @PooledResource ExecutorService executorService) throws InterruptedException {
         executorService.shutdown();
         executorService.awaitTermination(1, TimeUnit.SECONDS);
+    }
+
+    @PooledResource
+    @Produces
+    public StorageService createPooledStorageProtocol(@PooledResource ExecutorService pooledExecutorService, DataBundleIOProvider dataIOProvider) {
+        return new StorageServiceImpl(pooledExecutorService, dataIOProvider);
     }
 }

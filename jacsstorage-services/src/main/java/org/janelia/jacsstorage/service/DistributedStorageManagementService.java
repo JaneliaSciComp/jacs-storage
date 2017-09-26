@@ -17,14 +17,14 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
-public class StorageServiceCoordinator implements StorageService {
+public class DistributedStorageManagementService implements StorageManagementService {
 
     private final StorageAgentManager agentManager;
     private final JacsStorageVolumeDao storageVolumeDao;
     private final JacsBundleDao bundleDao;
 
     @Inject
-    public StorageServiceCoordinator(StorageAgentManager agentManager, JacsStorageVolumeDao storageVolumeDao, JacsBundleDao bundleDao) {
+    public DistributedStorageManagementService(StorageAgentManager agentManager, JacsStorageVolumeDao storageVolumeDao, JacsBundleDao bundleDao) {
         this.agentManager = agentManager;
         this.storageVolumeDao = storageVolumeDao;
         this.bundleDao = bundleDao;
@@ -33,7 +33,7 @@ public class StorageServiceCoordinator implements StorageService {
     @Override
     public Optional<JacsBundle> allocateStorage(JacsBundle dataBundle) {
         return agentManager.findRandomRegisteredAgent((StorageAgentInfo sai) -> dataBundle.getUsedSpaceInKB() == null || sai.getStorageSpaceAvailableInMB() * 1000 > dataBundle.getUsedSpaceInKB())
-                .map((StorageAgentInfo  storageAgentInfo) -> {
+                .map((StorageAgentInfo storageAgentInfo) -> {
                     JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocation(storageAgentInfo.getLocation());
                     if (StringUtils.isBlank(storageVolume.getMountPoint())) {
                         storageVolume.setMountHostIP(storageAgentInfo.getConnectionInfo());

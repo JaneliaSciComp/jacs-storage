@@ -3,7 +3,7 @@ package org.janelia.jacsstorage.rest;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
-import org.janelia.jacsstorage.service.StorageService;
+import org.janelia.jacsstorage.service.StorageManagementService;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -26,7 +26,7 @@ import java.util.Optional;
 public class StorageResource {
 
     @Inject
-    private StorageService storageService;
+    private StorageManagementService storageManagementService;
     @Context
     private UriInfo resourceURI;
 
@@ -39,7 +39,7 @@ public class StorageResource {
     @GET
     @Path("{id}")
     public Response getBundleInfo(@PathParam("id") Long id) {
-        JacsBundle jacsBundle = storageService.getDataBundleById(id);
+        JacsBundle jacsBundle = storageManagementService.getDataBundleById(id);
         if (jacsBundle == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
@@ -54,7 +54,7 @@ public class StorageResource {
     @GET
     @Path("{owner}/{name}")
     public Response getBundleInfoByOwnerAndName(@PathParam("owner") String owner, @PathParam("name") String name) {
-        JacsBundle jacsBundle = storageService.findDataBundleByOwnerAndName(owner, name);
+        JacsBundle jacsBundle = storageManagementService.findDataBundleByOwnerAndName(owner, name);
         if (jacsBundle == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
@@ -71,7 +71,7 @@ public class StorageResource {
     public Response createBundleInfo(DataStorageInfo dataStorageInfo) {
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
 
-        Optional<JacsBundle> dataBundleInfo = storageService.allocateStorage(dataBundle);
+        Optional<JacsBundle> dataBundleInfo = storageManagementService.allocateStorage(dataBundle);
         return dataBundleInfo
                 .map(bi -> Response
                         .created(resourceURI.getBaseUriBuilder().path(dataBundle.getId().toString()).build())
@@ -89,7 +89,7 @@ public class StorageResource {
     public Response updateBundleInfo(@PathParam("id") Long id, DataStorageInfo dataStorageInfo) {
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
         dataBundle.setId(id);
-        JacsBundle updatedDataBundleInfo = storageService.updateDataBundle(dataBundle);
+        JacsBundle updatedDataBundleInfo = storageManagementService.updateDataBundle(dataBundle);
         if (updatedDataBundleInfo == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
