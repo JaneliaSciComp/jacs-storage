@@ -1,12 +1,11 @@
 package org.janelia.jacsstorage;
 
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
+import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.junit.BeforeClass;
 
-import java.util.Properties;
-
 public abstract class AbstractITest {
-    protected static Properties integrationTestsConfig;
+    protected static ApplicationConfig integrationTestsConfig;
 
     @BeforeClass
     public static void setUpTestsConfig() {

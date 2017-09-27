@@ -59,8 +59,8 @@ subprojects {
         }
     }
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    sourceCompatibility = 1.9
+    targetCompatibility = 1.9
 
     task integrationTest(type: Test) {
         testClassesDirs += sourceSets.integrationTest.output.classesDirs

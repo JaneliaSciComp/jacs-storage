@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.cdi;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.config.ApplicationConfig;
+import org.janelia.jacsstorage.config.ApplicationConfigImpl;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,7 +22,7 @@ public class ApplicationConfigProvider {
         return APPLICATION_ARGS;
     }
 
-    private ApplicationConfig applicationConfig = new ApplicationConfig();
+    private ApplicationConfig applicationConfig = new ApplicationConfigImpl();
 
     public ApplicationConfigProvider fromDefaultResource() {
         return fromResource(DEFAULT_APPLICATION_CONFIG_RESOURCES);

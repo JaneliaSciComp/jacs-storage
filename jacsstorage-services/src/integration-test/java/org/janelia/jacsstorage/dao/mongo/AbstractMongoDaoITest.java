@@ -29,14 +29,14 @@ public abstract class AbstractMongoDaoITest<T extends BaseEntity> extends Abstra
     public static void setUpMongoClient() throws IOException {
         CodecRegistry codecRegistry = RegistryHelper.createCodecRegistry(testObjectMapperFactory);
         MongoClientOptions.Builder optionsBuilder = MongoClientOptions.builder().codecRegistry(codecRegistry).maxConnectionIdleTime(60000);
-        MongoClientURI mongoConnectionString = new MongoClientURI(integrationTestsConfig.getProperty("MongoDB.ConnectionURL"), optionsBuilder);
+        MongoClientURI mongoConnectionString = new MongoClientURI(integrationTestsConfig.getStringPropertyValue("MongoDB.ConnectionURL"), optionsBuilder);
         testMongoClient = new MongoClient(mongoConnectionString);
     }
 
     @Before
     public final void setUpDaoResources() {
         idGenerator = new TimebasedIdGenerator(0);
-        testMongoDatabase = testMongoClient.getDatabase(integrationTestsConfig.getProperty("MongoDB.Database"));
+        testMongoDatabase = testMongoClient.getDatabase(integrationTestsConfig.getStringPropertyValue("MongoDB.Database"));
     }
 
     protected void deleteAll(ReadWriteDao<T> dao, List<T> es) {
