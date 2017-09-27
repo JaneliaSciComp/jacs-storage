@@ -1,15 +1,17 @@
 project(":jacsstorage-commonweb") {
     dependencies {
-        compile project(":jacsstorage-services"),
-                CDI_SERVLET_LIB,
-                CMDLINE_ARG_LIB,
-                JACKSON_JAXRS_JSON_PROVIDER,
-                JAVAX_SERVLET_API_LIB,
-                JAX_RS_API_LIB,
-                JAX_RS_CONTAINERS_LIB,
-                JAX_RS_CORE_LIB,
-                JAX_RS_SERVER_LIB,
-                UNDERTOW_CORE_LIB,
-                UNDERTOW_SERVLET_LIB
+        api project(":jacsstorage-services"),
+            CDI_SERVLET_LIB,
+            CMDLINE_ARG_LIB,
+            JACKSON_JAXRS_JSON_PROVIDER,
+            JAVAX_SERVLET_API_LIB,
+            JAX_RS_API_LIB,
+            JAX_RS_CONTAINERS_LIB,
+            JAX_RS_CORE_LIB,
+            JAX_RS_SERVER_LIB,
+            UNDERTOW_CORE_LIB,
+            UNDERTOW_SERVLET_LIB
     }
 }
+
+ext.moduleName = 'org.janelia.jacsstorage.commonweb'

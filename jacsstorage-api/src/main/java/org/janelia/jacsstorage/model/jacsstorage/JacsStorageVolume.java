@@ -2,7 +2,7 @@ package org.janelia.jacsstorage.model.jacsstorage;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.AbstractEntity;
-import org.janelia.jacsstorage.model.support.PersistenceInfo;
+import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 
 import java.util.Date;
 

@@ -23,8 +23,7 @@ import org.janelia.jacsstorage.datarequest.SortCriteria;
 import org.janelia.jacsstorage.datarequest.SortDirection;
 import org.janelia.jacsstorage.model.support.AppendFieldValueHandler;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
-import org.janelia.jacsstorage.model.support.EntityUtils;
-import org.janelia.jacsstorage.model.support.PersistenceInfo;
+import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

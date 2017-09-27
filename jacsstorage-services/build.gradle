@@ -5,10 +5,13 @@ applicationName = "storageListener"
 
 project(":jacsstorage-services") {
     dependencies {
-        compile project(":jacsstorage-core"),
-                CDI_SE_CORE_LIB,
-                CMDLINE_ARG_LIB,
-                MONGODB_DRIVER_LIB,
-                REFLECTIONS_LIB
+        api project(":jacsstorage-core")
+
+        implementation CDI_SE_CORE_LIB,
+                       CMDLINE_ARG_LIB,
+                       MONGODB_DRIVER_LIB,
+                       REFLECTIONS_LIB
     }
 }
+
+ext.moduleName = 'org.janelia.jacsstorage.services'

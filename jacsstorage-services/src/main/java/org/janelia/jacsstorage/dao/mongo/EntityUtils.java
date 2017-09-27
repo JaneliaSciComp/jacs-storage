@@ -1,8 +1,9 @@
-package org.janelia.jacsstorage.model.support;
+package org.janelia.jacsstorage.dao.mongo;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 
 import java.util.concurrent.ExecutionException;
 

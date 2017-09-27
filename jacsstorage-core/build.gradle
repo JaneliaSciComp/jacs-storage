@@ -1,8 +1,11 @@
 project(":jacsstorage-core") {
     dependencies {
-        compile project(":jacsstorage-api"),
-                CDI_API_LIB,
-                COMMONS_COMPRESS_LIB,
-                MESSAGEPACK_LIB
+        api project(":jacsstorage-api"),
+            CDI_API_LIB
+        
+        implementation COMMONS_COMPRESS_LIB,
+                       MESSAGEPACK_LIB
     }
 }
+
+ext.moduleName = 'org.janelia.jacsstorage.core'

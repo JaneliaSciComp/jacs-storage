@@ -1,76 +1,63 @@
 allprojects {
-    apply plugin: 'java'
+    apply plugin: 'java-library'
     apply plugin: 'idea'
     group = 'org.janelia.jacsstorage'
     version = '1.0.0'
 }
 
-project.ext {
-        eclipseBuildDir = 'eclipseBuild'
-}
-
 subprojects {
-    apply plugin: 'eclipse'
     apply from: "${rootDir}/deps.gradle"
 
-    sourceSets {
-        integrationTest {
-            java {
-                compileClasspath += main.output + test.output
-                runtimeClasspath += main.output + test.output
-                srcDir file('src/integration-test/java')
-            }
-            resources {
-                srcDir file('src/integration-test/resources')
+    afterEvaluate {
+        repositories {
+            mavenLocal()
+            mavenCentral()
+        }
+
+        sourceSets {
+            integrationTest {
+                java {
+                    compileClasspath += main.output + test.output
+                    runtimeClasspath += main.output + test.output
+                    srcDir file('src/integration-test/java')
+                }
+                resources {
+                    srcDir file('src/integration-test/resources')
+                }
             }
         }
-    }
 
-    configurations {
-        provided
-        compile.extendsFrom provided
-        integrationTestCompile.extendsFrom testCompile
-        integrationTestRuntime.extendsFrom testRuntime
-    }
+        configurations {
+            provided
+            implementation.extendsFrom provided
+            integrationTestImplementation.extendsFrom testImplementation
+            integrationTestRuntime.extendsFrom testRuntime
+        }
 
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-
-    eclipse {
-        classpath {
-            defaultOutputDir = file(eclipseBuildDir)
+        idea {
+            module {
             downloadSources = true
             downloadJavadoc = true
+                outputDir = file("${buildDir}/classes/java")
+                testSourceDirs += [file('src/integration-test/java'), file('src/integration-test/resources')]
+                scopes.TEST.plus += [configurations.integrationTestRuntime, configurations.integrationTestCompile]
+            }
         }
-        project {
-            name = "$project.name"
+
+        task integrationTest(type: Test) {
+            testClassesDirs += sourceSets.integrationTest.output.classesDirs
+            classpath = sourceSets.integrationTest.runtimeClasspath
         }
+
+        check.dependsOn integrationTest
+        integrationTest.mustRunAfter test
     }
 
-    idea {
-        module {
-	    downloadSources = true
-	    downloadJavadoc = true
-            outputDir = file("${buildDir}/classes/java")
-            testSourceDirs += [file('src/integration-test/java'), file('src/integration-test/resources')]
-            scopes.TEST.plus += [configurations.integrationTestRuntime, configurations.integrationTestCompile]
-        }
-    }
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 
-    sourceCompatibility = 1.9
-    targetCompatibility = 1.9
-
-    task integrationTest(type: Test) {
-        testClassesDirs += sourceSets.integrationTest.output.classesDirs
-        classpath = sourceSets.integrationTest.runtimeClasspath
-    }
-
-    check.dependsOn integrationTest
-    integrationTest.mustRunAfter test
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "4.1"
+    gradleVersion = "4.2"
 }

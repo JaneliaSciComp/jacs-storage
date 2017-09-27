@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.model.support;
+package org.janelia.jacsstorage.model.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
