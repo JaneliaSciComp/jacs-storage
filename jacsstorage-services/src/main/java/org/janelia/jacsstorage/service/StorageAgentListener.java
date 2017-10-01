@@ -35,7 +35,7 @@ public class StorageAgentListener {
 
     private final String bindingIP;
     private final int portNo;
-    private final StorageService agentStorageProxy;
+    private final DataTransferService agentStorageProxy;
 
     private Selector selector;
     private boolean running;
@@ -43,7 +43,7 @@ public class StorageAgentListener {
     @Inject
     public StorageAgentListener(@PropertyValue(name = "StorageAgent.bindingIP") String bindingIP,
                                 @PropertyValue(name = "StorageAgent.portNo") int portNo,
-                                @PooledResource StorageService agentStorageProxy) {
+                                @PooledResource DataTransferService agentStorageProxy) {
         this.bindingIP = bindingIP;
         this.portNo = portNo;
         this.agentStorageProxy = agentStorageProxy;
@@ -122,7 +122,7 @@ public class StorageAgentListener {
                 // stream closed - still attempt to write the response and then close the channel
                 LOG.error("Stream closed before reading the request");
                 StorageMessageHeader processErrorResponse = new StorageMessageHeader(
-                        StorageService.Operation.PROCESS_ERROR,
+                        DataTransferService.Operation.PROCESS_ERROR,
                         JacsStorageFormat.ARCHIVE_DATA_FILE,
                         "",
                         "Stream closed before the request was read");
@@ -143,7 +143,7 @@ public class StorageAgentListener {
                 return;
             }
         }
-        if (channelState.transferState.getMessageType().getOperation() == StorageService.Operation.PERSIST_DATA) {
+        if (channelState.transferState.getMessageType().getOperation() == DataTransferService.Operation.PERSIST_DATA) {
             if (numRead == -1) {
                 // nothing left to read
                 handlePersistDataCompleted(key, channel, channelState);
@@ -151,10 +151,10 @@ public class StorageAgentListener {
                 // persist the data
                 handlePersistData(key, channel, channelState);
             }
-        } else if (channelState.transferState.getMessageType().getOperation() == StorageService.Operation.RETRIEVE_DATA) {
+        } else if (channelState.transferState.getMessageType().getOperation() == DataTransferService.Operation.RETRIEVE_DATA) {
             // switch mode to sending the data
             key.interestOps(SelectionKey.OP_WRITE);
-        } else if (channelState.transferState.getMessageType().getOperation() == StorageService.Operation.PING) {
+        } else if (channelState.transferState.getMessageType().getOperation() == DataTransferService.Operation.PING) {
             handlePing(key, channel, channelState);
         } else {
             handleInvalidOperationError(key, channel, channelState);
@@ -185,7 +185,7 @@ public class StorageAgentListener {
     private void handlePing(SelectionKey key, SocketChannel channel, ChannelState channelState) throws IOException {
         key.interestOps(SelectionKey.OP_WRITE);
         StorageMessageHeader pingOperationResponse = new StorageMessageHeader(
-                StorageService.Operation.PROCESS_RESPONSE,
+                DataTransferService.Operation.PROCESS_RESPONSE,
                 JacsStorageFormat.ARCHIVE_DATA_FILE,
                 "",
                 "OK");
@@ -204,7 +204,7 @@ public class StorageAgentListener {
         key.interestOps(SelectionKey.OP_WRITE);
         LOG.error("Invalid operation {} sent by {}", channelState.transferState.getMessageType().getOperation(), channel.getRemoteAddress());
         StorageMessageHeader invalidOperationResponse = new StorageMessageHeader(
-                StorageService.Operation.PROCESS_ERROR,
+                DataTransferService.Operation.PROCESS_ERROR,
                 JacsStorageFormat.ARCHIVE_DATA_FILE,
                 "",
                 "Invalid operation " + channelState.transferState.getMessageType().getOperation());
@@ -223,7 +223,7 @@ public class StorageAgentListener {
         byte[] responseBytes;
         SocketChannel channel = (SocketChannel) key.channel();
         ChannelState channelState = (ChannelState) key.attachment();
-        if (channelState.transferState.getMessageType().getOperation() == StorageService.Operation.PERSIST_DATA) {
+        if (channelState.transferState.getMessageType().getOperation() == DataTransferService.Operation.PERSIST_DATA) {
             StorageMessageResponse response;
             TransferState<StorageMessageResponse> responseTransfer;
             switch (channelState.transferState.getState()) {
@@ -254,7 +254,7 @@ public class StorageAgentListener {
                     writeBuffer(ByteBuffer.wrap(responseBytes), channel);
                     channel.close();
             }
-        } else if (channelState.transferState.getMessageType().getOperation() == StorageService.Operation.RETRIEVE_DATA) {
+        } else if (channelState.transferState.getMessageType().getOperation() == DataTransferService.Operation.RETRIEVE_DATA) {
             StorageMessageHeader responseHeader;
             TransferState<StorageMessageHeader> responseHeaderTransfer;
             byte[] responseHeaderBytes;
@@ -271,13 +271,13 @@ public class StorageAgentListener {
                             // nothing read from the data channel
                             if (channelState.transferState.getState() == State.READ_DATA_ERROR) {
                                 responseHeader = new StorageMessageHeader(
-                                        StorageService.Operation.PROCESS_ERROR,
+                                        DataTransferService.Operation.PROCESS_ERROR,
                                         JacsStorageFormat.ARCHIVE_DATA_FILE,
                                         "", // the client is responsible for deciding where to save
                                         channelState.transferState.getErrorMessage());
                             } else {
                                 responseHeader = new StorageMessageHeader(
-                                        StorageService.Operation.PROCESS_RESPONSE,
+                                        DataTransferService.Operation.PROCESS_RESPONSE,
                                         JacsStorageFormat.ARCHIVE_DATA_FILE,
                                         "",
                                         channelState.transferState.getErrorMessage());
@@ -291,7 +291,7 @@ public class StorageAgentListener {
                             channelState.channelOutputBuffer = responseBuffer;
                             channelState.channelOutputBuffer.flip();
                             responseHeader = new StorageMessageHeader(
-                                    StorageService.Operation.PROCESS_RESPONSE,
+                                    DataTransferService.Operation.PROCESS_RESPONSE,
                                     JacsStorageFormat.ARCHIVE_DATA_FILE,
                                     "",
                                     channelState.transferState.getErrorMessage());
@@ -317,7 +317,7 @@ public class StorageAgentListener {
                 case READ_DATA_ERROR:
                     if (channelState.channelOutputBuffer == null) {
                         responseHeader = new StorageMessageHeader(
-                                StorageService.Operation.PROCESS_ERROR,
+                                DataTransferService.Operation.PROCESS_ERROR,
                                 JacsStorageFormat.ARCHIVE_DATA_FILE,
                                 "",
                                 channelState.transferState.getErrorMessage());

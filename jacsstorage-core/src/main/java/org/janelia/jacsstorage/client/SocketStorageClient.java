@@ -6,7 +6,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.service.State;
 import org.janelia.jacsstorage.service.StorageMessageHeaderCodec;
 import org.janelia.jacsstorage.service.StorageMessageResponseCodec;
-import org.janelia.jacsstorage.service.StorageService;
+import org.janelia.jacsstorage.service.DataTransferService;
 import org.janelia.jacsstorage.service.StorageMessageHeader;
 import org.janelia.jacsstorage.service.StorageMessageResponse;
 import org.janelia.jacsstorage.service.TransferState;
@@ -29,22 +29,22 @@ public class SocketStorageClient implements StorageClient {
     private static final Logger LOG = LoggerFactory.getLogger(SocketStorageClient.class);
     private static final long SELECTOR_TIMEOUT = 10000;
 
-    private final StorageService clientStorageProxy;
+    private final DataTransferService clientStorageProxy;
     private Selector selector;
 
-    public SocketStorageClient(StorageService clientStorageProxy) {
+    public SocketStorageClient(DataTransferService clientStorageProxy) {
         this.clientStorageProxy = clientStorageProxy;
     }
 
     @Override
     public StorageMessageResponse ping(String connectionInfo) throws IOException {
         try {
-            initTransfer(StorageService.Operation.PING, null, null, connectionInfo, SelectionKey.OP_READ);
+            initTransfer(DataTransferService.Operation.PING, null, null, connectionInfo, SelectionKey.OP_READ);
             ByteBuffer dataTransferBuffer = allocateTransferBuffer();
             StorageMessageHeader responseHeader = retrieveResponseHeader(dataTransferBuffer);
-            if (responseHeader.getOperation() == StorageService.Operation.PROCESS_RESPONSE) {
+            if (responseHeader.getOperation() == DataTransferService.Operation.PROCESS_RESPONSE) {
                 return new StorageMessageResponse(StorageMessageResponse.OK, null, 0, 0);
-            } else if (responseHeader.getOperation() == StorageService.Operation.PROCESS_ERROR) {
+            } else if (responseHeader.getOperation() == DataTransferService.Operation.PROCESS_ERROR) {
                 return new StorageMessageResponse(StorageMessageResponse.ERROR, responseHeader.getMessageOrDefault(), 0, 0);
             } else {
                 throw new IllegalStateException("Invalid response operation");
@@ -76,13 +76,13 @@ public class SocketStorageClient implements StorageClient {
                 }
             }
             initTransfer(
-                    StorageService.Operation.PERSIST_DATA,
+                    DataTransferService.Operation.PERSIST_DATA,
                     storageInfo.getStorageFormat(),
                     storageInfo.getPath(),
                     storageInfo.getConnectionInfo(),
                     SelectionKey.OP_WRITE);
             TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
-                    StorageService.Operation.RETRIEVE_DATA,
+                    DataTransferService.Operation.RETRIEVE_DATA,
                     localDataFormat,
                     localPath,
                     ""));
@@ -105,7 +105,7 @@ public class SocketStorageClient implements StorageClient {
     public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
         try {
             initTransfer(
-                    StorageService.Operation.RETRIEVE_DATA,
+                    DataTransferService.Operation.RETRIEVE_DATA,
                     storageInfo.getStorageFormat(),
                     storageInfo.getPath(),
                     storageInfo.getConnectionInfo(),
@@ -123,9 +123,9 @@ public class SocketStorageClient implements StorageClient {
             ByteBuffer dataTransferBuffer = allocateTransferBuffer();
 
             StorageMessageHeader responseHeader = retrieveResponseHeader(dataTransferBuffer);
-            if (responseHeader.getOperation() == StorageService.Operation.PROCESS_RESPONSE) {
+            if (responseHeader.getOperation() == DataTransferService.Operation.PROCESS_RESPONSE) {
                 TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
-                        StorageService.Operation.PERSIST_DATA,
+                        DataTransferService.Operation.PERSIST_DATA,
                         localDataFormat,
                         localPath,
                         ""));
@@ -133,7 +133,7 @@ public class SocketStorageClient implements StorageClient {
                 clientStorageProxy.beginDataTransfer(localDataTransfer);
                 retrieveData(dataTransferBuffer, localDataTransfer);
                 return new StorageMessageResponse(StorageMessageResponse.OK, localDataTransfer.getErrorMessage(), localDataTransfer.getTransferredBytes(), localDataTransfer.getPersistedBytes());
-            } else if (responseHeader.getOperation() == StorageService.Operation.PROCESS_ERROR) {
+            } else if (responseHeader.getOperation() == DataTransferService.Operation.PROCESS_ERROR) {
                 return new StorageMessageResponse(StorageMessageResponse.ERROR, responseHeader.getMessageOrDefault(), 0, 0);
             } else {
                 throw new IllegalStateException("Invalid response operation");
@@ -143,7 +143,7 @@ public class SocketStorageClient implements StorageClient {
         }
     }
 
-    private byte[] createRemoteMessageHeaderBytes(StorageService.Operation operation, JacsStorageFormat storageFormat, String storagePathname) throws IOException {
+    private byte[] createRemoteMessageHeaderBytes(DataTransferService.Operation operation, JacsStorageFormat storageFormat, String storagePathname) throws IOException {
         StorageMessageHeader messageHeader = new StorageMessageHeader(
                 operation,
                 storageFormat,
@@ -180,7 +180,7 @@ public class SocketStorageClient implements StorageClient {
         }
     }
 
-    private void initTransfer(StorageService.Operation op, JacsStorageFormat format, String pathName, String connectionInfo, int channelIOOp) throws IOException {
+    private void initTransfer(DataTransferService.Operation op, JacsStorageFormat format, String pathName, String connectionInfo, int channelIOOp) throws IOException {
         byte[] remoteOpBytes = createRemoteMessageHeaderBytes(op, format, pathName);
         ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
         openChannel(remoteOpBuffer, getConnectionHost(connectionInfo), getConnectionPort(connectionInfo), channelIOOp);

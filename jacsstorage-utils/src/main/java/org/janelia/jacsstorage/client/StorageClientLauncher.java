@@ -6,7 +6,7 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.janelia.jacsstorage.service.StorageService;
+import org.janelia.jacsstorage.service.DataTransferService;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
@@ -65,7 +65,7 @@ public class StorageClientLauncher {
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
         SeContainer container = containerInit.initialize();
         StorageClient socketStorageClient = new SocketStorageClient(
-                container.select(StorageService.class).get()
+                container.select(DataTransferService.class).get()
         );
         DataStorageInfo storageInfo;
         StorageClientLauncher storageClientLauncher = new StorageClientLauncher(socketStorageClient);

@@ -8,8 +8,8 @@ import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.TimebasedIdGenerator;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
-import org.janelia.jacsstorage.service.StorageService;
-import org.janelia.jacsstorage.service.StorageServiceImpl;
+import org.janelia.jacsstorage.service.DataTransferService;
+import org.janelia.jacsstorage.service.DataTransferServiceImpl;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
@@ -76,7 +76,7 @@ public class ApplicationProducer {
 
     @PooledResource
     @Produces
-    public StorageService createPooledStorageProtocol(@PooledResource ExecutorService pooledExecutorService, DataBundleIOProvider dataIOProvider) {
-        return new StorageServiceImpl(pooledExecutorService, dataIOProvider);
+    public DataTransferService createPooledStorageProtocol(@PooledResource ExecutorService pooledExecutorService, DataBundleIOProvider dataIOProvider) {
+        return new DataTransferServiceImpl(pooledExecutorService, dataIOProvider);
     }
 }

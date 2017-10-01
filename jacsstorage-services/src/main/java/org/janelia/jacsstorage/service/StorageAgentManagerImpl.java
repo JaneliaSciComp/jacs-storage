@@ -14,9 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
-/**
- * This class is explicitly excluded from CDI because it's created using the method from the @ServicesProducer.
- */
 @ApplicationScoped
 public class StorageAgentManagerImpl implements StorageAgentManager {
     private static final Logger LOG = LoggerFactory.getLogger(StorageAgentManagerImpl.class);

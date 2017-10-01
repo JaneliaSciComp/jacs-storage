@@ -20,14 +20,14 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.concurrent.ExecutorService;
 
-public class StorageServiceImpl implements StorageService {
-    private final Logger LOG = LoggerFactory.getLogger(StorageServiceImpl.class);
+public class DataTransferServiceImpl implements DataTransferService {
+    private final Logger LOG = LoggerFactory.getLogger(DataTransferServiceImpl.class);
 
     private final ExecutorService backgroundTransferExecutor;
     private final DataBundleIOProvider dataIOProvider;
 
     @Inject
-    public StorageServiceImpl(ExecutorService backgroundTransferExecutor, DataBundleIOProvider dataIOProvider) {
+    public DataTransferServiceImpl(ExecutorService backgroundTransferExecutor, DataBundleIOProvider dataIOProvider) {
         this.backgroundTransferExecutor = backgroundTransferExecutor;
         this.dataIOProvider = dataIOProvider;
     }

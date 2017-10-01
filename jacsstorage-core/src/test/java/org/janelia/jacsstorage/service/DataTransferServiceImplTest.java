@@ -34,12 +34,12 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class StorageServiceImplTest {
+public class DataTransferServiceImplTest {
 
     private static final String TEST_DATA_DIRECTORY = "src/test/resources/testdata/bundletransfer";
 
     private Path testDirectory;
-    private StorageServiceImpl storageService;
+    private DataTransferServiceImpl storageService;
 
     @SuppressWarnings("unchecked")
     @Before
@@ -48,7 +48,7 @@ public class StorageServiceImplTest {
         Instance<BundleWriter> bundleWriterSource = mock(Instance.class);
         when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader()).iterator());
         when(bundleWriterSource.iterator()).thenReturn(ImmutableList.<BundleWriter>of(new SingleFileBundleWriter()).iterator());
-        storageService = new StorageServiceImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource));
+        storageService = new DataTransferServiceImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource));
         testDirectory = Files.createTempDirectory("StorageAgentTest");
     }
 
@@ -75,7 +75,7 @@ public class StorageServiceImplTest {
         Path testTargetPath = testDirectory.resolve("testWriteData");
         FileInputStream testInput = new FileInputStream(testDataPath.toFile());
         try {
-            TransferState<StorageMessageHeader> transferState = createMessageHeaderTransferState(StorageService.Operation.PERSIST_DATA, JacsStorageFormat.SINGLE_DATA_FILE, testTargetPath.toString());
+            TransferState<StorageMessageHeader> transferState = createMessageHeaderTransferState(DataTransferService.Operation.PERSIST_DATA, JacsStorageFormat.SINGLE_DATA_FILE, testTargetPath.toString());
             storageService.beginDataTransfer(transferState);
 
             ByteBuffer buffer = ByteBuffer.allocate(2048);
@@ -106,7 +106,7 @@ public class StorageServiceImplTest {
     @Test
     public void readData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
-        TransferState<StorageMessageHeader> transferState = createMessageHeaderTransferState(StorageService.Operation.RETRIEVE_DATA, JacsStorageFormat.SINGLE_DATA_FILE, testDataPath.toString());
+        TransferState<StorageMessageHeader> transferState = createMessageHeaderTransferState(DataTransferService.Operation.RETRIEVE_DATA, JacsStorageFormat.SINGLE_DATA_FILE, testDataPath.toString());
         storageService.beginDataTransfer(transferState);
 
         ByteBuffer buffer = ByteBuffer.allocate(2048);
@@ -121,7 +121,7 @@ public class StorageServiceImplTest {
         assertThat(transferState.getState(), isIn(EnumSet.of(State.READ_DATA, State.READ_DATA_COMPLETE, State.READ_DATA_ERROR)));
     }
 
-    private TransferState<StorageMessageHeader> createMessageHeaderTransferState(StorageService.Operation op, JacsStorageFormat format, String dataFile) throws IOException {
+    private TransferState<StorageMessageHeader> createMessageHeaderTransferState(DataTransferService.Operation op, JacsStorageFormat format, String dataFile) throws IOException {
         StorageMessageHeader messageHeader = new StorageMessageHeader(
                 op,
                 format,

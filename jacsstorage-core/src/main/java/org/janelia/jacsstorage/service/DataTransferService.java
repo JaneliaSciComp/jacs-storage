@@ -3,7 +3,7 @@ package org.janelia.jacsstorage.service;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public interface StorageService {
+public interface DataTransferService {
 
     enum Operation {
         PING,

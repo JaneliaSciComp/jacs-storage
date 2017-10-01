@@ -27,7 +27,7 @@ public class StorageMessageHeaderCodec implements MessageDataCodec<StorageMessag
     @Override
     public StorageMessageHeader decodeMessage(ByteBuffer buffer) throws IOException {
         MessageUnpacker messageHeaderUnpacker = MessagePack.newDefaultUnpacker(buffer);
-        StorageService.Operation op = StorageService.Operation.valueOf(messageHeaderUnpacker.unpackString());
+        DataTransferService.Operation op = DataTransferService.Operation.valueOf(messageHeaderUnpacker.unpackString());
         String formatString = messageHeaderUnpacker.unpackString();
         JacsStorageFormat format = StringUtils.isBlank(formatString) ? null : JacsStorageFormat.valueOf(formatString);
         String path = messageHeaderUnpacker.unpackString();
