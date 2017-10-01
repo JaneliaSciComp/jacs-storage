@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.protocol;
+package org.janelia.jacsstorage.service;
 
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacsstorage.io.BundleReader;

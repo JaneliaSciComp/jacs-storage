@@ -8,8 +8,8 @@ import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.TimebasedIdGenerator;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
-import org.janelia.jacsstorage.protocol.StorageService;
-import org.janelia.jacsstorage.protocol.StorageServiceImpl;
+import org.janelia.jacsstorage.service.StorageService;
+import org.janelia.jacsstorage.service.StorageServiceImpl;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;

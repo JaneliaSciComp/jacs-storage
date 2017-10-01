@@ -3,13 +3,6 @@ package org.janelia.jacsstorage.service;
 import org.janelia.jacsstorage.cdi.qualifier.PooledResource;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.janelia.jacsstorage.protocol.State;
-import org.janelia.jacsstorage.protocol.StorageMessageHeaderCodec;
-import org.janelia.jacsstorage.protocol.StorageMessageResponseCodec;
-import org.janelia.jacsstorage.protocol.StorageService;
-import org.janelia.jacsstorage.protocol.StorageMessageHeader;
-import org.janelia.jacsstorage.protocol.StorageMessageResponse;
-import org.janelia.jacsstorage.protocol.TransferState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

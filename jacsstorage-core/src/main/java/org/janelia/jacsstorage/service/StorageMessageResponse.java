@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.protocol;
+package org.janelia.jacsstorage.service;
 
 public class StorageMessageResponse {
     public static final int OK = 0;

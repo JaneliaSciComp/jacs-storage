@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.protocol;
+package org.janelia.jacsstorage.service;
 
 import org.msgpack.core.MessageBufferPacker;
 import org.msgpack.core.MessagePack;

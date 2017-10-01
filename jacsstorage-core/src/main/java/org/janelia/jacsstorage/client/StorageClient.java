@@ -1,7 +1,7 @@
 package org.janelia.jacsstorage.client;
 
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
-import org.janelia.jacsstorage.protocol.StorageMessageResponse;
+import org.janelia.jacsstorage.service.StorageMessageResponse;
 
 import java.io.IOException;
 

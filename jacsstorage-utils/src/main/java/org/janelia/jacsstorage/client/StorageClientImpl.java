@@ -2,7 +2,7 @@ package org.janelia.jacsstorage.client;
 
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
-import org.janelia.jacsstorage.protocol.StorageMessageResponse;
+import org.janelia.jacsstorage.service.StorageMessageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
