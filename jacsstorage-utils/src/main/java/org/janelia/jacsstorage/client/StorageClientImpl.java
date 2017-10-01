@@ -102,8 +102,13 @@ public class StorageClientImpl implements StorageClient {
 
     @Override
     public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
-        DataStorageInfo allocatedStorage = retrieveStorageInfo(storageInfo);
-        return storageClient.retrieveData(localPath, allocatedStorage);
+        DataStorageInfo persistedStorageInfo = retrieveStorageInfo(storageInfo);
+        if (persistedStorageInfo.getConnectionInfo() == null) {
+            LOG.error("No connection available for retrieving {}", storageInfo);
+            return new StorageMessageResponse(StorageMessageResponse.ERROR, "No connection to " + storageInfo.getName(), 0, 0);
+        }
+        LOG.info("Data storage info: {}", persistedStorageInfo);
+        return storageClient.retrieveData(localPath, persistedStorageInfo);
     }
 
     private DataStorageInfo retrieveStorageInfo(DataStorageInfo storageRequest) {
