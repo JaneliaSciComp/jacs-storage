@@ -8,7 +8,7 @@ import java.util.function.Predicate;
 public interface StorageAgentManager {
     List<StorageAgentInfo> getCurrentRegisteredAgents();
     StorageAgentInfo registerAgent(StorageAgentInfo agentInfo);
-    void deregisterAgent(String agentConnectionInfo);
+    StorageAgentInfo deregisterAgent(String agentConnectionInfo);
     Optional<StorageAgentInfo> findRegisteredAgentByLocationOrConnectionInfo(String agentInfo);
     Optional<StorageAgentInfo> findRandomRegisteredAgent(Predicate<StorageAgentInfo> agentFilter);
 }

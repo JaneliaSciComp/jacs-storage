@@ -98,7 +98,6 @@ public abstract class AbstractStorageApp {
                     .addHttpListener(appArgs.portNumber, appArgs.host)
                     .setHandler(storageHandler)
                     .build();
-
     }
 
     private void run() {

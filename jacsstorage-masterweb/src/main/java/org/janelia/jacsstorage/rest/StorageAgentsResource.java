@@ -23,6 +23,14 @@ public class StorageAgentsResource {
     @Inject
     private StorageAgentManager agentManager;
 
+    @Path("{agentLocationInfo}")
+    @GET
+    public Response findRegisteredAgent(@PathParam("agentLocationInfo") String agentLocationInfo) {
+        return agentManager.findRegisteredAgentByLocationOrConnectionInfo(agentLocationInfo)
+                .map(agentInfo -> Response.ok(agentInfo).build())
+                .orElse(Response.status(Response.Status.NOT_FOUND).build());
+    }
+
     @GET
     public Response getCurrentRegisteredAgents() {
         return Response
@@ -42,9 +50,12 @@ public class StorageAgentsResource {
     @Path("{agentLocationInfo}")
     @DELETE
     public Response deregisterAgent(@PathParam("agentLocationInfo") String agentLocationInfo) {
-        agentManager.deregisterAgent(agentLocationInfo);
-        return Response
-                .noContent()
-                .build();
+        if (agentManager.deregisterAgent(agentLocationInfo) != null) {
+            return Response
+                    .noContent()
+                    .build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
     }
 }

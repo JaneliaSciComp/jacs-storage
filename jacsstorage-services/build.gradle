@@ -9,6 +9,8 @@ project(":jacsstorage-services") {
 
         implementation CDI_SE_CORE_LIB,
                        CMDLINE_ARG_LIB,
+                       JAX_RS_CLIENT_LIB,
+                       JERSEY_MEDIA_JSON_LIB,
                        MONGODB_DRIVER_LIB,
                        REFLECTIONS_LIB
     }

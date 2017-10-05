@@ -1,9 +1,11 @@
 package org.janelia.jacsstorage.cdi;
 
 import com.fasterxml.jackson.databind. ObjectMapper;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacsstorage.cdi.qualifier.PooledResource;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
+import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.TimebasedIdGenerator;
@@ -18,6 +20,8 @@ import javax.enterprise.inject.spi.InjectionPoint;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
@@ -70,6 +74,21 @@ public class ApplicationProducer {
     }
 
     public void shutdownExecutor(@Disposes @PooledResource ExecutorService executorService) throws InterruptedException {
+        executorService.shutdown();
+        executorService.awaitTermination(1, TimeUnit.SECONDS);
+    }
+
+    @ScheduledResource
+    @Produces
+    public ScheduledExecutorService createScheduledExecutorService() {
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("JACS-STORAGE-TASK-%d")
+                .setDaemon(true)
+                .build();
+        return Executors.newScheduledThreadPool(1, threadFactory);
+    }
+
+    public void shutdownExecutor(@Disposes @ScheduledResource ScheduledExecutorService executorService) throws InterruptedException {
         executorService.shutdown();
         executorService.awaitTermination(1, TimeUnit.SECONDS);
     }

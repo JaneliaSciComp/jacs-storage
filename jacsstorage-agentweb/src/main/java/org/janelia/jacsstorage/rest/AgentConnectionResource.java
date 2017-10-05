@@ -5,7 +5,9 @@ import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
@@ -15,20 +17,31 @@ import javax.ws.rs.core.UriInfo;
 
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
-@Path("status")
-public class AgentStatusResource {
+@Path("connection")
+public class AgentConnectionResource {
 
     @Inject
     private AgentState agentState;
     @Context
     private UriInfo resourceURI;
 
+    @Path("status")
     @GET
     public Response getStatus() {
-        StorageAgentInfo localAgentInfo = new StorageAgentInfo(agentState.getAgentLocation(), agentState.getConnectionInfo(), agentState.getStorageRootDir());
-        localAgentInfo.setStorageSpaceAvailableInMB(agentState.getAvailableStorageSpaceInMB());
+        StorageAgentInfo localAgentInfo = agentState.getLocalAgentInfo();
         return Response
                 .ok(localAgentInfo)
+                .build();
+    }
+
+    @Consumes(MediaType.APPLICATION_JSON)
+    @POST
+    public Response connect(String connectURL) {
+        agentState.connectTo(connectURL);
+        StorageAgentInfo localAgentInfo = agentState.getLocalAgentInfo();
+        return Response
+                .created(resourceURI.getRequestUriBuilder().path("status").path(localAgentInfo.getLocation()).build())
+                .entity(localAgentInfo)
                 .build();
     }
 
