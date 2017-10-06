@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.app;
 
 import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.Parameter;
+import com.google.common.collect.ImmutableList;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -25,7 +26,9 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * This is the bootstrap application for JACS services.
@@ -68,6 +71,7 @@ public abstract class AbstractStorageApp {
                         .setAsyncSupported(true)
                         .setEnabled(true)
                         .addInitParam(ServletProperties.JAXRS_APPLICATION_CLASS, getJaxConfigName())
+                        .addInitParam("jersey.config.server.provider.packages", getAppPackages().stream().collect(Collectors.joining(";")))
                         .addMapping(getRestApiMapping())
                 ;
         DeploymentInfo servletBuilder =
@@ -109,4 +113,10 @@ public abstract class AbstractStorageApp {
     protected abstract String getRestApiMapping();
 
     protected abstract ListenerInfo[] getAppListeners();
+
+    protected List<String> getAppPackages() {
+        return ImmutableList.of(
+                "org.janelia.jacsstorage"
+        );
+    }
 }
