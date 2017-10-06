@@ -13,9 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.UriInfo;
 import java.net.InetAddress;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
