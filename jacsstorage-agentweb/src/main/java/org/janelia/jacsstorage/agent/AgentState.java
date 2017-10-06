@@ -11,14 +11,17 @@ import org.janelia.jacsstorage.resilience.CircuitBreakerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
 public class AgentState {
@@ -154,6 +157,17 @@ public class AgentState {
 
     public void setRegistered(boolean registered) {
         this.registered = registered;
+    }
+
+    @PostConstruct
+    public void initialize() {
+        if (StringUtils.isNotBlank(storageRootDir)) {
+            try {
+                Files.createDirectories(Paths.get(storageRootDir));
+            } catch (IOException e) {
+                LOG.warn("Error creating storage root directory {}", storageRootDir, e);
+            }
+        }
     }
 
     @Override
