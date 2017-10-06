@@ -71,7 +71,6 @@ public abstract class AbstractStorageApp {
                         .setAsyncSupported(true)
                         .setEnabled(true)
                         .addInitParam(ServletProperties.JAXRS_APPLICATION_CLASS, getJaxConfigName())
-                        .addInitParam("jersey.config.server.provider.packages", getAppPackages().stream().collect(Collectors.joining(";")))
                         .addMapping(getRestApiMapping())
                 ;
         DeploymentInfo servletBuilder =
@@ -113,10 +112,4 @@ public abstract class AbstractStorageApp {
     protected abstract String getRestApiMapping();
 
     protected abstract ListenerInfo[] getAppListeners();
-
-    protected List<String> getAppPackages() {
-        return ImmutableList.of(
-                "org.janelia.jacsstorage"
-        );
-    }
 }
