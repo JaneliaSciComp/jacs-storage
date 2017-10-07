@@ -36,6 +36,7 @@ public class StorageClientImpl implements StorageClient {
 
     public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
         DataStorageInfo allocatedStorage = allocateStorage(storageInfo);
+        LOG.debug("Allocated {}", allocatedStorage);
         StorageMessageResponse storageResponse = storageClient.persistData(localPath, allocatedStorage);
         if (storageResponse.getStatus() == StorageMessageResponse.OK) {
             updateStorageInfo(storageInfo.getConnectionInfo(), storageResponse.getPersistedBytes(), allocatedStorage);
