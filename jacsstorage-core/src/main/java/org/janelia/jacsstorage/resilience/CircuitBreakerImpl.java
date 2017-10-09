@@ -33,8 +33,7 @@ public class CircuitBreakerImpl<T> implements CircuitBreaker<T> {
 
     @Override
     public void initialize(T connState, CircuitTester<T> circuitTester, Optional<Consumer<T>> onSuccess, Optional<Consumer<T>> onFailure) {
-        dispose();
-        updateStateTask = scheduler.scheduleAtFixedRate(() -> {
+        Runnable scheduleTask = () -> {
             if (circuitTester.testConnection(connState)) {
                 if (state != BreakerState.CLOSED) {
                     reset();
@@ -57,7 +56,12 @@ public class CircuitBreakerImpl<T> implements CircuitBreaker<T> {
                     state = BreakerState.HALF_CLOSED;
                 }
             }
-        }, initialDelayInSeconds, periodInSeconds, TimeUnit.SECONDS);
+        };
+        if (initialDelayInSeconds == 0) {
+            scheduleTask.run();
+        }
+        dispose();
+        updateStateTask = scheduler.scheduleAtFixedRate(scheduleTask, initialDelayInSeconds, periodInSeconds, TimeUnit.SECONDS);
     }
 
     private void reset() {

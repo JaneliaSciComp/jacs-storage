@@ -1,7 +1,6 @@
 package org.janelia.jacsstorage.app;
 
 import com.google.common.collect.ImmutableSet;
-import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.rest.AgentConnectionResource;
 
 import java.util.Set;

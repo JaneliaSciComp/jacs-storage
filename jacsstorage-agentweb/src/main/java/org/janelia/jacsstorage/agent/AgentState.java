@@ -8,6 +8,7 @@ import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.CircuitBreaker;
 import org.janelia.jacsstorage.resilience.CircuitBreakerImpl;
+import org.janelia.jacsstorage.resilience.CircuitTester;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
 public class AgentState {
@@ -99,7 +99,10 @@ public class AgentState {
                 periodInSeconds,
                 initialDelayInSeconds,
                 tripThreshold);
-        agentConnectionBreaker.initialize(this, new AgentConnectionTester(),
+
+        CircuitTester<AgentState> circuitTester = new AgentConnectionTester();
+
+        agentConnectionBreaker.initialize(this, circuitTester,
                 Optional.of(agentState -> {
                     LOG.trace("Agent {} registered with {}", agentState, masterURL);
                     agentState.setRegistered(true);

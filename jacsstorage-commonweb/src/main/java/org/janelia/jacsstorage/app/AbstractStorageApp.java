@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.app;
 
 import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.Parameter;
-import com.google.common.collect.ImmutableList;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -25,10 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
-
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * This is the bootstrap application for JACS services.
