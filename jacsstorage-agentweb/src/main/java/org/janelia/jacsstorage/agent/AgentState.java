@@ -95,7 +95,9 @@ public class AgentState {
         LOG.info("Register agent on {} with {}", this, masterURL);
         Preconditions.checkArgument(StringUtils.isNotBlank(masterURL));
         this.masterURL = masterURL;
-        agentConnectionBreaker = new CircuitBreakerImpl<>(scheduler,
+        agentConnectionBreaker = new CircuitBreakerImpl<>(
+                Optional.empty(), // initial state is undefined
+                scheduler,
                 periodInSeconds,
                 initialDelayInSeconds,
                 tripThreshold);

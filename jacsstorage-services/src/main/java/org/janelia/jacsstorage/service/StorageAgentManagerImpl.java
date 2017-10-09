@@ -50,7 +50,9 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     @Override
     public StorageAgentInfo registerAgent(StorageAgentInfo agentInfo) {
         LOG.info("Register {}", agentInfo);
-        CircuitBreaker<StorageAgentInfo> agentConnectionBreaker = new CircuitBreakerImpl<>(scheduler,
+        CircuitBreaker<StorageAgentInfo> agentConnectionBreaker = new CircuitBreakerImpl<>(
+                Optional.of(CircuitBreaker.BreakerState.CLOSED),
+                scheduler,
                 periodInSeconds,
                 initialDelayInSeconds,
                 tripThreshold);

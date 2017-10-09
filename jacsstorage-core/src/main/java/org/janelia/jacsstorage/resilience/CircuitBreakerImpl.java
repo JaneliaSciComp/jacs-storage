@@ -16,10 +16,12 @@ public class CircuitBreakerImpl<T> implements CircuitBreaker<T> {
     private BreakerState state;
     private int numFailures;
 
-    public CircuitBreakerImpl(ScheduledExecutorService scheduler,
+    public CircuitBreakerImpl(Optional<BreakerState> initialState,
+                              ScheduledExecutorService scheduler,
                               int periodInSeconds,
                               int initialDelayInSeconds,
                               int tripThreshold) {
+        initialState.ifPresent(s -> state = s);
         this.scheduler = scheduler;
         this.periodInSeconds = periodInSeconds;
         this.initialDelayInSeconds = initialDelayInSeconds;
