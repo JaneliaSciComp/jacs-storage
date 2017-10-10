@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
+import org.janelia.jacsstorage.datarequest.PageRequest;
+import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
@@ -31,10 +33,23 @@ public class DistributedStorageManagementService implements StorageManagementSer
     }
 
     @Override
+    public PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest) {
+        String storageLocation = pattern.getStorageVolume().map(sv -> sv.getLocation()).orElse(null);
+        Optional<JacsStorageVolume> storageVolume;
+        if (StringUtils.isNotBlank(storageLocation)) {
+            storageVolume = storageVolumeDao.findStorageByLocation(storageLocation);
+        } else {
+            storageVolume = Optional.empty();
+        }
+        storageVolume.ifPresent(sv -> pattern.setStorageVolumeId(sv.getId()));
+        return bundleDao.findMatchingDataBundles(pattern, pageRequest);
+    }
+
+    @Override
     public Optional<JacsBundle> allocateStorage(JacsBundle dataBundle) {
         return agentManager.findRandomRegisteredAgent((StorageAgentInfo sai) -> dataBundle.getUsedSpaceInKB() == null || sai.getStorageSpaceAvailableInMB() * 1000 > dataBundle.getUsedSpaceInKB())
                 .map((StorageAgentInfo storageAgentInfo) -> {
-                    JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocation(storageAgentInfo.getLocation());
+                    JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocationAndCreateIfNotFound(storageAgentInfo.getLocation());
                     if (StringUtils.isBlank(storageVolume.getMountPoint())) {
                         storageVolume.setMountHostIP(storageAgentInfo.getConnectionInfo());
                         storageVolume.setMountPoint(storageAgentInfo.getStoragePath());

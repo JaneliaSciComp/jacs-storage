@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.dao.mongo;
 
+import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -14,6 +15,8 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 
 import javax.inject.Inject;
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Mongo based implementation of JacsVolumeDao.
@@ -28,7 +31,20 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
     }
 
     @Override
-    public JacsStorageVolume getStorageByLocation(String location) {
+    public Optional<JacsStorageVolume> findStorageByLocation(String location) {
+        ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
+        filtersBuilder.add(Filters.eq("location", location));
+
+        List<JacsStorageVolume> results = find(Filters.and(filtersBuilder.build()),
+                null,
+                0,
+                0,
+                getEntityType());
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    }
+
+    @Override
+    public JacsStorageVolume getStorageByLocationAndCreateIfNotFound(String location) {
         FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
         updateOptions.returnDocument(ReturnDocument.AFTER);
         updateOptions.upsert(true);

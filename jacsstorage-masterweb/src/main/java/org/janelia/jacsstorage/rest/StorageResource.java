@@ -2,7 +2,11 @@ package org.janelia.jacsstorage.rest;
 
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
+import org.janelia.jacsstorage.datarequest.PageRequest;
+import org.janelia.jacsstorage.datarequest.PageRequestBuilder;
+import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
+import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.service.StorageManagementService;
 
 import javax.enterprise.context.RequestScoped;
@@ -14,6 +18,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -34,6 +39,27 @@ public class StorageResource {
     @Path("status")
     public String getStatus() {
         return "OK";
+    }
+
+    @GET
+    public Response listBundleInfo(@QueryParam("id") Long dataBundleId,
+                                   @QueryParam("owner") String owner,
+                                   @QueryParam("location") String dataLocation,
+                                   @QueryParam("page") Long pageNumber,
+                                   @QueryParam("length") Integer pageLength) {
+        JacsBundle dataBundle = new JacsBundleBuilder()
+                .dataBundleId(dataBundleId)
+                .owner(owner)
+                .location(dataLocation)
+                .build();
+        PageRequest pageRequest = new PageRequestBuilder()
+                .pageNumber(pageNumber)
+                .pageSize(pageLength)
+                .build();
+        PageResult<JacsBundle> results = storageManagementService.findMatchingDataBundles(dataBundle, pageRequest);
+        return Response
+                .ok(results)
+                .build();
     }
 
     @GET
