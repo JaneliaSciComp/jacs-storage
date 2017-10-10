@@ -2,8 +2,6 @@ package org.janelia.jacsstorage.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import org.apache.commons.lang3.StringUtils;
@@ -73,7 +71,12 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
         if (storageNumberId != null) {
             filtersBuilder.add(eq("storageVolumeId", storageNumberId));
         }
-        List<JacsBundle> results = find(and(filtersBuilder.build()),
+        Bson bsonFilter = null;
+        List<Bson> filters = filtersBuilder.build();
+
+        if (!filters.isEmpty()) bsonFilter = and(filters);
+
+        List<JacsBundle> results = find(bsonFilter,
                 createBsonSortCriteria(pageRequest.getSortCriteria()),
                 pageRequest.getOffset(),
                 pageRequest.getPageSize(),

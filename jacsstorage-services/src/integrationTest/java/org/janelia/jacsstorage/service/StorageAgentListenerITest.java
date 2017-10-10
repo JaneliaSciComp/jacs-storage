@@ -16,7 +16,6 @@ import org.janelia.jacsstorage.io.TarArchiveBundleReader;
 import org.janelia.jacsstorage.io.TarArchiveBundleWriter;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.service.StorageMessageResponse;
-import org.janelia.jacsstorage.service.StorageServiceImpl;
 import org.janelia.jacsstorage.utils.PathUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -43,7 +42,7 @@ import static org.mockito.Mockito.when;
 
 public class StorageAgentListenerITest {
 
-    private static final String TEST_DATA_DIRECTORY = "src/integration-test/resources/testdata/bundletransfer";
+    private static final String TEST_DATA_DIRECTORY = "src/integrationTest/resources/testdata/bundletransfer";
     private Path testDirectory;
 
     private static StorageAgentListener socketStorageListener;
@@ -70,7 +69,7 @@ public class StorageAgentListenerITest {
                 .then(invocation -> dataWriters.iterator());
         dataBundleIOProvider = new DataBundleIOProvider(bundleReaderSource, bundleWriterSource);
         CoreCdiProducer cdiProducer = new CoreCdiProducer();
-        socketStorageListener = new StorageAgentListener("localhost", 0, new StorageServiceImpl(Executors.newFixedThreadPool(3), dataBundleIOProvider));
+        socketStorageListener = new StorageAgentListener("localhost", 0, new DataTransferServiceImpl(Executors.newFixedThreadPool(3), dataBundleIOProvider));
         startListener(cdiProducer.createSingleExecutorService());
     }
 
@@ -104,7 +103,7 @@ public class StorageAgentListenerITest {
 
     private StorageClient createStorageClient() {
         return new SocketStorageClient(
-                new StorageServiceImpl(Executors.newSingleThreadExecutor(), dataBundleIOProvider)
+                new DataTransferServiceImpl(Executors.newSingleThreadExecutor(), dataBundleIOProvider)
         );
     }
 

@@ -19,28 +19,27 @@ subprojects {
                 java {
                     compileClasspath += main.output + test.output
                     runtimeClasspath += main.output + test.output
-                    srcDir file('src/integration-test/java')
+                    srcDir file('src/integrationTest/java')
                 }
                 resources {
-                    srcDir file('src/integration-test/resources')
-                }
-            }
+                    srcDir file('src/integrationTest/resources')
+                 }
+             }
         }
 
         configurations {
             provided
-            implementation.extendsFrom provided
-            integrationTestImplementation.extendsFrom testImplementation
-            integrationTestRuntime.extendsFrom testRuntime
+            implementation.extendsFrom(provided)
+            integrationTestCompileOnly.extendsFrom(testCompileOnly)
+            integrationTestImplementation.extendsFrom(testImplementation)
+            integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
         }
 
         idea {
             module {
-            downloadSources = true
-            downloadJavadoc = true
-                outputDir = file("${buildDir}/classes/java")
-                testSourceDirs += [file('src/integration-test/java'), file('src/integration-test/resources')]
-                scopes.TEST.plus += [configurations.integrationTestRuntime, configurations.integrationTestCompile]
+                downloadSources = true
+                downloadJavadoc = true
+                scopes.TEST.plus += [ configurations.integrationTestImplementation ]
             }
         }
 
@@ -51,7 +50,8 @@ subprojects {
 
         check.dependsOn integrationTest
         integrationTest.mustRunAfter test
-    }
+
+   }
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -59,5 +59,5 @@ subprojects {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "4.2"
+    gradleVersion = "4.2.1"
 }

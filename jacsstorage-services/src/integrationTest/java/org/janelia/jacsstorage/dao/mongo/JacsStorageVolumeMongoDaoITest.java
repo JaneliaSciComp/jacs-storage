@@ -48,7 +48,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest<JacsSt
 
     @Test
     public void searchMissingVolumeByLocationAndCheckIfCreated() {
-        JacsStorageVolume justCreated = testDao.getStorageByLocation("newlyCreatedLocation");
+        JacsStorageVolume justCreated = testDao.getStorageByLocationAndCreateIfNotFound("newlyCreatedLocation");
         assertNotNull(justCreated);
         testData.add(justCreated);
         JacsStorageVolume retrievedTe = testDao.findById(justCreated.getId());
@@ -61,7 +61,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest<JacsSt
     public void searchExistingVolumeByLocationAndCheckNoNewOneIsCreated() {
         String testLocation = "127.0.0.1";
         JacsStorageVolume te = persistEntity(testDao, createTestEntity("v1", testLocation, "/tmp", 100L, 20L));
-        JacsStorageVolume existingVolume = testDao.getStorageByLocation(testLocation);
+        JacsStorageVolume existingVolume = testDao.getStorageByLocationAndCreateIfNotFound(testLocation);
         assertNotNull(existingVolume);
         assertNotSame(te, existingVolume);
         PageResult<JacsStorageVolume> allVolumes = testDao.findAll(new PageRequest());
