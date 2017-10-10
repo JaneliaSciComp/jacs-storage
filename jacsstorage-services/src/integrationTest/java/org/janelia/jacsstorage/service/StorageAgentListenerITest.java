@@ -126,20 +126,20 @@ public class StorageAgentListenerITest {
         StorageClient storageClient = createStorageClient();
         List<TestData> testData = ImmutableList.<TestData>builder()
                 .add(new TestData(storageInfo(
-                                testDirectory.resolve("td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
-                                storageInfo(testDirectory.resolve("td1.local"), JacsStorageFormat.ARCHIVE_DATA_FILE))
+                                testDirectory.resolve("sendDataDirectory.td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
+                                storageInfo(testDirectory.resolve("sendDataDirectory.td1.local"), JacsStorageFormat.ARCHIVE_DATA_FILE))
                 )
                 .add(new TestData(
-                                storageInfo(testDirectory.resolve("td2.remote"), JacsStorageFormat.DATA_DIRECTORY),
-                                storageInfo(testDirectory.resolve("td2.local"), JacsStorageFormat.DATA_DIRECTORY))
+                                storageInfo(testDirectory.resolve("sendDataDirectory.td2.remote"), JacsStorageFormat.DATA_DIRECTORY),
+                                storageInfo(testDirectory.resolve("sendDataDirectory.td2.local"), JacsStorageFormat.DATA_DIRECTORY))
                 )
                 .add(new TestData(
-                                storageInfo(testDirectory.resolve("td3.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
-                                storageInfo(testDirectory.resolve("td3.local"), JacsStorageFormat.DATA_DIRECTORY))
+                                storageInfo(testDirectory.resolve("sendDataDirectory.td3.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
+                                storageInfo(testDirectory.resolve("sendDataDirectory.td3.local"), JacsStorageFormat.DATA_DIRECTORY))
                 )
                 .add(new TestData(
-                                storageInfo(testDirectory.resolve("td4.remote"), JacsStorageFormat.DATA_DIRECTORY),
-                                storageInfo(testDirectory.resolve("td4.local"), JacsStorageFormat.ARCHIVE_DATA_FILE))
+                                storageInfo(testDirectory.resolve("sendDataDirectory.td4.remote"), JacsStorageFormat.DATA_DIRECTORY),
+                                storageInfo(testDirectory.resolve("sendDataDirectory.td4.local"), JacsStorageFormat.ARCHIVE_DATA_FILE))
                 )
                 .build();
         Path sourceTestDataDirectory = Paths.get(TEST_DATA_DIRECTORY);
@@ -173,24 +173,24 @@ public class StorageAgentListenerITest {
         StorageClient storageClient = createStorageClient();
         List<TestData> testData = ImmutableList.<TestData>builder()
                 .add(new TestData(
-                                storageInfo(testDirectory.resolve("td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
-                                storageInfo(testDirectory.resolve("td1.local"), JacsStorageFormat.ARCHIVE_DATA_FILE))
+                                storageInfo(testDirectory.resolve("sendDataFile.td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
+                                storageInfo(testDirectory.resolve("sendDataFile.td1.local"), JacsStorageFormat.ARCHIVE_DATA_FILE))
                 )
                 .add(new TestData(
-                                storageInfo(testDirectory.resolve("td2.remote"), JacsStorageFormat.SINGLE_DATA_FILE),
-                                storageInfo(testDirectory.resolve("td2.local"), JacsStorageFormat.SINGLE_DATA_FILE))
+                                storageInfo(testDirectory.resolve("sendDataFile.td2.remote"), JacsStorageFormat.SINGLE_DATA_FILE),
+                                storageInfo(testDirectory.resolve("sendDataFile.td2.local"), JacsStorageFormat.SINGLE_DATA_FILE))
                 )
                 .add(new TestData(
-                                storageInfo(testDirectory.resolve("td3.remote"), JacsStorageFormat.SINGLE_DATA_FILE),
-                                storageInfo(testDirectory.resolve("td3.local"), JacsStorageFormat.DATA_DIRECTORY))
+                                storageInfo(testDirectory.resolve("sendDataFile.td3.remote"), JacsStorageFormat.SINGLE_DATA_FILE),
+                                storageInfo(testDirectory.resolve("sendDataFile.td3.local"), JacsStorageFormat.DATA_DIRECTORY))
                 )
                 .add(new TestData(
-                                storageInfo(testDirectory.resolve("td4.remote"), JacsStorageFormat.SINGLE_DATA_FILE),
-                                storageInfo(testDirectory.resolve("td4.local"), JacsStorageFormat.ARCHIVE_DATA_FILE))
+                                storageInfo(testDirectory.resolve("sendDataFile.td4.remote"), JacsStorageFormat.SINGLE_DATA_FILE),
+                                storageInfo(testDirectory.resolve("sendDataFile.td4.local"), JacsStorageFormat.ARCHIVE_DATA_FILE))
                 )
                 .add(new TestData(
-                                storageInfo(testDirectory.resolve("td5.remote"), JacsStorageFormat.DATA_DIRECTORY),
-                                storageInfo(testDirectory.resolve("td5.local"), JacsStorageFormat.SINGLE_DATA_FILE))
+                                storageInfo(testDirectory.resolve("sendDataFile.td5.remote"), JacsStorageFormat.DATA_DIRECTORY),
+                                storageInfo(testDirectory.resolve("sendDataFile.td5.local"), JacsStorageFormat.SINGLE_DATA_FILE))
                 )
                 .build();
         Path sourceTestDataFile = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
@@ -257,8 +257,8 @@ public class StorageAgentListenerITest {
 
     @Test
     public void retrieveError() throws IOException {
-        DataStorageInfo remoteStorageInfo = storageInfo(testDirectory.resolve("td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE);
-        DataStorageInfo localStorageInfo = storageInfo(testDirectory.resolve("td1.local"), JacsStorageFormat.ARCHIVE_DATA_FILE);
+        DataStorageInfo remoteStorageInfo = storageInfo(testDirectory.resolve("retrieveError.td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE);
+        DataStorageInfo localStorageInfo = storageInfo(testDirectory.resolve("retrieveError.td1.local"), JacsStorageFormat.ARCHIVE_DATA_FILE);
         StorageClient storageClient = createStorageClient();
         StorageMessageResponse retrieveErrorResponse = storageClient.retrieveData(localStorageInfo.getPath(), remoteStorageInfo);
         assertThat(retrieveErrorResponse.getStatus(), equalTo(StorageMessageResponse.ERROR));
