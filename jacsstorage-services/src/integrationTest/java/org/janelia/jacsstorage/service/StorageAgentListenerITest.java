@@ -154,7 +154,7 @@ public class StorageAgentListenerITest {
             Path localPath = Paths.get(td.retrievedDataStorageInfo.getPath());
             assertThat(retrievalResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(localPath));
-            assertThat(PathUtils.getSize(localPath), equalTo(sourceTestDataDirSize));
+            assertThat(localPath + " size compared to " + sourceTestDataDirectory, PathUtils.getSize(localPath), equalTo(sourceTestDataDirSize));
             assertThat(retrievalResponse.getTransferredBytes(), equalTo(persistenceResponse.getTransferredBytes()));
         }
     }
