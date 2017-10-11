@@ -143,18 +143,18 @@ public class StorageAgentListenerITest {
                 )
                 .build();
         Path sourceTestDataDirectory = Paths.get(TEST_DATA_DIRECTORY);
-        long sourceTestDataDirSize = PathUtils.getSize(sourceTestDataDirectory);
+        long sourceTestDataDirSize = PathUtils.getSize(sourceTestDataDirectory, (f, fa) -> fa.isRegularFile());
         for (TestData td : testData) {
             StorageMessageResponse persistenceResponse = storageClient.persistData(sourceTestDataDirectory.toString(), td.persistedDataStorageInfo);
             Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
             assertThat(persistenceResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(targetPath));
-            assertThat(PathUtils.getSize(targetPath), lessThanOrEqualTo(persistenceResponse.getPersistedBytes()));
+            assertThat(PathUtils.getSize(targetPath, (f, fa) -> fa.isRegularFile()), lessThanOrEqualTo(persistenceResponse.getPersistedBytes()));
             StorageMessageResponse retrievalResponse = storageClient.retrieveData(td.retrievedDataStorageInfo.getPath(), td.persistedDataStorageInfo);
             Path localPath = Paths.get(td.retrievedDataStorageInfo.getPath());
             assertThat(retrievalResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(localPath));
-            assertThat(localPath + " size compared to " + sourceTestDataDirectory, PathUtils.getSize(localPath), equalTo(sourceTestDataDirSize));
+            assertThat(localPath + " size compared to " + sourceTestDataDirectory, PathUtils.getSize(localPath, (f, fa) -> fa.isRegularFile()), equalTo(sourceTestDataDirSize));
             assertThat(retrievalResponse.getTransferredBytes(), equalTo(persistenceResponse.getTransferredBytes()));
         }
     }
@@ -194,13 +194,13 @@ public class StorageAgentListenerITest {
                 )
                 .build();
         Path sourceTestDataFile = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
-        long sourceTestDataDirSize = PathUtils.getSize(sourceTestDataFile);
+        long sourceTestDataDirSize = PathUtils.getSize(sourceTestDataFile, (f, fa) -> fa.isRegularFile());
         for (TestData td : testData) {
             StorageMessageResponse persistenceResponse = storageClient.persistData(sourceTestDataFile.toString(), td.persistedDataStorageInfo);
             Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
             assertThat(targetPath.toString(), persistenceResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(targetPath));
-            assertThat(targetPath.toString(), PathUtils.getSize(targetPath), lessThanOrEqualTo(persistenceResponse.getPersistedBytes()));
+            assertThat(targetPath.toString(), PathUtils.getSize(targetPath, (f, fa) -> fa.isRegularFile()), lessThanOrEqualTo(persistenceResponse.getPersistedBytes()));
             StorageMessageResponse retrievalResponse = storageClient.retrieveData(td.retrievedDataStorageInfo.getPath(), td.persistedDataStorageInfo);
             Path localPath = Paths.get(td.retrievedDataStorageInfo.getPath());
             assertThat(retrievalResponse.getStatus(), equalTo(StorageMessageResponse.OK));
