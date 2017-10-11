@@ -64,6 +64,11 @@ dependencies {
 
         // testing
         JUNIT_VERSION = "4.12"
+
+        // benchmarks
+        BENCHMARK_CORE_LIB = "org.openjdk.jmh:jmh-core:1.19"
+        BENCHMARK_ANN_PROCESSOR_LIB = "org.openjdk.jmh:jmh-generator-annprocess:1.19"
+
     }
 
     // Included in the implementation of ALL projects

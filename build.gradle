@@ -39,7 +39,9 @@ subprojects {
             module {
                 downloadSources = true
                 downloadJavadoc = true
-                scopes.TEST.plus += [ configurations.integrationTestImplementation ]
+                scopes.TEST.plus += [
+		    configurations.integrationTestCompileOnly
+		]
             }
         }
 

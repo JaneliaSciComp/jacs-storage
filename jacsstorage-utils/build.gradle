@@ -1,10 +1,13 @@
 apply plugin: 'application'
 
+applicationName = 'storageClientApp'
 mainClassName = 'org.janelia.jacsstorage.client.StorageClientApp'
 
 project(":jacsstorage-utils") {
     dependencies {
         implementation project(":jacsstorage-core"),
+                       BENCHMARK_CORE_LIB,
+                       BENCHMARK_ANN_PROCESSOR_LIB,
                        CDI_API_LIB,
                        CDI_SE_CORE_LIB,
                        CMDLINE_ARG_LIB,
@@ -12,6 +15,28 @@ project(":jacsstorage-utils") {
                        JERSEY_INJECT_LIB,
                        JERSEY_MEDIA_JSON_LIB
     }
+
+    task createStorageClientApp(type: CreateStartScripts) {
+        mainClassName = "org.janelia.jacsstorage.client.StorageClientApp"
+	classpath = startScripts.classpath
+	outputDir = startScripts.outputDir
+	applicationName = "storageClientApp"
+    }
+
+    task createStorageBenchmarks(type: CreateStartScripts) {
+        mainClassName = "org.janelia.jacsstorage.benchmarks.StorageBenchmarks"
+	classpath = startScripts.classpath
+	outputDir = startScripts.outputDir
+	applicationName = "storageBenchmarks"
+    }
+
+    applicationDistribution.into("bin") {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        from(createStorageClientApp)
+        from(createStorageBenchmarks)
+        fileMode = 0755
+    }
+
 }
 
 ext.moduleName = 'org.janelia.jacsstorage.utils'

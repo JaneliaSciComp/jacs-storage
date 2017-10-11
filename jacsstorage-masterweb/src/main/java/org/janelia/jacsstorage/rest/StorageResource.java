@@ -24,6 +24,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
@@ -56,7 +57,15 @@ public class StorageResource {
                 .pageNumber(pageNumber)
                 .pageSize(pageLength)
                 .build();
-        PageResult<JacsBundle> results = storageManagementService.findMatchingDataBundles(dataBundle, pageRequest);
+        PageResult<JacsBundle> dataBundleResults = storageManagementService.findMatchingDataBundles(dataBundle, pageRequest);
+        PageResult<DataStorageInfo> results = new PageResult<>();
+        results.setPageOffset(dataBundleResults.getPageOffset());
+        results.setSortCriteria(dataBundleResults.getSortCriteria());
+        results.setPageOffset(dataBundleResults.getPageOffset());
+        results.setPageSize(dataBundleResults.getResultList().size());
+        results.setResultList(dataBundleResults.getResultList().stream()
+                .map(DataStorageInfo::fromBundle)
+                .collect(Collectors.toList()));
         return Response
                 .ok(results)
                 .build();
