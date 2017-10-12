@@ -40,7 +40,8 @@ subprojects {
                 downloadSources = true
                 downloadJavadoc = true
                 scopes.TEST.plus += [
-		    configurations.integrationTestCompileOnly
+		    configurations.integrationTestCompileOnly,
+		    configurations.integrationTestRuntime
 		]
             }
         }

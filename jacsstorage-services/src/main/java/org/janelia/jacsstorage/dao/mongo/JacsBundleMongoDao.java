@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.dao.mongo;
 
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import org.apache.commons.lang3.StringUtils;
@@ -11,6 +12,7 @@ import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 
@@ -76,9 +78,22 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
 
         if (!filters.isEmpty()) bsonFilter = and(filters);
 
-        List<JacsBundle> results = find(bsonFilter,
+        ImmutableList.Builder<Bson> bundleAggregationOpsBuilder = ImmutableList.builder();
+        pattern.getStorageVolume().ifPresent(sv -> {
+            bundleAggregationOpsBuilder.add(Aggregates.lookup(
+                    EntityUtils.getMongoMapping(JacsStorageVolume.class).storeName(),
+                    "storageVolumeId",
+                    "_id",
+                    "referencedVolumes"
+                    ));
+            if (StringUtils.isNotBlank(sv.getLocation())) {
+                bundleAggregationOpsBuilder.add(Aggregates.match(eq("referencedVolumes.location", sv.getLocation())));
+            }
+        });
+        List<JacsBundle> results = aggregate(bsonFilter,
+                bundleAggregationOpsBuilder.build(),
                 createBsonSortCriteria(pageRequest.getSortCriteria()),
-                pageRequest.getOffset(),
+                (int) pageRequest.getOffset(),
                 pageRequest.getPageSize(),
                 getEntityType());
 

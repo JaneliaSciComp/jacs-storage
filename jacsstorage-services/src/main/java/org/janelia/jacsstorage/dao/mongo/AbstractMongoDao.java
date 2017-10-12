@@ -2,9 +2,11 @@ package org.janelia.jacsstorage.dao.mongo;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
@@ -123,6 +125,28 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
         return results
                 .sort(sortCriteria)
                 .into(entityDocs);
+    }
+
+    protected <R> List<R> aggregate(Bson queryFilter, List<Bson> aggregationOperators, Bson sortCriteria, int offset, int length, Class<R> resultType) {
+        List<R> entityDocs = new ArrayList<>();
+        ImmutableList.Builder<Bson> aggregatePipelineBuilder = ImmutableList.builder();
+        if (queryFilter != null) {
+            aggregatePipelineBuilder.add(Aggregates.match(queryFilter));
+        }
+        if (CollectionUtils.isNotEmpty(aggregationOperators)) {
+            aggregatePipelineBuilder.addAll(aggregationOperators);
+        }
+        if (sortCriteria != null) {
+            aggregatePipelineBuilder.add(Aggregates.sort(sortCriteria));
+        }
+        if (offset > 0) {
+            aggregatePipelineBuilder.add(Aggregates.skip(offset));
+        }
+        if (length > 0) {
+            aggregatePipelineBuilder.add(Aggregates.limit(length));
+        }
+        AggregateIterable<R> results = mongoCollection.aggregate(aggregatePipelineBuilder.build(), resultType);
+        return results.into(entityDocs);
     }
 
     @Override

@@ -17,7 +17,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
-public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest<JacsStorageVolume> {
+public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
 
     private List<JacsStorageVolume> testData = new ArrayList<>();
     private JacsStorageVolumeDao testDao;

@@ -1,12 +1,14 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.AbstractEntity;
 import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -140,6 +142,13 @@ public class JacsBundle extends AbstractEntity {
     public Optional<JacsStorageVolume> setStorageVolume(JacsStorageVolume storageVolume) {
         this.storageVolume = storageVolume;
         return getStorageVolume();
+    }
+
+    @JsonProperty("referencedVolumes")
+    public void referencedVolumes(List<JacsStorageVolume> referencedVolumes) {
+        if (referencedVolumes != null && referencedVolumes.size() > 0) {
+            this.storageVolume = referencedVolumes.get(0);
+        }
     }
 
     @Override

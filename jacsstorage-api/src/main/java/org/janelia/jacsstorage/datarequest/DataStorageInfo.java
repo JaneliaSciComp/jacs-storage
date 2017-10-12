@@ -13,6 +13,7 @@ public class DataStorageInfo {
     private String owner;
     private String path;
     private String permissions;
+    private String location;
     private String connectionInfo;
     private JacsStorageFormat storageFormat;
     private Long requestedSpaceInKB;
@@ -28,7 +29,9 @@ public class DataStorageInfo {
                 .setPermissions(dataBundle.getPermissions())
                 .setRequestedSpaceInKB(dataBundle.getUsedSpaceInKB())
                 .addMetadata(dataBundle.getMetadata())
-                .setConnectionInfo(dataBundle.getConnectionInfo());
+                .setConnectionInfo(dataBundle.getStorageVolume().map(sv -> sv.getMountHostIP()).orElse(dataBundle.getConnectionInfo()))
+                .setLocation(dataBundle.getStorageVolume().map(sv -> sv.getLocation()).orElse(null))
+                ;
     }
 
     public Number getId() {
@@ -82,6 +85,15 @@ public class DataStorageInfo {
 
     public DataStorageInfo setConnectionInfo(String connectionInfo) {
         this.connectionInfo = connectionInfo;
+        return this;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public DataStorageInfo setLocation(String location) {
+        this.location = location;
         return this;
     }
 

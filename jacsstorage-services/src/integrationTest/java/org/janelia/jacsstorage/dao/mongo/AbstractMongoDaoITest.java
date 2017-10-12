@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.dao.mongo;
 
+import com.fasterxml.jackson.databind.ser.Serializers;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
@@ -18,7 +19,7 @@ import org.junit.BeforeClass;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class AbstractMongoDaoITest<T extends BaseEntity> extends AbstractITest {
+public abstract class AbstractMongoDaoITest extends AbstractITest {
     private static MongoClient testMongoClient;
     protected static ObjectMapperFactory testObjectMapperFactory = ObjectMapperFactory.instance();
 
@@ -39,19 +40,19 @@ public abstract class AbstractMongoDaoITest<T extends BaseEntity> extends Abstra
         testMongoDatabase = testMongoClient.getDatabase(integrationTestsConfig.getStringPropertyValue("MongoDB.Database"));
     }
 
-    protected void deleteAll(ReadWriteDao<T> dao, List<T> es) {
-        for (T e : es) {
+    protected <R extends BaseEntity> void deleteAll(ReadWriteDao<R> dao, List<R> es) {
+        for (R e : es) {
             delete(dao, e);
         }
     }
 
-    protected void delete(ReadWriteDao<T> dao, T e) {
+    protected <R extends BaseEntity> void delete(ReadWriteDao<R> dao, R e) {
         if (e.getId() != null) {
             dao.delete(e);
         }
     }
 
-    protected T persistEntity(ReadWriteDao<T> dao, T e) {
+    protected <R extends BaseEntity> R persistEntity(ReadWriteDao<R> dao, R e) {
         dao.save(e);
         return e;
     }
