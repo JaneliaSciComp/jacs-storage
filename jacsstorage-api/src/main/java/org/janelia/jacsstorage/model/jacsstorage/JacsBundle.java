@@ -158,6 +158,9 @@ public class JacsBundle extends AbstractEntity {
                 .append("name", name)
                 .append("path", path)
                 .append("storageFormat", storageFormat)
+                .append("storageVolumeId", storageVolumeId)
+                .append("storageHostIP", getStorageVolume().map(sv -> sv.getMountHostIP()).orElse(""))
+                .append("storageLocation", getStorageVolume().map(sv -> sv.getLocation()).orElse(""))
                 .toString();
     }
 }

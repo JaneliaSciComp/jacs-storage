@@ -12,6 +12,8 @@ import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.utils.PathUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class DistributedStorageManagementService implements StorageManagementService {
+    private static final Logger LOG = LoggerFactory.getLogger(DistributedStorageManagementService.class);
 
     private final StorageAgentManager agentManager;
     private final JacsStorageVolumeDao storageVolumeDao;
@@ -123,14 +126,12 @@ public class DistributedStorageManagementService implements StorageManagementSer
         if (existingBundle == null) {
             return false;
         }
-        JacsStorageVolume storageVolume = storageVolumeDao.findById(existingBundle.getStorageVolumeId());
-        if (storageVolume == null) {
-            throw new IllegalThreadStateException("Invalid volume set for " + existingBundle);
-        }
-        return agentManager.findRegisteredAgentByLocationOrConnectionInfo(storageVolume.getLocation())
+        return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
+                .flatMap(sv -> agentManager.findRegisteredAgentByLocationOrConnectionInfo(sv.getLocation()))
                 .map(storageAgentInfo -> {
                     if (AgentConnectionHelper.deleteStorage(storageAgentInfo.getAgentURL(), existingBundle.getPath())) {
                         bundleDao.delete(existingBundle);
+                        LOG.info("Delete {}", existingBundle);
                         return true;
                     } else {
                         return false;
