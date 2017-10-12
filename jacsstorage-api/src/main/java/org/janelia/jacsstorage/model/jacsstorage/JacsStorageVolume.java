@@ -12,6 +12,7 @@ public class JacsStorageVolume extends AbstractEntity {
     private String name; // volume name
     private String location; // name that uniquely identifies the location
     private String mountHostIP; // IP of the host where the storage volume resides
+    private String mountHostURL;
     private String mountPoint;
     private Long capacityInMB;
     private Long availableInMB;
@@ -39,6 +40,14 @@ public class JacsStorageVolume extends AbstractEntity {
 
     public void setMountHostIP(String mountHostIP) {
         this.mountHostIP = mountHostIP;
+    }
+
+    public String getMountHostURL() {
+        return mountHostURL;
+    }
+
+    public void setMountHostURL(String mountHostURL) {
+        this.mountHostURL = mountHostURL;
     }
 
     public String getMountPoint() {

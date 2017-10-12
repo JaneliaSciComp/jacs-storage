@@ -12,4 +12,5 @@ public interface StorageManagementService {
     PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest);
     JacsBundle findDataBundleByOwnerAndName(String owner, String name);
     JacsBundle updateDataBundle(JacsBundle dataBundle);
+    boolean deleteDataBundle(JacsBundle dataBundle);
 }

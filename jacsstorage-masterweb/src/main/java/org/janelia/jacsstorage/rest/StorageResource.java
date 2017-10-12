@@ -12,7 +12,9 @@ import org.janelia.jacsstorage.service.StorageManagementService;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -132,6 +134,22 @@ public class StorageResource {
         } else {
             return Response
                     .ok(DataStorageInfo.fromBundle(updatedDataBundleInfo))
+                    .build();
+        }
+    }
+
+    @DELETE
+    @Path("{id}")
+    public Response deleteBundleInfo(@PathParam("id") Long id) {
+        JacsBundle dataBundle = new JacsBundle();
+        dataBundle.setId(id);
+        if (storageManagementService.deleteDataBundle(dataBundle)) {
+            return Response
+                    .status(Response.Status.NO_CONTENT)
+                    .build();
+        } else {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
                     .build();
         }
     }

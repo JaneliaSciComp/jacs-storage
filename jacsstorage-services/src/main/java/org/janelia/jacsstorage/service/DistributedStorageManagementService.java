@@ -52,6 +52,7 @@ public class DistributedStorageManagementService implements StorageManagementSer
                     JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocationAndCreateIfNotFound(storageAgentInfo.getLocation());
                     if (StringUtils.isBlank(storageVolume.getMountPoint())) {
                         storageVolume.setMountHostIP(storageAgentInfo.getConnectionInfo());
+                        storageVolume.setMountHostURL(storageAgentInfo.getAgentURL());
                         storageVolume.setMountPoint(storageAgentInfo.getStoragePath());
                         storageVolumeDao.update(storageVolume, ImmutableMap.of(
                                         "mountHostIP", new SetFieldValueHandler<>(storageVolume.getMountHostIP()),
@@ -114,5 +115,27 @@ public class DistributedStorageManagementService implements StorageManagementSer
         }
         bundleDao.update(dataBundle, updatedFieldsBuilder.build());
         return existingBundle;
+    }
+
+    @Override
+    public boolean deleteDataBundle(JacsBundle dataBundle) {
+        JacsBundle existingBundle = bundleDao.findById(dataBundle.getId());
+        if (existingBundle == null) {
+            return false;
+        }
+        JacsStorageVolume storageVolume = storageVolumeDao.findById(existingBundle.getStorageVolumeId());
+        if (storageVolume == null) {
+            throw new IllegalThreadStateException("Invalid volume set for " + existingBundle);
+        }
+        return agentManager.findRegisteredAgentByLocationOrConnectionInfo(storageVolume.getLocation())
+                .map(storageAgentInfo -> {
+                    if (AgentConnectionHelper.deleteStorage(storageAgentInfo.getAgentURL(), existingBundle.getPath())) {
+                        bundleDao.delete(existingBundle);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                })
+                .orElse(false);
     }
 }

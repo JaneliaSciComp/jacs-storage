@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.dao.mongo;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
@@ -48,6 +49,9 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
 
     @Override
     public JacsBundle findByOwnerAndName(String owner, String name) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(owner));
+        Preconditions.checkArgument(StringUtils.isNotBlank(name));
+
         ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
         filtersBuilder.add(eq("owner", owner));
         filtersBuilder.add(eq("name", name));
@@ -63,6 +67,9 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
     @Override
     public PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest) {
         ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
+        if (pattern.getId() != null) {
+            filtersBuilder.add(eq("_id", pattern.getId()));
+        }
         if (StringUtils.isNotBlank(pattern.getOwner())) {
             filtersBuilder.add(eq("owner", pattern.getOwner()));
         }

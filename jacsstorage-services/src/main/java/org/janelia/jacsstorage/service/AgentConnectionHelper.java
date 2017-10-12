@@ -45,6 +45,30 @@ class AgentConnectionHelper {
         return null;
     }
 
+    static boolean deleteStorage(String agentUrl, String dataPath) {
+        String deleteStorageEndpoint = String.format("/agent-storage/%s", dataPath);
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(agentUrl).path(deleteStorageEndpoint);
+            Response response = target.request()
+                    .delete()
+                    ;
+            if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
+                LOG.warn("Agent deregistration returned {}", response.getStatus());
+            } else {
+                return true;
+            }
+        } catch (Exception e) {
+            LOG.warn("Error raised during agent deregistration", e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+        return false;
+    }
+
     private static Client createHttpClient() throws Exception {
         SSLContext sslContext = SSLContext.getInstance("TLSv1");
         TrustManager[] trustManagers = {
