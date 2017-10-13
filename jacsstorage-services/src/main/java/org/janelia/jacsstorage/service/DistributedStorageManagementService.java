@@ -58,8 +58,10 @@ public class DistributedStorageManagementService implements StorageManagementSer
                         storageVolume.setMountHostURL(storageAgentInfo.getAgentURL());
                         storageVolume.setMountPoint(storageAgentInfo.getStoragePath());
                         storageVolumeDao.update(storageVolume, ImmutableMap.of(
-                                        "mountHostIP", new SetFieldValueHandler<>(storageVolume.getMountHostIP()),
-                                        "mountPoint", new SetFieldValueHandler<>(storageVolume.getMountPoint()))
+                                "mountHostIP", new SetFieldValueHandler<>(storageVolume.getMountHostIP()),
+                                "mountPoint", new SetFieldValueHandler<>(storageVolume.getMountPoint()),
+                                "mountHostURL", new SetFieldValueHandler<>(storageVolume.getMountHostURL())
+                                )
                         );
                     }
                     dataBundle.setStorageVolumeId(storageVolume.getId());

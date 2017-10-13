@@ -1,9 +1,15 @@
 package org.janelia.jacsstorage.service;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
+import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
+import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
+import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.resilience.CircuitBreaker;
 import org.janelia.jacsstorage.resilience.CircuitBreakerImpl;
 import org.slf4j.Logger;
@@ -28,6 +34,8 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
 
     private final ConcurrentMap<String, StorageAgentConnection> registeredAgentConnections = new ConcurrentHashMap<>();
 
+    @Inject
+    private JacsStorageVolumeDao storageVolumeDao;
     @Inject @ScheduledResource
     private ScheduledExecutorService scheduler;
     @Inject @PropertyValue(name= "StorageAgent.PingPeriodInSeconds")
@@ -58,6 +66,23 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
                 tripThreshold);
         StorageAgentConnection agentConnection = new StorageAgentConnection(agentInfo, agentConnectionBreaker);
         if (registeredAgentConnections.putIfAbsent(agentInfo.getLocation(), agentConnection) == null) {
+            // update connection info for the volume in case anything has changed.
+            JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocationAndCreateIfNotFound(agentInfo.getLocation());
+            ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedVolumeFieldsBuilder = ImmutableMap.builder();
+            storageVolume.setMountHostIP(agentInfo.getConnectionInfo());
+            updatedVolumeFieldsBuilder.put("mountHostIP", new SetFieldValueHandler<>(storageVolume.getMountHostIP()));
+            storageVolume.setMountHostURL(agentInfo.getAgentURL());
+            updatedVolumeFieldsBuilder.put("mountHostURL", new SetFieldValueHandler<>(storageVolume.getMountHostURL()));
+            if (StringUtils.isBlank(storageVolume.getMountPoint())) {
+                storageVolume.setMountPoint(agentInfo.getStoragePath());
+                updatedVolumeFieldsBuilder.put("mountPoint", new SetFieldValueHandler<>(storageVolume.getMountPoint()));
+            } else if (!storageVolume.equals(agentInfo.getStoragePath())) {
+                // warn if path has changed
+                LOG.warn("Agent mount point has changed from {} to {}", storageVolume.getMountPoint(), agentInfo.getStoragePath());
+                storageVolume.setMountPoint(agentInfo.getStoragePath());
+                updatedVolumeFieldsBuilder.put("mountPoint", new SetFieldValueHandler<>(storageVolume.getMountPoint()));
+            }
+            storageVolumeDao.update(storageVolume, updatedVolumeFieldsBuilder.build());
             agentConnectionBreaker.initialize(agentInfo, new AgentConnectionTester(),
                     Optional.of(storageAgentInfo -> {
                         StorageAgentInfo registeredAgentInfo = registeredAgentConnections.get(storageAgentInfo.getLocation()).getAgentInfo();
