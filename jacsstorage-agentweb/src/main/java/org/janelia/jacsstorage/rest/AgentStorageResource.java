@@ -67,6 +67,11 @@ public class AgentStorageResource {
 
     @DELETE
     public Response deleteStorage(@QueryParam("dataPath") String dataPath, @QueryParam("parentPath") String parentPath) throws IOException {
+        if (StringUtils.isBlank(dataPath)) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .build();
+        }
         dataStorageService.deleteStorage(dataPath);
         if (StringUtils.isNotBlank(parentPath)) dataStorageService.cleanupStorage(parentPath);
         return Response
