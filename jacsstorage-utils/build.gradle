@@ -23,17 +23,25 @@ project(":jacsstorage-utils") {
 	applicationName = "storageClientApp"
     }
 
-    task createStorageBenchmarks(type: CreateStartScripts) {
-        mainClassName = "org.janelia.jacsstorage.benchmarks.StorageBenchmarks"
+    task createStoragePersistAvgBenchmark(type: CreateStartScripts) {
+        mainClassName = "org.janelia.jacsstorage.benchmarks.StoragePersistAvgBenchmark"
 	classpath = startScripts.classpath
 	outputDir = startScripts.outputDir
-	applicationName = "storageBenchmarks"
+	applicationName = "storagePersistAvgBenchmarks"
     }
 
-    applicationDistribution.into("bin") {
+    task createStoragePersistThroughputBenchmark(type: CreateStartScripts) {
+        mainClassName = "org.janelia.jacsstorage.benchmarks.StoragePersistThroughputBenchmark"
+	classpath = startScripts.classpath
+	outputDir = startScripts.outputDir
+	applicationName = "storagePersistThroughputBenchmarks"
+    }
+
+applicationDistribution.into("bin") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         from(createStorageClientApp)
-        from(createStorageBenchmarks)
+        from(createStoragePersistAvgBenchmark)
+        from(createStoragePersistThroughputBenchmark)
         fileMode = 0755
     }
 
