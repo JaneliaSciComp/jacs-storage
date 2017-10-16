@@ -21,7 +21,6 @@ public class DataBundleIOProvider {
     public BundleReader getBundleReader(String source, JacsStorageFormat format) {
         for (BundleReader bundleReader : getSupportedReaders(bundleReaderSource)) {
             if (bundleReader.getSupportedFormats().contains(format)) {
-                bundleReader.checkState(source);
                 return bundleReader;
             }
         }
@@ -31,7 +30,6 @@ public class DataBundleIOProvider {
     public BundleWriter getBundleWriter(String target, JacsStorageFormat format) {
         for (BundleWriter bundleWriter : getSupportedWriters(bundleWriterSource)) {
             if (bundleWriter.getSupportedFormats().contains(format)) {
-                bundleWriter.checkState(target);
                 return bundleWriter;
             }
         }

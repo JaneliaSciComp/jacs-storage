@@ -18,17 +18,6 @@ public class SingleFileBundleReader extends AbstractBundleReader {
     }
 
     @Override
-    public boolean checkState(String source) {
-        Path sourcePath = Paths.get(source);
-        if (Files.notExists(sourcePath)) {
-            throw new IllegalStateException("No file found for " + source);
-        } else if (!Files.isRegularFile(sourcePath)) {
-            throw new IllegalStateException("Source " + source + " expected to be a file");
-        }
-        return true;
-    }
-
-    @Override
     protected long readBundleBytes(String source, OutputStream stream) throws Exception {
         Path sourcePath = Paths.get(source);
         if (Files.notExists(sourcePath)) {

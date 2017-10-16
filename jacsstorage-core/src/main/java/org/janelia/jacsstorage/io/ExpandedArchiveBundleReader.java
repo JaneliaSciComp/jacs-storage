@@ -56,15 +56,6 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
     }
 
     @Override
-    public boolean checkState(String source) {
-        Path sourcePath = Paths.get(source);
-        if (Files.notExists(sourcePath)) {
-            throw new IllegalStateException("No path found for " + source);
-        }
-        return true;
-    }
-
-    @Override
     protected long readBundleBytes(String source, OutputStream stream) throws Exception {
         TarArchiveOutputStream outputStream = new TarArchiveOutputStream(stream);
         Path sourcePath = Paths.get(source);

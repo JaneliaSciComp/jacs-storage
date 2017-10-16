@@ -49,7 +49,6 @@ subprojects {
         task integrationTest(type: Test) {
             testClassesDirs += sourceSets.integrationTest.output.classesDirs
             classpath = sourceSets.integrationTest.runtimeClasspath
-//            jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5007"
         }
 
         check.dependsOn integrationTest
