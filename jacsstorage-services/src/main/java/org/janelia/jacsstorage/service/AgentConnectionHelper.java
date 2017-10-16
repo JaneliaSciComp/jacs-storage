@@ -46,11 +46,12 @@ class AgentConnectionHelper {
     }
 
     static boolean deleteStorage(String agentUrl, String dataPath) {
-        String deleteStorageEndpoint = String.format("/agent-storage?dataPath=%s", dataPath);
+        String deleteStorageEndpoint = "/agent-storage";
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
-            WebTarget target = httpClient.target(agentUrl).path(deleteStorageEndpoint);
+            WebTarget target = httpClient.target(agentUrl).path(deleteStorageEndpoint)
+                    .queryParam("dataPath", dataPath);
             Response response = target.request()
                     .delete()
                     ;
