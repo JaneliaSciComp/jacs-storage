@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service;
 
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import javax.ws.rs.core.Response;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 class AgentConnectionHelper {
@@ -45,13 +47,17 @@ class AgentConnectionHelper {
         return null;
     }
 
-    static boolean deleteStorage(String agentUrl, String dataPath) {
+    static boolean deleteStorage(String agentUrl, String dataPath, String parentPath) {
         String deleteStorageEndpoint = "/agent-storage";
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
-            WebTarget target = httpClient.target(agentUrl).path(deleteStorageEndpoint)
-                    .queryParam("dataPath", dataPath);
+            WebTarget target = httpClient.target(agentUrl)
+                        .path(deleteStorageEndpoint)
+                        .queryParam("dataPath", dataPath);
+            if (StringUtils.isNotBlank(parentPath)) {
+                target = target.queryParam("parentPath", parentPath);
+            }
             Response response = target.request()
                     .delete()
                     ;

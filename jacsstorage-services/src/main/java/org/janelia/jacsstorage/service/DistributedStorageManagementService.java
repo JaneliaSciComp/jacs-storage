@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.service;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
@@ -131,7 +132,16 @@ public class DistributedStorageManagementService implements StorageManagementSer
         return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
                 .flatMap(sv -> agentManager.findRegisteredAgentByLocationOrConnectionInfo(sv.getLocation()))
                 .map(storageAgentInfo -> {
-                    if (AgentConnectionHelper.deleteStorage(storageAgentInfo.getAgentURL(), existingBundle.getPath())) {
+                    List<String> dataSubpath = PathUtils.getTreePathComponentsForId(dataBundle.getId());
+                    String parentDataPath = null;
+                    if (CollectionUtils.isNotEmpty(dataSubpath)) {
+                        Path dataPath = Paths.get(dataBundle.getPath());
+                        Path parentPath = Paths.get(storageAgentInfo.getStoragePath(), dataSubpath.get(0));
+                        if (dataPath.startsWith(parentPath)) {
+                            parentDataPath = parentPath.toString();
+                        }
+                    }
+                    if (AgentConnectionHelper.deleteStorage(storageAgentInfo.getAgentURL(), existingBundle.getPath(), parentDataPath)) {
                         bundleDao.delete(existingBundle);
                         LOG.info("Delete {}", existingBundle);
                         return true;

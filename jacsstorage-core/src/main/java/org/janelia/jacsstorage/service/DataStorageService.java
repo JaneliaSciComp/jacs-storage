@@ -11,4 +11,5 @@ public interface DataStorageService {
     TransferInfo persistDataStream(String dataPath, JacsStorageFormat dataStorageFormat, InputStream dataStream) throws IOException;
     TransferInfo retrieveDataStream(String dataPath, JacsStorageFormat dataStorageFormat, OutputStream dataStream) throws IOException;
     void deleteStorage(String dataPath) throws IOException;
+    void cleanupStorage(String dataPath) throws IOException;
 }

@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.rest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.service.DataStorageService;
@@ -65,8 +66,9 @@ public class AgentStorageResource {
     }
 
     @DELETE
-    public Response deleteStorage(@QueryParam("dataPath") String dataPath) throws IOException {
+    public Response deleteStorage(@QueryParam("dataPath") String dataPath, @QueryParam("parentPath") String parentPath) throws IOException {
         dataStorageService.deleteStorage(dataPath);
+        if (StringUtils.isNotBlank(parentPath)) dataStorageService.cleanupStorage(parentPath);
         return Response
                 .status(Response.Status.NO_CONTENT)
                 .build();

@@ -36,7 +36,7 @@ public class PathUtils {
         return id == null ? Collections.emptyList() : getTreePathComponentsForId(id.toString());
     }
 
-    public static List<String> getTreePathComponentsForId(String id) {
+    private static List<String> getTreePathComponentsForId(String id) {
         if (StringUtils.isBlank(id)) {
             return Collections.emptyList();
         }
@@ -82,6 +82,21 @@ public class PathUtils {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    public static void deletePathIfEmpty(Path fp) throws IOException {
+        Files.walkFileTree(fp, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                return FileVisitResult.TERMINATE;
             }
 
             @Override
