@@ -6,7 +6,7 @@ public class JacsBundleBuilder {
 
     public JacsBundle build() {
         JacsBundle toReturn = jacsBundle;
-        jacsBundle = null;
+        jacsBundle = new JacsBundle();
         return toReturn;
     }
 

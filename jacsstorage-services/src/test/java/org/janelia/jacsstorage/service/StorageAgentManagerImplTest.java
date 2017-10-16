@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.junit.Before;
@@ -36,7 +37,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
-@RunWith(PowerMockRunner.class)
 public class StorageAgentManagerImplTest {
 
     @Mock
@@ -64,6 +64,25 @@ public class StorageAgentManagerImplTest {
         String testAgentConnectionInfo = "agent:100";
         String testAgentMountPoint = "/storage";
         JacsStorageVolume testVolume = new JacsStorageVolume();
+        Mockito.when(storageVolumeDao.getStorageByLocationAndCreateIfNotFound(testLocation)).thenReturn(testVolume);
+
+        registerAgent(testLocation, testAgentURL, testAgentConnectionInfo, testAgentMountPoint);
+
+        Mockito.verify(storageVolumeDao).update(testVolume, ImmutableMap.of(
+                "mountHostIP", new SetFieldValueHandler<>(testAgentConnectionInfo),
+                "mountPoint", new SetFieldValueHandler<>(testAgentMountPoint),
+                "mountHostURL", new SetFieldValueHandler<>(testAgentURL)
+        ));
+        Mockito.verify(scheduler).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
+    }
+
+    @Test
+    public void registerAgentWithDifferentVolume() {
+        String testLocation = "testLocation";
+        String testAgentURL = "http://agentURL";
+        String testAgentConnectionInfo = "agent:100";
+        String testAgentMountPoint = "/storage";
+        JacsStorageVolume testVolume = new JacsStorageVolumeBuilder().mountPoint("/oldstorage").build();
         Mockito.when(storageVolumeDao.getStorageByLocationAndCreateIfNotFound(testLocation)).thenReturn(testVolume);
 
         registerAgent(testLocation, testAgentURL, testAgentConnectionInfo, testAgentMountPoint);
@@ -125,9 +144,13 @@ public class StorageAgentManagerImplTest {
         Mockito.verify(scheduler, Mockito.times(2)).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
 
         Mockito.verify(storageVolumeDao, Mockito.times(2)).getStorageByLocationAndCreateIfNotFound(testLocation);
-        Mockito.verify(storageVolumeDao, Mockito.times(2)).update(testVolume, ImmutableMap.of(
+        Mockito.verify(storageVolumeDao, Mockito.times(1)).update(testVolume, ImmutableMap.of(
                 "mountHostIP", new SetFieldValueHandler<>(testAgentConnectionInfo),
                 "mountPoint", new SetFieldValueHandler<>(testAgentMountPoint),
+                "mountHostURL", new SetFieldValueHandler<>(testAgentURL)
+        ));
+        Mockito.verify(storageVolumeDao, Mockito.times(1)).update(testVolume, ImmutableMap.of(
+                "mountHostIP", new SetFieldValueHandler<>(testAgentConnectionInfo),
                 "mountHostURL", new SetFieldValueHandler<>(testAgentURL)
         ));
         Mockito.verifyNoMoreInteractions(scheduler);

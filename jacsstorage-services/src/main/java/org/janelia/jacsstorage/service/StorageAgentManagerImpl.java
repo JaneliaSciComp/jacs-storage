@@ -76,7 +76,7 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
             if (StringUtils.isBlank(storageVolume.getMountPoint())) {
                 storageVolume.setMountPoint(agentInfo.getStoragePath());
                 updatedVolumeFieldsBuilder.put("mountPoint", new SetFieldValueHandler<>(storageVolume.getMountPoint()));
-            } else if (!storageVolume.equals(agentInfo.getStoragePath())) {
+            } else if (!storageVolume.getMountPoint().equals(agentInfo.getStoragePath())) {
                 // warn if path has changed
                 LOG.warn("Agent mount point has changed from {} to {}", storageVolume.getMountPoint(), agentInfo.getStoragePath());
                 storageVolume.setMountPoint(agentInfo.getStoragePath());
