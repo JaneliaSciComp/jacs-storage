@@ -21,6 +21,11 @@ public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
     }
 
     @Override
+    public boolean checkState(String target) {
+        return true;
+    }
+
+    @Override
     public long writeBundleBytes(InputStream stream, String target) throws Exception {
         long nBytes = 0;
         ArchiveInputStream inputStream = new ArchiveStreamFactory().createArchiveInputStream(stream);

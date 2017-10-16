@@ -3,12 +3,12 @@ package org.janelia.jacsstorage.client;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.janelia.jacsstorage.service.State;
-import org.janelia.jacsstorage.service.StorageMessageHeaderCodec;
-import org.janelia.jacsstorage.service.StorageMessageResponseCodec;
 import org.janelia.jacsstorage.service.DataTransferService;
+import org.janelia.jacsstorage.service.State;
 import org.janelia.jacsstorage.service.StorageMessageHeader;
+import org.janelia.jacsstorage.service.StorageMessageHeaderCodec;
 import org.janelia.jacsstorage.service.StorageMessageResponse;
+import org.janelia.jacsstorage.service.StorageMessageResponseCodec;
 import org.janelia.jacsstorage.service.TransferState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -250,7 +250,16 @@ public class SocketStorageClient implements StorageClient {
                 }
                 if (key.isWritable()) {
                     if (dataBuffer.hasRemaining()) {
-                        write(key, dataBuffer);
+                        try {
+                            write(key, dataBuffer);
+                        } catch (IOException e) {
+                            // error encountered while writing the data
+                            SocketChannel channel = (SocketChannel) key.channel();
+                            channel.shutdownOutput();
+                            // get ready to read the response
+                            key.interestOps(SelectionKey.OP_READ);
+                            done = true;
+                        }
                     } else {
                         // get more bytes to write
                         dataBuffer.clear();

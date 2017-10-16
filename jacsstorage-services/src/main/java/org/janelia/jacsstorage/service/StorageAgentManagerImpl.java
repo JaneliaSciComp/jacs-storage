@@ -114,7 +114,8 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
             agentConnection.updateConnectionStatus();
             return Optional.of(agentConnection.getAgentInfo());
         } else {
-            return registeredAgentConnections.entrySet().stream().filter(agentEntry -> agentInfo.equals(agentEntry.getValue()))
+            return registeredAgentConnections.entrySet().stream()
+                    .filter(agentEntry -> agentInfo.equals(agentEntry.getValue().getAgentInfo().getConnectionInfo()))
                     .findFirst()
                     .map(Map.Entry::getValue)
                     .map((StorageAgentConnection ac) -> {
@@ -127,7 +128,7 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     @Override
     public Optional<StorageAgentInfo> findRandomRegisteredAgent(Predicate<StorageAgentInfo> agentFilter) {
         Predicate<StorageAgentConnection> goodConnection = (StorageAgentConnection ac) -> ac.getAgentConnectionBreaker().getState() == CircuitBreaker.BreakerState.CLOSED;
-        Predicate<StorageAgentConnection> candidateFilter = goodConnection.and((StorageAgentConnection ac) -> agentFilter.test(ac.getAgentInfo()));
+        Predicate<StorageAgentConnection> candidateFilter = goodConnection.and((StorageAgentConnection ac) -> agentFilter == null || agentFilter.test(ac.getAgentInfo()));
         while (true) {
             long count = registeredAgentConnections.entrySet().stream()
                     .filter(agentEntry -> candidateFilter.test(agentEntry.getValue()))
@@ -135,7 +136,7 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
             if (count == 0) {
                 return Optional.empty();
             }
-            long pos = RANDOM_SELECTOR.nextInt(registeredAgentConnections.size());
+            long pos = RANDOM_SELECTOR.nextInt((int) count);
             return registeredAgentConnections.entrySet().stream()
                     .filter(agentEntry -> candidateFilter.test(agentEntry.getValue()))
                     .skip(pos)

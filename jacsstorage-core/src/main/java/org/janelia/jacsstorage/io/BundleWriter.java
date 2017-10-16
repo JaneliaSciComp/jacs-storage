@@ -9,6 +9,14 @@ public interface BundleWriter {
     Set<JacsStorageFormat> getSupportedFormats();
 
     /**
+     * Checks if the source is available.
+     * @param source
+     * @throws IllegalStateException
+     * @return
+     */
+    boolean checkState(String target);
+
+    /**
      * Reads the bytes from the given stream and writes it to the specified target.
      *
      * @param stream a tar archive stream of bytes to be written

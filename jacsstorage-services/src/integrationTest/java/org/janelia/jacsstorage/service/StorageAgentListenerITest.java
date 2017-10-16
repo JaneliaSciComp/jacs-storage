@@ -15,7 +15,6 @@ import org.janelia.jacsstorage.io.SingleFileBundleWriter;
 import org.janelia.jacsstorage.io.TarArchiveBundleReader;
 import org.janelia.jacsstorage.io.TarArchiveBundleWriter;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.janelia.jacsstorage.service.StorageMessageResponse;
 import org.janelia.jacsstorage.utils.PathUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -37,6 +36,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -213,13 +213,16 @@ public class StorageAgentListenerITest {
     @Test
     public void sendError() throws IOException {
         class TestData {
+            final String testName;
             final Path sourceDataPath;
             final DataStorageInfo persistedDataStorageInfo;
             final String expectedErrorMessage;
 
-            public TestData(Path sourceDataPath,
+            public TestData(String testName,
+                            Path sourceDataPath,
                             DataStorageInfo persistedDataStorageInfo,
                             String expectedErrorMessage) {
+                this.testName = testName;
                 this.sourceDataPath = sourceDataPath;
                 this.persistedDataStorageInfo = persistedDataStorageInfo;
                 this.expectedErrorMessage = expectedErrorMessage;
@@ -229,29 +232,37 @@ public class StorageAgentListenerITest {
         StorageClient storageClient = createStorageClient();
         List<TestData> testData = ImmutableList.<TestData>builder()
                 .add(new TestData(
+                        "Test archive already exists",
                                 sourceTestData,
-                                storageInfo(testDirectory.resolve("td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
+                                storageInfo(testDirectory.resolve("sendError.td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE),
                                 "Target path %s already exists")
                 )
                 .add(new TestData(
+                        "Test file write error",
                                 sourceTestData,
-                                storageInfo(testDirectory.resolve("td2.remote"), JacsStorageFormat.DATA_DIRECTORY),
+                                storageInfo(testDirectory.resolve("sendError.td2.remote"), JacsStorageFormat.DATA_DIRECTORY),
                                 "Error writing data: java.nio.file.FileAlreadyExistsException: %s")
                 )
                 .add(new TestData(
+                        "Test file already exists",
                                 sourceTestData.resolve("f_1_1"),
-                                storageInfo(testDirectory.resolve("td3.remote"), JacsStorageFormat.SINGLE_DATA_FILE),
+                                storageInfo(testDirectory.resolve("sendError.td3.remote"), JacsStorageFormat.SINGLE_DATA_FILE),
                                 "Target path %s already exists")
                 )
                 .build();
         for (TestData td : testData) {
-            StorageMessageResponse persistenceOKResponse = storageClient.persistData(td.sourceDataPath.toString(), td.persistedDataStorageInfo);
-            Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
-            assertThat(td.persistedDataStorageInfo.getPath(), persistenceOKResponse.getStatus(), equalTo(StorageMessageResponse.OK));
-            assertTrue(Files.exists(targetPath));
-            StorageMessageResponse persistenceErrorResponse = storageClient.persistData(td.sourceDataPath.toString(), td.persistedDataStorageInfo);
-            assertThat(persistenceErrorResponse.getStatus(), equalTo(StorageMessageResponse.ERROR));
-            assertThat(persistenceErrorResponse.getMessage(), containsString(String.format(td.expectedErrorMessage, td.persistedDataStorageInfo.getPath())));
+            try {
+                StorageMessageResponse persistenceOKResponse = storageClient.persistData(td.sourceDataPath.toString(), td.persistedDataStorageInfo);
+                Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
+                assertThat(td.persistedDataStorageInfo.getPath(), persistenceOKResponse.getStatus(), equalTo(StorageMessageResponse.OK));
+                assertTrue(Files.exists(targetPath));
+                StorageMessageResponse persistenceErrorResponse = storageClient.persistData(td.sourceDataPath.toString(), td.persistedDataStorageInfo);
+                assertThat(persistenceErrorResponse.getStatus(), equalTo(StorageMessageResponse.ERROR));
+                assertThat(persistenceErrorResponse.getMessage(), containsString(String.format(td.expectedErrorMessage, td.persistedDataStorageInfo.getPath())));
+            } catch (Exception e) {
+                e.printStackTrace();
+                fail("Failure detected while running " + td.testName + " " + e);
+            }
         }
     }
 

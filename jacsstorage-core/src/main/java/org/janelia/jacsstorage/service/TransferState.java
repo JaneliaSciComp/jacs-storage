@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Pipe;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.Optional;
 
 /**
  * @param <T> message type that is being transferred
@@ -22,7 +23,7 @@ public class TransferState<T> {
     private ByteBuffer messageTypeSizeBuffer;
     private ByteBuffer messageTypeBuffer;
     private T messageType;
-    private Pipe dataTransferPipe;
+    private volatile Pipe dataTransferPipe;
 
     public boolean hasReadEntireMessageType() {
         return messageType != null;
@@ -112,19 +113,15 @@ public class TransferState<T> {
         dataTransferPipe = Pipe.open();
     }
 
-    public boolean isDataTransferChannelOpen() {
-        return dataTransferPipe != null;
-    }
-
     public void closeDataTransferChannel() {
         dataTransferPipe = null;
     }
 
-    public WritableByteChannel getDataWriteChannel() {
-        return dataTransferPipe.sink();
+    public Optional<WritableByteChannel> getDataWriteChannel() {
+        return dataTransferPipe != null ? Optional.of(dataTransferPipe.sink()) : Optional.empty();
     }
 
-    public ReadableByteChannel getDataReadChannel() {
-        return dataTransferPipe.source();
+    public Optional<ReadableByteChannel> getDataReadChannel() {
+        return dataTransferPipe != null ? Optional.of(dataTransferPipe.source()) : Optional.empty();
     }
 }

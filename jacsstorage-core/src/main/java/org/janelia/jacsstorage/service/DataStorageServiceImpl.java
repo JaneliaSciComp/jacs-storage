@@ -25,13 +25,13 @@ public class DataStorageServiceImpl implements DataStorageService {
 
     @Override
     public TransferInfo persistDataStream(String dataPath, JacsStorageFormat dataStorageFormat, InputStream dataStream) throws IOException {
-        BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataStorageFormat);
+        BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataPath, dataStorageFormat);
         return bundleWriter.writeBundle(new BufferedInputStream(dataStream), dataPath);
     }
 
     @Override
     public TransferInfo retrieveDataStream(String dataPath, JacsStorageFormat dataStorageFormat, OutputStream dataStream) throws IOException {
-        BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
+        BundleReader bundleReader = dataIOProvider.getBundleReader(dataPath, dataStorageFormat);
         return bundleReader.readBundle(dataPath, dataStream);
     }
 

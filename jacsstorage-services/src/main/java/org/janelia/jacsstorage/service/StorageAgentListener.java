@@ -131,7 +131,7 @@ public class StorageAgentListener {
                 try {
                     writeBuffer(ByteBuffer.wrap(processErrorResponseBytes), channel);
                 } catch (IOException e) {
-                    LOG.warn("Error writing the sending the incomplete request message to the other end: {}", channel.getRemoteAddress());
+                    LOG.warn("Error sending the incompleted request error message to {}", channel.getRemoteAddress());
                 }
                 channel.close();
                 return;
@@ -144,8 +144,11 @@ public class StorageAgentListener {
             }
         }
         if (channelState.transferState.getMessageType().getOperation() == DataTransferService.Operation.PERSIST_DATA) {
-            if (numRead == -1) {
+            if (numRead == -1 || channelState.transferState.getState() == State.WRITE_DATA_ERROR) {
                 // nothing left to read
+                if (channelState.transferState.getState() == State.WRITE_DATA_ERROR) {
+                    prepareForSendResponse(key, channel);
+                }
                 handlePersistDataCompleted(key, channel, channelState);
             } else {
                 // persist the data
@@ -162,11 +165,20 @@ public class StorageAgentListener {
         }
     }
 
+    private void prepareForSendResponse(SelectionKey key, SocketChannel channel) throws IOException {
+        key.interestOps(SelectionKey.OP_WRITE);
+        channel.shutdownInput();
+    }
+
     private void handlePersistData(SelectionKey key, SocketChannel channel, ChannelState channelState) throws IOException {
-        int numWritten = agentStorageProxy.writeData(channelState.channelInputBuffer, channelState.transferState);
+        int numWritten = -1;
+        try {
+            numWritten = agentStorageProxy.writeData(channelState.channelInputBuffer, channelState.transferState);
+        } catch (Exception e) {
+            LOG.error("Error while writing data to {}", channelState.transferState, e);
+        }
         if (numWritten == -1) {
-            key.interestOps(SelectionKey.OP_WRITE);
-            channel.shutdownInput();
+            prepareForSendResponse(key, channel);
         } else {
             channelState.nTransferredBytes += numWritten;
         }

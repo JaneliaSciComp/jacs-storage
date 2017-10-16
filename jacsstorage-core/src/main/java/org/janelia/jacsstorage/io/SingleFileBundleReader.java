@@ -5,6 +5,8 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -16,15 +18,25 @@ public class SingleFileBundleReader extends AbstractBundleReader {
     }
 
     @Override
+    public boolean checkState(String source) {
+        Path sourcePath = Paths.get(source);
+        if (Files.notExists(sourcePath)) {
+            throw new IllegalStateException("No file found for " + source);
+        } else if (!Files.isRegularFile(sourcePath)) {
+            throw new IllegalStateException("Source " + source + " expected to be a file");
+        }
+        return true;
+    }
+
+    @Override
     protected long readBundleBytes(String source, OutputStream stream) throws Exception {
-        File sourcePath = new File(source);
-        if (!sourcePath.exists()) {
+        Path sourcePath = Paths.get(source);
+        if (Files.notExists(sourcePath)) {
             throw new IllegalArgumentException("No file found for " + source);
-        } else if (!sourcePath.isFile()) {
+        } else if (!Files.isRegularFile(sourcePath)) {
             throw new IllegalArgumentException("Source " + source + " expected to be a file");
         }
-        long nBytes = Files.copy(sourcePath.toPath(), stream);
-        return nBytes;
+        return Files.copy(sourcePath, stream);
     }
 
 }

@@ -9,6 +9,13 @@ public interface BundleReader {
     Set<JacsStorageFormat> getSupportedFormats();
 
     /**
+     * Checks if the source is available.
+     * @param source
+     * @return
+     */
+    boolean checkState(String source);
+
+    /**
      * Reads the data bundle from the specified source and writes it to the given output stream.
      *
      * @param source bundle

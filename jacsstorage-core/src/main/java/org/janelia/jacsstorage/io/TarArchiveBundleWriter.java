@@ -19,6 +19,15 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
     }
 
     @Override
+    public boolean checkState(String target) {
+        Path targetPath = Paths.get(target);
+        if (Files.exists(targetPath)) {
+            throw new IllegalStateException("Target path " + target + " already exists");
+        }
+        return true;
+    }
+
+    @Override
     protected long writeBundleBytes(InputStream stream, String target) throws Exception {
         Path targetPath = Paths.get(target);
         if (Files.exists(targetPath)) {
