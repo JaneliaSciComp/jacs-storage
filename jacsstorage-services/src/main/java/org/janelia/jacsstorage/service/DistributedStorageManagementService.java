@@ -132,10 +132,10 @@ public class DistributedStorageManagementService implements StorageManagementSer
         return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
                 .flatMap(sv -> agentManager.findRegisteredAgentByLocationOrConnectionInfo(sv.getLocation()))
                 .map(storageAgentInfo -> {
-                    List<String> dataSubpath = PathUtils.getTreePathComponentsForId(dataBundle.getId());
+                    List<String> dataSubpath = PathUtils.getTreePathComponentsForId(existingBundle.getId());
                     String parentDataPath = null;
                     if (CollectionUtils.isNotEmpty(dataSubpath)) {
-                        Path dataPath = Paths.get(dataBundle.getPath());
+                        Path dataPath = Paths.get(existingBundle.getPath());
                         Path parentPath = Paths.get(storageAgentInfo.getStoragePath(), dataSubpath.get(0));
                         if (dataPath.startsWith(parentPath)) {
                             parentDataPath = parentPath.toString();
