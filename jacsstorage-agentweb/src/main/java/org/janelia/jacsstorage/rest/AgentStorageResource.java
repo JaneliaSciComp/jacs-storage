@@ -32,11 +32,12 @@ public class AgentStorageResource {
 
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @POST
-    @Path("{storageFormat}/{dataPath}")
+    @Path("format/{storageFormat}/absolute-path/{dataPath: .+}")
     public Response persistStream(@PathParam("storageFormat") JacsStorageFormat storageFormat,
                                   @PathParam("dataPath") String dataPath,
                                   InputStream bundleStream) throws IOException {
-        TransferInfo ti = dataStorageService.persistDataStream(dataPath, storageFormat, bundleStream);
+        String persistedDataPath = getPersistedDataPath(dataPath);
+        TransferInfo ti = dataStorageService.persistDataStream(persistedDataPath, storageFormat, bundleStream);
         return Response
                 .ok(ti)
                 .build();
@@ -44,15 +45,16 @@ public class AgentStorageResource {
 
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @GET
-    @Path("{storageFormat}/{dataPath}")
+    @Path("format/{storageFormat}/absolute-path/{dataPath: .+}")
     public Response retrieveStream(@PathParam("storageFormat") JacsStorageFormat storageFormat,
-                                  @PathParam("dataPath") String dataPath) {
+                                   @PathParam("dataPath") String dataPath) {
+        String persistedDataPath = getPersistedDataPath(dataPath);
         StreamingOutput bundleStream =  new StreamingOutput()
         {
             @Override
             public void write(java.io.OutputStream output) throws IOException, WebApplicationException {
                 try {
-                    dataStorageService.retrieveDataStream(dataPath, storageFormat, output);
+                    dataStorageService.retrieveDataStream(persistedDataPath, storageFormat, output);
                     output.flush();
                 } catch (Exception e) {
                     throw new WebApplicationException(e);
@@ -66,17 +68,21 @@ public class AgentStorageResource {
     }
 
     @DELETE
-    public Response deleteStorage(@QueryParam("dataPath") String dataPath, @QueryParam("parentPath") String parentPath) throws IOException {
-        if (StringUtils.isBlank(dataPath)) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .build();
-        }
-        dataStorageService.deleteStorage(dataPath);
+    @Path("absolute-path/{dataPath: .+}")
+    public Response deleteStorage(@PathParam("dataPath") String dataPath, @QueryParam("parent-path") String parentPath) throws IOException {
+        String persistedDataPath = getPersistedDataPath(dataPath);
+        dataStorageService.deleteStorage(persistedDataPath);
         if (StringUtils.isNotBlank(parentPath)) dataStorageService.cleanupStorage(parentPath);
         return Response
                 .status(Response.Status.NO_CONTENT)
                 .build();
     }
 
+    private String getPersistedDataPath(String dataPath) {
+        if (!StringUtils.startsWith(dataPath, "/")) {
+            return "/" + dataPath;
+        } else {
+            return dataPath;
+        }
+    }
 }
