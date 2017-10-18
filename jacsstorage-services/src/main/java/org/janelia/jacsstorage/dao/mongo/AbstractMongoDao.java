@@ -179,7 +179,10 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
     }
 
     protected long update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate, UpdateOptions updateOptions) {
-        return update(getUpdateMatchCriteria(entity), getUpdates(fieldsToUpdate), updateOptions);
+        if (fieldsToUpdate.isEmpty())
+            return 0;
+        else
+            return update(getUpdateMatchCriteria(entity), getUpdates(fieldsToUpdate), updateOptions);
     }
 
     protected long update(Bson query, Bson toUpdate, UpdateOptions updateOptions) {

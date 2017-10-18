@@ -59,7 +59,7 @@ public class StorageClientImpl implements StorageClient {
             if (responseStatus == Response.Status.CREATED.getStatusCode()) {
                 return response.readEntity(DataStorageInfo.class);
             } else {
-                LOG.warn("Allocate storage request returned with status {}", responseStatus);
+                LOG.warn("Allocate storage request {} returned with status {}", target.getUri(), responseStatus);
                 throw new IllegalStateException("Error while trying to allocate data storage - returned status: " + responseStatus);
             }
         } catch (Exception e) {
