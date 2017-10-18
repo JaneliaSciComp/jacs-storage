@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public class DistributedStorageManagementService implements StorageManagementService {
     private static final Logger LOG = LoggerFactory.getLogger(DistributedStorageManagementService.class);
@@ -53,7 +54,9 @@ public class DistributedStorageManagementService implements StorageManagementSer
 
     @Override
     public Optional<JacsBundle> allocateStorage(JacsBundle dataBundle) {
-        return agentManager.findRandomRegisteredAgent((StorageAgentInfo sai) -> dataBundle.getUsedSpaceInKB() == null || sai.getStorageSpaceAvailableInMB() * 1000 > dataBundle.getUsedSpaceInKB())
+        Predicate<StorageAgentInfo> agentSelectCondition = (StorageAgentInfo sai) -> sai.getStorageSpaceAvailableInMB() > 0;
+        Predicate<StorageAgentInfo> spaceAvailableCondition = (StorageAgentInfo sai) -> dataBundle.getUsedSpaceInKB() == null || sai.getStorageSpaceAvailableInMB() * 1000 > dataBundle.getUsedSpaceInKB();
+        return agentManager.findRandomRegisteredAgent(agentSelectCondition.and(spaceAvailableCondition))
                 .map((StorageAgentInfo storageAgentInfo) -> {
                     JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocationAndCreateIfNotFound(storageAgentInfo.getLocation());
                     ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedVolumeFieldsBuilder = ImmutableMap.builder();
