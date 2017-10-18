@@ -123,6 +123,10 @@ public class DistributedStorageManagementService implements StorageManagementSer
             }
             updatedFieldsBuilder.put("usedSpaceInKB", new SetFieldValueHandler<>(existingBundle.getUsedSpaceInKB()));
         }
+        if (dataBundle.getChecksum() != null) {
+            existingBundle.setChecksum(dataBundle.getChecksum());
+            updatedFieldsBuilder.put("checksum", new SetFieldValueHandler<>(existingBundle.getChecksum()));
+        }
         bundleDao.update(dataBundle, updatedFieldsBuilder.build());
         return existingBundle;
     }

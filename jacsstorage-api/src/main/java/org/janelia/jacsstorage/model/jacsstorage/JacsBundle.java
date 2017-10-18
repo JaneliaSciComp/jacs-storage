@@ -21,7 +21,7 @@ public class JacsBundle extends AbstractEntity {
     private String permissions;
     private JacsStorageFormat storageFormat;
     private Long usedSpaceInKB;
-    private byte[] checksum;
+    private String checksum;
     private Date created = new Date();
     private Date modified = new Date();
     private Map<String, Object> metadata = new LinkedHashMap<>();
@@ -83,11 +83,11 @@ public class JacsBundle extends AbstractEntity {
         return usedSpaceInKB != null && usedSpaceInKB != 0L;
     }
 
-    public byte[] getChecksum() {
+    public String getChecksum() {
         return checksum;
     }
 
-    public void setChecksum(byte[] checksum) {
+    public void setChecksum(String checksum) {
         this.checksum = checksum;
     }
 

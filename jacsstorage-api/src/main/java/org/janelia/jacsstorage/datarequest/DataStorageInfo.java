@@ -17,7 +17,7 @@ public class DataStorageInfo {
     private String connectionInfo;
     private JacsStorageFormat storageFormat;
     private Long requestedSpaceInKB;
-    private byte[] checksum;
+    private String checksum;
     private Map<String, Object> metadata = new LinkedHashMap<>();
 
     public static DataStorageInfo fromBundle(JacsBundle dataBundle) {
@@ -117,11 +117,11 @@ public class DataStorageInfo {
         return this;
     }
 
-    public byte[] getChecksum() {
+    public String getChecksum() {
         return checksum;
     }
 
-    public DataStorageInfo setChecksum(byte[] checksum) {
+    public DataStorageInfo setChecksum(String checksum) {
         this.checksum = checksum;
         return this;
     }

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.Optional;
 
 public class StorageClientImpl implements StorageClient {
@@ -81,7 +82,9 @@ public class StorageClientImpl implements StorageClient {
             DataStorageInfo storageUpdate = new DataStorageInfo();
             storageUpdate.setId(storageInfo.getId());
             storageUpdate.setRequestedSpaceInKB(messageSize);
-            storageUpdate.setChecksum(checksum);
+            if (checksum != null) {
+                storageUpdate.setChecksum(Base64.getEncoder().encodeToString(checksum));
+            }
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .put(Entity.json(storageUpdate))
                     ;
