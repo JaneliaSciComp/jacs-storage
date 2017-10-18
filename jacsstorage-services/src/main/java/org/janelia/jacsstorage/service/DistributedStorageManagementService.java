@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
@@ -30,7 +31,9 @@ public class DistributedStorageManagementService implements StorageManagementSer
     private final JacsBundleDao bundleDao;
 
     @Inject
-    public DistributedStorageManagementService(StorageAgentManager agentManager, JacsStorageVolumeDao storageVolumeDao, JacsBundleDao bundleDao) {
+    public DistributedStorageManagementService(StorageAgentManager agentManager,
+                                               JacsStorageVolumeDao storageVolumeDao,
+                                               JacsBundleDao bundleDao) {
         this.agentManager = agentManager;
         this.storageVolumeDao = storageVolumeDao;
         this.bundleDao = bundleDao;
@@ -54,17 +57,18 @@ public class DistributedStorageManagementService implements StorageManagementSer
         return agentManager.findRandomRegisteredAgent((StorageAgentInfo sai) -> dataBundle.getUsedSpaceInKB() == null || sai.getStorageSpaceAvailableInMB() * 1000 > dataBundle.getUsedSpaceInKB())
                 .map((StorageAgentInfo storageAgentInfo) -> {
                     JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocationAndCreateIfNotFound(storageAgentInfo.getLocation());
+                    ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedVolumeFieldsBuilder = ImmutableMap.builder();
                     if (StringUtils.isBlank(storageVolume.getMountPoint())) {
-                        storageVolume.setMountHostIP(storageAgentInfo.getConnectionInfo());
-                        storageVolume.setMountHostURL(storageAgentInfo.getAgentURL());
                         storageVolume.setMountPoint(storageAgentInfo.getStoragePath());
-                        storageVolumeDao.update(storageVolume, ImmutableMap.of(
-                                "mountHostIP", new SetFieldValueHandler<>(storageVolume.getMountHostIP()),
-                                "mountPoint", new SetFieldValueHandler<>(storageVolume.getMountPoint()),
-                                "mountHostURL", new SetFieldValueHandler<>(storageVolume.getMountHostURL())
-                                )
-                        );
+                        updatedVolumeFieldsBuilder.put("mountPoint", new SetFieldValueHandler<>(storageVolume.getMountPoint()));
+                        if (!StorageAgentSelector.OVERFLOW_AGENT_INFO.equals(storageVolume.getLocation())) {
+                            storageVolume.setMountHostIP(storageAgentInfo.getConnectionInfo());
+                            updatedVolumeFieldsBuilder.put("mountHostIP", new SetFieldValueHandler<>(storageVolume.getMountHostIP()));
+                            storageVolume.setMountHostURL(storageAgentInfo.getAgentURL());
+                            updatedVolumeFieldsBuilder.put("mountHostURL", new SetFieldValueHandler<>(storageVolume.getMountHostURL()));
+                        }
                     }
+                    storageVolumeDao.update(storageVolume, updatedVolumeFieldsBuilder.build());
                     dataBundle.setStorageVolumeId(storageVolume.getId());
                     dataBundle.setStorageVolume(storageVolume);
                     dataBundle.setConnectionInfo(storageAgentInfo.getConnectionInfo());
@@ -74,7 +78,8 @@ public class DistributedStorageManagementService implements StorageManagementSer
                     dataBundle.setPath(dataPath.toString());
                     bundleDao.update(dataBundle, ImmutableMap.of("path", new SetFieldValueHandler<>(dataBundle.getPath())));
                     return dataBundle;
-                });
+                })
+                ;
     }
 
     @Override

@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,7 +31,6 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class StorageAgentManagerImpl implements StorageAgentManager {
     private static final Logger LOG = LoggerFactory.getLogger(StorageAgentManagerImpl.class);
-    private static final Random RANDOM_SELECTOR = new Random(System.currentTimeMillis());
 
     private final ConcurrentMap<String, StorageAgentConnection> registeredAgentConnections = new ConcurrentHashMap<>();
 
@@ -44,6 +44,8 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     private Integer initialDelayInSeconds;
     @Inject @PropertyValue(name= "StorageAgent.FailureCountTripThreshold")
     private Integer tripThreshold;
+    @Inject @PropertyValue(name = "Storage.Overflow.RootDir")
+    private String overflowRootDir;
 
     @Override
     public List<StorageAgentInfo> getCurrentRegisteredAgents() {
@@ -109,43 +111,49 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
 
     @Override
     public Optional<StorageAgentInfo> findRegisteredAgentByLocationOrConnectionInfo(String agentInfo) {
-        StorageAgentConnection agentConnection = registeredAgentConnections.get(agentInfo);
-        if (agentConnection != null) {
-            agentConnection.updateConnectionStatus();
-            return Optional.of(agentConnection.getAgentInfo());
+        if (StorageAgentSelector.OVERFLOW_AGENT_INFO.equals(agentInfo)) {
+            Predicate<StorageAgentConnection> goodConnection = (StorageAgentConnection ac) -> ac.getAgentConnectionBreaker().getState() == CircuitBreaker.BreakerState.CLOSED;
+            StorageAgentInfo storageAgentInfo = new OverflowStorageAgentSelector(goodConnection, overflowRootDir)
+                    .selectStorageAgent(registeredAgentConnections.values());
+            if (storageAgentInfo != null) {
+                return Optional.of(storageAgentInfo);
+            } else {
+                // no agent is registered or there's no good connection to any of the registered agents.
+                return Optional.empty();
+            }
         } else {
-            return registeredAgentConnections.entrySet().stream()
-                    .filter(agentEntry -> agentInfo.equals(agentEntry.getValue().getAgentInfo().getConnectionInfo()))
-                    .findFirst()
-                    .map(Map.Entry::getValue)
-                    .map((StorageAgentConnection ac) -> {
-                        ac.updateConnectionStatus();
-                        return ac.getAgentInfo();
-                    });
+            // search by location info
+            StorageAgentConnection agentConnection = registeredAgentConnections.get(agentInfo);
+            if (agentConnection != null) {
+                agentConnection.updateConnectionStatus();
+                return Optional.of(agentConnection.getAgentInfo());
+            } else {
+                // search by connection info
+                return registeredAgentConnections.entrySet().stream()
+                        .filter(agentEntry -> agentInfo.equals(agentEntry.getValue().getAgentInfo().getConnectionInfo()))
+                        .findFirst()
+                        .map(Map.Entry::getValue)
+                        .map((StorageAgentConnection ac) -> {
+                            ac.updateConnectionStatus();
+                            return ac.getAgentInfo();
+                        });
+            }
         }
     }
 
     @Override
     public Optional<StorageAgentInfo> findRandomRegisteredAgent(Predicate<StorageAgentInfo> agentFilter) {
         Predicate<StorageAgentConnection> goodConnection = (StorageAgentConnection ac) -> ac.getAgentConnectionBreaker().getState() == CircuitBreaker.BreakerState.CLOSED;
-        Predicate<StorageAgentConnection> candidateFilter = goodConnection.and((StorageAgentConnection ac) -> agentFilter == null || agentFilter.test(ac.getAgentInfo()));
-        while (true) {
-            long count = registeredAgentConnections.entrySet().stream()
-                    .filter(agentEntry -> candidateFilter.test(agentEntry.getValue()))
-                    .count();
-            if (count == 0) {
-                return Optional.empty();
-            }
-            long pos = RANDOM_SELECTOR.nextInt((int) count);
-            return registeredAgentConnections.entrySet().stream()
-                    .filter(agentEntry -> candidateFilter.test(agentEntry.getValue()))
-                    .skip(pos)
-                    .findFirst()
-                    .map(agentEntry -> {
-                        StorageAgentInfo agentInfo = agentEntry.getValue().getAgentInfo();
-                        LOG.info("Select {} for storage", agentInfo);
-                        return agentInfo;
-                    });
+        Predicate<StorageAgentConnection> candidateFilter = (StorageAgentConnection ac) -> agentFilter == null || agentFilter.test(ac.getAgentInfo());
+        StorageAgentSelector[] agentSelectors = new StorageAgentSelector[] {
+                new RandomStorageAgentSelector(goodConnection.and(candidateFilter)),
+                new OverflowStorageAgentSelector(goodConnection, overflowRootDir)
+        };
+        Collection<StorageAgentConnection> agentConnections = registeredAgentConnections.values();
+        for (StorageAgentSelector agentSelector : agentSelectors) {
+            StorageAgentInfo agentInfo = agentSelector.selectStorageAgent(agentConnections);
+            if (agentInfo != null) return Optional.of(agentInfo);
         }
+        return Optional.empty();
     }
 }

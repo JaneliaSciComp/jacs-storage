@@ -8,17 +8,13 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.List;
 import java.util.Map;
@@ -228,7 +224,8 @@ public class StorageAgentManagerImplTest {
         for (int i = 0; i < nInvocations; i++) {
             StorageAgentInfo agentInfo = testStorageAgentManager.findRandomRegisteredAgent(ai -> ai.getStorageSpaceAvailableInMB() > requestedSpace)
                     .orElse(null);
-            assertNull(agentInfo);
+            assertNotNull(agentInfo);
+            assertThat(agentInfo.getLocation(), equalTo(StorageAgentSelector.OVERFLOW_AGENT_INFO));
         }
     }
 
