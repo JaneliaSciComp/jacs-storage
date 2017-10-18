@@ -271,6 +271,33 @@ public class StorageAgentManagerImplTest {
         });
     }
 
+    @Test
+    public void findOverflowAgent() {
+        registerMultipleAgents();
+        StorageAgentInfo agentInfo = testStorageAgentManager.findRegisteredAgentByLocationOrConnectionInfo(StorageAgentSelector.OVERFLOW_AGENT_INFO)
+                .orElse(null);
+        assertNotNull(agentInfo);
+        assertThat(agentInfo.getLocation(), equalTo(StorageAgentSelector.OVERFLOW_AGENT_INFO));
+    }
+
+    @Test
+    public void findOverflowAgentWhenAllConnectionsAreBad() {
+        Mockito.when(scheduler.scheduleAtFixedRate(
+                any(Runnable.class),
+                eq(initialDelayInSeconds.longValue()),
+                eq(periodInSeconds.longValue()),
+                eq(TimeUnit.SECONDS)))
+                .then((Answer<ScheduledFuture<?>>) invocation -> {
+                    Runnable r = invocation.getArgument(0);
+                    r.run();
+                    return null;
+                });
+        registerMultipleAgents();
+        StorageAgentInfo agentInfo = testStorageAgentManager.findRegisteredAgentByLocationOrConnectionInfo(StorageAgentSelector.OVERFLOW_AGENT_INFO)
+                .orElse(null);
+        assertNull(agentInfo);
+    }
+
     private List<StorageAgentInfo> registerMultipleAgents() {
         int agentIndex = 0;
         List<StorageAgentInfo> testAgents = ImmutableList.<StorageAgentInfo>builder()
