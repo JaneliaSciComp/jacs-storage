@@ -22,6 +22,7 @@ public class TransferState<T> {
     private String errorMessage;
     private ByteBuffer messageTypeSizeBuffer;
     private ByteBuffer messageTypeBuffer;
+    private byte[] checksum;
     private T messageType;
     private volatile Pipe dataTransferPipe;
 
@@ -107,6 +108,14 @@ public class TransferState<T> {
     public TransferState<T> setMessageType(T messageType) {
         this.messageType = messageType;
         return this;
+    }
+
+    public byte[] getChecksum() {
+        return checksum;
+    }
+
+    public void setChecksum(byte[] checksum) {
+        this.checksum = checksum;
     }
 
     public void openDataTransferChannel() throws IOException {

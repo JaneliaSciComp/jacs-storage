@@ -249,7 +249,8 @@ public class StorageAgentListener {
                     response = new StorageMessageResponse(channelState.transferState.getState() == State.WRITE_DATA_COMPLETE ? StorageMessageResponse.OK : StorageMessageResponse.ERROR,
                             channelState.transferState.getErrorMessage(),
                             channelState.nTransferredBytes,
-                            channelState.transferState.getPersistedBytes());
+                            channelState.transferState.getPersistedBytes(),
+                            channelState.transferState.getChecksum());
                     responseTransfer = new TransferState<>();
                     responseBytes = responseTransfer.writeMessageType(response, new StorageMessageResponseCodec());
                     writeBuffer(ByteBuffer.wrap(responseBytes), channel);
@@ -260,7 +261,8 @@ public class StorageAgentListener {
                     response = new StorageMessageResponse(StorageMessageResponse.ERROR,
                             "Invalid state " + channelState.transferState.getState() + "while persisting data from " + channel.getRemoteAddress(),
                             channelState.nTransferredBytes,
-                            channelState.transferState.getPersistedBytes());
+                            channelState.transferState.getPersistedBytes(),
+                            channelState.transferState.getChecksum());
                     responseTransfer = new TransferState<>();
                     responseBytes = responseTransfer.writeMessageType(response, new StorageMessageResponseCodec());
                     writeBuffer(ByteBuffer.wrap(responseBytes), channel);

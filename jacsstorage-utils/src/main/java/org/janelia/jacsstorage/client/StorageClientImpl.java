@@ -106,7 +106,7 @@ public class StorageClientImpl implements StorageClient {
         DataStorageInfo persistedStorageInfo = retrieveStorageInfo(storageInfo);
         if (persistedStorageInfo.getConnectionInfo() == null) {
             LOG.error("No connection available for retrieving {}", storageInfo);
-            return new StorageMessageResponse(StorageMessageResponse.ERROR, "No connection to " + storageInfo.getName(), 0, 0);
+            return new StorageMessageResponse(StorageMessageResponse.ERROR, "No connection to " + storageInfo.getName(), 0, 0, new byte[0]);
         }
         LOG.info("Data storage info: {}", persistedStorageInfo);
         return storageClient.retrieveData(localPath, persistedStorageInfo);

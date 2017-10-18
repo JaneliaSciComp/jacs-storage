@@ -8,12 +8,14 @@ public class StorageMessageResponse {
     private final String message;
     private final long transferredBytes;
     private final long persistedBytes;
+    private final byte[] checksum;
 
-    public StorageMessageResponse(int status, String message, long transferredBytes, long persistedBytes) {
+    public StorageMessageResponse(int status, String message, long transferredBytes, long persistedBytes, byte[] checksum) {
         this.status = status;
         this.message = message;
         this.transferredBytes = transferredBytes;
         this.persistedBytes = persistedBytes;
+        this.checksum = checksum;
     }
 
     /**
@@ -34,5 +36,9 @@ public class StorageMessageResponse {
 
     public long getTransferredBytes() {
         return transferredBytes;
+    }
+
+    public byte[] getChecksum() {
+        return checksum == null ? new byte[0] : checksum;
     }
 }

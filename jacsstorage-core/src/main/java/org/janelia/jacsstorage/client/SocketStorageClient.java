@@ -43,9 +43,9 @@ public class SocketStorageClient implements StorageClient {
             ByteBuffer dataTransferBuffer = allocateTransferBuffer();
             StorageMessageHeader responseHeader = retrieveResponseHeader(dataTransferBuffer);
             if (responseHeader.getOperation() == DataTransferService.Operation.PROCESS_RESPONSE) {
-                return new StorageMessageResponse(StorageMessageResponse.OK, null, 0, 0);
+                return new StorageMessageResponse(StorageMessageResponse.OK, null, 0, 0, new byte[0]);
             } else if (responseHeader.getOperation() == DataTransferService.Operation.PROCESS_ERROR) {
-                return new StorageMessageResponse(StorageMessageResponse.ERROR, responseHeader.getMessageOrDefault(), 0, 0);
+                return new StorageMessageResponse(StorageMessageResponse.ERROR, responseHeader.getMessageOrDefault(), 0, 0, new byte[0]);
             } else {
                 throw new IllegalStateException("Invalid response operation");
             }
@@ -132,9 +132,9 @@ public class SocketStorageClient implements StorageClient {
                 // initiate the local data write operation
                 clientStorageProxy.beginDataTransfer(localDataTransfer);
                 retrieveData(dataTransferBuffer, localDataTransfer);
-                return new StorageMessageResponse(StorageMessageResponse.OK, localDataTransfer.getErrorMessage(), localDataTransfer.getTransferredBytes(), localDataTransfer.getPersistedBytes());
+                return new StorageMessageResponse(StorageMessageResponse.OK, localDataTransfer.getErrorMessage(), localDataTransfer.getTransferredBytes(), localDataTransfer.getPersistedBytes(), localDataTransfer.getChecksum());
             } else if (responseHeader.getOperation() == DataTransferService.Operation.PROCESS_ERROR) {
-                return new StorageMessageResponse(StorageMessageResponse.ERROR, responseHeader.getMessageOrDefault(), 0, 0);
+                return new StorageMessageResponse(StorageMessageResponse.ERROR, responseHeader.getMessageOrDefault(), 0, 0, new byte[0]);
             } else {
                 throw new IllegalStateException("Invalid response operation");
             }
