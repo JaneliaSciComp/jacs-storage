@@ -39,7 +39,7 @@ public class StorageClientImpl implements StorageClient {
         LOG.debug("Allocated {}", allocatedStorage);
         StorageMessageResponse storageResponse = storageClient.persistData(localPath, allocatedStorage);
         if (storageResponse.getStatus() == StorageMessageResponse.OK) {
-            updateStorageInfo(storageInfo.getConnectionInfo(), storageResponse.getPersistedBytes(), allocatedStorage);
+            updateStorageInfo(storageInfo.getConnectionInfo(), storageResponse.getPersistedBytes(), storageResponse.getChecksum(), allocatedStorage);
         }
         return storageResponse;
     }
@@ -71,7 +71,7 @@ public class StorageClientImpl implements StorageClient {
         }
     }
 
-    private Optional<DataStorageInfo> updateStorageInfo(String connectionInfo, long messageSize, DataStorageInfo storageInfo) {
+    private Optional<DataStorageInfo> updateStorageInfo(String connectionInfo, long messageSize, byte[] checksum, DataStorageInfo storageInfo) {
         String storageEndpoint = String.format("/storage/%d", storageInfo.getId());
         Client httpClient = null;
         try {
@@ -81,6 +81,7 @@ public class StorageClientImpl implements StorageClient {
             DataStorageInfo storageUpdate = new DataStorageInfo();
             storageUpdate.setId(storageInfo.getId());
             storageUpdate.setRequestedSpaceInKB(messageSize);
+            storageUpdate.setChecksum(checksum);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .put(Entity.json(storageUpdate))
                     ;
