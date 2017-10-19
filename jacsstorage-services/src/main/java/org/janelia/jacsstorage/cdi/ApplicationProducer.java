@@ -58,6 +58,18 @@ public class ApplicationProducer {
         }
     }
 
+    @Produces
+    @PropertyValue(name = "")
+    public Long longPropertyValue(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
+        final PropertyValue property = injectionPoint.getAnnotated().getAnnotation(PropertyValue.class);
+        String defaultValue = property.defaultValue();
+        if (StringUtils.isBlank(defaultValue)) {
+            return applicationConfig.getLongPropertyValue(property.name());
+        } else {
+            return applicationConfig.getLongPropertyValue(property.name(), Long.valueOf(defaultValue));
+        }
+    }
+
     @ApplicationScoped
     @ApplicationProperties
     @Produces

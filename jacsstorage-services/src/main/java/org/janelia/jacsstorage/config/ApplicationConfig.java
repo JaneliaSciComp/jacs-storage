@@ -10,6 +10,8 @@ public interface ApplicationConfig {
     Boolean getBooleanPropertyValue(String name);
     Integer getIntegerPropertyValue(String name);
     Integer getIntegerPropertyValue(String name, Integer defaultValue);
+    Long getLongPropertyValue(String name);
+    Long getLongPropertyValue(String name, Long defaultValue);
     void load(InputStream stream) throws IOException;
     void putAll(Map<String, String> properties);
 }
