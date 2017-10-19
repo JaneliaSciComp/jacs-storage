@@ -106,6 +106,7 @@ public class DistributedStorageManagementService implements StorageManagementSer
                 .flatMap(storageVolume -> agentManager.findRegisteredAgentByLocationOrConnectionInfo(storageVolume.getLocation())) // find a registered agent that serves the given location
                 .map(storageAgent -> {
                     bundle.setConnectionInfo(storageAgent.getConnectionInfo());
+                    bundle.setConnectionURL(storageAgent.getAgentURL());
                     return bundle;
                 });
     }

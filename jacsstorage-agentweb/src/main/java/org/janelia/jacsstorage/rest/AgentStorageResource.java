@@ -78,6 +78,15 @@ public class AgentStorageResource {
                 .build();
     }
 
+    @DELETE
+    @Path("absolute-path-to-clean/{dataPath: .*}")
+    public Response deleteStorage(@PathParam("dataPath") String dataPath) throws IOException {
+        if (StringUtils.isNotBlank(dataPath)) dataStorageService.cleanupStorage(dataPath);
+        return Response
+                .status(Response.Status.NO_CONTENT)
+                .build();
+    }
+
     private String getPersistedDataPath(String dataPath) {
         if (!StringUtils.startsWith(dataPath, "/")) {
             return "/" + dataPath;

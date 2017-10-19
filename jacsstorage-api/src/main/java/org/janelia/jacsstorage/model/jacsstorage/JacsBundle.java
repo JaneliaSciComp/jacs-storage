@@ -29,6 +29,8 @@ public class JacsBundle extends AbstractEntity {
     @JsonIgnore
     private String connectionInfo;
     @JsonIgnore
+    private String connectionURL;
+    @JsonIgnore
     private JacsStorageVolume storageVolume;
 
     public String getName() {
@@ -141,6 +143,14 @@ public class JacsBundle extends AbstractEntity {
 
     public void setConnectionInfo(String connectionInfo) {
         this.connectionInfo = connectionInfo;
+    }
+
+    public String getConnectionURL() {
+        return connectionURL;
+    }
+
+    public void setConnectionURL(String connectionURL) {
+        this.connectionURL = connectionURL;
     }
 
     @JsonIgnore

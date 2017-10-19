@@ -5,8 +5,11 @@ import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageRequestBuilder;
 import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
+import org.janelia.jacsstorage.service.DataStorageService;
+import org.janelia.jacsstorage.service.HttpClientDataStorageServiceImpl;
 import org.janelia.jacsstorage.service.StorageManagementService;
 
 import javax.enterprise.context.RequestScoped;
@@ -20,10 +23,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -88,6 +95,36 @@ public class StorageResource {
         }
     }
 
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @GET
+    @Path("{id}/stream")
+    public Response getBundleStream(@PathParam("id") Long id) {
+        JacsBundle jacsBundle = storageManagementService.getDataBundleById(id);
+        if (jacsBundle == null) {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .build();
+        } else {
+            StreamingOutput bundleStream =  new StreamingOutput()
+            {
+                @Override
+                public void write(java.io.OutputStream output) throws IOException, WebApplicationException {
+                    DataStorageService dataStreamService = new HttpClientDataStorageServiceImpl(jacsBundle.getConnectionURL());
+                    try {
+                        dataStreamService.retrieveDataStream(jacsBundle.getPath(), jacsBundle.getStorageFormat(), output);
+                        output.flush();
+                    } catch (Exception e) {
+                        throw new WebApplicationException(e);
+                    }
+                }
+            };
+            return Response
+                    .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)
+                    .header("content-disposition","attachment; filename = " + jacsBundle.getOwner() + "-" + jacsBundle.getName())
+                    .build();
+        }
+    }
+
     @GET
     @Path("{owner}/{name}")
     public Response getBundleInfoByOwnerAndName(@PathParam("owner") String owner, @PathParam("name") String name) {
@@ -118,6 +155,24 @@ public class StorageResource {
                         .status(Response.Status.NOT_FOUND)
                         .entity(ImmutableMap.of("errormessage", "Metadata could not be created. Usually the reason is that no agent is available"))
                         .build());
+    }
+
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @PUT
+    @Path("{id}/stream")
+    public Response streamBundle(@PathParam("id") Long id, InputStream dataStream) throws IOException {
+        JacsBundle jacsBundle = storageManagementService.getDataBundleById(id);
+        if (jacsBundle == null) {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .build();
+        } else {
+            DataStorageService dataStreamService = new HttpClientDataStorageServiceImpl(jacsBundle.getConnectionURL());
+            TransferInfo ti = dataStreamService.persistDataStream(jacsBundle.getPath(), jacsBundle.getStorageFormat(), dataStream);
+            return Response
+                    .ok(ti)
+                    .build();
+        }
     }
 
     @Consumes("application/json")
