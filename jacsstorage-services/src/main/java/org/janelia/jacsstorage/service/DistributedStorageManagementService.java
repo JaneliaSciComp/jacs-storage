@@ -54,9 +54,8 @@ public class DistributedStorageManagementService implements StorageManagementSer
 
     @Override
     public Optional<JacsBundle> allocateStorage(JacsBundle dataBundle) {
-        Predicate<StorageAgentInfo> agentSelectCondition = (StorageAgentInfo sai) -> sai.getStorageSpaceAvailableInMB() > 0;
         Predicate<StorageAgentInfo> spaceAvailableCondition = (StorageAgentInfo sai) -> dataBundle.getUsedSpaceInKB() == null || sai.getStorageSpaceAvailableInMB() * 1000 > dataBundle.getUsedSpaceInKB();
-        return agentManager.findRandomRegisteredAgent(agentSelectCondition.and(spaceAvailableCondition))
+        return agentManager.findRandomRegisteredAgent(spaceAvailableCondition)
                 .map((StorageAgentInfo storageAgentInfo) -> {
                     JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocationAndCreateIfNotFound(storageAgentInfo.getLocation());
                     ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedVolumeFieldsBuilder = ImmutableMap.builder();

@@ -144,9 +144,10 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     @Override
     public Optional<StorageAgentInfo> findRandomRegisteredAgent(Predicate<StorageAgentInfo> agentFilter) {
         Predicate<StorageAgentConnection> goodConnection = (StorageAgentConnection ac) -> ac.getAgentConnectionBreaker().getState() == CircuitBreaker.BreakerState.CLOSED;
+        Predicate<StorageAgentConnection> agentSelectableCondition = (StorageAgentConnection ac) -> ac.getAgentInfo().getStorageSpaceAvailableInMB() > 0;
         Predicate<StorageAgentConnection> candidateFilter = (StorageAgentConnection ac) -> agentFilter == null || agentFilter.test(ac.getAgentInfo());
         StorageAgentSelector[] agentSelectors = new StorageAgentSelector[] {
-                new RandomStorageAgentSelector(goodConnection.and(candidateFilter)),
+                new RandomStorageAgentSelector(goodConnection.and(agentSelectableCondition).and(candidateFilter)),
                 new OverflowStorageAgentSelector(goodConnection, overflowRootDir)
         };
         Collection<StorageAgentConnection> agentConnections = registeredAgentConnections.values();

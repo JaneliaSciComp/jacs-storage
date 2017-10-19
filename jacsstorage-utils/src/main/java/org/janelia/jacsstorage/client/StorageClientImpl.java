@@ -16,10 +16,12 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
+import java.util.Map;
 import java.util.Optional;
 
 public class StorageClientImpl implements StorageClient {
@@ -36,16 +38,24 @@ public class StorageClientImpl implements StorageClient {
     }
 
     public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
-        DataStorageInfo allocatedStorage = allocateStorage(storageInfo);
-        LOG.debug("Allocated {}", allocatedStorage);
-        StorageMessageResponse storageResponse = storageClient.persistData(localPath, allocatedStorage);
-        if (storageResponse.getStatus() == StorageMessageResponse.OK) {
-            updateStorageInfo(storageInfo.getConnectionInfo(), storageResponse.getPersistedBytes(), storageResponse.getChecksum(), allocatedStorage);
-        }
-        return storageResponse;
+        return allocateStorage(storageInfo)
+                .map(allocatedStorage -> {
+                    LOG.debug("Allocated {}", allocatedStorage);
+                    try {
+                        StorageMessageResponse storageResponse = storageClient.persistData(localPath, allocatedStorage);
+                        if (storageResponse.getStatus() == StorageMessageResponse.OK) {
+                            updateStorageInfo(storageInfo.getConnectionInfo(), storageResponse.getPersistedBytes(), storageResponse.getChecksum(), allocatedStorage);
+                        }
+                        return storageResponse;
+                    } catch (IOException e) {
+                        LOG.error("Error persisting the bundle {}", allocatedStorage, e);
+                        return new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage(), 0, 0, new byte[0]);
+                    }
+                })
+                .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "Error allocating storage for " + storageInfo, 0, 0, new byte[0]));
     }
 
-    private DataStorageInfo allocateStorage(DataStorageInfo storageRequest) {
+    private Optional<DataStorageInfo> allocateStorage(DataStorageInfo storageRequest) {
         String storageEndpoint = "/storage";
         Client httpClient = null;
         try {
@@ -58,10 +68,11 @@ public class StorageClientImpl implements StorageClient {
 
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.CREATED.getStatusCode()) {
-                return response.readEntity(DataStorageInfo.class);
+                return Optional.of(response.readEntity(DataStorageInfo.class));
             } else {
-                LOG.warn("Allocate storage request {} returned with status {}", target.getUri(), responseStatus);
-                throw new IllegalStateException("Error while trying to allocate data storage - returned status: " + responseStatus);
+                Map<String, String> errResponse = response.readEntity(Map.class);
+                LOG.warn("Allocate storage request {} returned with status {} - {}", target.getUri(), responseStatus, errResponse);
+                return Optional.empty();
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
