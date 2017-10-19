@@ -14,4 +14,7 @@ public @interface PropertyValue {
 
     @Nonbinding
     String name();
+
+    @Nonbinding
+    String defaultValue() default "";
 }

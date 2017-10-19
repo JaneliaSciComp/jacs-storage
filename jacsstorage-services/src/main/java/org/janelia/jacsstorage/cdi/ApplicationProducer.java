@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.cdi;
 
 import com.fasterxml.jackson.databind. ObjectMapper;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacsstorage.cdi.qualifier.PooledResource;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
@@ -42,14 +43,19 @@ public class ApplicationProducer {
     @PropertyValue(name = "")
     public String stringPropertyValue(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
         final PropertyValue property = injectionPoint.getAnnotated().getAnnotation(PropertyValue.class);
-        return applicationConfig.getStringPropertyValue(property.name());
+        return applicationConfig.getStringPropertyValue(property.name(), property.defaultValue());
     }
 
     @Produces
     @PropertyValue(name = "")
     public Integer integerPropertyValue(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
         final PropertyValue property = injectionPoint.getAnnotated().getAnnotation(PropertyValue.class);
-        return applicationConfig.getIntegerPropertyValue(property.name());
+        String defaultValue = property.defaultValue();
+        if (StringUtils.isBlank(defaultValue)) {
+            return applicationConfig.getIntegerPropertyValue(property.name());
+        } else {
+            return applicationConfig.getIntegerPropertyValue(property.name(), Integer.valueOf(defaultValue));
+        }
     }
 
     @ApplicationScoped
