@@ -25,6 +25,8 @@ public class StorageClientApp {
     private static class CommandMain {
         @Parameter(names = "-server", description = "Storage (master) server URL")
         private String serverURL = "http://localhost:8080/jacsstorage/master-api";
+        @Parameter(names = "-useHttp", description = "Use Http to persist/retrieve data")
+        private Boolean useHttp = false;
     }
 
     @Parameters(commandDescription = "Send data to the storage server")
@@ -41,12 +43,6 @@ public class StorageClientApp {
     private static class CommandPing extends AbstractCommand {
         @Parameter(names = "-connectionInfo", description = "Connection info", required = true)
         private String connectionInfo;
-    }
-
-    private final StorageClient storageClient;
-
-    public StorageClientApp(StorageClient storageClient) {
-        this.storageClient = storageClient;
     }
 
     public static void main(String[] args) throws Exception {
@@ -72,29 +68,35 @@ public class StorageClientApp {
 
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
         SeContainer container = containerInit.initialize();
-        StorageClient socketStorageClient = new SocketStorageClient(
-                container.select(DataTransferService.class).get()
-        );
+        StorageClient storageClient;
+        if (cm.useHttp) {
+            storageClient = new HttpStorageClient(
+                    container.select(DataTransferService.class).get()
+            );
+        } else {
+            storageClient = new StorageClientImpl(new SocketStorageClient(
+                    container.select(DataTransferService.class).get())
+            );
+        }
         DataStorageInfo storageInfo;
-        StorageClientImpl storageClientImpl = new StorageClientImpl(socketStorageClient);
         switch (jc.getParsedCommand()) {
             case "get":
                 storageInfo = new DataStorageInfo()
-                        .setConnectionInfo(cm.serverURL)
+                        .setConnectionURL(cm.serverURL)
                         .setOwner(cmdGet.owner)
                         .setName(cmdGet.name);
-                storageClientImpl.retrieveData(cmdGet.localPath, storageInfo);
+                storageClient.retrieveData(cmdGet.localPath, storageInfo);
                 return;
             case "put":
                 storageInfo = new DataStorageInfo()
-                        .setConnectionInfo(cm.serverURL)
+                        .setConnectionURL(cm.serverURL)
                         .setStorageFormat(cmdPut.dataFormat)
                         .setOwner(cmdPut.owner)
                         .setName(cmdPut.name);
-                storageClientImpl.persistData(cmdPut.localPath, storageInfo);
+                storageClient.persistData(cmdPut.localPath, storageInfo);
                 return;
             case "ping":
-                storageClientImpl.ping(cmdPing.connectionInfo);
+                storageClient.ping(cmdPing.connectionInfo);
             default:
                 usage(jc);
         }

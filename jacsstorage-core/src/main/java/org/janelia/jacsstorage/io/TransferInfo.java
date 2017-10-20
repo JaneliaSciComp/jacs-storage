@@ -1,10 +1,14 @@
 package org.janelia.jacsstorage.io;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class TransferInfo {
     private final long numBytes;
     private final byte[] checksum;
 
-    public TransferInfo(long numBytes, byte[] checksum) {
+    @JsonCreator
+    public TransferInfo(@JsonProperty("numBytes") long numBytes, @JsonProperty("checksum") byte[] checksum) {
         this.numBytes = numBytes;
         this.checksum = checksum;
     }

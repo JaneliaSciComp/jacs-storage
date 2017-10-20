@@ -15,6 +15,7 @@ public class DataStorageInfo {
     private String permissions;
     private String location;
     private String connectionInfo;
+    private String connectionURL;
     private JacsStorageFormat storageFormat;
     private Long requestedSpaceInKB;
     private String checksum;
@@ -32,6 +33,7 @@ public class DataStorageInfo {
                 .setChecksum(dataBundle.getChecksum())
                 .addMetadata(dataBundle.getMetadata())
                 .setConnectionInfo(dataBundle.getStorageVolume().map(sv -> sv.getMountHostIP()).orElse(dataBundle.getConnectionInfo()))
+                .setConnectionURL(dataBundle.getConnectionURL())
                 .setLocation(dataBundle.getStorageVolume().map(sv -> sv.getLocation()).orElse(null))
                 ;
     }
@@ -87,6 +89,15 @@ public class DataStorageInfo {
 
     public DataStorageInfo setConnectionInfo(String connectionInfo) {
         this.connectionInfo = connectionInfo;
+        return this;
+    }
+
+    public String getConnectionURL() {
+        return connectionURL;
+    }
+
+    public DataStorageInfo setConnectionURL(String connectionURL) {
+        this.connectionURL = connectionURL;
         return this;
     }
 
@@ -159,6 +170,7 @@ public class DataStorageInfo {
                 .append("name", name)
                 .append("path", path)
                 .append("connectionInfo", connectionInfo)
+                .append("connectionURL", connectionURL)
                 .append("storageFormat", storageFormat)
                 .toString();
     }

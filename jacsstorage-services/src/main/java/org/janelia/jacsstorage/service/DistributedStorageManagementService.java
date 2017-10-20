@@ -73,6 +73,7 @@ public class DistributedStorageManagementService implements StorageManagementSer
                     dataBundle.setStorageVolumeId(storageVolume.getId());
                     dataBundle.setStorageVolume(storageVolume);
                     dataBundle.setConnectionInfo(storageAgentInfo.getConnectionInfo());
+                    dataBundle.setConnectionURL(storageAgentInfo.getAgentURL());
                     bundleDao.save(dataBundle);
                     List<String> dataSubpath = PathUtils.getTreePathComponentsForId(dataBundle.getId());
                     Path dataPath = Paths.get(storageVolume.getMountPoint(), dataSubpath.toArray(new String[dataSubpath.size()]));
