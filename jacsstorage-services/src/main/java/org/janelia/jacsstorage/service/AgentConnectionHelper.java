@@ -105,54 +105,6 @@ class AgentConnectionHelper {
         return false;
     }
 
-    static InputStream streamDataFromStorage(String agentUrl, JacsStorageFormat storageFormat, String dataPath) {
-        String retrieveStreamEndpoint = String.format("/agent-storage/format/%s/absolute-path/%s", storageFormat, dataPath);
-        Client httpClient = null;
-        try {
-            httpClient = createHttpClient();
-            WebTarget target = httpClient.target(agentUrl).path(retrieveStreamEndpoint);
-            Response response = target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE)
-                    .get()
-                    ;
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                LOG.warn("Agent getStatus returned {}", response.getStatus());
-            } else {
-                return response.readEntity(InputStream.class);
-            }
-        } catch (Exception e) {
-            LOG.warn("Error raised during agent getStatus", e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
-        }
-        return null;
-    }
-
-    static TransferInfo streamDataToStorage(String agentUrl, JacsStorageFormat storageFormat, String dataPath, InputStream dataStream) {
-        String persistStreamEndpoint = String.format("/agent-storage/format/%s/absolute-path/%s", storageFormat, dataPath);
-        Client httpClient = null;
-        try {
-            httpClient = createHttpClient();
-            WebTarget target = httpClient.target(agentUrl).path(persistStreamEndpoint);
-            Response response = target.request()
-                    .post(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE))
-                    ;
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                LOG.warn("Agent stream data returned {}", response.getStatus());
-            } else {
-                return response.readEntity(TransferInfo.class);
-            }
-        } catch (Exception e) {
-            LOG.warn("Error raised during agent stream data", e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
-        }
-        return null;
-    }
-
     private static Client createHttpClient() throws Exception {
         SSLContext sslContext = SSLContext.getInstance("TLSv1");
         TrustManager[] trustManagers = {

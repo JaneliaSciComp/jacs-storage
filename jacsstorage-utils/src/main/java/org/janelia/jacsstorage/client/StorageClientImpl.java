@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class StorageClientImpl implements StorageClient {
     private static final Logger LOG = LoggerFactory.getLogger(StorageClientImpl.class);
@@ -45,13 +46,17 @@ public class StorageClientImpl implements StorageClient {
     @Override
     public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
         String storageServiceURL = storageInfo.getConnectionURL();
-        DataStorageInfo persistedStorageInfo = clientImplHelper.retrieveStorageInfo(storageServiceURL, storageInfo);
-        if (persistedStorageInfo.getConnectionInfo() == null) {
-            LOG.error("No connection available for retrieving {}", storageInfo);
-            return new StorageMessageResponse(StorageMessageResponse.ERROR, "No connection to " + storageInfo.getName(), 0, 0, new byte[0]);
-        }
-        LOG.info("Data storage info: {}", persistedStorageInfo);
-        return storageClient.retrieveData(localPath, persistedStorageInfo);
+        return clientImplHelper.retrieveStorageInfo(storageServiceURL, storageInfo)
+            .map((DataStorageInfo persistedStorageInfo) -> {
+                LOG.info("Data storage info: {}", persistedStorageInfo);
+                try {
+                    return storageClient.retrieveData(localPath, persistedStorageInfo);
+                } catch (IOException e) {
+                    LOG.error("Error retrieving data from {}", persistedStorageInfo, e);
+                    return new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage(), 0, 0, new byte[0]);
+                }
+            })
+            .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "No connection to " + storageInfo.getName(), 0, 0, new byte[0]));
     }
 
 }

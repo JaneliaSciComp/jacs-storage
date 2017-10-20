@@ -77,6 +77,7 @@ public class StorageClientImplHelper {
                 return Optional.of(response.readEntity(DataStorageInfo.class));
             } else {
                 LOG.warn("Update storage info returned with status {}", responseStatus);
+                return Optional.empty();
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -85,10 +86,9 @@ public class StorageClientImplHelper {
                 httpClient.close();
             }
         }
-        return Optional.empty();
     }
 
-    DataStorageInfo retrieveStorageInfo(String connectionURL, DataStorageInfo storageRequest) {
+    Optional<DataStorageInfo> retrieveStorageInfo(String connectionURL, DataStorageInfo storageRequest) {
         String storageEndpoint = String.format("/storage/%s/%s", storageRequest.getOwner(), storageRequest.getName());
         Client httpClient = null;
         try {
@@ -101,10 +101,10 @@ public class StorageClientImplHelper {
 
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
-                return response.readEntity(DataStorageInfo.class);
+                return Optional.of(response.readEntity(DataStorageInfo.class));
             } else {
                 LOG.warn("Retrieve storage info request returned with status {}", responseStatus);
-                throw new IllegalStateException("Error while trying to retrieve data storage - returned status: " + responseStatus);
+                return Optional.empty();
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -116,20 +116,20 @@ public class StorageClientImplHelper {
     }
 
     Optional<TransferInfo> streamDataToStore(String connectionURL, DataStorageInfo storageInfo, InputStream dataStream) {
-        String dataStreamEndpoint = String.format("/storage/%d/stream", storageInfo.getId());
+        String dataStreamEndpoint = String.format("/agent-storage/format/%s/absolute-path/%s", storageInfo.getStorageFormat(), storageInfo.getPath());
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
-                    .put(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE))
+                    .post(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE))
                     ;
 
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return Optional.of(response.readEntity(TransferInfo.class));
             } else {
-                LOG.warn("Stream data returned with status {}", responseStatus);
+                LOG.warn("Stream data from {} returned with status {}", target, responseStatus);
                 return Optional.empty();
             }
         } catch (Exception e) {
@@ -142,7 +142,7 @@ public class StorageClientImplHelper {
     }
 
     Optional<InputStream> streamDataFromStore(String connectionURL, DataStorageInfo storageInfo) {
-        String dataStreamEndpoint = String.format("/storage/%d/stream", storageInfo.getId());
+        String dataStreamEndpoint = String.format("/agent-storage/format/%s/absolute-path/%s", storageInfo.getStorageFormat(), storageInfo.getPath());
         Client httpClient = null;
         try {
             httpClient = createHttpClient();

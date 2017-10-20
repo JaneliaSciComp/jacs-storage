@@ -17,19 +17,20 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
-public class HttpStorageClient implements StorageClient {
-    private static final Logger LOG = LoggerFactory.getLogger(HttpStorageClient.class);
+public class StorageClientHttpImpl implements StorageClient {
+    private static final Logger LOG = LoggerFactory.getLogger(StorageClientHttpImpl.class);
 
     private final DataTransferService clientStorageProxy;
     private final StorageClientImplHelper clientImplHelper;
 
-    public HttpStorageClient(DataTransferService clientStorageProxy) {
+    public StorageClientHttpImpl(DataTransferService clientStorageProxy) {
         this.clientStorageProxy = clientStorageProxy;
         clientImplHelper = new StorageClientImplHelper();
     }
@@ -81,10 +82,10 @@ public class HttpStorageClient implements StorageClient {
                 localDataFormat = JacsStorageFormat.DATA_DIRECTORY;
             }
         }
-        String storageServiceURL = storageInfo.getConnectionURL();
-        return clientImplHelper.allocateStorage(storageServiceURL, storageInfo)
+        return clientImplHelper.allocateStorage(storageInfo.getConnectionURL(), storageInfo)
                 .flatMap((DataStorageInfo allocatedStorage) -> {
                     LOG.debug("Allocated {}", allocatedStorage);
+                    String agentStorageServiceURL = allocatedStorage.getConnectionURL();
                     try {
                         // initiate the local data read operation
                         TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
@@ -93,7 +94,7 @@ public class HttpStorageClient implements StorageClient {
                                 localPath,
                                 ""));
                         clientStorageProxy.beginDataTransfer(localDataTransfer);
-                        return localDataTransfer.getDataReadChannel().flatMap(dataReadChannel -> clientImplHelper.streamDataToStore(storageServiceURL, allocatedStorage, Channels.newInputStream(dataReadChannel)));
+                        return localDataTransfer.getDataReadChannel().flatMap(dataReadChannel -> clientImplHelper.streamDataToStore(agentStorageServiceURL, allocatedStorage, Channels.newInputStream(dataReadChannel)));
                     } catch (IOException e) {
                         LOG.error("Error persisting the bundle {}", allocatedStorage, e);
                         return Optional.empty();
@@ -105,12 +106,6 @@ public class HttpStorageClient implements StorageClient {
 
     @Override
     public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
-        DataStorageInfo persistedStorageInfo = clientImplHelper.retrieveStorageInfo(storageInfo.getConnectionURL(), storageInfo);
-        if (persistedStorageInfo.getConnectionInfo() == null) {
-            LOG.error("No connection available for retrieving {}", storageInfo);
-            return new StorageMessageResponse(StorageMessageResponse.ERROR, "No connection to " + storageInfo.getName(), 0, 0, new byte[0]);
-        }
-        LOG.info("Data storage info: {}", persistedStorageInfo);
         JacsStorageFormat localDataFormat;
         if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
             Files.createDirectories(Paths.get(localPath).getParent());
@@ -120,9 +115,13 @@ public class HttpStorageClient implements StorageClient {
             Files.createDirectories(Paths.get(localPath));
             localDataFormat = JacsStorageFormat.DATA_DIRECTORY;
         }
-        String storageServiceURL = storageInfo.getConnectionURL();
-        clientImplHelper.streamDataFromStore(storageServiceURL, persistedStorageInfo)
-                .flatMap(dataStream -> {
+        clientImplHelper.retrieveStorageInfo(storageInfo.getConnectionURL(), storageInfo)
+                .flatMap((DataStorageInfo persistedStorageInfo) -> {
+                    LOG.info("Data storage info: {}", persistedStorageInfo);
+                    String agentStorageServiceURL = persistedStorageInfo.getConnectionURL();
+                    return clientImplHelper.streamDataFromStore(agentStorageServiceURL, persistedStorageInfo);
+                })
+                .flatMap((InputStream dataStream) -> {
                     try {
                         // initiate the local data write operation
                         TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
@@ -145,7 +144,7 @@ public class HttpStorageClient implements StorageClient {
                         return Optional.of(new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage(), 0, 0, new byte[0]));
                     }
                 })
-                .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "Error streaming data from " + persistedStorageInfo, 0, 0, new byte[0]));
+                .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "Error streaming data from " + storageInfo, 0, 0, new byte[0]));
         return null;
     }
 

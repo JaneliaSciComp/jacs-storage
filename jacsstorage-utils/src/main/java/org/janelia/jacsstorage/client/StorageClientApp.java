@@ -70,7 +70,7 @@ public class StorageClientApp {
         SeContainer container = containerInit.initialize();
         StorageClient storageClient;
         if (cm.useHttp) {
-            storageClient = new HttpStorageClient(
+            storageClient = new StorageClientHttpImpl(
                     container.select(DataTransferService.class).get()
             );
         } else {
