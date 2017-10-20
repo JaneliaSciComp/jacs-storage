@@ -27,7 +27,7 @@ public abstract class AbstractEntityFieldValueHandler<T> implements EntityFieldV
         AbstractEntityFieldValueHandler<?> that = (AbstractEntityFieldValueHandler<?>) o;
 
         return new EqualsBuilder()
-                .append(fieldValue, that.fieldValue)
+                .append(getFieldValue(), that.getFieldValue())
                 .isEquals();
     }
 
