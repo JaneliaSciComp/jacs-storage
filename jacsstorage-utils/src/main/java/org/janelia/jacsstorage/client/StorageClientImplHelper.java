@@ -1,9 +1,9 @@
 package org.janelia.jacsstorage.client;
 
-import com.google.common.io.ByteStreams;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.io.TransferInfo;
+import org.janelia.jacsstorage.service.StorageMessageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +16,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.io.InputStream;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
@@ -33,11 +34,9 @@ public class StorageClientImplHelper {
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
-
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .post(Entity.json(storageRequest))
                     ;
-
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.CREATED.getStatusCode()) {
                 return Optional.of(response.readEntity(DataStorageInfo.class));
@@ -71,7 +70,6 @@ public class StorageClientImplHelper {
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .put(Entity.json(storageUpdate))
                     ;
-
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return Optional.of(response.readEntity(DataStorageInfo.class));
@@ -94,11 +92,9 @@ public class StorageClientImplHelper {
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
-
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .get()
                     ;
-
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return Optional.of(response.readEntity(DataStorageInfo.class));
@@ -124,7 +120,6 @@ public class StorageClientImplHelper {
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .post(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE))
                     ;
-
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return Optional.of(response.readEntity(TransferInfo.class));
@@ -166,7 +161,31 @@ public class StorageClientImplHelper {
         }
     }
 
-    Client createHttpClient() throws Exception {
+    StorageMessageResponse ping(String connectionURL) throws IOException {
+        String endpoint = "/storage/status";
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(connectionURL).path(endpoint);
+            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .get()
+                    ;
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return new StorageMessageResponse(StorageMessageResponse.OK, "", 0, 0, new byte[0]);
+            } else {
+                return new StorageMessageResponse(StorageMessageResponse.ERROR, "Response status: " + responseStatus, 0, 0, new byte[0]);
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    private Client createHttpClient() throws Exception {
         SSLContext sslContext = SSLContext.getInstance("TLSv1");
         TrustManager[] trustManagers = {
                 new X509TrustManager() {

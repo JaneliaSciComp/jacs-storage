@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Optional;
 
 public class StorageClientImpl implements StorageClient {
     private static final Logger LOG = LoggerFactory.getLogger(StorageClientImpl.class);
