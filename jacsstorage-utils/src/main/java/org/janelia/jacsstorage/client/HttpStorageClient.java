@@ -1,5 +1,8 @@
 package org.janelia.jacsstorage.client;
 
+import com.google.common.hash.Hashing;
+import com.google.common.hash.HashingInputStream;
+import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.service.DataTransferService;
@@ -83,14 +86,14 @@ public class HttpStorageClient implements StorageClient {
                 .flatMap((DataStorageInfo allocatedStorage) -> {
                     LOG.debug("Allocated {}", allocatedStorage);
                     try {
+                        // initiate the local data read operation
                         TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
                                 DataTransferService.Operation.RETRIEVE_DATA,
                                 localDataFormat,
                                 localPath,
                                 ""));
-                        // initiate the local data read operation
                         clientStorageProxy.beginDataTransfer(localDataTransfer);
-                        return localDataTransfer.getDataReadChannel().flatMap(dataReadChannel -> clientImplHelper.streamData(storageServiceURL, allocatedStorage, Channels.newInputStream(dataReadChannel)));
+                        return localDataTransfer.getDataReadChannel().flatMap(dataReadChannel -> clientImplHelper.streamDataToStore(storageServiceURL, allocatedStorage, Channels.newInputStream(dataReadChannel)));
                     } catch (IOException e) {
                         LOG.error("Error persisting the bundle {}", allocatedStorage, e);
                         return Optional.empty();
@@ -102,6 +105,47 @@ public class HttpStorageClient implements StorageClient {
 
     @Override
     public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
+        DataStorageInfo persistedStorageInfo = clientImplHelper.retrieveStorageInfo(storageInfo.getConnectionURL(), storageInfo);
+        if (persistedStorageInfo.getConnectionInfo() == null) {
+            LOG.error("No connection available for retrieving {}", storageInfo);
+            return new StorageMessageResponse(StorageMessageResponse.ERROR, "No connection to " + storageInfo.getName(), 0, 0, new byte[0]);
+        }
+        LOG.info("Data storage info: {}", persistedStorageInfo);
+        JacsStorageFormat localDataFormat;
+        if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
+            Files.createDirectories(Paths.get(localPath).getParent());
+            localDataFormat = JacsStorageFormat.SINGLE_DATA_FILE;
+        } else {
+            // expand everything locally
+            Files.createDirectories(Paths.get(localPath));
+            localDataFormat = JacsStorageFormat.DATA_DIRECTORY;
+        }
+        String storageServiceURL = storageInfo.getConnectionURL();
+        clientImplHelper.streamDataFromStore(storageServiceURL, persistedStorageInfo)
+                .flatMap(dataStream -> {
+                    try {
+                        // initiate the local data write operation
+                        TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
+                                DataTransferService.Operation.PERSIST_DATA,
+                                localDataFormat,
+                                localPath,
+                                ""));
+                        clientStorageProxy.beginDataTransfer(localDataTransfer);
+                        return localDataTransfer.getDataWriteChannel()
+                                .map(dataWriteChannel -> {
+                                    try {
+                                        HashingInputStream hashingDataStream = new HashingInputStream(Hashing.sha256(), dataStream);
+                                        long nbytes = ByteStreams.copy(hashingDataStream, Channels.newOutputStream(dataWriteChannel));
+                                        return new StorageMessageResponse(StorageMessageResponse.OK, "", nbytes, nbytes, hashingDataStream.hash().asBytes());
+                                    } catch (IOException e) {
+                                        return new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage(), 0, 0, new byte[0]);
+                                    }
+                                });
+                    } catch (IOException e) {
+                        return Optional.of(new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage(), 0, 0, new byte[0]));
+                    }
+                })
+                .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "Error streaming data from " + persistedStorageInfo, 0, 0, new byte[0]));
         return null;
     }
 

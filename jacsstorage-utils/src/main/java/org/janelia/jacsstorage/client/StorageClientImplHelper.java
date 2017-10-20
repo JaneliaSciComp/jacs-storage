@@ -115,7 +115,7 @@ public class StorageClientImplHelper {
         }
     }
 
-    Optional<TransferInfo> streamData(String connectionURL, DataStorageInfo storageInfo, InputStream dataStream) {
+    Optional<TransferInfo> streamDataToStore(String connectionURL, DataStorageInfo storageInfo, InputStream dataStream) {
         String dataStreamEndpoint = String.format("/storage/%d/stream", storageInfo.getId());
         Client httpClient = null;
         try {
@@ -128,6 +128,31 @@ public class StorageClientImplHelper {
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return Optional.of(response.readEntity(TransferInfo.class));
+            } else {
+                LOG.warn("Stream data returned with status {}", responseStatus);
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    Optional<InputStream> streamDataFromStore(String connectionURL, DataStorageInfo storageInfo) {
+        String dataStreamEndpoint = String.format("/storage/%d/stream", storageInfo.getId());
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
+            Response response = target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE)
+                    .get()
+                    ;
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return Optional.of(response.readEntity(InputStream.class));
             } else {
                 LOG.warn("Stream data returned with status {}", responseStatus);
                 return Optional.empty();
