@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.collect.ImmutableMap;
+import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageRequestBuilder;
@@ -33,9 +34,9 @@ import java.util.stream.Collectors;
 @Path("storage")
 public class StorageResource {
 
-    @Inject
+    @Inject @RemoteInstance
     private StorageAllocatorService storageAllocatorService;
-    @Inject
+    @Inject @RemoteInstance
     private StorageLookupService storageLookupService;
     @Context
     private UriInfo resourceURI;

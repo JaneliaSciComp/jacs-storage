@@ -18,6 +18,7 @@ import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Optional;
 
 public class StorageClientHttpImpl implements StorageClient {
@@ -75,7 +76,7 @@ public class StorageClientHttpImpl implements StorageClient {
                         return Optional.empty();
                     }
                 })
-                .map(ti -> new StorageMessageResponse(StorageMessageResponse.OK, "", ti.getNumBytes(), ti.getNumBytes(), ti.getChecksum()))
+                .map((DataStorageInfo dsi) -> new StorageMessageResponse(StorageMessageResponse.OK, "", dsi.getRequestedSpaceInKB(), dsi.getRequestedSpaceInKB(), Base64.getDecoder().decode(dsi.getChecksum())))
                 .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "Error allocating storage for " + storageInfo, 0, 0, new byte[0]));
     }
 

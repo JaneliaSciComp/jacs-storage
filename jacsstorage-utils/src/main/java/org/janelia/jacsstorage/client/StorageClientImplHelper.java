@@ -78,8 +78,8 @@ public class StorageClientImplHelper {
         }
     }
 
-    Optional<TransferInfo> streamDataToStore(String connectionURL, DataStorageInfo storageInfo, InputStream dataStream) {
-        String dataStreamEndpoint = String.format("/agent-storage/format/%s/absolute-path/%s", storageInfo.getStorageFormat(), storageInfo.getPath());
+    Optional<DataStorageInfo> streamDataToStore(String connectionURL, DataStorageInfo storageInfo, InputStream dataStream) {
+        String dataStreamEndpoint = String.format("/agent-storage/%s", storageInfo.getId());
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
@@ -89,7 +89,7 @@ public class StorageClientImplHelper {
                     ;
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
-                return Optional.of(response.readEntity(TransferInfo.class));
+                return Optional.of(response.readEntity(DataStorageInfo.class));
             } else {
                 LOG.warn("Stream data from {} returned with status {}", target, responseStatus);
                 return Optional.empty();
@@ -104,7 +104,7 @@ public class StorageClientImplHelper {
     }
 
     Optional<InputStream> streamDataFromStore(String connectionURL, DataStorageInfo storageInfo) {
-        String dataStreamEndpoint = String.format("/agent-storage/format/%s/absolute-path/%s", storageInfo.getStorageFormat(), storageInfo.getPath());
+        String dataStreamEndpoint = String.format("/agent-storage/%s", storageInfo.getId());
         Client httpClient = null;
         try {
             httpClient = createHttpClient();

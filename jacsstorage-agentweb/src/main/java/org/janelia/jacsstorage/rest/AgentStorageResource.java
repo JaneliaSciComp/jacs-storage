@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.rest;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
+import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.service.DataStorageService;
@@ -53,7 +54,7 @@ public class AgentStorageResource {
         dataBundle.setUsedSpaceInKB(ti.getNumBytes() / _1_K);
         storageAllocatorService.updateStorage(dataBundle);
         return Response
-                .ok(dataBundle)
+                .ok(DataStorageInfo.fromBundle(dataBundle))
                 .build();
     }
 
