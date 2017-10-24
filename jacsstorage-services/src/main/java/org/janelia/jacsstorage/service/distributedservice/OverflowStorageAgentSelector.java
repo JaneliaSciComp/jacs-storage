@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.service.distributedservice;
 
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 
@@ -32,7 +32,7 @@ public class OverflowStorageAgentSelector implements StorageAgentSelector {
         }
         int pos = RANDOM_SELECTOR.nextInt(agentConnectionsArray.length);
         StorageAgentConnection selectedAgentConnection = agentConnectionsArray[pos];
-        return new StorageAgentInfo(OVERFLOW_AGENT_INFO,
+        return new StorageAgentInfo(StorageAgentInfo.OVERFLOW_AGENT,
                 selectedAgentConnection.getAgentInfo().getAgentURL(),
                 selectedAgentConnection.getAgentInfo().getConnectionInfo(),
                 rootDir);

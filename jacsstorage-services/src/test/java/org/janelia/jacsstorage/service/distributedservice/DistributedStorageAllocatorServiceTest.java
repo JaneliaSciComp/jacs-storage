@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.service.distributedservice;
 
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
@@ -12,7 +12,6 @@ import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 
 import java.util.Map;
@@ -20,73 +19,30 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.everyItem;
-import static org.hamcrest.Matchers.isIn;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class DistributedStorageManagementServiceTest {
+public class DistributedStorageAllocatorServiceTest {
 
     private StorageAgentManager storageAgentManager;
     private JacsStorageVolumeDao storageVolumeDao;
     private JacsBundleDao bundleDao;
-    private DistributedStorageManagementService testStorageManagementService;
+    private DistributedStorageAllocatorService testStorageAllocatorService;
 
     @Before
     public void setUp() {
         storageAgentManager = mock(StorageAgentManager.class);
         storageVolumeDao = mock(JacsStorageVolumeDao.class);
         bundleDao = mock(JacsBundleDao.class);
-        testStorageManagementService = new DistributedStorageManagementService(storageAgentManager, storageVolumeDao, bundleDao);
+        testStorageAllocatorService = new DistributedStorageAllocatorService(storageVolumeDao, bundleDao, storageAgentManager);
     }
 
-    @Test
-    public void useBadIdToGetBundle() {
-        Long badId = 0L;
-        JacsBundle dataBundle = testStorageManagementService.getDataBundleById(badId);
-        assertNull(dataBundle);
-        verify(bundleDao).findById(badId);
-        verify(storageVolumeDao, never()).findById(any(Number.class));
-    }
-
-    @Test
-    public void useBadIdToGoodBundle() {
-        Long goodBundleId = 1L;
-        Long volumeId = 2L;
-        String testLocation = "volLocation";
-        when(bundleDao.findById(goodBundleId))
-                .thenReturn(new JacsBundleBuilder()
-                        .dataBundleId(goodBundleId)
-                        .storageVolumeId(volumeId)
-                        .build());
-        when(storageVolumeDao.findById(volumeId))
-                .thenReturn(new JacsStorageVolumeBuilder()
-                        .storageVolumeId(volumeId)
-                        .location(testLocation)
-                        .build());
-        when(storageAgentManager.findRegisteredAgentByLocationOrConnectionInfo(testLocation))
-                .thenReturn(Optional.of(new StorageAgentInfo(testLocation,
-                        "testURL",
-                        "testConnectionInfo",
-                        "testPath")));
-        JacsBundle dataBundle = testStorageManagementService.getDataBundleById(goodBundleId);
-        assertNotNull(dataBundle);
-        verify(bundleDao).findById(goodBundleId);
-        verify(storageVolumeDao).findById(volumeId);
-        verify(storageAgentManager).findRegisteredAgentByLocationOrConnectionInfo(testLocation);
-        assertThat(dataBundle.getConnectionInfo(), equalTo("testConnectionInfo"));
-    }
 
     private static class TestAllocateData {
         final Long testBundleId;
@@ -139,14 +95,14 @@ public class DistributedStorageManagementServiceTest {
                 ),
                 new TestAllocateData(10L,
                         20L,
-                        StorageAgentSelector.OVERFLOW_AGENT_INFO,
+                        StorageAgentInfo.OVERFLOW_AGENT,
                         "http://agentURL",
                         "agent:100",
                         "/storage",
                         new JacsBundleBuilder().owner("anowner").name("aname").build(),
-                        new JacsStorageVolumeBuilder().storageVolumeId(20L).location(StorageAgentSelector.OVERFLOW_AGENT_INFO).build(),
+                        new JacsStorageVolumeBuilder().storageVolumeId(20L).location(StorageAgentInfo.OVERFLOW_AGENT).build(),
                         ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
-                                .put("mountPoint", new SetFieldValueHandler<>(StorageAgentSelector.OVERFLOW_AGENT_INFO))
+                                .put("mountPoint", new SetFieldValueHandler<>(StorageAgentInfo.OVERFLOW_AGENT))
                                 .build()
                 ),
                 new TestAllocateData(10L,
@@ -162,7 +118,7 @@ public class DistributedStorageManagementServiceTest {
         };
         for (TestAllocateData td : testData) {
             prepareMockServices(td);
-            Optional<JacsBundle> bundleResult = testStorageManagementService.allocateStorage(td.testBundle);
+            Optional<JacsBundle> bundleResult = testStorageAllocatorService.allocateStorage(td.testBundle);
             verifyTestBundle(bundleResult, td, td.volumeUpdatedFields);
         }
     }

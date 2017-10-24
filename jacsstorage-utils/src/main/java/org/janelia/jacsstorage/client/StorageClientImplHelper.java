@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 
@@ -43,38 +42,6 @@ public class StorageClientImplHelper {
             } else {
                 Map<String, String> errResponse = response.readEntity(Map.class);
                 LOG.warn("Allocate storage request {} returned with status {} - {}", target.getUri(), responseStatus, errResponse);
-                return Optional.empty();
-            }
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
-        }
-    }
-
-    Optional<DataStorageInfo> updateStorageInfo(String connectionURL, long messageSize, byte[] checksum, DataStorageInfo storageInfo) {
-        String storageEndpoint = String.format("/storage/%d", storageInfo.getId());
-        Client httpClient = null;
-        try {
-            httpClient = createHttpClient();
-            WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
-            // set the fields to update
-            DataStorageInfo storageUpdate = new DataStorageInfo();
-            storageUpdate.setId(storageInfo.getId());
-            storageUpdate.setRequestedSpaceInKB(messageSize);
-            if (checksum != null) {
-                storageUpdate.setChecksum(Base64.getEncoder().encodeToString(checksum));
-            }
-            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
-                    .put(Entity.json(storageUpdate))
-                    ;
-            int responseStatus = response.getStatus();
-            if (responseStatus == Response.Status.OK.getStatusCode()) {
-                return Optional.of(response.readEntity(DataStorageInfo.class));
-            } else {
-                LOG.warn("Update storage info returned with status {}", responseStatus);
                 return Optional.empty();
             }
         } catch (Exception e) {

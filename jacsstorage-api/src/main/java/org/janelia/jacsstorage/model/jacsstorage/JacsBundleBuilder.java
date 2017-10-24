@@ -37,6 +37,16 @@ public class JacsBundleBuilder {
         return this;
     }
 
+    public JacsBundleBuilder usedSpaceInKB(Long v) {
+        jacsBundle.setUsedSpaceInKB(v);
+        return this;
+    }
+
+    public JacsBundleBuilder checksum(String v) {
+        jacsBundle.setChecksum(v);
+        return this;
+    }
+
     public JacsBundleBuilder storageVolumeId(Number v) {
         jacsBundle.setStorageVolumeId(v);
         return this;

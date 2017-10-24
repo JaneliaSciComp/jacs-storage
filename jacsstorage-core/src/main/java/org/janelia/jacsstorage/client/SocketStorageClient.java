@@ -39,7 +39,7 @@ public class SocketStorageClient implements StorageClient {
     @Override
     public StorageMessageResponse ping(String connectionInfo) throws IOException {
         try {
-            initTransfer(DataTransferService.Operation.PING, null, null, connectionInfo, SelectionKey.OP_READ);
+            initTransfer(0L, DataTransferService.Operation.PING, null, null, connectionInfo, SelectionKey.OP_READ);
             ByteBuffer dataTransferBuffer = allocateTransferBuffer();
             StorageMessageHeader responseHeader = retrieveResponseHeader(dataTransferBuffer);
             if (responseHeader.getOperation() == DataTransferService.Operation.PROCESS_RESPONSE) {
@@ -62,7 +62,7 @@ public class SocketStorageClient implements StorageClient {
             if (Files.notExists(sourcePath)) {
                 throw new IllegalArgumentException("No path found for " + localPath);
             }
-            // figure out the best local data format
+            // figure out the best localservice data format
             if (Files.isDirectory(sourcePath)) {
                 if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
                     throw new IllegalArgumentException("Cannot persist directory " + localPath + " as a single file");
@@ -76,17 +76,19 @@ public class SocketStorageClient implements StorageClient {
                 }
             }
             initTransfer(
+                    storageInfo.getId(),
                     DataTransferService.Operation.PERSIST_DATA,
                     storageInfo.getStorageFormat(),
                     storageInfo.getPath(),
                     storageInfo.getConnectionInfo(),
                     SelectionKey.OP_WRITE);
             TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
+                    0L,
                     DataTransferService.Operation.RETRIEVE_DATA,
                     localDataFormat,
                     localPath,
                     ""));
-            // initiate the local data read operation
+            // initiate the localservice data read operation
             clientStorageProxy.beginDataTransfer(localDataTransfer);
 
             ByteBuffer dataTransferBuffer = allocateTransferBuffer();
@@ -105,12 +107,13 @@ public class SocketStorageClient implements StorageClient {
     public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
         try {
             initTransfer(
+                    storageInfo.getId(),
                     DataTransferService.Operation.RETRIEVE_DATA,
                     storageInfo.getStorageFormat(),
                     storageInfo.getPath(),
                     storageInfo.getConnectionInfo(),
                     SelectionKey.OP_READ);
-            // figure out how to write the local data
+            // figure out how to write the localservice data
             JacsStorageFormat localDataFormat;
             if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
                 Files.createDirectories(Paths.get(localPath).getParent());
@@ -125,11 +128,12 @@ public class SocketStorageClient implements StorageClient {
             StorageMessageHeader responseHeader = retrieveResponseHeader(dataTransferBuffer);
             if (responseHeader.getOperation() == DataTransferService.Operation.PROCESS_RESPONSE) {
                 TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
+                        storageInfo.getId(),
                         DataTransferService.Operation.PERSIST_DATA,
                         localDataFormat,
                         localPath,
                         ""));
-                // initiate the local data write operation
+                // initiate the localservice data write operation
                 clientStorageProxy.beginDataTransfer(localDataTransfer);
                 retrieveData(dataTransferBuffer, localDataTransfer);
                 return new StorageMessageResponse(StorageMessageResponse.OK, localDataTransfer.getErrorMessage(), localDataTransfer.getTransferredBytes(), localDataTransfer.getPersistedBytes(), localDataTransfer.getChecksum());
@@ -143,8 +147,9 @@ public class SocketStorageClient implements StorageClient {
         }
     }
 
-    private byte[] createRemoteMessageHeaderBytes(DataTransferService.Operation operation, JacsStorageFormat storageFormat, String storagePathname) throws IOException {
+    private byte[] createRemoteMessageHeaderBytes(Number id, DataTransferService.Operation operation, JacsStorageFormat storageFormat, String storagePathname) throws IOException {
         StorageMessageHeader messageHeader = new StorageMessageHeader(
+                id,
                 operation,
                 storageFormat,
                 storagePathname,
@@ -180,8 +185,8 @@ public class SocketStorageClient implements StorageClient {
         }
     }
 
-    private void initTransfer(DataTransferService.Operation op, JacsStorageFormat format, String pathName, String connectionInfo, int channelIOOp) throws IOException {
-        byte[] remoteOpBytes = createRemoteMessageHeaderBytes(op, format, pathName);
+    private void initTransfer(Number id, DataTransferService.Operation op, JacsStorageFormat format, String pathName, String connectionInfo, int channelIOOp) throws IOException {
+        byte[] remoteOpBytes = createRemoteMessageHeaderBytes(id, op, format, pathName);
         ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
         openChannel(remoteOpBuffer, getConnectionHost(connectionInfo), getConnectionPort(connectionInfo), channelIOOp);
     }

@@ -40,9 +40,9 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
 
     @Test
     public void saveTestEntity() {
-        JacsStorageVolume te = persistEntity(testDao, createTestEntity("v1", "127.0.0.1", "/tmp", 100L, 20L));
+        JacsStorageVolume te = persistEntity(testDao, createTestEntity("127.0.0.1", "/tmp", 100L, 20L));
         JacsStorageVolume retrievedTe = testDao.findById(te.getId());
-        assertThat(retrievedTe.getName(), equalTo(te.getName()));
+        assertThat(retrievedTe.getLocation(), equalTo(te.getLocation()));
         assertNotSame(te, retrievedTe);
     }
 
@@ -60,7 +60,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
     @Test
     public void searchExistingVolumeByLocationAndCheckNoNewOneIsCreated() {
         String testLocation = "127.0.0.1";
-        JacsStorageVolume te = persistEntity(testDao, createTestEntity("v1", testLocation, "/tmp", 100L, 20L));
+        JacsStorageVolume te = persistEntity(testDao, createTestEntity(testLocation, "/tmp", 100L, 20L));
         JacsStorageVolume existingVolume = testDao.getStorageByLocationAndCreateIfNotFound(testLocation);
         assertNotNull(existingVolume);
         assertNotSame(te, existingVolume);
@@ -68,9 +68,8 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
         assertThat(allVolumes.getResultList().stream().filter(v -> testLocation.equals(v.getLocation())).count(), equalTo(1L));
     }
 
-    private JacsStorageVolume createTestEntity(String name, String location, String mountPoint, Long capacity, Long available) {
+    private JacsStorageVolume createTestEntity(String location, String mountPoint, Long capacity, Long available) {
         JacsStorageVolume v = new JacsStorageVolume();
-        v.setName(name);
         v.setLocation(location);
         v.setMountPoint(mountPoint);
         v.setCapacityInMB(capacity);

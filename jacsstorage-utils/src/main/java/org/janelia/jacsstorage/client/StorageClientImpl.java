@@ -29,11 +29,7 @@ public class StorageClientImpl implements StorageClient {
                 .map(allocatedStorage -> {
                     LOG.debug("Allocated {}", allocatedStorage);
                     try {
-                        StorageMessageResponse storageResponse = storageClient.persistData(localPath, allocatedStorage);
-                        if (storageResponse.getStatus() == StorageMessageResponse.OK) {
-                            clientImplHelper.updateStorageInfo(storageServiceURL, storageResponse.getPersistedBytes(), storageResponse.getChecksum(), allocatedStorage);
-                        }
-                        return storageResponse;
+                        return storageClient.persistData(localPath, allocatedStorage);
                     } catch (IOException e) {
                         LOG.error("Error persisting the bundle {}", allocatedStorage, e);
                         return new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage(), 0, 0, new byte[0]);

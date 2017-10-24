@@ -73,7 +73,7 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
     public void findMatchingDataBundles() {
         String testUser = "user";
         String testName = "test";
-        JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume("testVolume", "testLocation", "test:1000",  "mountPoint", 100L, 100L));
+        JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume("testLocation", "test:1000",  "mountPoint", 100L, 100L));
         persistEntity(testDao, createTestEntity(testUser, testName, storageVolume.getId(), "/tmp", 100L, 0, ImmutableMap.of("f1", 1, "f2", "v2")));
         ImmutableMap<JacsBundle, Integer> testData = ImmutableMap.of(
                 new JacsBundleBuilder().build(), 1,
@@ -92,7 +92,7 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
     public void findMatchingDataBundlesUsingAggregationOps() {
         String testUser = "user";
         String testName = "test";
-        JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume("testVolume", "testLocation", "test:1000","mountPoint", 100L, 100L));
+        JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume("testLocation", "test:1000","mountPoint", 100L, 100L));
         persistEntity(testDao, createTestEntity(testUser, testName, storageVolume.getId(), "/tmp", 100L, 512, ImmutableMap.of("f1", 1, "f2", "v2")));
         ImmutableMap<JacsBundle, Integer> testData = ImmutableMap.of(
                 new JacsBundleBuilder().location("testLocation").build(), 1
@@ -117,9 +117,8 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
         assertNotSame(te, retrievedTe);
     }
 
-    private JacsStorageVolume createTestVolume(String name, String location, String mountHostIP, String mountPoint, Long capacity, Long available) {
+    private JacsStorageVolume createTestVolume(String location, String mountHostIP, String mountPoint, Long capacity, Long available) {
         JacsStorageVolume v = new JacsStorageVolume();
-        v.setName(name);
         v.setLocation(location);
         v.setMountHostIP(mountHostIP);
         v.setMountPoint(mountPoint);

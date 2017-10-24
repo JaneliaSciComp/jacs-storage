@@ -6,11 +6,8 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 
 import java.util.Optional;
 
-public interface StorageManagementService {
-    Optional<JacsBundle> allocateStorage(JacsBundle dataBundle);
+public interface StorageLookupService {
     JacsBundle getDataBundleById(Number id);
     PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest);
     JacsBundle findDataBundleByOwnerAndName(String owner, String name);
-    JacsBundle updateDataBundle(JacsBundle dataBundle);
-    boolean deleteDataBundle(JacsBundle dataBundle);
 }

@@ -15,11 +15,6 @@ public class JacsStorageVolumeBuilder {
         return this;
     }
 
-    public JacsStorageVolumeBuilder name(String v) {
-        jacsStorageVolume.setName(v);
-        return this;
-    }
-
     public JacsStorageVolumeBuilder location(String v) {
         jacsStorageVolume.setLocation(v);
         return this;

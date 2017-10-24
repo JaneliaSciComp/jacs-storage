@@ -27,7 +27,7 @@ import java.util.concurrent.ScheduledExecutorService;
 public class AgentState {
 
     private static final Logger LOG = LoggerFactory.getLogger(AgentState.class);
-    private static final long _1_M = 1024 * 1024;
+    private static final long _1_K = 1024;
 
     @PropertyValue(name = "StorageAgent.IPAddress")
     @Inject
@@ -80,12 +80,12 @@ public class AgentState {
         return storageRootDir;
     }
 
-    public long getAvailableStorageSpaceInMB() {
+    public long getAvailableStorageSpaceInKB() {
         try {
             java.nio.file.Path storageRootPath = Paths.get(storageRootDir);
             FileStore storageRootStore = Files.getFileStore(storageRootPath);
             long usableBytes = storageRootStore.getUsableSpace();
-            return usableBytes / _1_M;
+            return usableBytes / _1_K;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -135,7 +135,7 @@ public class AgentState {
                 getAgentURL(),
                 getConnectionInfo(),
                 getStorageRootDir());
-        localAgentInfo.setStorageSpaceAvailableInMB(getAvailableStorageSpaceInMB());
+        localAgentInfo.setStorageSpaceAvailableInKB(getAvailableStorageSpaceInKB());
         if (this.isRegistered()) {
             localAgentInfo.setConnectionStatus("CONNECTED");
         } else {

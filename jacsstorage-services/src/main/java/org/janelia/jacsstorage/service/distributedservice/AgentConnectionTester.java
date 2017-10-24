@@ -1,7 +1,8 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.service.distributedservice;
 
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.CircuitTester;
+import org.janelia.jacsstorage.service.distributedservice.AgentConnectionHelper;
 
 public class AgentConnectionTester implements CircuitTester<StorageAgentInfo> {
 

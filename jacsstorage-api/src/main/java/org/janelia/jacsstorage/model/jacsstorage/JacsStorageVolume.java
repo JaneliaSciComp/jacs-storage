@@ -9,7 +9,6 @@ import java.util.Date;
 @PersistenceInfo(storeName ="jacsStorageVolume", label="JacsStorageVolume")
 public class JacsStorageVolume extends AbstractEntity {
 
-    private String name; // volume name
     private String location; // name that uniquely identifies the location
     private String mountHostIP; // IP of the host where the storage volume resides
     private String mountHostURL;
@@ -17,14 +16,6 @@ public class JacsStorageVolume extends AbstractEntity {
     private Long capacityInMB;
     private Long availableInMB;
     private Date created = new Date();
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public String getLocation() {
         return location;
@@ -86,7 +77,7 @@ public class JacsStorageVolume extends AbstractEntity {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("entityRefId", getEntityRefId())
-                .append("name", name)
+                .append("location", location)
                 .append("mountPoint", mountPoint)
                 .toString();
     }

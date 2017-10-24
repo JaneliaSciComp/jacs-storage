@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.service.distributedservice;
 
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.CircuitBreaker;

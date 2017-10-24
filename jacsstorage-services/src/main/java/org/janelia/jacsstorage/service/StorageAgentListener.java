@@ -1,7 +1,10 @@
 package org.janelia.jacsstorage.service;
 
+import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PooledResource;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
+import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
+import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +18,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Base64;
 import java.util.Iterator;
 
 public class StorageAgentListener {
@@ -36,6 +40,7 @@ public class StorageAgentListener {
     private final String bindingIP;
     private final int portNo;
     private final DataTransferService agentStorageProxy;
+    private final StorageAllocatorService storageAllocatorService;
 
     private Selector selector;
     private boolean running;
@@ -43,10 +48,12 @@ public class StorageAgentListener {
     @Inject
     public StorageAgentListener(@PropertyValue(name = "StorageAgent.bindingIP") String bindingIP,
                                 @PropertyValue(name = "StorageAgent.portNo") int portNo,
-                                @PooledResource DataTransferService agentStorageProxy) {
+                                @PooledResource DataTransferService agentStorageProxy,
+                                @LocalInstance StorageAllocatorService storageAllocatorService) {
         this.bindingIP = bindingIP;
         this.portNo = portNo;
         this.agentStorageProxy = agentStorageProxy;
+        this.storageAllocatorService = storageAllocatorService;
     }
 
     public String open() throws IOException {
@@ -122,6 +129,7 @@ public class StorageAgentListener {
                 // stream closed - still attempt to write the response and then close the channel
                 LOG.error("Stream closed before reading the request");
                 StorageMessageHeader processErrorResponse = new StorageMessageHeader(
+                        channelState.transferState.getMessageType().getDataBundleId(),
                         DataTransferService.Operation.PROCESS_ERROR,
                         JacsStorageFormat.ARCHIVE_DATA_FILE,
                         "",
@@ -197,6 +205,7 @@ public class StorageAgentListener {
     private void handlePing(SelectionKey key, SocketChannel channel, ChannelState channelState) throws IOException {
         key.interestOps(SelectionKey.OP_WRITE);
         StorageMessageHeader pingOperationResponse = new StorageMessageHeader(
+                0L,
                 DataTransferService.Operation.PROCESS_RESPONSE,
                 JacsStorageFormat.ARCHIVE_DATA_FILE,
                 "",
@@ -216,6 +225,7 @@ public class StorageAgentListener {
         key.interestOps(SelectionKey.OP_WRITE);
         LOG.error("Invalid operation {} sent by {}", channelState.transferState.getMessageType().getOperation(), channel.getRemoteAddress());
         StorageMessageHeader invalidOperationResponse = new StorageMessageHeader(
+                channelState.transferState.getMessageType().getDataBundleId(),
                 DataTransferService.Operation.PROCESS_ERROR,
                 JacsStorageFormat.ARCHIVE_DATA_FILE,
                 "",
@@ -244,6 +254,13 @@ public class StorageAgentListener {
                     // still writing the data to the file system
                     return;
                 case WRITE_DATA_COMPLETE:
+                    // update the storage for the persisted data bundle
+                    storageAllocatorService.updateStorage(new JacsBundleBuilder()
+                            .dataBundleId(channelState.transferState.getMessageType().getDataBundleId())
+                            .usedSpaceInKB(channelState.transferState.getPersistedBytes() / 1024)
+                            .checksum(Base64.getEncoder().encodeToString(channelState.transferState.getChecksum()))
+                            .build());
+                    // and continue sending the response
                 case WRITE_DATA_ERROR:
                     // write the response
                     response = new StorageMessageResponse(channelState.transferState.getState() == State.WRITE_DATA_COMPLETE ? StorageMessageResponse.OK : StorageMessageResponse.ERROR,
@@ -285,12 +302,14 @@ public class StorageAgentListener {
                             // nothing read from the data channel
                             if (channelState.transferState.getState() == State.READ_DATA_ERROR) {
                                 responseHeader = new StorageMessageHeader(
+                                        channelState.transferState.getMessageType().getDataBundleId(),
                                         DataTransferService.Operation.PROCESS_ERROR,
                                         JacsStorageFormat.ARCHIVE_DATA_FILE,
                                         "", // the client is responsible for deciding where to save
                                         channelState.transferState.getErrorMessage());
                             } else {
                                 responseHeader = new StorageMessageHeader(
+                                        channelState.transferState.getMessageType().getDataBundleId(),
                                         DataTransferService.Operation.PROCESS_RESPONSE,
                                         JacsStorageFormat.ARCHIVE_DATA_FILE,
                                         "",
@@ -305,6 +324,7 @@ public class StorageAgentListener {
                             channelState.channelOutputBuffer = responseBuffer;
                             channelState.channelOutputBuffer.flip();
                             responseHeader = new StorageMessageHeader(
+                                    channelState.transferState.getMessageType().getDataBundleId(),
                                     DataTransferService.Operation.PROCESS_RESPONSE,
                                     JacsStorageFormat.ARCHIVE_DATA_FILE,
                                     "",
@@ -331,6 +351,7 @@ public class StorageAgentListener {
                 case READ_DATA_ERROR:
                     if (channelState.channelOutputBuffer == null) {
                         responseHeader = new StorageMessageHeader(
+                                channelState.transferState.getMessageType().getDataBundleId(),
                                 DataTransferService.Operation.PROCESS_ERROR,
                                 JacsStorageFormat.ARCHIVE_DATA_FILE,
                                 "",

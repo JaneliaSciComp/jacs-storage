@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.service.distributedservice;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -88,7 +87,7 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
             agentConnectionBreaker.initialize(agentInfo, new AgentConnectionTester(),
                     Optional.of(storageAgentInfo -> {
                         StorageAgentInfo registeredAgentInfo = registeredAgentConnections.get(storageAgentInfo.getLocation()).getAgentInfo();
-                        registeredAgentInfo.setStorageSpaceAvailableInMB(storageAgentInfo.getStorageSpaceAvailableInMB());
+                        registeredAgentInfo.setStorageSpaceAvailableInKB(storageAgentInfo.getStorageSpaceAvailableInKB());
                     }),
                     Optional.of(storageAgentInfo -> {
                         LOG.error("Connection lost to {}", storageAgentInfo);
@@ -111,7 +110,7 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
 
     @Override
     public Optional<StorageAgentInfo> findRegisteredAgentByLocationOrConnectionInfo(String agentInfo) {
-        if (StorageAgentSelector.OVERFLOW_AGENT_INFO.equals(agentInfo)) {
+        if (StorageAgentInfo.OVERFLOW_AGENT.equals(agentInfo)) {
             Predicate<StorageAgentConnection> goodConnection = (StorageAgentConnection ac) -> ac.getAgentConnectionBreaker().getState() == CircuitBreaker.BreakerState.CLOSED;
             StorageAgentInfo storageAgentInfo = new OverflowStorageAgentSelector(goodConnection, overflowRootDir)
                     .selectStorageAgent(registeredAgentConnections.values());
@@ -144,7 +143,7 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     @Override
     public Optional<StorageAgentInfo> findRandomRegisteredAgent(Predicate<StorageAgentInfo> agentFilter) {
         Predicate<StorageAgentConnection> goodConnection = (StorageAgentConnection ac) -> ac.getAgentConnectionBreaker().getState() == CircuitBreaker.BreakerState.CLOSED;
-        Predicate<StorageAgentConnection> agentSelectableCondition = (StorageAgentConnection ac) -> ac.getAgentInfo().getStorageSpaceAvailableInMB() > 0;
+        Predicate<StorageAgentConnection> agentSelectableCondition = (StorageAgentConnection ac) -> ac.getAgentInfo().getStorageSpaceAvailableInKB() > 0;
         Predicate<StorageAgentConnection> candidateFilter = (StorageAgentConnection ac) -> agentFilter == null || agentFilter.test(ac.getAgentInfo());
         StorageAgentSelector[] agentSelectors = new StorageAgentSelector[] {
                 new RandomStorageAgentSelector(goodConnection.and(agentSelectableCondition).and(candidateFilter)),

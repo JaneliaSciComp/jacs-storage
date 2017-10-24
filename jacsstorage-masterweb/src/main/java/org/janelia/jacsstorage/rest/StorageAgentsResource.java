@@ -1,7 +1,7 @@
 package org.janelia.jacsstorage.rest;
 
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
-import org.janelia.jacsstorage.service.StorageAgentManager;
+import org.janelia.jacsstorage.service.distributedservice.StorageAgentManager;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;

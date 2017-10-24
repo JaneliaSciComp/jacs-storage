@@ -5,11 +5,10 @@ import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageRequestBuilder;
 import org.janelia.jacsstorage.datarequest.PageResult;
-import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
-import org.janelia.jacsstorage.service.DataStorageService;
-import org.janelia.jacsstorage.service.StorageManagementService;
+import org.janelia.jacsstorage.service.StorageAllocatorService;
+import org.janelia.jacsstorage.service.StorageLookupService;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -22,14 +21,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,7 +34,9 @@ import java.util.stream.Collectors;
 public class StorageResource {
 
     @Inject
-    private StorageManagementService storageManagementService;
+    private StorageAllocatorService storageAllocatorService;
+    @Inject
+    private StorageLookupService storageLookupService;
     @Context
     private UriInfo resourceURI;
 
@@ -65,7 +62,7 @@ public class StorageResource {
                 .pageNumber(pageNumber)
                 .pageSize(pageLength)
                 .build();
-        PageResult<JacsBundle> dataBundleResults = storageManagementService.findMatchingDataBundles(dataBundle, pageRequest);
+        PageResult<JacsBundle> dataBundleResults = storageLookupService.findMatchingDataBundles(dataBundle, pageRequest);
         PageResult<DataStorageInfo> results = new PageResult<>();
         results.setPageOffset(dataBundleResults.getPageOffset());
         results.setSortCriteria(dataBundleResults.getSortCriteria());
@@ -82,7 +79,7 @@ public class StorageResource {
     @GET
     @Path("{id}")
     public Response getBundleInfo(@PathParam("id") Long id) {
-        JacsBundle jacsBundle = storageManagementService.getDataBundleById(id);
+        JacsBundle jacsBundle = storageLookupService.getDataBundleById(id);
         if (jacsBundle == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
@@ -97,7 +94,7 @@ public class StorageResource {
     @GET
     @Path("{owner}/{name}")
     public Response getBundleInfoByOwnerAndName(@PathParam("owner") String owner, @PathParam("name") String name) {
-        JacsBundle jacsBundle = storageManagementService.findDataBundleByOwnerAndName(owner, name);
+        JacsBundle jacsBundle = storageLookupService.findDataBundleByOwnerAndName(owner, name);
         if (jacsBundle == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
@@ -114,7 +111,7 @@ public class StorageResource {
     public Response createBundleInfo(DataStorageInfo dataStorageInfo) {
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
 
-        Optional<JacsBundle> dataBundleInfo = storageManagementService.allocateStorage(dataBundle);
+        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(dataBundle);
         return dataBundleInfo
                 .map(bi -> Response
                         .created(resourceURI.getBaseUriBuilder().path(dataBundle.getId().toString()).build())
@@ -132,7 +129,7 @@ public class StorageResource {
     public Response updateBundleInfo(@PathParam("id") Long id, DataStorageInfo dataStorageInfo) {
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
         dataBundle.setId(id);
-        JacsBundle updatedDataBundleInfo = storageManagementService.updateDataBundle(dataBundle);
+        JacsBundle updatedDataBundleInfo = storageAllocatorService.updateStorage(dataBundle);
         if (updatedDataBundleInfo == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
@@ -149,7 +146,7 @@ public class StorageResource {
     public Response deleteBundleInfo(@PathParam("id") Long id) {
         JacsBundle dataBundle = new JacsBundle();
         dataBundle.setId(id);
-        if (storageManagementService.deleteDataBundle(dataBundle)) {
+        if (storageAllocatorService.deleteStorage(dataBundle)) {
             return Response
                     .status(Response.Status.NO_CONTENT)
                     .build();

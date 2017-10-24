@@ -1,9 +1,7 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.service.distributedservice;
 
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.jackson.JacksonFeature;
-import org.janelia.jacsstorage.io.TransferInfo;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,15 +11,11 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.InputStream;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 class AgentConnectionHelper {
@@ -52,41 +46,13 @@ class AgentConnectionHelper {
         return null;
     }
 
-    static boolean cleanupStorage(String agentUrl, String dataPath) {
-        String deleteStorageEndpoint = String.format("/agent-storage/absolute-path-to-clean/%s", dataPath);
-        Client httpClient = null;
-        try {
-            httpClient = createHttpClient();
-            WebTarget target = httpClient.target(agentUrl)
-                    .path(deleteStorageEndpoint);
-            Response response = target.request()
-                    .delete()
-                    ;
-            if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
-                LOG.warn("Agent storage cleanup returned {}", response.getStatus());
-            } else {
-                return true;
-            }
-        } catch (Exception e) {
-            LOG.warn("Error raised during agent storage cleanup", e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
-        }
-        return false;
-    }
-
-    static boolean deleteStorage(String agentUrl, String dataPath, String parentPath) {
-        String deleteStorageEndpoint = String.format("/agent-storage/absolute-path/%s", dataPath);
+    static boolean deleteStorage(String agentUrl, Number dataBundleId) {
+        String deleteStorageEndpoint = String.format("/agent-storage/%d", dataBundleId);
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(agentUrl)
                         .path(deleteStorageEndpoint);
-            if (StringUtils.isNotBlank(parentPath)) {
-                target = target.queryParam("parent-path", parentPath);
-            }
             Response response = target.request()
                     .delete()
                     ;

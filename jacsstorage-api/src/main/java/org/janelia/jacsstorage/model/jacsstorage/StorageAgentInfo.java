@@ -7,11 +7,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class StorageAgentInfo {
+    public static final String OVERFLOW_AGENT = "OVERFLOW_AGENT";
+
     private final String location; // agent running location
     private final String agentURL;
     private final String connectionInfo;
     private final String storagePath;
-    private Long storageSpaceAvailableInMB;
+    private Long storageSpaceAvailableInKB;
     private String connectionStatus;
 
     @JsonCreator
@@ -41,12 +43,12 @@ public class StorageAgentInfo {
         return storagePath;
     }
 
-    public Long getStorageSpaceAvailableInMB() {
-        return storageSpaceAvailableInMB;
+    public Long getStorageSpaceAvailableInKB() {
+        return storageSpaceAvailableInKB;
     }
 
-    public void setStorageSpaceAvailableInMB(Long storageSpaceAvailableInMB) {
-        this.storageSpaceAvailableInMB = storageSpaceAvailableInMB;
+    public void setStorageSpaceAvailableInKB(Long storageSpaceAvailableInKB) {
+        this.storageSpaceAvailableInKB = storageSpaceAvailableInKB;
     }
 
     @JsonIgnore

@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.service.distributedservice;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -180,14 +180,14 @@ public class StorageAgentManagerImplTest {
         int nInvocations = registeredAgents.size() * 3;
         long requestedSpace = 8;
         for (int i = 0; i < nInvocations; i++) {
-            StorageAgentInfo agentInfo = testStorageAgentManager.findRandomRegisteredAgent(ai -> ai.getStorageSpaceAvailableInMB() > requestedSpace)
+            StorageAgentInfo agentInfo = testStorageAgentManager.findRandomRegisteredAgent(ai -> ai.getStorageSpaceAvailableInKB() > requestedSpace)
                     .orElse(null);
             assertNotNull(agentInfo);
             registeredAgents.put(agentInfo, registeredAgents.get(agentInfo) + 1);
         }
         // check that the manager didn't always returned the same agent
         registeredAgents.forEach((ai, count) -> {
-            if (ai.getStorageSpaceAvailableInMB() <= requestedSpace) {
+            if (ai.getStorageSpaceAvailableInKB() <= requestedSpace) {
                 assertThat(count, equalTo(0));
             } else {
                 assertThat(count, greaterThanOrEqualTo(0));
@@ -202,13 +202,13 @@ public class StorageAgentManagerImplTest {
         int nInvocations = registeredAgents.size() * 3;
         long requestedSpace = 15;
         for (int i = 0; i < nInvocations; i++) {
-            StorageAgentInfo agentInfo = testStorageAgentManager.findRandomRegisteredAgent(ai -> ai.getStorageSpaceAvailableInMB() > requestedSpace)
+            StorageAgentInfo agentInfo = testStorageAgentManager.findRandomRegisteredAgent(ai -> ai.getStorageSpaceAvailableInKB() > requestedSpace)
                     .orElse(null);
             assertNotNull(agentInfo);
             registeredAgents.put(agentInfo, registeredAgents.get(agentInfo) + 1);
         }
         registeredAgents.forEach((ai, count) -> {
-            if (ai.getStorageSpaceAvailableInMB() <= requestedSpace) {
+            if (ai.getStorageSpaceAvailableInKB() <= requestedSpace) {
                 assertThat(count, equalTo(0));
             } else {
                 assertThat(count, equalTo(nInvocations));
@@ -222,10 +222,10 @@ public class StorageAgentManagerImplTest {
         int nInvocations = registeredAgents.size() * 3;
         long requestedSpace = 100;
         for (int i = 0; i < nInvocations; i++) {
-            StorageAgentInfo agentInfo = testStorageAgentManager.findRandomRegisteredAgent(ai -> ai.getStorageSpaceAvailableInMB() > requestedSpace)
+            StorageAgentInfo agentInfo = testStorageAgentManager.findRandomRegisteredAgent(ai -> ai.getStorageSpaceAvailableInKB() > requestedSpace)
                     .orElse(null);
             assertNotNull(agentInfo);
-            assertThat(agentInfo.getLocation(), equalTo(StorageAgentSelector.OVERFLOW_AGENT_INFO));
+            assertThat(agentInfo.getLocation(), equalTo(StorageAgentInfo.OVERFLOW_AGENT));
         }
     }
 
@@ -274,10 +274,10 @@ public class StorageAgentManagerImplTest {
     @Test
     public void findOverflowAgent() {
         registerMultipleAgents();
-        StorageAgentInfo agentInfo = testStorageAgentManager.findRegisteredAgentByLocationOrConnectionInfo(StorageAgentSelector.OVERFLOW_AGENT_INFO)
+        StorageAgentInfo agentInfo = testStorageAgentManager.findRegisteredAgentByLocationOrConnectionInfo(StorageAgentInfo.OVERFLOW_AGENT)
                 .orElse(null);
         assertNotNull(agentInfo);
-        assertThat(agentInfo.getLocation(), equalTo(StorageAgentSelector.OVERFLOW_AGENT_INFO));
+        assertThat(agentInfo.getLocation(), equalTo(StorageAgentInfo.OVERFLOW_AGENT));
     }
 
     @Test
@@ -293,7 +293,7 @@ public class StorageAgentManagerImplTest {
                     return null;
                 });
         registerMultipleAgents();
-        StorageAgentInfo agentInfo = testStorageAgentManager.findRegisteredAgentByLocationOrConnectionInfo(StorageAgentSelector.OVERFLOW_AGENT_INFO)
+        StorageAgentInfo agentInfo = testStorageAgentManager.findRegisteredAgentByLocationOrConnectionInfo(StorageAgentInfo.OVERFLOW_AGENT)
                 .orElse(null);
         assertNull(agentInfo);
     }
@@ -336,7 +336,7 @@ public class StorageAgentManagerImplTest {
                 testAgentURL + "_" + index,
                 testAgentConnectionInfo + "_" + index + ":100",
                 testAgentMountPoint);
-        agentInfo.setStorageSpaceAvailableInMB(availableSpace);
+        agentInfo.setStorageSpaceAvailableInKB(availableSpace);
         JacsStorageVolume testVolume = new JacsStorageVolume();
         Mockito.when(storageVolumeDao.getStorageByLocationAndCreateIfNotFound(agentInfo.getLocation())).thenReturn(testVolume);
         return agentInfo;

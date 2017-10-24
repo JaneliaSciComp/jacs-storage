@@ -41,7 +41,7 @@ public class DataStorageServiceImpl implements DataStorageService {
     }
 
     @Override
-    public void cleanupStorage(String dataPath) throws IOException {
+    public void cleanupStoragePath(String dataPath) throws IOException {
         PathUtils.deletePathIfEmpty(Paths.get(dataPath));
     }
 }

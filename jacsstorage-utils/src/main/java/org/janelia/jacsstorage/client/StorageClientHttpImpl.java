@@ -26,7 +26,7 @@ public class StorageClientHttpImpl implements StorageClient {
     private final DataTransferService clientStorageProxy;
     private final StorageClientImplHelper clientImplHelper;
 
-    public StorageClientHttpImpl(DataTransferService clientStorageProxy) {
+    StorageClientHttpImpl(DataTransferService clientStorageProxy) {
         this.clientStorageProxy = clientStorageProxy;
         clientImplHelper = new StorageClientImplHelper();
     }
@@ -39,11 +39,11 @@ public class StorageClientHttpImpl implements StorageClient {
     @Override
     public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
         Path sourcePath = Paths.get(localPath);
-        JacsStorageFormat localDataFormat;
         if (Files.notExists(sourcePath)) {
             throw new IllegalArgumentException("No path found for " + localPath);
         }
-        // figure out the best local data format
+        // figure out the best localservice data format
+        JacsStorageFormat localDataFormat;
         if (Files.isDirectory(sourcePath)) {
             if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
                 throw new IllegalArgumentException("Cannot persist directory " + localPath + " as a single file");
@@ -61,8 +61,9 @@ public class StorageClientHttpImpl implements StorageClient {
                     LOG.debug("Allocated {}", allocatedStorage);
                     String agentStorageServiceURL = allocatedStorage.getConnectionURL();
                     try {
-                        // initiate the local data read operation
+                        // initiate the localservice data read operation
                         TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
+                                allocatedStorage.getId(),
                                 DataTransferService.Operation.RETRIEVE_DATA,
                                 localDataFormat,
                                 localPath,
@@ -89,7 +90,7 @@ public class StorageClientHttpImpl implements StorageClient {
             Files.createDirectories(Paths.get(localPath));
             localDataFormat = JacsStorageFormat.DATA_DIRECTORY;
         }
-        clientImplHelper.retrieveStorageInfo(storageInfo.getConnectionURL(), storageInfo)
+        return clientImplHelper.retrieveStorageInfo(storageInfo.getConnectionURL(), storageInfo)
                 .flatMap((DataStorageInfo persistedStorageInfo) -> {
                     LOG.info("Data storage info: {}", persistedStorageInfo);
                     String agentStorageServiceURL = persistedStorageInfo.getConnectionURL();
@@ -97,8 +98,9 @@ public class StorageClientHttpImpl implements StorageClient {
                 })
                 .flatMap((InputStream dataStream) -> {
                     try {
-                        // initiate the local data write operation
+                        // initiate the localservice data write operation
                         TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
+                                0L,
                                 DataTransferService.Operation.PERSIST_DATA,
                                 localDataFormat,
                                 localPath,
@@ -119,7 +121,6 @@ public class StorageClientHttpImpl implements StorageClient {
                     }
                 })
                 .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "Error streaming data from " + storageInfo, 0, 0, new byte[0]));
-        return null;
     }
 
 }
