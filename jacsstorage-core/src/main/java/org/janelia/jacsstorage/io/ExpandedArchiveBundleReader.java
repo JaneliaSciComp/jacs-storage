@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.io;
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.io.IOException;
@@ -45,7 +46,8 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
 
         private void createEntry(Path p) throws IOException {
             Path entryPath = parentDir.relativize(p);
-            TarArchiveEntry entry = new TarArchiveEntry(p.toFile(), entryPath.toString());
+            String entryName = "./"+ entryPath.toString();
+            TarArchiveEntry entry = new TarArchiveEntry(p.toFile(), entryName);
             outputStream.putArchiveEntry(entry);
         }
     }
