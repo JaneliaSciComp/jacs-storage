@@ -47,7 +47,7 @@ class AgentConnectionHelper {
         return null;
     }
 
-    static boolean registerAgent(String masterServiceUrl, StorageAgentInfo agentInfo) {
+    static StorageAgentInfo registerAgent(String masterServiceUrl, StorageAgentInfo agentInfo) {
         String registrationEndpoint = "/agents";
         Client httpClient = null;
         try {
@@ -59,7 +59,7 @@ class AgentConnectionHelper {
 
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
-                return true;
+                return response.readEntity(StorageAgentInfo.class);
             }
             LOG.warn("Register agent returned {}", responseStatus);
         } catch (Exception e) {
@@ -69,16 +69,19 @@ class AgentConnectionHelper {
                 httpClient.close();
             }
         }
-        return false;
+        return null;
     }
 
-    static void deregisterAgent(String masterServiceUrl, String agentLocation) {
+    static void deregisterAgent(String masterServiceUrl, String agentLocation, String agentToken) {
         String registrationEndpoint = String.format("/agents/%s", agentLocation);
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
-            WebTarget target = httpClient.target(masterServiceUrl).path(registrationEndpoint);
+            WebTarget target = httpClient.target(masterServiceUrl)
+                    .path(registrationEndpoint)
+                    ;
             Response response = target.request()
+                    .header("agentToken", agentToken)
                     .delete()
                     ;
             if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {

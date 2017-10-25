@@ -30,7 +30,6 @@ import java.util.Optional;
 @LocalInstance
 public class LocalStorageAllocatorService extends AbstractStorageAllocatorService {
     private static final Logger LOG = LoggerFactory.getLogger(LocalStorageAllocatorService.class);
-    private static final long _1_K = 1024;
 
     private final String storageLocation;
     private final String storageIPAddress;
@@ -83,11 +82,11 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
 
     @Override
     public Optional<JacsStorageVolume> selectStorageVolume(JacsBundle dataBundle) {
-        long availableSpaceInKB = getAvailableStorageSpaceInKB();
+        long availableSpace = getAvailableStorageSpace();
         String selectedStorageLocation;
         String rootDir;
-        if (availableSpaceInKB > 0 &&
-                (dataBundle.getUsedSpaceInKB() == null || availableSpaceInKB > dataBundle.getUsedSpaceInKB())) {
+        if (availableSpace > 0 &&
+                (dataBundle.getUsedSpaceInBytes() == null || availableSpace > dataBundle.getUsedSpaceInBytes())) {
             selectedStorageLocation = getStorageLocation();
             rootDir = storageRootDir;
         } else {
@@ -121,12 +120,12 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
         }
     }
 
-    private long getAvailableStorageSpaceInKB() {
+    private long getAvailableStorageSpace() {
         try {
             java.nio.file.Path storageRootPath = Paths.get(storageRootDir);
             FileStore storageRootStore = Files.getFileStore(storageRootPath);
             long usableBytes = storageRootStore.getUsableSpace();
-            return usableBytes / _1_K;
+            return usableBytes;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     private static final Logger LOG = LoggerFactory.getLogger(StorageAgentManagerImpl.class);
 
     private final ConcurrentMap<String, StorageAgentConnection> registeredAgentConnections = new ConcurrentHashMap<>();
+    private final SecureRandom AGENT_TOKEN_GENERATOR = new SecureRandom();
 
     @Inject
     private JacsStorageVolumeDao storageVolumeDao;
@@ -66,7 +68,9 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
                 initialDelayInSeconds,
                 tripThreshold);
         StorageAgentConnection agentConnection = new StorageAgentConnection(agentInfo, agentConnectionBreaker);
-        if (registeredAgentConnections.putIfAbsent(agentInfo.getLocation(), agentConnection) == null) {
+        StorageAgentConnection registeredConnection = registeredAgentConnections.putIfAbsent(agentInfo.getLocation(), agentConnection);
+        if (registeredConnection == null) {
+            agentInfo.setAgentToken(String.valueOf(AGENT_TOKEN_GENERATOR.nextInt()));
             // update connection info for the volume in case anything has changed.
             JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocationAndCreateIfNotFound(agentInfo.getLocation());
             ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedVolumeFieldsBuilder = ImmutableMap.builder();
@@ -87,24 +91,32 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
             agentConnectionBreaker.initialize(agentInfo, new AgentConnectionTester(),
                     Optional.of(storageAgentInfo -> {
                         StorageAgentInfo registeredAgentInfo = registeredAgentConnections.get(storageAgentInfo.getLocation()).getAgentInfo();
-                        registeredAgentInfo.setStorageSpaceAvailableInKB(storageAgentInfo.getStorageSpaceAvailableInKB());
+                        registeredAgentInfo.setStorageSpaceAvailableInBytes(storageAgentInfo.getStorageSpaceAvailableInBytes());
                     }),
                     Optional.of(storageAgentInfo -> {
                         LOG.error("Connection lost to {}", storageAgentInfo);
                     }));
+            return agentInfo;
+        } else {
+            return registeredConnection.getAgentInfo();
         }
-        return agentInfo;
     }
 
     @Override
-    public StorageAgentInfo deregisterAgent(String agentLocationInfo) {
+    public StorageAgentInfo deregisterAgent(String agentLocationInfo, String agentToken) {
         LOG.info("Deregister agent serving {}", agentLocationInfo);
-        StorageAgentConnection agentConnection = registeredAgentConnections.remove(agentLocationInfo);
+        StorageAgentConnection agentConnection = registeredAgentConnections.get(agentLocationInfo);
         if (agentConnection == null) {
             return null;
         } else {
-            agentConnection.getAgentConnectionBreaker().dispose();
-            return agentConnection.getAgentInfo();
+            if (agentConnection.getAgentInfo().getAgentToken().equals(agentToken)) {
+                LOG.info("Deregistering agent for {} with {}", agentLocationInfo, agentToken);
+                registeredAgentConnections.remove(agentLocationInfo);
+                agentConnection.getAgentConnectionBreaker().dispose();
+                return agentConnection.getAgentInfo();
+            } else {
+                throw new IllegalArgumentException("Invalid agent token - deregistration is not allowed with an invalid token");
+            }
         }
     }
 
@@ -143,7 +155,7 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     @Override
     public Optional<StorageAgentInfo> findRandomRegisteredAgent(Predicate<StorageAgentInfo> agentFilter) {
         Predicate<StorageAgentConnection> goodConnection = (StorageAgentConnection ac) -> ac.getAgentConnectionBreaker().getState() == CircuitBreaker.BreakerState.CLOSED;
-        Predicate<StorageAgentConnection> agentSelectableCondition = (StorageAgentConnection ac) -> ac.getAgentInfo().getStorageSpaceAvailableInKB() > 0;
+        Predicate<StorageAgentConnection> agentSelectableCondition = (StorageAgentConnection ac) -> ac.getAgentInfo().getStorageSpaceAvailableInBytes() > 0;
         Predicate<StorageAgentConnection> candidateFilter = (StorageAgentConnection ac) -> agentFilter == null || agentFilter.test(ac.getAgentInfo());
         StorageAgentSelector[] agentSelectors = new StorageAgentSelector[] {
                 new RandomStorageAgentSelector(goodConnection.and(agentSelectableCondition).and(candidateFilter)),

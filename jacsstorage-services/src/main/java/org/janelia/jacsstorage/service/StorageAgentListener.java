@@ -257,7 +257,7 @@ public class StorageAgentListener {
                     // update the storage for the persisted data bundle
                     storageAllocatorService.updateStorage(new JacsBundleBuilder()
                             .dataBundleId(channelState.transferState.getMessageType().getDataBundleId())
-                            .usedSpaceInKB(channelState.transferState.getPersistedBytes() / 1024)
+                            .usedSpaceInBytes(channelState.transferState.getPersistedBytes())
                             .checksum(Base64.getEncoder().encodeToString(channelState.transferState.getChecksum()))
                             .build());
                     // and continue sending the response

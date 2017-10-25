@@ -5,6 +5,7 @@ mainClassName = 'org.janelia.jacsstorage.app.JacsAgentStorageApp'
 project(":jacsstorage-agentweb") {
     dependencies {
         implementation project(":jacsstorage-commonweb"),
+                       JACKSON_DATAFORMAT_XML_LIB,
                        JAX_RS_CDI_EXT_LIB,
                        JAX_RS_CLIENT_LIB,
                        JERSEY_INJECT_LIB,

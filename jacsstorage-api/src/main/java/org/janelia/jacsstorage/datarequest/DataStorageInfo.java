@@ -17,7 +17,7 @@ public class DataStorageInfo {
     private String connectionInfo;
     private String connectionURL;
     private JacsStorageFormat storageFormat;
-    private Long requestedSpaceInKB;
+    private Long requestedSpaceInBytes;
     private String checksum;
     private Map<String, Object> metadata = new LinkedHashMap<>();
 
@@ -29,7 +29,7 @@ public class DataStorageInfo {
                 .setPath(dataBundle.getPath())
                 .setStorageFormat(dataBundle.getStorageFormat())
                 .setPermissions(dataBundle.getPermissions())
-                .setRequestedSpaceInKB(dataBundle.getUsedSpaceInKB())
+                .setRequestedSpaceInBytes(dataBundle.getUsedSpaceInBytes())
                 .setChecksum(dataBundle.getChecksum())
                 .addMetadata(dataBundle.getMetadata())
                 .setConnectionInfo(dataBundle.getStorageVolume().map(sv -> sv.getMountHostIP()).orElse(dataBundle.getConnectionInfo()))
@@ -119,12 +119,12 @@ public class DataStorageInfo {
         return this;
     }
 
-    public Long getRequestedSpaceInKB() {
-        return requestedSpaceInKB;
+    public Long getRequestedSpaceInBytes() {
+        return requestedSpaceInBytes;
     }
 
-    public DataStorageInfo setRequestedSpaceInKB(Long requestedSpaceInKB) {
-        this.requestedSpaceInKB = requestedSpaceInKB;
+    public DataStorageInfo setRequestedSpaceInBytes(Long requestedSpaceInBytes) {
+        this.requestedSpaceInBytes = requestedSpaceInBytes;
         return this;
     }
 
@@ -157,7 +157,7 @@ public class DataStorageInfo {
         dataBundle.setOwner(this.owner);
         dataBundle.setStorageFormat(this.storageFormat);
         dataBundle.setPermissions(this.permissions);
-        dataBundle.setUsedSpaceInKB(this.requestedSpaceInKB);
+        dataBundle.setUsedSpaceInBytes(this.requestedSpaceInBytes);
         dataBundle.setChecksum(this.checksum);
         dataBundle.addMetadataFields(this.metadata);
         return dataBundle;

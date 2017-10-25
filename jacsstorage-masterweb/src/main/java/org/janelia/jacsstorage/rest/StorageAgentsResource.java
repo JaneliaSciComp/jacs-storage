@@ -3,11 +3,13 @@ package org.janelia.jacsstorage.rest;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.janelia.jacsstorage.service.distributedservice.StorageAgentManager;
 
+import javax.annotation.security.PermitAll;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -23,6 +25,7 @@ public class StorageAgentsResource {
     @Inject
     private StorageAgentManager agentManager;
 
+    @PermitAll
     @Path("{agentLocationInfo}")
     @GET
     public Response findRegisteredAgent(@PathParam("agentLocationInfo") String agentLocationInfo) {
@@ -31,6 +34,7 @@ public class StorageAgentsResource {
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
+    @PermitAll
     @GET
     public Response getCurrentRegisteredAgents() {
         return Response
@@ -38,19 +42,21 @@ public class StorageAgentsResource {
                 .build();
     }
 
+    @PermitAll
     @Consumes("application/json")
     @POST
     public Response registerAgent(StorageAgentInfo agentInfo) {
-        agentManager.registerAgent(agentInfo);
+        StorageAgentInfo registeterdAgentInfo = agentManager.registerAgent(agentInfo);
         return Response
-                .ok(agentInfo)
+                .ok(registeterdAgentInfo)
                 .build();
     }
 
+    @PermitAll
     @Path("{agentLocationInfo}")
     @DELETE
-    public Response deregisterAgent(@PathParam("agentLocationInfo") String agentLocationInfo) {
-        if (agentManager.deregisterAgent(agentLocationInfo) != null) {
+    public Response deregisterAgent(@PathParam("agentLocationInfo") String agentLocationInfo, @HeaderParam("agentToken") String agentToken) {
+        if (agentManager.deregisterAgent(agentLocationInfo, agentToken) != null) {
             return Response
                     .noContent()
                     .build();

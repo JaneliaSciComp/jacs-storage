@@ -37,8 +37,8 @@ public class JacsBundleBuilder {
         return this;
     }
 
-    public JacsBundleBuilder usedSpaceInKB(Long v) {
-        jacsBundle.setUsedSpaceInKB(v);
+    public JacsBundleBuilder usedSpaceInBytes(Long v) {
+        jacsBundle.setUsedSpaceInBytes(v);
         return this;
     }
 

@@ -76,7 +76,7 @@ public class StorageClientHttpImpl implements StorageClient {
                         return Optional.empty();
                     }
                 })
-                .map((DataStorageInfo dsi) -> new StorageMessageResponse(StorageMessageResponse.OK, "", dsi.getRequestedSpaceInKB(), dsi.getRequestedSpaceInKB(), Base64.getDecoder().decode(dsi.getChecksum())))
+                .map((DataStorageInfo dsi) -> new StorageMessageResponse(StorageMessageResponse.OK, "", dsi.getRequestedSpaceInBytes(), dsi.getRequestedSpaceInBytes(), Base64.getDecoder().decode(dsi.getChecksum())))
                 .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "Error allocating storage for " + storageInfo, 0, 0, new byte[0]));
     }
 

@@ -1,7 +1,6 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.io.TransferInfo;
@@ -33,8 +32,6 @@ import java.util.Base64;
 @Path("agent-storage")
 public class AgentStorageResource {
 
-    private static final long _1_K = 1024;
-
     @Inject
     private DataStorageService dataStorageService;
     @Inject @LocalInstance
@@ -51,7 +48,7 @@ public class AgentStorageResource {
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         TransferInfo ti = dataStorageService.persistDataStream(dataBundle.getPath(), dataBundle.getStorageFormat(), bundleStream);
         dataBundle.setChecksum(Base64.getEncoder().encodeToString(ti.getChecksum()));
-        dataBundle.setUsedSpaceInKB(ti.getNumBytes() / _1_K);
+        dataBundle.setUsedSpaceInBytes(ti.getNumBytes());
         storageAllocatorService.updateStorage(dataBundle);
         return Response
                 .ok(DataStorageInfo.fromBundle(dataBundle))
@@ -86,9 +83,10 @@ public class AgentStorageResource {
     @Path("{dataBundleId}")
     public Response deleteStorage(@PathParam("dataBundleId") Long dataBundleId) throws IOException {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
-        Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        dataStorageService.deleteStorage(dataBundle.getPath());
-        dataStorageService.cleanupStoragePath(Paths.get(dataBundle.getPath()).getParent().toString());
+        if (dataBundle != null) {
+            dataStorageService.deleteStorage(dataBundle.getPath());
+            dataStorageService.cleanupStoragePath(Paths.get(dataBundle.getPath()).getParent().toString());
+        }
         return Response
                 .status(Response.Status.NO_CONTENT)
                 .build();

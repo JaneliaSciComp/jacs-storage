@@ -75,8 +75,6 @@ public abstract class AbstractStorageApp {
                         .setContextPath(contextPath)
                         .setDeploymentName(appArgs.deployment)
                         .setEagerFilterInit(true)
-                        .addFilter(new FilterInfo("corsFilter", CORSResponseFilter.class))
-                        .addFilterUrlMapping("corsFilter", "/*", DispatcherType.REQUEST)
                         .addListener(Servlets.listener(WeldInitialListener.class))
                         .addListener(Servlets.listener(Listener.class))
                         .addListeners(getAppListeners())

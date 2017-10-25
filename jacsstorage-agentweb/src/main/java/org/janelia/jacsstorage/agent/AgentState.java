@@ -27,7 +27,6 @@ import java.util.concurrent.ScheduledExecutorService;
 public class AgentState {
 
     private static final Logger LOG = LoggerFactory.getLogger(AgentState.class);
-    private static final long _1_K = 1024;
 
     @PropertyValue(name = "StorageAgent.IPAddress")
     @Inject
@@ -53,7 +52,7 @@ public class AgentState {
 
     private CircuitBreaker<AgentState> agentConnectionBreaker;
     private String masterURL;
-    private boolean registered;
+    private String registeredToken;
 
     public String getAgentLocation() {
         return StringUtils.isBlank(agentLocation) ? getStorageIPAddress() + "/" + getStorageRootDir() : agentLocation;
@@ -80,12 +79,12 @@ public class AgentState {
         return storageRootDir;
     }
 
-    public long getAvailableStorageSpaceInKB() {
+    public long getAvailableStorageSpaceInBytes() {
         try {
             java.nio.file.Path storageRootPath = Paths.get(storageRootDir);
             FileStore storageRootStore = Files.getFileStore(storageRootPath);
             long usableBytes = storageRootStore.getUsableSpace();
-            return usableBytes / _1_K;
+            return usableBytes;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -107,11 +106,9 @@ public class AgentState {
         agentConnectionBreaker.initialize(this, circuitTester,
                 Optional.of(agentState -> {
                     LOG.trace("Agent {} registered with {}", agentState, masterURL);
-                    agentState.setRegistered(true);
                 }),
                 Optional.of(agentState -> {
                     LOG.error("Agent {} got disconnected from {}", agentState, masterURL);
-                    agentState.setRegistered(false);
                 }));
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -124,9 +121,9 @@ public class AgentState {
 
     public synchronized void disconnect() {
         agentConnectionBreaker.dispose();
-        AgentConnectionHelper.deregisterAgent(masterURL, agentLocation);
+        AgentConnectionHelper.deregisterAgent(masterURL, agentLocation, registeredToken);
         masterURL = null;
-        registered = false;
+        registeredToken = null;
     }
 
     public StorageAgentInfo getLocalAgentInfo() {
@@ -135,7 +132,7 @@ public class AgentState {
                 getAgentURL(),
                 getConnectionInfo(),
                 getStorageRootDir());
-        localAgentInfo.setStorageSpaceAvailableInKB(getAvailableStorageSpaceInKB());
+        localAgentInfo.setStorageSpaceAvailableInBytes(getAvailableStorageSpaceInBytes());
         if (this.isRegistered()) {
             localAgentInfo.setConnectionStatus("CONNECTED");
         } else {
@@ -157,11 +154,11 @@ public class AgentState {
     }
 
     public boolean isRegistered() {
-        return registered;
+        return StringUtils.isNotBlank(registeredToken);
     }
 
-    public void setRegistered(boolean registered) {
-        this.registered = registered;
+    public void setRegisteredToken(String registeredToken) {
+        this.registeredToken = registeredToken;
     }
 
     @PostConstruct
@@ -181,7 +178,7 @@ public class AgentState {
                 .append("agentLocation", agentLocation)
                 .append("connectionInfo", getConnectionInfo())
                 .append("masterURL", masterURL)
-                .append("registered", registered)
+                .append("registeredToken", registeredToken)
                 .append("storageIPAddress", storageIPAddress)
                 .append("storageRootDir", storageRootDir)
                 .build();

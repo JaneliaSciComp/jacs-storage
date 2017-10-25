@@ -134,7 +134,7 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
         d.setName(name);
         d.setPath(path);
         d.setStorageVolumeId(storageVolumeId);
-        d.setUsedSpaceInKB(size);
+        d.setUsedSpaceInBytes(size);
         d.setChecksum(createChecksum(checksumLength));
         metadata.forEach(d::addMetadataField);
         testData.add(d);

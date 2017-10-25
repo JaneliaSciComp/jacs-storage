@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.rest;
 import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 
+import javax.annotation.security.PermitAll;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -25,6 +26,7 @@ public class AgentConnectionResource {
     @Context
     private UriInfo resourceURI;
 
+    @PermitAll
     @Path("status")
     @GET
     public Response getStatus() {
@@ -34,6 +36,7 @@ public class AgentConnectionResource {
                 .build();
     }
 
+    @PermitAll
     @Consumes(MediaType.APPLICATION_JSON)
     @POST
     public Response connect(String connectURL) {

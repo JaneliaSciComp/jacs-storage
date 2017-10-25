@@ -9,8 +9,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.utils.PathUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,9 +47,9 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
     public JacsBundle updateStorage(JacsBundle dataBundle) {
         JacsBundle existingBundle = retrieveExistingStorage(dataBundle);
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedFieldsBuilder = ImmutableMap.builder();
-        if (dataBundle.hasUsedSpaceInKBSet()) {
-            existingBundle.setUsedSpaceInKB(dataBundle.getUsedSpaceInKB());
-            updatedFieldsBuilder.put("usedSpaceInKB", new SetFieldValueHandler<>(existingBundle.getUsedSpaceInKB()));
+        if (dataBundle.hasUsedSpaceSet()) {
+            existingBundle.setUsedSpaceInBytes(dataBundle.getUsedSpaceInBytes());
+            updatedFieldsBuilder.put("usedSpaceInBytes", new SetFieldValueHandler<>(existingBundle.getUsedSpaceInBytes()));
         }
         if (StringUtils.isNotBlank(dataBundle.getChecksum())) {
             existingBundle.setChecksum(dataBundle.getChecksum());

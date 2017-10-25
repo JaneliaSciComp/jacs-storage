@@ -59,7 +59,7 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
 
     @Override
     public Optional<JacsStorageVolume> selectStorageVolume(JacsBundle dataBundle) {
-        Predicate<StorageAgentInfo> spaceAvailableCondition = (StorageAgentInfo sai) -> dataBundle.getUsedSpaceInKB() == null || sai.getStorageSpaceAvailableInKB() > dataBundle.getUsedSpaceInKB();
+        Predicate<StorageAgentInfo> spaceAvailableCondition = (StorageAgentInfo sai) -> dataBundle.getUsedSpaceInBytes() == null || sai.getStorageSpaceAvailableInBytes() > dataBundle.getUsedSpaceInBytes();
         return agentManager.findRandomRegisteredAgent(spaceAvailableCondition)
                 .map((StorageAgentInfo storageAgentInfo) -> {
                     JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocationAndCreateIfNotFound(storageAgentInfo.getLocation());

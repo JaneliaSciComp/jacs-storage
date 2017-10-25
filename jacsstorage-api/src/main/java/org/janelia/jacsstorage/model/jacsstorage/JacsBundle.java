@@ -20,7 +20,7 @@ public class JacsBundle extends AbstractEntity {
     private String path;
     private String permissions;
     private JacsStorageFormat storageFormat;
-    private Long usedSpaceInKB;
+    private Long usedSpaceInBytes;
     private String checksum;
     private Date created = new Date();
     private Date modified = new Date();
@@ -73,16 +73,16 @@ public class JacsBundle extends AbstractEntity {
         this.storageFormat = storageFormat;
     }
 
-    public Long getUsedSpaceInKB() {
-        return usedSpaceInKB;
+    public Long getUsedSpaceInBytes() {
+        return usedSpaceInBytes;
     }
 
-    public void setUsedSpaceInKB(Long usedSpaceInKB) {
-        this.usedSpaceInKB = usedSpaceInKB;
+    public void setUsedSpaceInBytes(Long usedSpaceInBytes) {
+        this.usedSpaceInBytes = usedSpaceInBytes;
     }
 
-    public boolean hasUsedSpaceInKBSet() {
-        return usedSpaceInKB != null && usedSpaceInKB != 0L;
+    public boolean hasUsedSpaceSet() {
+        return usedSpaceInBytes != null && usedSpaceInBytes != 0L;
     }
 
     public String getChecksum() {

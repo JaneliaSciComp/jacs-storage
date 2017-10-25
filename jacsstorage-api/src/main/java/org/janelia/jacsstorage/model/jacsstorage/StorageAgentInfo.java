@@ -13,8 +13,9 @@ public class StorageAgentInfo {
     private final String agentURL;
     private final String connectionInfo;
     private final String storagePath;
-    private Long storageSpaceAvailableInKB;
+    private Long storageSpaceAvailableInBytes;
     private String connectionStatus;
+    private String agentToken;
 
     @JsonCreator
     public StorageAgentInfo(@JsonProperty("location") String location,
@@ -43,12 +44,12 @@ public class StorageAgentInfo {
         return storagePath;
     }
 
-    public Long getStorageSpaceAvailableInKB() {
-        return storageSpaceAvailableInKB;
+    public Long getStorageSpaceAvailableInBytes() {
+        return storageSpaceAvailableInBytes;
     }
 
-    public void setStorageSpaceAvailableInKB(Long storageSpaceAvailableInKB) {
-        this.storageSpaceAvailableInKB = storageSpaceAvailableInKB;
+    public void setStorageSpaceAvailableInBytes(Long storageSpaceAvailableInBytes) {
+        this.storageSpaceAvailableInBytes = storageSpaceAvailableInBytes;
     }
 
     @JsonIgnore
@@ -64,13 +65,23 @@ public class StorageAgentInfo {
         this.connectionStatus = connectionStatus;
     }
 
+    public String getAgentToken() {
+        return agentToken;
+    }
+
+    public void setAgentToken(String agentToken) {
+        this.agentToken = agentToken;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .append("location", location)
+                .append("agentToken", agentToken)
                 .append("agentURL", agentURL)
                 .append("connectionInfo", connectionInfo)
                 .append("storagePath", storagePath)
                 .toString();
     }
+
 }
