@@ -22,7 +22,7 @@ public class StoragePersistAvgBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void measureAvgPersistTime(BenchmarkTrialParams trialParams, BenchmarkInvocationParams invocationParams) throws Exception {
-        invocationParams.storageClient.persistData(trialParams.dataLocation, invocationParams.dataStorageInfo);
+        invocationParams.storageClient.persistData(trialParams.dataLocation, invocationParams.dataStorageInfo, trialParams.authToken);
     }
 
     public static void main(String[] args) throws RunnerException {
@@ -49,6 +49,7 @@ public class StoragePersistAvgBenchmark {
                 .param("owner", benchmarksCmdLineParams.owner)
                 .param("dataLocation", benchmarksCmdLineParams.localPath)
                 .param("dataFormat", benchmarksCmdLineParams.dataFormat.name())
+                .param("authToken", benchmarksCmdLineParams.authToken)
                 .build();
 
         Collection<RunResult> runResults = new Runner(opt).run();

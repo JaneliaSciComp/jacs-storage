@@ -46,7 +46,7 @@ class AgentConnectionHelper {
         return null;
     }
 
-    static boolean deleteStorage(String agentUrl, Number dataBundleId) {
+    static boolean deleteStorage(String agentUrl, Number dataBundleId, String authToken) {
         String deleteStorageEndpoint = String.format("/agent-storage/%d", dataBundleId);
         Client httpClient = null;
         try {
@@ -54,6 +54,7 @@ class AgentConnectionHelper {
             WebTarget target = httpClient.target(agentUrl)
                         .path(deleteStorageEndpoint);
             Response response = target.request()
+                    .header("Authorization", "Bearer " + authToken)
                     .delete()
                     ;
             if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {

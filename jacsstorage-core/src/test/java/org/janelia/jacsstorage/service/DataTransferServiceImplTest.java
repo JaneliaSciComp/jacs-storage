@@ -124,6 +124,7 @@ public class DataTransferServiceImplTest {
     private TransferState<StorageMessageHeader> createMessageHeaderTransferState(DataTransferService.Operation op, JacsStorageFormat format, String dataFile) throws IOException {
         StorageMessageHeader messageHeader = new StorageMessageHeader(
                 0L,
+                "",
                 op,
                 format,
                 dataFile,

@@ -5,6 +5,7 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
+import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
@@ -19,8 +20,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,13 +46,14 @@ public class AgentStorageResource {
     @POST
     @Path("{dataBundleId}")
     public Response persistStream(@PathParam("dataBundleId") Long dataBundleId,
+                                  @Context SecurityContext securityContext,
                                   InputStream bundleStream) throws IOException {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         TransferInfo ti = dataStorageService.persistDataStream(dataBundle.getPath(), dataBundle.getStorageFormat(), bundleStream);
         dataBundle.setChecksum(Base64.getEncoder().encodeToString(ti.getChecksum()));
         dataBundle.setUsedSpaceInBytes(ti.getNumBytes());
-        storageAllocatorService.updateStorage(dataBundle);
+        storageAllocatorService.updateStorage(SecurityUtils.getUserPrincipal(securityContext), dataBundle);
         return Response
                 .ok(DataStorageInfo.fromBundle(dataBundle))
                 .build();
@@ -58,7 +62,8 @@ public class AgentStorageResource {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @GET
     @Path("{dataBundleId}")
-    public Response retrieveStream(@PathParam("dataBundleId") Long dataBundleId) {
+    public Response retrieveStream(@PathParam("dataBundleId") Long dataBundleId,
+                                   @Context SecurityContext securityContext) {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StreamingOutput bundleStream =  new StreamingOutput()
@@ -81,7 +86,8 @@ public class AgentStorageResource {
 
     @DELETE
     @Path("{dataBundleId}")
-    public Response deleteStorage(@PathParam("dataBundleId") Long dataBundleId) throws IOException {
+    public Response deleteStorage(@PathParam("dataBundleId") Long dataBundleId,
+                                  @Context SecurityContext securityContext) throws IOException {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         if (dataBundle != null) {
             dataStorageService.deleteStorage(dataBundle.getPath());

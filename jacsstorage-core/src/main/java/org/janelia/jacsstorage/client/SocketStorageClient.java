@@ -39,23 +39,16 @@ public class SocketStorageClient implements StorageClient {
     @Override
     public StorageMessageResponse ping(String connectionInfo) throws IOException {
         try {
-            initTransfer(0L, DataTransferService.Operation.PING, null, null, connectionInfo, SelectionKey.OP_READ);
+            initTransfer(0L, DataTransferService.Operation.PING, null, null, connectionInfo, SelectionKey.OP_READ, "");
             ByteBuffer dataTransferBuffer = allocateTransferBuffer();
-            StorageMessageHeader responseHeader = retrieveResponseHeader(dataTransferBuffer);
-            if (responseHeader.getOperation() == DataTransferService.Operation.PROCESS_RESPONSE) {
-                return new StorageMessageResponse(StorageMessageResponse.OK, null, 0, 0, new byte[0]);
-            } else if (responseHeader.getOperation() == DataTransferService.Operation.PROCESS_ERROR) {
-                return new StorageMessageResponse(StorageMessageResponse.ERROR, responseHeader.getMessageOrDefault(), 0, 0, new byte[0]);
-            } else {
-                throw new IllegalStateException("Invalid response operation");
-            }
+            return retrieveResponse(dataTransferBuffer);
         } finally {
             closeChannel();
         }
     }
 
     @Override
-    public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
+    public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo, String authToken) throws IOException {
         try {
             Path sourcePath = Paths.get(localPath);
             JacsStorageFormat localDataFormat;
@@ -81,9 +74,11 @@ public class SocketStorageClient implements StorageClient {
                     storageInfo.getStorageFormat(),
                     storageInfo.getPath(),
                     storageInfo.getConnectionInfo(),
-                    SelectionKey.OP_WRITE);
+                    SelectionKey.OP_WRITE,
+                    authToken);
             TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
                     0L,
+                    authToken,
                     DataTransferService.Operation.RETRIEVE_DATA,
                     localDataFormat,
                     localPath,
@@ -104,7 +99,7 @@ public class SocketStorageClient implements StorageClient {
         }
     }
 
-    public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
+    public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo, String authToken) throws IOException {
         try {
             initTransfer(
                     storageInfo.getId(),
@@ -112,7 +107,8 @@ public class SocketStorageClient implements StorageClient {
                     storageInfo.getStorageFormat(),
                     storageInfo.getPath(),
                     storageInfo.getConnectionInfo(),
-                    SelectionKey.OP_READ);
+                    SelectionKey.OP_READ,
+                    authToken);
             // figure out how to write the localservice data
             JacsStorageFormat localDataFormat;
             if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
@@ -125,10 +121,11 @@ public class SocketStorageClient implements StorageClient {
             }
             ByteBuffer dataTransferBuffer = allocateTransferBuffer();
 
-            StorageMessageHeader responseHeader = retrieveResponseHeader(dataTransferBuffer);
-            if (responseHeader.getOperation() == DataTransferService.Operation.PROCESS_RESPONSE) {
+            StorageMessageResponse response = retrieveResponse(dataTransferBuffer);
+            if (response.getStatus() == StorageMessageResponse.OK) {
                 TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
                         storageInfo.getId(),
+                        authToken,
                         DataTransferService.Operation.PERSIST_DATA,
                         localDataFormat,
                         localPath,
@@ -136,20 +133,19 @@ public class SocketStorageClient implements StorageClient {
                 // initiate the localservice data write operation
                 clientStorageProxy.beginDataTransfer(localDataTransfer);
                 retrieveData(dataTransferBuffer, localDataTransfer);
-                return new StorageMessageResponse(StorageMessageResponse.OK, localDataTransfer.getErrorMessage(), localDataTransfer.getTransferredBytes(), localDataTransfer.getPersistedBytes(), localDataTransfer.getChecksum());
-            } else if (responseHeader.getOperation() == DataTransferService.Operation.PROCESS_ERROR) {
-                return new StorageMessageResponse(StorageMessageResponse.ERROR, responseHeader.getMessageOrDefault(), 0, 0, new byte[0]);
+                return new StorageMessageResponse(StorageMessageResponse.OK, localDataTransfer.getErrorMessage());
             } else {
-                throw new IllegalStateException("Invalid response operation");
+                return response;
             }
         } finally {
             closeChannel();
         }
     }
 
-    private byte[] createRemoteMessageHeaderBytes(Number id, DataTransferService.Operation operation, JacsStorageFormat storageFormat, String storagePathname) throws IOException {
+    private byte[] createRemoteMessageHeaderBytes(Number id, DataTransferService.Operation operation, JacsStorageFormat storageFormat, String storagePathname, String authToken) throws IOException {
         StorageMessageHeader messageHeader = new StorageMessageHeader(
                 id,
+                authToken,
                 operation,
                 storageFormat,
                 storagePathname,
@@ -185,8 +181,8 @@ public class SocketStorageClient implements StorageClient {
         }
     }
 
-    private void initTransfer(Number id, DataTransferService.Operation op, JacsStorageFormat format, String pathName, String connectionInfo, int channelIOOp) throws IOException {
-        byte[] remoteOpBytes = createRemoteMessageHeaderBytes(id, op, format, pathName);
+    private void initTransfer(Number id, DataTransferService.Operation op, JacsStorageFormat format, String pathName, String connectionInfo, int channelIOOp, String authToken) throws IOException {
+        byte[] remoteOpBytes = createRemoteMessageHeaderBytes(id, op, format, pathName, authToken);
         ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
         openChannel(remoteOpBuffer, getConnectionHost(connectionInfo), getConnectionPort(connectionInfo), channelIOOp);
     }
@@ -319,37 +315,7 @@ public class SocketStorageClient implements StorageClient {
                         return transferResponseState.getMessageType();
                     }
                     if (transferResponseState.readMessageType(dataBuffer, new StorageMessageResponseCodec())) {
-                        channel.close();
                         return transferResponseState.getMessageType();
-                    }
-                }
-            }
-        }
-    }
-
-    private StorageMessageHeader retrieveResponseHeader(ByteBuffer dataBuffer) throws IOException {
-        TransferState<StorageMessageHeader> transferResponseHeaderState = new TransferState();
-        while (true) {
-            selector.select(SELECTOR_TIMEOUT);
-            Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-            while (keys.hasNext()) {
-                SelectionKey key = keys.next();
-                keys.remove();
-                if (!key.isValid()) {
-                    continue;
-                }
-                if (key.isReadable()) {
-                    SocketChannel channel = (SocketChannel) key.channel();
-                    if (dataBuffer.hasRemaining()) {
-                        if (transferResponseHeaderState.readMessageType(dataBuffer, new StorageMessageHeaderCodec())) {
-                            return transferResponseHeaderState.getMessageType();
-                        }
-                    } else {
-                        int numRead = read(channel, dataBuffer);
-                        if (numRead == -1) {
-                            channel.close();
-                            return transferResponseHeaderState.getMessageType();
-                        }
                     }
                 }
             }

@@ -12,6 +12,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
+import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.AbstractStorageAllocatorService;
 import org.janelia.jacsstorage.utils.PathUtils;
 import org.slf4j.Logger;
@@ -51,8 +52,9 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
     }
 
     @Override
-    public boolean deleteStorage(JacsBundle dataBundle) {
+    public boolean deleteStorage(JacsCredentials credentials, JacsBundle dataBundle) {
         JacsBundle existingBundle = retrieveExistingStorage(dataBundle);
+        checkStorageAccess(credentials, dataBundle);
         LOG.info("Delete {}", existingBundle);
         return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
                 .map(storageVolume -> {

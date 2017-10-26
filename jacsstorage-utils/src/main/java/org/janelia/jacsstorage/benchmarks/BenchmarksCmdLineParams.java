@@ -20,4 +20,6 @@ class BenchmarksCmdLineParams {
     String owner = "benchmarks";
     @Parameter(names = "-localPath", description = "Local path")
     String localPath;
+    @Parameter(names = "-authToken", description = "Authentication token")
+    String authToken;
 }

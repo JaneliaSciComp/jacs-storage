@@ -23,6 +23,7 @@ public class StorageMessageHeaderCodec implements MessageDataCodec<StorageMessag
         }
         messageHeaderPacker
                 .packBigInteger(dataBundleId)
+                .packString(data.getAuthToken())
                 .packString(data.getOperation().name())
                 .packString(data.getFormat() == null ? "" : data.getFormat().name())
                 .packString(data.getLocationOrDefault())
@@ -37,12 +38,13 @@ public class StorageMessageHeaderCodec implements MessageDataCodec<StorageMessag
     public StorageMessageHeader decodeMessage(ByteBuffer buffer) throws IOException {
         MessageUnpacker messageHeaderUnpacker = MessagePack.newDefaultUnpacker(buffer);
         BigInteger dataBundleId = messageHeaderUnpacker.unpackBigInteger();
+        String authToken = messageHeaderUnpacker.unpackString();
         DataTransferService.Operation op = DataTransferService.Operation.valueOf(messageHeaderUnpacker.unpackString());
         String formatString = messageHeaderUnpacker.unpackString();
         JacsStorageFormat format = StringUtils.isBlank(formatString) ? null : JacsStorageFormat.valueOf(formatString);
         String path = messageHeaderUnpacker.unpackString();
         String message = messageHeaderUnpacker.unpackString();
         messageHeaderUnpacker.close();
-        return new StorageMessageHeader(dataBundleId, op, format, path, message);
+        return new StorageMessageHeader(dataBundleId, authToken, op, format, path, message);
     }
 }

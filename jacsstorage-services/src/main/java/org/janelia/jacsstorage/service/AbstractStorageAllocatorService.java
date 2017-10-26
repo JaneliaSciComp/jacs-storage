@@ -8,6 +8,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
+import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.utils.PathUtils;
 
 import java.nio.file.Path;
@@ -26,9 +27,10 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
     }
 
     @Override
-    public Optional<JacsBundle> allocateStorage(JacsBundle dataBundle) {
+    public Optional<JacsBundle> allocateStorage(JacsCredentials credentials, JacsBundle dataBundle) {
         return selectStorageVolume(dataBundle)
                 .map((JacsStorageVolume storageVolume) -> {
+                    dataBundle.setOwner(credentials.getSubject());
                     dataBundle.setStorageVolumeId(storageVolume.getId());
                     dataBundle.setStorageVolume(storageVolume);
                     dataBundle.setConnectionInfo(storageVolume.getMountHostIP());
@@ -44,8 +46,9 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
     }
 
     @Override
-    public JacsBundle updateStorage(JacsBundle dataBundle) {
+    public JacsBundle updateStorage(JacsCredentials credentials, JacsBundle dataBundle) {
         JacsBundle existingBundle = retrieveExistingStorage(dataBundle);
+        checkStorageAccess(credentials, existingBundle);
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedFieldsBuilder = ImmutableMap.builder();
         if (dataBundle.hasUsedSpaceSet()) {
             existingBundle.setUsedSpaceInBytes(dataBundle.getUsedSpaceInBytes());
@@ -67,4 +70,9 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
         return existingBundle;
     }
 
+    protected void checkStorageAccess(JacsCredentials credentials, JacsBundle dataBundle) {
+        if (!credentials.getSubject().equals(dataBundle.getOwner())) {
+            throw new SecurityException("Access not allowed to " + dataBundle.getName() + " for " + credentials.getSubject());
+        }
+    }
 }

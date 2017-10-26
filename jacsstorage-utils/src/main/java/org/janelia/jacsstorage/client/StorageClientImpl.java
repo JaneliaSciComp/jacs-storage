@@ -23,35 +23,35 @@ public class StorageClientImpl implements StorageClient {
         return storageClient.ping(connectionInfo);
     }
 
-    public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo) throws IOException {
+    public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo, String authToken) throws IOException {
         String storageServiceURL = storageInfo.getConnectionURL();
-        return clientImplHelper.allocateStorage(storageServiceURL, storageInfo)
+        return clientImplHelper.allocateStorage(storageServiceURL, storageInfo, authToken)
                 .map(allocatedStorage -> {
                     LOG.debug("Allocated {}", allocatedStorage);
                     try {
-                        return storageClient.persistData(localPath, allocatedStorage);
+                        return storageClient.persistData(localPath, allocatedStorage, authToken);
                     } catch (IOException e) {
                         LOG.error("Error persisting the bundle {}", allocatedStorage, e);
-                        return new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage(), 0, 0, new byte[0]);
+                        return new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage());
                     }
                 })
-                .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "Error allocating storage for " + storageInfo, 0, 0, new byte[0]));
+                .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "Error allocating storage for " + storageInfo));
     }
 
     @Override
-    public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo) throws IOException {
+    public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo, String authToken) throws IOException {
         String storageServiceURL = storageInfo.getConnectionURL();
-        return clientImplHelper.retrieveStorageInfo(storageServiceURL, storageInfo)
+        return clientImplHelper.retrieveStorageInfo(storageServiceURL, storageInfo, authToken)
             .map((DataStorageInfo persistedStorageInfo) -> {
                 LOG.info("Data storage info: {}", persistedStorageInfo);
                 try {
-                    return storageClient.retrieveData(localPath, persistedStorageInfo);
+                    return storageClient.retrieveData(localPath, persistedStorageInfo, authToken);
                 } catch (IOException e) {
                     LOG.error("Error retrieving data from {}", persistedStorageInfo, e);
-                    return new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage(), 0, 0, new byte[0]);
+                    return new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage());
                 }
             })
-            .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "No connection to " + storageInfo.getName(), 0, 0, new byte[0]));
+            .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "No connection to " + storageInfo.getName()));
     }
 
 }

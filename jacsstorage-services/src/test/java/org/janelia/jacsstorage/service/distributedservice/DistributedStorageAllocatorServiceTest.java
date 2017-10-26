@@ -10,6 +10,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
+import org.janelia.jacsstorage.security.JacsCredentials;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -118,7 +119,8 @@ public class DistributedStorageAllocatorServiceTest {
         };
         for (TestAllocateData td : testData) {
             prepareMockServices(td);
-            Optional<JacsBundle> bundleResult = testStorageAllocatorService.allocateStorage(td.testBundle);
+            JacsCredentials jacsCredentials = new JacsCredentials();
+            Optional<JacsBundle> bundleResult = testStorageAllocatorService.allocateStorage(jacsCredentials, td.testBundle);
             verifyTestBundle(bundleResult, td, td.volumeUpdatedFields);
         }
     }

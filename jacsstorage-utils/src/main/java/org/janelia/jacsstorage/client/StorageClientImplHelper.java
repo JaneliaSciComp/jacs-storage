@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.client;
 
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
-import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.service.StorageMessageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,13 +26,14 @@ import java.util.Optional;
 public class StorageClientImplHelper {
     private static final Logger LOG = LoggerFactory.getLogger(StorageClientImplHelper.class);
 
-    Optional<DataStorageInfo> allocateStorage(String connectionURL, DataStorageInfo storageRequest) {
+    Optional<DataStorageInfo> allocateStorage(String connectionURL, DataStorageInfo storageRequest, String authToken) {
         String storageEndpoint = "/storage";
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .header("Authorization", "Bearer " + authToken)
                     .post(Entity.json(storageRequest))
                     ;
             int responseStatus = response.getStatus();
@@ -53,13 +53,14 @@ public class StorageClientImplHelper {
         }
     }
 
-    Optional<DataStorageInfo> retrieveStorageInfo(String connectionURL, DataStorageInfo storageRequest) {
+    Optional<DataStorageInfo> retrieveStorageInfo(String connectionURL, DataStorageInfo storageRequest, String authToken) {
         String storageEndpoint = String.format("/storage/%s/%s", storageRequest.getOwner(), storageRequest.getName());
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .header("Authorization", "Bearer " + authToken)
                     .get()
                     ;
             int responseStatus = response.getStatus();
@@ -78,13 +79,14 @@ public class StorageClientImplHelper {
         }
     }
 
-    Optional<DataStorageInfo> streamDataToStore(String connectionURL, DataStorageInfo storageInfo, InputStream dataStream) {
+    Optional<DataStorageInfo> streamDataToStore(String connectionURL, DataStorageInfo storageInfo, InputStream dataStream, String authToken) {
         String dataStreamEndpoint = String.format("/agent-storage/%s", storageInfo.getId());
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .header("Authorization", "Bearer " + authToken)
                     .post(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE))
                     ;
             int responseStatus = response.getStatus();
@@ -103,13 +105,14 @@ public class StorageClientImplHelper {
         }
     }
 
-    Optional<InputStream> streamDataFromStore(String connectionURL, DataStorageInfo storageInfo) {
+    Optional<InputStream> streamDataFromStore(String connectionURL, DataStorageInfo storageInfo, String authToken) {
         String dataStreamEndpoint = String.format("/agent-storage/%s", storageInfo.getId());
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
             Response response = target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE)
+                    .header("Authorization", "Bearer " + authToken)
                     .get()
                     ;
             int responseStatus = response.getStatus();
@@ -139,9 +142,9 @@ public class StorageClientImplHelper {
                     ;
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
-                return new StorageMessageResponse(StorageMessageResponse.OK, "", 0, 0, new byte[0]);
+                return new StorageMessageResponse(StorageMessageResponse.OK, "");
             } else {
-                return new StorageMessageResponse(StorageMessageResponse.ERROR, "Response status: " + responseStatus, 0, 0, new byte[0]);
+                return new StorageMessageResponse(StorageMessageResponse.ERROR, "Response status: " + responseStatus);
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);

@@ -17,6 +17,8 @@ public class BenchmarkTrialParams {
     String dataLocation;
     @Param({""})
     String dataFormat;
+    @Param({""})
+    String authToken;
 
     @Setup(Level.Trial)
     public void setUp(BenchmarkParams params) {
@@ -24,5 +26,6 @@ public class BenchmarkTrialParams {
         owner = params.getParam("owner");
         dataLocation = params.getParam("dataLocation");
         dataFormat = params.getParam("dataFormat");
+        authToken = params.getParam("authToken");
     }
 }

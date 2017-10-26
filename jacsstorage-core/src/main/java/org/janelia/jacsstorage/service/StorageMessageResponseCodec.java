@@ -15,11 +15,7 @@ public class StorageMessageResponseCodec implements MessageDataCodec<StorageMess
         responsePacker
                 .packInt(data.getStatus())
                 .packString(data.getMessage())
-                .packLong(data.getTransferredBytes())
-                .packLong(data.getPersistedBytes())
         ;
-        responsePacker.packBinaryHeader(data.getChecksum().length);
-        responsePacker.writePayload(data.getChecksum());
         responsePacker.close();
         byte[] msgBytes = responsePacker.toByteArray();
         ByteBuffer msgBuffer = ByteBuffer.wrap(msgBytes);
@@ -31,11 +27,6 @@ public class StorageMessageResponseCodec implements MessageDataCodec<StorageMess
         MessageUnpacker responseUnpacker = MessagePack.newDefaultUnpacker(buffer);
         int status = responseUnpacker.unpackInt();
         String message = responseUnpacker.unpackString();
-        long transferredBytes = responseUnpacker.unpackLong();
-        long persistedBytes = responseUnpacker.unpackLong();
-        int checksumLength = responseUnpacker.unpackBinaryHeader();
-        byte[] checksum = new byte[checksumLength];
-        responseUnpacker.readPayload(checksum);
-        return new StorageMessageResponse(status, message, transferredBytes, persistedBytes, checksum);
+        return new StorageMessageResponse(status, message);
     }
 }

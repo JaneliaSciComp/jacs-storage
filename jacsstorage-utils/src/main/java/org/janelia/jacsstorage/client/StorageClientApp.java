@@ -20,6 +20,8 @@ public class StorageClientApp {
         protected String owner;
         @Parameter(names = "-name", description = "Data bundle name")
         protected String name;
+        @Parameter(names = "-authToken", description = "Authentication token")
+        protected String authToken;
     }
 
     private static class CommandMain {
@@ -85,7 +87,7 @@ public class StorageClientApp {
                         .setConnectionURL(cm.serverURL)
                         .setOwner(cmdGet.owner)
                         .setName(cmdGet.name);
-                storageClient.retrieveData(cmdGet.localPath, storageInfo);
+                storageClient.retrieveData(cmdGet.localPath, storageInfo, cmdGet.authToken);
                 return;
             case "put":
                 storageInfo = new DataStorageInfo()
@@ -93,7 +95,7 @@ public class StorageClientApp {
                         .setStorageFormat(cmdPut.dataFormat)
                         .setOwner(cmdPut.owner)
                         .setName(cmdPut.name);
-                storageClient.persistData(cmdPut.localPath, storageInfo);
+                storageClient.persistData(cmdPut.localPath, storageInfo, cmdPut.authToken);
                 return;
             case "ping":
                 storageClient.ping(cmdPing.connectionInfo);

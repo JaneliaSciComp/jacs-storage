@@ -1,6 +1,12 @@
 package org.janelia.jacsstorage.service;
 
 import com.google.common.collect.ImmutableList;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import org.janelia.jacsstorage.cdi.CoreCdiProducer;
 import org.janelia.jacsstorage.client.SocketStorageClient;
 import org.janelia.jacsstorage.client.StorageClient;
@@ -26,6 +32,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -33,6 +40,7 @@ import java.util.concurrent.Executors;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -43,6 +51,7 @@ import static org.mockito.Mockito.when;
 public class StorageAgentListenerITest {
 
     private static final String TEST_DATA_DIRECTORY = "src/integrationTest/resources/testdata/bundletransfer";
+    private static final String TEST_AUTH_KEY = "This key must be at least 32 chars long";
     private Path testDirectory;
 
     private static StorageAgentListener socketStorageListener;
@@ -70,7 +79,7 @@ public class StorageAgentListenerITest {
                 .then(invocation -> dataWriters.iterator());
         dataBundleIOProvider = new DataBundleIOProvider(bundleReaderSource, bundleWriterSource);
         CoreCdiProducer cdiProducer = new CoreCdiProducer();
-        socketStorageListener = new StorageAgentListener("localhost", 0, new DataTransferServiceImpl(Executors.newFixedThreadPool(3), dataBundleIOProvider), storageAllocatorService);
+        socketStorageListener = new StorageAgentListener("localhost", 0, new DataTransferServiceImpl(Executors.newFixedThreadPool(3), dataBundleIOProvider), storageAllocatorService, TEST_AUTH_KEY);
         startListener(cdiProducer.createSingleExecutorService());
     }
 
@@ -146,17 +155,16 @@ public class StorageAgentListenerITest {
         Path sourceTestDataDirectory = Paths.get(TEST_DATA_DIRECTORY);
         long sourceTestDataDirSize = PathUtils.getSize(sourceTestDataDirectory, (f, fa) -> fa.isRegularFile());
         for (TestData td : testData) {
-            StorageMessageResponse persistenceResponse = storageClient.persistData(sourceTestDataDirectory.toString(), td.persistedDataStorageInfo);
+            StorageMessageResponse persistenceResponse = storageClient.persistData(sourceTestDataDirectory.toString(), td.persistedDataStorageInfo, createAuthToken());
             Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
             assertThat(persistenceResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(targetPath));
-            assertThat(PathUtils.getSize(targetPath, (f, fa) -> fa.isRegularFile()), lessThanOrEqualTo(persistenceResponse.getPersistedBytes()));
-            StorageMessageResponse retrievalResponse = storageClient.retrieveData(td.retrievedDataStorageInfo.getPath(), td.persistedDataStorageInfo);
+            assertThat(PathUtils.getSize(targetPath, (f, fa) -> fa.isRegularFile()), greaterThanOrEqualTo(sourceTestDataDirSize));
+            StorageMessageResponse retrievalResponse = storageClient.retrieveData(td.retrievedDataStorageInfo.getPath(), td.persistedDataStorageInfo, createAuthToken());
             Path localPath = Paths.get(td.retrievedDataStorageInfo.getPath());
             assertThat(retrievalResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(localPath));
             assertThat(localPath + " size compared to " + sourceTestDataDirectory, PathUtils.getSize(localPath, (f, fa) -> fa.isRegularFile()), equalTo(sourceTestDataDirSize));
-            assertThat(retrievalResponse.getTransferredBytes(), equalTo(persistenceResponse.getTransferredBytes()));
         }
     }
 
@@ -197,17 +205,16 @@ public class StorageAgentListenerITest {
         Path sourceTestDataFile = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
         long sourceTestDataDirSize = PathUtils.getSize(sourceTestDataFile, (f, fa) -> fa.isRegularFile());
         for (TestData td : testData) {
-            StorageMessageResponse persistenceResponse = storageClient.persistData(sourceTestDataFile.toString(), td.persistedDataStorageInfo);
+            StorageMessageResponse persistenceResponse = storageClient.persistData(sourceTestDataFile.toString(), td.persistedDataStorageInfo, createAuthToken());
             Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
             assertThat(targetPath.toString(), persistenceResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(targetPath));
-            assertThat(targetPath.toString(), PathUtils.getSize(targetPath, (f, fa) -> fa.isRegularFile()), lessThanOrEqualTo(persistenceResponse.getPersistedBytes()));
-            StorageMessageResponse retrievalResponse = storageClient.retrieveData(td.retrievedDataStorageInfo.getPath(), td.persistedDataStorageInfo);
+            assertThat(targetPath.toString(), PathUtils.getSize(targetPath, (f, fa) -> fa.isRegularFile()), greaterThanOrEqualTo(sourceTestDataDirSize));
+            StorageMessageResponse retrievalResponse = storageClient.retrieveData(td.retrievedDataStorageInfo.getPath(), td.persistedDataStorageInfo, createAuthToken());
             Path localPath = Paths.get(td.retrievedDataStorageInfo.getPath());
             assertThat(retrievalResponse.getStatus(), equalTo(StorageMessageResponse.OK));
             assertTrue(Files.exists(localPath));
             assertThat(localPath.toString(), PathUtils.getSize(localPath, (p, a) -> a.isRegularFile()), equalTo(sourceTestDataDirSize));
-            assertThat(localPath.toString(), retrievalResponse.getTransferredBytes(), equalTo(persistenceResponse.getTransferredBytes()));
         }
     }
 
@@ -253,11 +260,11 @@ public class StorageAgentListenerITest {
                 .build();
         for (TestData td : testData) {
             try {
-                StorageMessageResponse persistenceOKResponse = storageClient.persistData(td.sourceDataPath.toString(), td.persistedDataStorageInfo);
+                StorageMessageResponse persistenceOKResponse = storageClient.persistData(td.sourceDataPath.toString(), td.persistedDataStorageInfo, createAuthToken());
                 Path targetPath = Paths.get(td.persistedDataStorageInfo.getPath());
                 assertThat(td.persistedDataStorageInfo.getPath(), persistenceOKResponse.getStatus(), equalTo(StorageMessageResponse.OK));
                 assertTrue(Files.exists(targetPath));
-                StorageMessageResponse persistenceErrorResponse = storageClient.persistData(td.sourceDataPath.toString(), td.persistedDataStorageInfo);
+                StorageMessageResponse persistenceErrorResponse = storageClient.persistData(td.sourceDataPath.toString(), td.persistedDataStorageInfo, createAuthToken());
                 assertThat(persistenceErrorResponse.getStatus(), equalTo(StorageMessageResponse.ERROR));
                 assertThat(persistenceErrorResponse.getMessage(), containsString(String.format(td.expectedErrorMessage, td.persistedDataStorageInfo.getPath())));
             } catch (Exception e) {
@@ -272,7 +279,7 @@ public class StorageAgentListenerITest {
         DataStorageInfo remoteStorageInfo = storageInfo(testDirectory.resolve("retrieveError.td1.remote"), JacsStorageFormat.ARCHIVE_DATA_FILE);
         DataStorageInfo localStorageInfo = storageInfo(testDirectory.resolve("retrieveError.td1.localservice"), JacsStorageFormat.ARCHIVE_DATA_FILE);
         StorageClient storageClient = createStorageClient();
-        StorageMessageResponse retrieveErrorResponse = storageClient.retrieveData(localStorageInfo.getPath(), remoteStorageInfo);
+        StorageMessageResponse retrieveErrorResponse = storageClient.retrieveData(localStorageInfo.getPath(), remoteStorageInfo, createAuthToken());
         assertThat(retrieveErrorResponse.getStatus(), equalTo(StorageMessageResponse.ERROR));
         assertThat(retrieveErrorResponse.getMessage(), containsString(String.format("No file found for %s", remoteStorageInfo.getPath())));
     }
@@ -289,5 +296,23 @@ public class StorageAgentListenerITest {
                 .setConnectionInfo(listenerSocketAddr)
                 .setStorageFormat(storageFormat)
                 .setPath(targetPath.toString());
+    }
+
+    private String createAuthToken() {
+        try {
+            JWSSigner signer = new MACSigner(TEST_AUTH_KEY.getBytes());
+            JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                    .subject("test")
+                    .issuer("https://test")
+                    .expirationTime(new Date(System.currentTimeMillis() + 60 * 1000))
+                    .claim("name", "First Last")
+                    .claim("email", "test@test.com")
+                    .build();
+            SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
+            signedJWT.sign(signer);
+            return signedJWT.serialize();
+        } catch (Exception e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 }

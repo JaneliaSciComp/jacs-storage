@@ -11,6 +11,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
+import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.AbstractStorageAllocatorService;
 import org.janelia.jacsstorage.utils.PathUtils;
 import org.slf4j.Logger;
@@ -38,15 +39,16 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
     }
 
     @Override
-    public boolean deleteStorage(JacsBundle dataBundle) {
+    public boolean deleteStorage(JacsCredentials credentials, JacsBundle dataBundle) {
         JacsBundle existingBundle = bundleDao.findById(dataBundle.getId());
         if (existingBundle == null) {
             return false;
         }
+        checkStorageAccess(credentials, existingBundle);
         return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
                 .flatMap(sv -> agentManager.findRegisteredAgentByLocationOrConnectionInfo(sv.getLocation()))
                 .map(storageAgentInfo -> {
-                    if (AgentConnectionHelper.deleteStorage(storageAgentInfo.getAgentURL(), existingBundle.getId())) {
+                    if (AgentConnectionHelper.deleteStorage(storageAgentInfo.getAgentURL(), existingBundle.getId(), credentials.getAuthToken())) {
                         LOG.info("Delete {}", existingBundle);
                         bundleDao.delete(existingBundle);
                         return true;

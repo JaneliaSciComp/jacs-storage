@@ -10,18 +10,18 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 @Provider
-public class InvalidArgumentRequestHandler implements ExceptionMapper<IllegalArgumentException> {
-    private static final Logger LOG = LoggerFactory.getLogger(InvalidArgumentRequestHandler.class);
+public class IllegalAccessRequestHandler implements ExceptionMapper<SecurityException> {
+    private static final Logger LOG = LoggerFactory.getLogger(IllegalAccessRequestHandler.class);
 
     @Override
-    public Response toResponse(IllegalArgumentException exception) {
-        LOG.error("Invalid argument response", exception);
+    public Response toResponse(SecurityException exception) {
+        LOG.error("Illegal access response", exception);
         String errorMessage = exception.getMessage();
         if (StringUtils.isBlank(errorMessage)) {
-            errorMessage = "Invalid argument";
+            errorMessage = "Access denied";
         }
         return Response
-                .status(Response.Status.NOT_FOUND)
+                .status(Response.Status.FORBIDDEN)
                 .entity(ImmutableMap.of("errormessage", errorMessage))
                 .build();
     }
