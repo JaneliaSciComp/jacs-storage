@@ -71,12 +71,15 @@ public class WebdavResource {
                     if (nodeInfo.isCollectionFlag()) {
                         prop.setResourceType("collection");
                     }
+
                     Propstat propstat = new Propstat();
                     propstat.setProp(prop);
                     propstat.setStatus("HTTP/1.1 200 OK");
 
                     PropfindResponse propfindResponse = new PropfindResponse();
-                    propfindResponse.setHref(nodeInfo.isCollectionFlag() ? nodeInfo.getNodePath() + "/" : nodeInfo.getNodePath());
+                    propfindResponse.setHref(nodeInfo.isCollectionFlag()
+                            ?  StringUtils.appendIfMissing(nodeInfo.getNodePath(), "/")
+                            : nodeInfo.getNodePath());
                     propfindResponse.setPropstat(propstat);
                     return propfindResponse;
                 })

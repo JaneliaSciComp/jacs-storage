@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.base.Preconditions;
+import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
@@ -91,7 +92,7 @@ public class AgentStorageResource {
 
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    @Path("{dataBundleId}/content")
+    @Path("{dataBundleId}/list")
     public Response listContent(@PathParam("dataBundleId") Long dataBundleId,
                                 @QueryParam("depth") Integer depthParam,
                                 @Context SecurityContext securityContext) {
@@ -102,6 +103,34 @@ public class AgentStorageResource {
         return Response
                 .ok(dataBundleCotent, MediaType.APPLICATION_JSON)
                 .header("content-disposition","attachment; filename = " + dataBundle.getOwner() + "-" + dataBundle.getName())
+                .build();
+    }
+
+    @Produces(MediaType.APPLICATION_JSON)
+    @GET
+    @Path("{dataBundleId}/entry-content/{dataEntryPath: .*}")
+    public Response entryContent(@PathParam("dataBundleId") Long dataBundleId,
+                                @PathParam("dataEntryPath") String dataEntryPath,
+                                @Context SecurityContext securityContext) {
+        JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
+        Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
+        StreamingOutput bundleStream =  new StreamingOutput()
+        {
+            @Override
+            public void write(java.io.OutputStream output) throws IOException, WebApplicationException {
+                try {
+                    ByteStreams.copy(
+                            dataStorageService.getDataEntryStream(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat()),
+                            output);
+                    output.flush();
+                } catch (Exception e) {
+                    throw new WebApplicationException(e);
+                }
+            }
+        };
+        return Response
+                .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)
+                .header("content-disposition","attachment; filename = " + dataBundle.getOwner() + "-" + dataBundle.getName() + "/" + dataEntryPath)
                 .build();
     }
 

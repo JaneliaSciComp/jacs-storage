@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import org.janelia.jacsstorage.filter.CORSResponseFilter;
 import org.janelia.jacsstorage.filter.JWTAuthFilter;
 import org.janelia.jacsstorage.provider.ObjectMapperResolver;
+import org.janelia.jacsstorage.rest.IOErrorRequestHandler;
 import org.janelia.jacsstorage.rest.IllegalAccessRequestHandler;
 import org.janelia.jacsstorage.rest.IllegalStateRequestHandler;
 import org.janelia.jacsstorage.rest.InvalidArgumentRequestHandler;
@@ -26,7 +27,8 @@ public abstract class AbstractJAXApp extends Application {
                         IllegalAccessRequestHandler.class,
                         IllegalStateRequestHandler.class,
                         InvalidJsonRequestHandler.class,
-                        JsonParseErrorRequestHandler.class)
+                        JsonParseErrorRequestHandler.class,
+                        IOErrorRequestHandler.class)
                 .addAll(getAppClasses())
                 .build();
     }

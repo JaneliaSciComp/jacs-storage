@@ -11,6 +11,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.Pipe;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -95,7 +97,21 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
         if (Files.notExists(entryPath)) {
             throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
         }
-        return new FileInputStream(entryPath.toFile());
+        if (Files.isDirectory(entryPath)) {
+            return streamDirectory(entryPath);
+        } else {
+            return new FileInputStream(entryPath.toFile());
+        }
+    }
+
+    private InputStream streamDirectory(Path dir) throws IOException {
+        Pipe pipe = Pipe.open();
+        TarArchiveOutputStream outputStream = new TarArchiveOutputStream(Channels.newOutputStream(pipe.sink()));
+        ArchiveFileVisitor archiver = new ArchiveFileVisitor(dir, outputStream);
+        Files.walkFileTree(dir, archiver);
+        outputStream.finish();
+        pipe.sink().close();
+        return Channels.newInputStream(pipe.source());
     }
 
     private Path getSourcePath(String source) {

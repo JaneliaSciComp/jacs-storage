@@ -69,12 +69,15 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     public InputStream readDataEntry(String source, String entryName) throws IOException {
         Path sourcePath = getSourcePath(source);
         TarArchiveInputStream inputStream = new TarArchiveInputStream(new FileInputStream(sourcePath.toFile()));
+        if (StringUtils.isBlank(entryName)) {
+            return inputStream;
+        }
         TarArchiveOutputStream outputStream = null;
         Pipe pipe = null;
         for (TarArchiveEntry sourceEntry = inputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = inputStream.getNextTarEntry()) {
             String currentEntryName = StringUtils.removeStart(sourceEntry.getName(), "./");
             if (currentEntryName.equals(entryName)) {
-                if (!sourceEntry.isDirectory()) {
+                if (sourceEntry.isDirectory()) {
                     pipe = Pipe.open();
                     outputStream = new TarArchiveOutputStream(Channels.newOutputStream(pipe.sink()));
                 } else {
@@ -92,10 +95,13 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                 entry.setUserName(sourceEntry.getUserName());
                 entry.setGroupName(sourceEntry.getGroupName());
                 outputStream.putArchiveEntry(entry);
+                if (sourceEntry.isFile()) {
+                    ByteStreams.copy(ByteStreams.limit(inputStream, sourceEntry.getSize()), outputStream);
+                }
                 outputStream.closeArchiveEntry();
-                ByteStreams.copy(ByteStreams.limit(inputStream, sourceEntry.getSize()), outputStream);
             } else {
                 if (pipe != null) {
+                    outputStream.finish();;
                     pipe.sink().close();
                     return Channels.newInputStream(pipe.source());
                 }
@@ -104,6 +110,7 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
         if (pipe == null) {
             throw new IllegalArgumentException("No entry " + entryName + " found under " + source);
         } else {
+            outputStream.finish();;
             pipe.sink().close();
             return Channels.newInputStream(pipe.source());
         }
