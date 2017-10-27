@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service;
 
+import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class DataStorageServiceImpl implements DataStorageService {
 
@@ -25,14 +27,26 @@ public class DataStorageServiceImpl implements DataStorageService {
 
     @Override
     public TransferInfo persistDataStream(String dataPath, JacsStorageFormat dataStorageFormat, InputStream dataStream) throws IOException {
-        BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataPath, dataStorageFormat);
+        BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataStorageFormat);
         return bundleWriter.writeBundle(new BufferedInputStream(dataStream), dataPath);
     }
 
     @Override
     public TransferInfo retrieveDataStream(String dataPath, JacsStorageFormat dataStorageFormat, OutputStream dataStream) throws IOException {
-        BundleReader bundleReader = dataIOProvider.getBundleReader(dataPath, dataStorageFormat);
+        BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
         return bundleReader.readBundle(dataPath, dataStream);
+    }
+
+    @Override
+    public List<DataNodeInfo> listDataEntries(String dataPath, JacsStorageFormat dataStorageFormat, int depth) {
+        BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
+        return bundleReader.listBundleContent(dataPath, depth);
+    }
+
+    @Override
+    public InputStream getDataEntryStream(String dataPath, String entryName, JacsStorageFormat dataStorageFormat) throws IOException {
+        BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
+        return bundleReader.readDataEntry(dataPath, entryName);
     }
 
     @Override

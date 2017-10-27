@@ -9,8 +9,10 @@ import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -72,5 +74,4 @@ public class DistributedStorageLookupServiceTest {
         verify(storageAgentManager).findRegisteredAgentByLocationOrConnectionInfo(testLocation);
         assertThat(dataBundle.getConnectionInfo(), equalTo("testConnectionInfo"));
     }
-
 }

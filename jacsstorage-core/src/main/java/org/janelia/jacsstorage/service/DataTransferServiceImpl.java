@@ -53,7 +53,7 @@ public class DataTransferServiceImpl implements DataTransferService {
         LOG.info("Begin reading data from: {}", dataLocation);
         BundleReader bundleReader;
         try {
-            bundleReader = dataIOProvider.getBundleReader(dataLocation.getPath(), dataLocation.getStorageFormat());
+            bundleReader = dataIOProvider.getBundleReader(dataLocation.getStorageFormat());
         } catch (Exception e) {
             transferState.setErrorMessage("Error opening the reader for " + dataLocation + " - " + e.getMessage());
             transferState.setState(State.READ_DATA_ERROR);
@@ -119,7 +119,7 @@ public class DataTransferServiceImpl implements DataTransferService {
         LOG.info("Begin writing data to: {}", dataLocation);
         BundleWriter bundleWriter;
         try {
-            bundleWriter = dataIOProvider.getBundleWriter(dataLocation.getPath(), dataLocation.getStorageFormat());
+            bundleWriter = dataIOProvider.getBundleWriter(dataLocation.getStorageFormat());
         } catch (Exception e) {
             transferState.setErrorMessage("Error opening the writer for " + dataLocation + " - " + e.getMessage());
             transferState.setState(State.WRITE_DATA_ERROR);

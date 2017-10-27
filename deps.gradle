@@ -59,6 +59,7 @@ dependencies {
         JACKSON_DATAFORMAT_XML_LIB = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${JACKSON_VERSION}"
         JACKSON_DATATYPE_JODA_LIB = "com.fasterxml.jackson.datatype:jackson-datatype-joda:${JACKSON_VERSION}"
         JACKSON_JAXRS_JSON_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${JACKSON_VERSION}"
+        JACKSON_JAXRS_XML_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-xml-provider:${JACKSON_VERSION}"
 
         // auth
         JWT_LIB = "com.nimbusds:nimbus-jose-jwt:5.1"

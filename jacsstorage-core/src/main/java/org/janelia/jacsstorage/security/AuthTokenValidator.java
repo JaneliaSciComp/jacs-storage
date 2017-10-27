@@ -33,7 +33,7 @@ public class AuthTokenValidator {
                     .setAuthToken(jwt)
                     .setClaims(claimsSet);
         } catch (Exception e) {
-            throw new IllegalArgumentException(e);
+            throw new SecurityException(e);
         }
     }
 }

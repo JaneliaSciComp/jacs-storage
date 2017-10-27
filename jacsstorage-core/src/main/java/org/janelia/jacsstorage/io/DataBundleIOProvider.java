@@ -18,7 +18,7 @@ public class DataBundleIOProvider {
         this.bundleWriterSource = bundleWriterSource;
     }
 
-    public BundleReader getBundleReader(String source, JacsStorageFormat format) {
+    public BundleReader getBundleReader(JacsStorageFormat format) {
         for (BundleReader bundleReader : getSupportedReaders(bundleReaderSource)) {
             if (bundleReader.getSupportedFormats().contains(format)) {
                 return bundleReader;
@@ -27,7 +27,7 @@ public class DataBundleIOProvider {
         throw new IllegalArgumentException("Unsuported data bundle read format: " + format);
     }
 
-    public BundleWriter getBundleWriter(String target, JacsStorageFormat format) {
+    public BundleWriter getBundleWriter(JacsStorageFormat format) {
         for (BundleWriter bundleWriter : getSupportedWriters(bundleWriterSource)) {
             if (bundleWriter.getSupportedFormats().contains(format)) {
                 return bundleWriter;

@@ -1,13 +1,14 @@
 package org.janelia.jacsstorage.webdav.propfind;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class PropfindResponse {
     @JacksonXmlProperty(localName = "D:href")
-    String href;
+    private String href;
 
     @JacksonXmlProperty(localName = "D:propstat")
-    Propstat propstat;
+    private Propstat propstat;
 
     public Propstat getPropstat() {
         return propstat;
@@ -23,6 +24,13 @@ public class PropfindResponse {
 
     public void setHref(String href) {
         this.href = href;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("propstat", propstat)
+                .build();
     }
 }
 

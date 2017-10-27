@@ -1,8 +1,12 @@
 package org.janelia.jacsstorage.io;
 
+import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.Set;
 
 public interface BundleReader {
@@ -16,4 +20,21 @@ public interface BundleReader {
      * @return data transfer info
      */
     TransferInfo readBundle(String source, OutputStream stream);
+
+    /**
+     * List bundle content.
+     * @param source bundle
+     * @param depth
+     * @return
+     */
+    List<DataNodeInfo> listBundleContent(String source, int depth);
+
+    /**
+     * Read the specified entry from the bundle.
+     * @param source
+     * @param entryName
+     * @return
+     * @throws IOException
+     */
+    InputStream readDataEntry(String source, String entryName) throws IOException;
 }

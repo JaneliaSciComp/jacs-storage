@@ -1,25 +1,28 @@
 package org.janelia.jacsstorage.webdav.propfind;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import java.util.Date;
 
 public class Prop {
-    @JacksonXmlProperty(localName = "D:resourcetype")
+    @JacksonXmlProperty(namespace = "D", localName = "resourcetype")
     String resourceType;
 
-    @JacksonXmlProperty(localName = "D:creationdate")
-    String creationDate;
+    @JacksonXmlProperty(namespace = "D", localName = "creationdate")
+    Date creationDate;
 
-    @JacksonXmlProperty(localName = "D:getlastmodified")
-    String getLastModified;
+    @JacksonXmlProperty(namespace = "D", localName = "getlastmodified")
+    Date lastmodified;
 
-    @JacksonXmlProperty(localName = "D:getetag")
-    String getEtag;
+    @JacksonXmlProperty(namespace = "D", localName = "getetag")
+    String etag;
 
-    @JacksonXmlProperty(localName = "D:getcontenttype")
-    String getContentType;
+    @JacksonXmlProperty(namespace = "D", localName = "getcontenttype")
+    String contentType;
 
-    @JacksonXmlProperty(localName = "D:getcontentlength")
-    String getContentLength;
+    @JacksonXmlProperty(namespace = "D", localName = "getcontentlength")
+    String contentLength;
 
     public String getResourceType() {
         return resourceType;
@@ -29,43 +32,53 @@ public class Prop {
         this.resourceType = resourceType;
     }
 
-    public String getCreationDate() {
+    public Date getCreationDate() {
         return creationDate;
     }
 
-    public void setCreationDate(String creationDate) {
+    public void setCreationDate(Date creationDate) {
         this.creationDate = creationDate;
     }
 
-    public String getGetLastModified() {
-        return getLastModified;
+    public Date getLastmodified() {
+        return lastmodified;
     }
 
-    public void setGetLastModified(String getLastModified) {
-        this.getLastModified = getLastModified;
+    public void setLastmodified(Date lastmodified) {
+        this.lastmodified = lastmodified;
     }
 
-    public String getGetEtag() {
-        return getEtag;
+    public String getEtag() {
+        return etag;
     }
 
-    public void setGetEtag(String getEtag) {
-        this.getEtag = getEtag;
+    public void setEtag(String etag) {
+        this.etag = etag;
     }
 
-    public String getGetContentType() {
-        return getContentType;
+    public String getContentType() {
+        return contentType;
     }
 
-    public void setGetContentType(String getContentType) {
-        this.getContentType = getContentType;
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 
-    public String getGetContentLength() {
-        return getContentLength;
+    public String getContentLength() {
+        return contentLength;
     }
 
-    public void setGetContentLength(String getContentLength) {
-        this.getContentLength = getContentLength;
+    public void setContentLength(String contentLength) {
+        this.contentLength = contentLength;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("resourceType", resourceType)
+                .append("etag", etag)
+                .append("contentType", contentType)
+                .append("contentLength", contentLength)
+                .build();
     }
 }

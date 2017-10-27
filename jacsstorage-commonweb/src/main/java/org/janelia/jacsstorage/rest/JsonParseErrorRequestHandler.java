@@ -1,7 +1,6 @@
 package org.janelia.jacsstorage.rest;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +22,7 @@ public class JsonParseErrorRequestHandler implements ExceptionMapper<JsonParseEx
         }
         return Response
                 .status(Response.Status.BAD_REQUEST)
-                .entity(ImmutableMap.of("errormessage", errorMessage))
+                .entity(new ErrorResponse(errorMessage))
                 .build();
     }
 

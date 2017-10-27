@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.filter;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
+import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.security.JacsSecurityContext;
 import org.janelia.jacsstorage.security.AuthTokenValidator;
 
@@ -27,8 +28,6 @@ public class JWTAuthFilter implements ContainerRequestFilter {
 
     @Context
     private ResourceInfo resourceInfo;
-    @Inject
-    private AuthTokenValidator jwtTokenValidator;
     @Inject @PropertyValue(name = "JWT.SecretKey")
     private String jwtSecretKey;
 
@@ -48,14 +47,23 @@ public class JWTAuthFilter implements ContainerRequestFilter {
         if (StringUtils.isBlank(jwt)) {
             requestContext.abortWith(
                     Response.status(Response.Status.FORBIDDEN)
-                            .entity(ImmutableMap.of("errormessage", "Resource is not accessible without proper authentication"))
+                            .entity(new ErrorResponse("Resource is not accessible without proper authentication"))
+                            .build()
+            );
+            return;
+        }
+        AuthTokenValidator tokenValidator = new AuthTokenValidator(jwtSecretKey);
+        try {
+            JacsSecurityContext securityContext = new JacsSecurityContext(tokenValidator.validateJwtToken(jwt),
+                    "https".equals(requestContext.getUriInfo().getRequestUri().getScheme()),
+                    "JWT");
+            requestContext.setSecurityContext(securityContext);
+        } catch (SecurityException e) {
+            requestContext.abortWith(
+                    Response.status(Response.Status.FORBIDDEN)
+                            .entity(new ErrorResponse(e.getMessage()))
                             .build()
             );
         }
-        AuthTokenValidator tokenValidator = new AuthTokenValidator(jwtSecretKey);
-        JacsSecurityContext securityContext = new JacsSecurityContext(tokenValidator.validateJwtToken(jwt),
-                "https".equals(requestContext.getUriInfo().getRequestUri().getScheme()),
-                "JWT");
-        requestContext.setSecurityContext(securityContext);
     }
 }

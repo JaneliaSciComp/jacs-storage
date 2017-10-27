@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.rest;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +21,7 @@ public class InvalidArgumentRequestHandler implements ExceptionMapper<IllegalArg
         }
         return Response
                 .status(Response.Status.NOT_FOUND)
-                .entity(ImmutableMap.of("errormessage", errorMessage))
+                .entity(new ErrorResponse(errorMessage))
                 .build();
     }
 
