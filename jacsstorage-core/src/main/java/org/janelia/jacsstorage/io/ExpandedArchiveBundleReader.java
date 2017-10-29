@@ -53,7 +53,9 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
 
         private void createEntry(Path p) throws IOException {
             Path entryPath = parentDir.relativize(p);
-            String entryName = StringUtils.prependIfMissing(entryPath.toString(), "./");
+            String entryName = StringUtils.prependIfMissing(
+                    StringUtils.prependIfMissing(entryPath.toString(), "/"),
+                    ".");
             TarArchiveEntry entry = new TarArchiveEntry(p.toFile(), entryName);
             outputStream.putArchiveEntry(entry);
         }

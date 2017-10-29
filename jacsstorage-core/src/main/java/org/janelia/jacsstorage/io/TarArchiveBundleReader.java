@@ -10,10 +10,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
+import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.Pipe;
 import java.nio.file.Files;
@@ -68,52 +70,150 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     @Override
     public InputStream readDataEntry(String source, String entryName) throws IOException {
         Path sourcePath = getSourcePath(source);
-        TarArchiveInputStream inputStream = new TarArchiveInputStream(new FileInputStream(sourcePath.toFile()));
+        TarArchiveInputStream inputStream = new TarArchiveInputStream(new BufferedInputStream(new FileInputStream(sourcePath.toFile())));
         if (StringUtils.isBlank(entryName)) {
             return inputStream;
         }
-        TarArchiveOutputStream outputStream = null;
-        Pipe pipe = null;
+        String normalizedEntryName = normalizeEntryName(entryName);
         for (TarArchiveEntry sourceEntry = inputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = inputStream.getNextTarEntry()) {
-            String currentEntryName = StringUtils.removeStart(sourceEntry.getName(), "./");
-            if (currentEntryName.equals(entryName)) {
+            String currentEntryName = normalizeEntryName(sourceEntry.getName());
+            if (currentEntryName.equals(normalizedEntryName)) {
                 if (sourceEntry.isDirectory()) {
-                    pipe = Pipe.open();
-                    outputStream = new TarArchiveOutputStream(Channels.newOutputStream(pipe.sink()));
+                    TarArchiveEntry currentEntry = sourceEntry;
+                    ByteBuffer readBuffer = ByteBuffer.allocate(512);
+                    readBuffer.limit(0);
+                    Pipe pipe = Pipe.open();
+                    pipe.source().configureBlocking(true);
+
+                    return new InputStream() {
+                        TarArchiveEntry nextStreamedEntry = currentEntry;
+
+                        TarArchiveOutputStream outputStream = new TarArchiveOutputStream(Channels.newOutputStream(pipe.sink()));
+                        InputStream entryContentStream = null;
+                        TarStreamerState writerState = TarStreamerState.WRITE_ENTRYHEADER;
+
+                        @Override
+                        public int read() throws IOException {
+                            if (!readBuffer.hasRemaining()) {
+                                if (!fillBuffer()) {
+                                    return -1;
+                                }
+                            }
+                            return readBuffer.get();
+                        }
+
+                        private boolean fillBuffer() throws IOException {
+                            boolean endLoop = false;
+                            while (!endLoop) {
+                                switch (writerState) {
+                                    case WRITE_ENTRYHEADER:
+                                        endLoop = writeEntryHeader();
+                                        break;
+                                    case WRITE_ENTRYCONTENT:
+                                        endLoop = writeEntryContent();
+                                        break;
+                                    case WRITE_ENTRYFOOTER:
+                                        endLoop = writeEntryFooter();
+                                        break;
+                                    case WRITE_COMPLETED:
+                                        pipe.sink().close();
+                                        endLoop = true;
+                                        break;
+                                    default:
+                                        return false;
+                                }
+                            }
+                            int nbytes = fillReaderBuffer();
+                            if (nbytes == -1) {
+                                pipe.source().close();
+                                return false;
+                            } else {
+                                return true;
+                            }
+                        }
+
+                        private int fillReaderBuffer() throws IOException {
+                            readBuffer.clear();
+                            int nbytes = pipe.source().read(readBuffer);
+                            if (nbytes == -1) {
+                                readBuffer.limit(0);
+                            } else if (nbytes == 0) {
+                                readBuffer.limit(0);
+                            } else {
+                                readBuffer.flip();
+                            }
+                            return nbytes;
+                        }
+
+                        private boolean writeEntryHeader() throws IOException {
+                            String currentEntryName = normalizeEntryName(nextStreamedEntry.getName());
+                            String relativeEntryName = StringUtils.removeStart(currentEntryName, normalizedEntryName);
+                            String newEntryName = StringUtils.prependIfMissing(
+                                    StringUtils.prependIfMissing(normalizeEntryName(relativeEntryName), "/"),
+                                    ".");
+                            TarArchiveEntry entry = new TarArchiveEntry(newEntryName, false);
+                            entry.setSize(nextStreamedEntry.getSize());
+                            entry.setModTime(nextStreamedEntry.getModTime());
+                            entry.setMode(nextStreamedEntry.getMode());
+                            entry.setUserId(nextStreamedEntry.getLongUserId());
+                            entry.setGroupId(nextStreamedEntry.getLongGroupId());
+                            entry.setUserName(nextStreamedEntry.getUserName());
+                            entry.setGroupName(nextStreamedEntry.getGroupName());
+                            outputStream.putArchiveEntry(entry);
+                            if (nextStreamedEntry.isFile()) {
+                                writerState = TarStreamerState.WRITE_ENTRYCONTENT;
+                                entryContentStream = ByteStreams.limit(inputStream, nextStreamedEntry.getSize());
+                            } else {
+                                writerState = TarStreamerState.WRITE_ENTRYFOOTER;
+                            }
+                            return true;
+                        }
+
+                        private boolean writeEntryContent() throws IOException {
+                            int bufferLength = 512;
+                            byte[] contentBuffer = new byte[bufferLength];
+                            int nbytes = entryContentStream.read(contentBuffer);
+                            if (nbytes == -1) {
+                                writerState = TarStreamerState.WRITE_ENTRYFOOTER;
+                                return false;
+                            } else if (nbytes == 0) {
+                                return false;
+                            } else {
+                                outputStream.write(contentBuffer, 0, nbytes);
+                                writerState = TarStreamerState.WRITE_ENTRYCONTENT;
+                                return nbytes == bufferLength;
+                            }
+                        }
+
+                        private boolean writeEntryFooter() throws IOException {
+                            outputStream.closeArchiveEntry();
+                            nextStreamedEntry = inputStream.getNextTarEntry();
+                            if (nextStreamedEntry == null) {
+                                outputStream.finish();
+                                writerState = TarStreamerState.WRITE_COMPLETED;
+                            } else {
+                                String currentEntryName = normalizeEntryName(nextStreamedEntry.getName());
+                                if (currentEntryName.startsWith(normalizedEntryName)) {
+                                    writerState = TarStreamerState.WRITE_ENTRYHEADER;
+                                } else {
+                                    outputStream.finish();
+                                    writerState = TarStreamerState.WRITE_COMPLETED;
+                                }
+                            }
+                            return false;
+                        }
+
+                        @Override
+                        public void close() throws IOException {
+                            pipe.source().close();
+                        }
+                    };
                 } else {
                     return ByteStreams.limit(inputStream, sourceEntry.getSize());
                 }
             }
-            if (pipe != null && currentEntryName.startsWith(entryName)) {
-                String newEntryName = StringUtils.prependIfMissing(StringUtils.removeStart(currentEntryName, entryName), "./");
-                TarArchiveEntry entry = new TarArchiveEntry(newEntryName, false);
-                entry.setSize(sourceEntry.getSize());
-                entry.setModTime(sourceEntry.getModTime());
-                entry.setMode(sourceEntry.getMode());
-                entry.setUserId(sourceEntry.getLongUserId());
-                entry.setGroupId(sourceEntry.getLongGroupId());
-                entry.setUserName(sourceEntry.getUserName());
-                entry.setGroupName(sourceEntry.getGroupName());
-                outputStream.putArchiveEntry(entry);
-                if (sourceEntry.isFile()) {
-                    ByteStreams.copy(ByteStreams.limit(inputStream, sourceEntry.getSize()), outputStream);
-                }
-                outputStream.closeArchiveEntry();
-            } else {
-                if (pipe != null) {
-                    outputStream.finish();;
-                    pipe.sink().close();
-                    return Channels.newInputStream(pipe.source());
-                }
-            }
         }
-        if (pipe == null) {
-            throw new IllegalArgumentException("No entry " + entryName + " found under " + source);
-        } else {
-            outputStream.finish();;
-            pipe.sink().close();
-            return Channels.newInputStream(pipe.source());
-        }
+        throw new IllegalArgumentException("No entry " + normalizedEntryName + " found under " + source);
     }
 
     private Path getSourcePath(String source) {
@@ -126,4 +226,9 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
         return sourcePath;
     }
 
+    private String normalizeEntryName(String name) {
+        return StringUtils.removeEnd(
+                StringUtils.removeStart(name, "./"),
+                "/");
+    }
 }
