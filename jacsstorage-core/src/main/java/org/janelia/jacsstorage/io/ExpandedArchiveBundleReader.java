@@ -93,27 +93,34 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
     }
 
     @Override
-    public InputStream readDataEntry(String source, String entryName) throws IOException {
+    public long readDataEntry(String source, String entryName, OutputStream outputStream) throws IOException {
         Path sourcePath = getSourcePath(source);
+        if (StringUtils.isBlank(entryName)) {
+            try {
+                return readBundleBytes(source, outputStream);
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+        }
         Path entryPath = sourcePath.resolve(entryName);
         if (Files.notExists(entryPath)) {
             throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
         }
         if (Files.isDirectory(entryPath)) {
-            return streamDirectory(entryPath);
+            TarArchiveOutputStream tarOutputStream = new TarArchiveOutputStream(outputStream);
+            Path archiverRootDir;
+            if (Files.isRegularFile(sourcePath)) {
+                archiverRootDir = sourcePath.getParent();
+            } else {
+                archiverRootDir = sourcePath;
+            }
+            ArchiveFileVisitor archiver = new ArchiveFileVisitor(archiverRootDir, tarOutputStream);
+            Files.walkFileTree(sourcePath, archiver);
+            tarOutputStream.finish();
+            return archiver.nBytes;
         } else {
-            return new FileInputStream(entryPath.toFile());
+            return Files.copy(entryPath, outputStream);
         }
-    }
-
-    private InputStream streamDirectory(Path dir) throws IOException {
-        Pipe pipe = Pipe.open();
-        TarArchiveOutputStream outputStream = new TarArchiveOutputStream(Channels.newOutputStream(pipe.sink()));
-        ArchiveFileVisitor archiver = new ArchiveFileVisitor(dir, outputStream);
-        Files.walkFileTree(dir, archiver);
-        outputStream.finish();
-        pipe.sink().close();
-        return Channels.newInputStream(pipe.source());
     }
 
     private Path getSourcePath(String source) {

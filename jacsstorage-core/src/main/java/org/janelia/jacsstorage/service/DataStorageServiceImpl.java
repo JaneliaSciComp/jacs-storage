@@ -44,9 +44,9 @@ public class DataStorageServiceImpl implements DataStorageService {
     }
 
     @Override
-    public InputStream getDataEntryStream(String dataPath, String entryName, JacsStorageFormat dataStorageFormat) throws IOException {
+    public long readDataEntryStream(String dataPath, String entryName, JacsStorageFormat dataStorageFormat, OutputStream outputStream) throws IOException {
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
-        return bundleReader.readDataEntry(dataPath, entryName);
+        return bundleReader.readDataEntry(dataPath, entryName, outputStream);
     }
 
     @Override

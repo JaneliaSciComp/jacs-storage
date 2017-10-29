@@ -119,8 +119,10 @@ public class AgentStorageResource {
             @Override
             public void write(java.io.OutputStream output) throws IOException, WebApplicationException {
                 try {
-                    ByteStreams.copy(
-                            dataStorageService.getDataEntryStream(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat()),
+                    dataStorageService.readDataEntryStream(
+                            dataBundle.getPath(),
+                            dataEntryPath,
+                            dataBundle.getStorageFormat(),
                             output);
                     output.flush();
                 } catch (Exception e) {

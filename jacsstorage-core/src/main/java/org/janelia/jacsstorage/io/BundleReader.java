@@ -33,8 +33,9 @@ public interface BundleReader {
      * Read the specified entry from the bundle.
      * @param source
      * @param entryName
+     * @param outputStream
      * @return
      * @throws IOException
      */
-    InputStream readDataEntry(String source, String entryName) throws IOException;
+    long readDataEntry(String source, String entryName, OutputStream outputStream) throws IOException;
 }

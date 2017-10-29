@@ -37,12 +37,12 @@ public class SingleFileBundleReader extends AbstractBundleReader {
     }
 
     @Override
-    public InputStream readDataEntry(String source, String entryName) throws IOException {
+    public long readDataEntry(String source, String entryName, OutputStream outputStream) throws IOException {
         Path sourcePath = getSourcePath(source);
         if (StringUtils.isNotBlank(entryName)) {
             throw new IllegalArgumentException("A single file (" + source + ") does not have any entry (" + entryName + ")");
         }
-        return new FileInputStream(sourcePath.toFile());
+        return Files.copy(sourcePath, outputStream);
     }
 
     private Path getSourcePath(String source) {
