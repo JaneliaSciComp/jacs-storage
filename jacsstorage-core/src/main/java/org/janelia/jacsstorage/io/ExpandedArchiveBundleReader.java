@@ -108,14 +108,8 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
         }
         if (Files.isDirectory(entryPath)) {
             TarArchiveOutputStream tarOutputStream = new TarArchiveOutputStream(outputStream);
-            Path archiverRootDir;
-            if (Files.isRegularFile(sourcePath)) {
-                archiverRootDir = sourcePath.getParent();
-            } else {
-                archiverRootDir = sourcePath;
-            }
-            ArchiveFileVisitor archiver = new ArchiveFileVisitor(archiverRootDir, tarOutputStream);
-            Files.walkFileTree(sourcePath, archiver);
+            ArchiveFileVisitor archiver = new ArchiveFileVisitor(entryPath, tarOutputStream);
+            Files.walkFileTree(entryPath, archiver);
             tarOutputStream.finish();
             return archiver.nBytes;
         } else {

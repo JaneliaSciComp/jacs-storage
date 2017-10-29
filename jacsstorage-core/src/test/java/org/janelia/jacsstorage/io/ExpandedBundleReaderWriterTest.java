@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.io;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.compress.utils.IOUtils;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -7,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -19,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertArrayEquals;
@@ -106,6 +109,24 @@ public class ExpandedBundleReaderWriterTest {
         TransferInfo info = expandedBundleReader.readBundle(testDataPath.toString(), output);
         assertThat(info.getNumBytes(), Matchers.equalTo((long) testDataBytes.length));
         assertThat(output.toByteArray().length, Matchers.greaterThan(testDataBytes.length));
+    }
+
+    @Test
+    public void readSDataEntry() throws IOException {
+        List<String> testData = ImmutableList.of(
+                "",
+                "d_1_1",
+                "d_1_2",
+                "d_1_2/d_1_2_1",
+                "d_1_3"
+        );
+        for (String td : testData) {
+            ByteArrayOutputStream testBundleOutputStream = new ByteArrayOutputStream();
+            expandedBundleReader.readBundle(TEST_DATA_DIRECTORY + "/" + td, testBundleOutputStream);
+            ByteArrayOutputStream testDataEntryStream = new ByteArrayOutputStream();
+            expandedBundleReader.readDataEntry(TEST_DATA_DIRECTORY, td, testDataEntryStream);
+            assertArrayEquals("Expected condition not met for " + td, testBundleOutputStream.toByteArray(), testDataEntryStream.toByteArray());
+        }
     }
 
     @Test
