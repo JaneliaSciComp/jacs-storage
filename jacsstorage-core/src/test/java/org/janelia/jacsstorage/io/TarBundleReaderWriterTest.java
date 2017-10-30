@@ -1,7 +1,6 @@
 package org.janelia.jacsstorage.io;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Ordering;
 import org.apache.commons.compress.utils.IOUtils;
 import org.hamcrest.Matchers;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
@@ -10,7 +9,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -24,31 +22,33 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-public class ExpandedBundleReaderWriterTest {
+public class TarBundleReaderWriterTest {
 
     private static final String TEST_DATA_DIRECTORY = "src/test/resources/testdata/bundletransfer";
 
     private Path testDirectory;
-    private ExpandedArchiveBundleReader expandedBundleReader;
-    private ExpandedArchiveBundleWriter expandedArchiveBundleWriter;
+    private Path testTarFile;
+    private ExpandedArchiveBundleReader expandedArchiveBundleReader;
+    private TarArchiveBundleReader tarBundleReader;
+    private TarArchiveBundleWriter tarBundleWriter;
 
     @Before
     public void setUp() throws IOException {
-        expandedBundleReader = new ExpandedArchiveBundleReader();
-        expandedArchiveBundleWriter = new ExpandedArchiveBundleWriter();
-        testDirectory = Files.createTempDirectory("ExpandedBundleReaderWriterTest");
+        expandedArchiveBundleReader = new ExpandedArchiveBundleReader();
+        tarBundleReader = new TarArchiveBundleReader();
+        tarBundleWriter = new TarArchiveBundleWriter();
+        testDirectory = Files.createTempDirectory("TarBundleReaderWriterTest");
+        testTarFile = createTestTarFile();
     }
 
     @After
@@ -68,67 +68,27 @@ public class ExpandedBundleReaderWriterTest {
         });
     }
 
-    @Test
-    public void directoryReadWriteCheck() throws Exception {
-        Path testDataDir = Paths.get(TEST_DATA_DIRECTORY);
-        Path testFilePath = testDirectory.resolve("readBundleToStream");
-        Path testExpandedPath = testDirectory.resolve("expandedArchiveBundle");
-        OutputStream testOutputStream = null;
-        InputStream testInputStream = null;
-        try {
-            testOutputStream = new FileOutputStream(testFilePath.toFile());
-            TransferInfo sentInfo = expandedBundleReader.readBundle(TEST_DATA_DIRECTORY, testOutputStream);
+    private Path createTestTarFile() throws IOException {
+        Path testTarFilePath = testDirectory.resolve("tarBundle.tar");
+        try(OutputStream testOutputStream = new FileOutputStream(testTarFilePath.toFile())) {
+            TransferInfo sentInfo = expandedArchiveBundleReader.readBundle(TEST_DATA_DIRECTORY, testOutputStream);
             assertNotNull(sentInfo);
-            testOutputStream.close();
-            testOutputStream = null;
-            testInputStream = new BufferedInputStream(new FileInputStream(testFilePath.toFile()));
-            TransferInfo receivedInfo = expandedArchiveBundleWriter.writeBundle(testInputStream, testExpandedPath.toString());
-            assertNotNull(receivedInfo);
-            assertEquals(sentInfo.getNumBytes(), receivedInfo.getNumBytes());
-            assertArrayEquals(sentInfo.getChecksum(), receivedInfo.getChecksum());
-            Files.walkFileTree(testExpandedPath, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Path relativePath = testExpandedPath.relativize(file);
-                    assertTrue(Files.exists(testDataDir.resolve(relativePath)));
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    Path relativePath = testExpandedPath.relativize(dir);
-                    assertTrue(Files.exists(testDataDir.resolve(relativePath)));
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } finally {
-            IOUtils.closeQuietly(testOutputStream);
-            IOUtils.closeQuietly(testInputStream);
         }
-    }
-
-    @Test
-    public void fileBundleRead() throws IOException {
-        Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
-        byte[] testDataBytes = Files.readAllBytes(testDataPath);
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        TransferInfo info = expandedBundleReader.readBundle(testDataPath.toString(), output);
-        assertThat(info.getNumBytes(), Matchers.equalTo((long) testDataBytes.length));
-        assertThat(output.toByteArray().length, Matchers.greaterThan(testDataBytes.length));
+        return testTarFilePath;
     }
 
     @Test
     public void listContentTree() {
         List<List<String>> expectedResults = ImmutableList.of(
                 ImmutableList.of(""),
-                ImmutableList.of("f_1_1", "d_1_1", "f_1_2", "d_1_2", "d_1_3", "f_1_3"),
-                ImmutableList.of("d_1_1/f_1_1_1", "d_1_2/d_1_2_1", "d_1_2/f_1_2_1", "d_1_3/f_1_3_1"),
+                ImmutableList.of("f_1_1", "d_1_1/", "f_1_2", "d_1_2/", "d_1_3/", "f_1_3"),
+                ImmutableList.of("d_1_1/f_1_1_1", "d_1_2/d_1_2_1/", "d_1_2/f_1_2_1", "d_1_3/f_1_3_1"),
                 ImmutableList.of("d_1_2/d_1_2_1/f_1_2_1_1"),
                 ImmutableList.of(),
                 ImmutableList.of()
         );
         for (int depth = 1; depth < expectedResults.size(); depth++) {
-            List<DataNodeInfo> nodeList = expandedBundleReader.listBundleContent(TEST_DATA_DIRECTORY, depth);
+            List<DataNodeInfo> nodeList = tarBundleReader.listBundleContent(testTarFile.toString(), depth);
             List<String> currentExpectedResults = IntStream.rangeClosed(0, depth)
                     .mapToObj(i -> expectedResults.get(i))
                     .flatMap(l -> l.stream())
@@ -149,9 +109,9 @@ public class ExpandedBundleReaderWriterTest {
         );
         for (String td : testData) {
             ByteArrayOutputStream referenceOutputStream = new ByteArrayOutputStream();
-            expandedBundleReader.readBundle(TEST_DATA_DIRECTORY + "/" + td, referenceOutputStream);
+            expandedArchiveBundleReader.readBundle(TEST_DATA_DIRECTORY + "/" + td, referenceOutputStream);
             ByteArrayOutputStream testDataEntryStream = new ByteArrayOutputStream();
-            expandedBundleReader.readDataEntry(TEST_DATA_DIRECTORY, td, testDataEntryStream);
+            tarBundleReader.readDataEntry(testTarFile.toString(), td, testDataEntryStream);
             assertArrayEquals("Expected condition not met for " + td, referenceOutputStream.toByteArray(), testDataEntryStream.toByteArray());
         }
     }
@@ -171,17 +131,48 @@ public class ExpandedBundleReaderWriterTest {
             ByteArrayOutputStream referenceOutputStream = new ByteArrayOutputStream();
             Files.copy(Paths.get(TEST_DATA_DIRECTORY, td), referenceOutputStream);
             ByteArrayOutputStream testDataEntryStream = new ByteArrayOutputStream();
-            expandedBundleReader.readDataEntry(TEST_DATA_DIRECTORY, td, testDataEntryStream);
+            tarBundleReader.readDataEntry(testTarFile.toString(), td, testDataEntryStream);
             assertArrayEquals("Expected condition not met for " + td, referenceOutputStream.toByteArray(), testDataEntryStream.toByteArray());
         }
     }
 
     @Test
-    public void bundleReadFailureBecauseSourceIsMissing() {
-        Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "missing");
+    public void readWriteCheck() throws Exception {
+        Path testReaderPath = testDirectory.resolve("readArchiveBundle");
+        Path testWriterPath = testDirectory.resolve("writtenArchiveBundle");
+        OutputStream testOutputStream = null;
+        InputStream testInputStream = null;
+        try {
+            testOutputStream = new FileOutputStream(testReaderPath.toFile());
+            TransferInfo sentInfo = tarBundleReader.readBundle(testTarFile.toString(), testOutputStream);
+            assertNotNull(sentInfo);
+            testOutputStream.close();
+            testOutputStream = null;
+            testInputStream = new BufferedInputStream(new FileInputStream(testReaderPath.toFile()));
+            TransferInfo receivedInfo = tarBundleWriter.writeBundle(testInputStream, testWriterPath.toString());
+            assertNotNull(receivedInfo);
+            assertEquals(sentInfo.getNumBytes(), receivedInfo.getNumBytes());
+            assertArrayEquals(sentInfo.getChecksum(), receivedInfo.getChecksum());
+        } finally {
+            IOUtils.closeQuietly(testOutputStream);
+            IOUtils.closeQuietly(testInputStream);
+        }
+    }
 
-        assertThatThrownBy(() -> expandedBundleReader.readBundle(testDataPath.toString(), new ByteArrayOutputStream()))
+    @Test
+    public void invalidDataEntry() throws IOException {
+        String testEntryName = "not-present";
+        assertThatThrownBy(() -> tarBundleReader.readDataEntry(testTarFile.toString(), testEntryName, new ByteArrayOutputStream()))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("java.lang.IllegalArgumentException: No path found for " + testDataPath.toString());
+                .hasMessage("No entry " + testEntryName + " found under " + testTarFile.toString());
+    }
+
+    @Test
+    public void bundleReadFailureBecauseSourceIsMissing() {
+        Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "missing.tar");
+
+        assertThatThrownBy(() -> tarBundleReader.readBundle(testDataPath.toString(), new ByteArrayOutputStream()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("java.lang.IllegalArgumentException: No file found for " + testDataPath.toString());
     }
 }
