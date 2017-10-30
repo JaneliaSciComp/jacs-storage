@@ -4,10 +4,10 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class PropfindResponse {
-    @JacksonXmlProperty(localName = "D:href")
+    @JacksonXmlProperty(namespace = "D", localName = "href")
     private String href;
 
-    @JacksonXmlProperty(localName = "D:propstat")
+    @JacksonXmlProperty(namespace = "D", localName = "propstat")
     private Propstat propstat;
 
     public Propstat getPropstat() {

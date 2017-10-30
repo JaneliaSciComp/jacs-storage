@@ -27,6 +27,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,9 @@ public class WebdavResource {
     @Inject
     private DataStorageService dataStorageService;
 
+    @Context
+    private UriInfo resourceURI;
+
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
     @PROPFIND
@@ -53,13 +57,13 @@ public class WebdavResource {
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         int depthValue = getDepth(depth);
         List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataBundle.getPath(), dataBundle.getStorageFormat(), depthValue);
-        Multistatus propfindResponse = convertBundleTree(dataBundleTree);
+        Multistatus propfindResponse = convertBundleTree(dataBundleId, dataBundleTree);
         return Response.status(207)
                 .entity(propfindResponse)
                 .build();
     }
 
-    private Multistatus convertBundleTree(List<DataNodeInfo> nodeInfoList) {
+    private Multistatus convertBundleTree(Number dataBundleId, List<DataNodeInfo> nodeInfoList) {
         Multistatus ms = new Multistatus();
         ms.getResponse().addAll(nodeInfoList.stream()
                 .map(nodeInfo -> {
@@ -77,9 +81,15 @@ public class WebdavResource {
                     propstat.setStatus("HTTP/1.1 200 OK");
 
                     PropfindResponse propfindResponse = new PropfindResponse();
-                    propfindResponse.setHref(nodeInfo.isCollectionFlag()
+                    String nodeInfoRelPath = nodeInfo.isCollectionFlag()
                             ?  StringUtils.appendIfMissing(nodeInfo.getNodePath(), "/")
-                            : nodeInfo.getNodePath());
+                            : nodeInfo.getNodePath();
+                    propfindResponse.setHref(resourceURI.getBaseUriBuilder()
+                            .path("agent-resource")
+                            .path(dataBundleId.toString())
+                            .path(nodeInfoRelPath)
+                            .build()
+                            .toString());
                     propfindResponse.setPropstat(propstat);
                     return propfindResponse;
                 })
@@ -88,13 +98,12 @@ public class WebdavResource {
     }
 
     @MKCOL
-    @Path("{dataBundleId}")
+    @Path("{dataBundleId}/{dataDirPath: .+}")
     public Response makeDir(@PathParam("dataBundleId") Long dataBundleId,
-                            @Context HttpHeaders headers,
-                            @Context HttpServletRequest request) {
+                            @PathParam("dataDirPath") String dataDirPath,
+                            @Context SecurityContext securityContext) {
         System.out.println("!!!!!!!!!!!!!!!!!!!MKCOL ID " + dataBundleId);
-        System.out.println("!!!!!!!!!!!!!!!!!!!MKCOL HEADERS " + headers);
-        System.out.println("!!!!!!!!!!!!!!!!!!!MKCOL REQUEST " + request);
+        System.out.println("!!!!!!!!!!!!!!!!!!!MKCOL DIRPATH " + dataDirPath);
         System.out.println("!!!!!!!!!!!!!!!!!!!MKCOL " + storageLookupService);
         return Response.status(Response.Status.CREATED)
                 .build();
