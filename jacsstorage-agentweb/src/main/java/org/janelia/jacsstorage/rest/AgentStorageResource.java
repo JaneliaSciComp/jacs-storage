@@ -30,6 +30,7 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.List;
@@ -75,7 +76,7 @@ public class AgentStorageResource {
         StreamingOutput bundleStream =  new StreamingOutput()
         {
             @Override
-            public void write(java.io.OutputStream output) throws IOException, WebApplicationException {
+            public void write(OutputStream output) throws IOException, WebApplicationException {
                 try {
                     dataStorageService.retrieveDataStream(dataBundle.getPath(), dataBundle.getStorageFormat(), output);
                     output.flush();

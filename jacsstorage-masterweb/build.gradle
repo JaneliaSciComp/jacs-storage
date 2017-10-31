@@ -5,7 +5,7 @@ mainClassName = 'org.janelia.jacsstorage.app.JacsMasterStorageApp'
 project(":jacsstorage-masterweb") {
     dependencies {
         implementation project(":jacsstorage-commonweb"),
-                       JAX_RS_CDI_EXT_LIB,
+                       JERSEY_CDI_SERVLET_LIB,
                        JERSEY_INJECT_LIB
     }
 }

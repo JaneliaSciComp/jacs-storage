@@ -1,11 +1,10 @@
 package org.janelia.jacsstorage.filter;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.rest.ErrorResponse;
-import org.janelia.jacsstorage.security.JacsSecurityContext;
 import org.janelia.jacsstorage.security.AuthTokenValidator;
+import org.janelia.jacsstorage.security.JacsSecurityContext;
 
 import javax.annotation.Priority;
 import javax.annotation.security.PermitAll;

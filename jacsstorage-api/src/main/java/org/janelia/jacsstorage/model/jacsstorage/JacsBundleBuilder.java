@@ -25,6 +25,16 @@ public class JacsBundleBuilder {
         return this;
     }
 
+    public JacsBundleBuilder path(String v) {
+        jacsBundle.setPath(v);
+        return this;
+    }
+
+    public JacsBundleBuilder storageFormat(JacsStorageFormat v) {
+        jacsBundle.setStorageFormat(v);
+        return this;
+    }
+
     public JacsBundleBuilder location(String v) {
         jacsBundle.setStorageVolume(jacsBundle.getStorageVolume().map(sv -> {
             sv.setLocation(v);
