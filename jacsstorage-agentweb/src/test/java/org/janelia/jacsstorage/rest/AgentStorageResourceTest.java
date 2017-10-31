@@ -14,6 +14,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
+import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
 import org.junit.Test;
 
 import javax.enterprise.inject.Produces;
@@ -30,7 +31,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class AgentStorageResourceTest extends CdiInjectedResourceTest {
+public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
 
     public static class AgentStorageDependenciesProducer {
         private DataStorageService dataStorageService = mock(DataStorageService.class);
@@ -96,7 +97,6 @@ public class AgentStorageResourceTest extends CdiInjectedResourceTest {
             protected Set<Class<?>> getAppClasses() {
                 return ImmutableSet.<Class<?>>builder()
                         .addAll(super.getAppClasses())
-                        .add(StorageAllocatorService.class)
                         .build()
                 ;
             }

@@ -12,6 +12,7 @@ project(":jacsstorage-agentweb") {
 
         testImplementation JERSEY_TEST_LIB,
                            JERSEY_TEST_PROVIDER_LIB
+
     }
 }
 

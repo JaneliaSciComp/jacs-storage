@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.rest;
+package org.janelia.jacsstorage.testrest;
 
 import org.glassfish.jersey.ext.cdi1x.internal.CdiComponentProvider;
 import org.glassfish.jersey.inject.hk2.Hk2InjectionManagerFactory;
@@ -12,7 +12,7 @@ import javax.enterprise.inject.se.SeContainerInitializer;
 
 import static org.mockito.Mockito.spy;
 
-public class CdiInjectedResourceTest extends JerseyTest {
+public class AbstractCdiInjectedResourceTest extends JerseyTest {
 
     protected SeContainer container;
 

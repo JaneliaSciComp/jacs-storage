@@ -1,7 +1,6 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.base.Preconditions;
-import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
