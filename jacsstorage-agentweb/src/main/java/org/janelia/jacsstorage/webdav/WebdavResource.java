@@ -102,10 +102,11 @@ public class WebdavResource {
     public Response makeDir(@PathParam("dataBundleId") Long dataBundleId,
                             @PathParam("dataDirPath") String dataDirPath,
                             @Context SecurityContext securityContext) {
-        System.out.println("!!!!!!!!!!!!!!!!!!!MKCOL ID " + dataBundleId);
-        System.out.println("!!!!!!!!!!!!!!!!!!!MKCOL DIRPATH " + dataDirPath);
-        System.out.println("!!!!!!!!!!!!!!!!!!!MKCOL " + storageLookupService);
-        return Response.status(Response.Status.CREATED)
+        JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
+        Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
+        dataStorageService.createDirectoryEntry(dataBundle.getPath(), dataDirPath, dataBundle.getStorageFormat());
+        return Response
+                .status(Response.Status.CREATED)
                 .build();
     }
 

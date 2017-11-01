@@ -13,7 +13,7 @@ public interface DataStorageService {
     TransferInfo persistDataStream(String dataPath, JacsStorageFormat dataStorageFormat, InputStream dataStream) throws IOException;
     TransferInfo retrieveDataStream(String dataPath, JacsStorageFormat dataStorageFormat, OutputStream dataStream) throws IOException;
     List<DataNodeInfo> listDataEntries(String dataPath, JacsStorageFormat dataStorageFormat, int depth);
-    void createDirectoryEntry(String dataPath, String entryName, JacsStorageFormat dataStorageFormat) throws IOException;
+    void createDirectoryEntry(String dataPath, String entryName, JacsStorageFormat dataStorageFormat);
     long readDataEntryStream(String dataPath, String entryName, JacsStorageFormat dataStorageFormat, OutputStream outputStream) throws IOException;
     void deleteStorage(String dataPath) throws IOException;
     void cleanupStoragePath(String dataPath) throws IOException;

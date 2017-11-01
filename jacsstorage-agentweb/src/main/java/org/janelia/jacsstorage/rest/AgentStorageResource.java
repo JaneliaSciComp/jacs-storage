@@ -27,6 +27,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -47,6 +48,8 @@ public class AgentStorageResource {
     private StorageAllocatorService storageAllocatorService;
     @Inject @LocalInstance
     private StorageLookupService storageLookupService;
+    @Context
+    private UriInfo resourceURI;
 
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @POST
@@ -109,9 +112,9 @@ public class AgentStorageResource {
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     @Path("{dataBundleId}/entry-content/{dataEntryPath: .*}")
-    public Response entryContent(@PathParam("dataBundleId") Long dataBundleId,
-                                @PathParam("dataEntryPath") String dataEntryPath,
-                                @Context SecurityContext securityContext) {
+    public Response getEntryContent(@PathParam("dataBundleId") Long dataBundleId,
+                                    @PathParam("dataEntryPath") String dataEntryPath,
+                                    @Context SecurityContext securityContext) {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StreamingOutput bundleStream =  new StreamingOutput()
@@ -133,6 +136,25 @@ public class AgentStorageResource {
         return Response
                 .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)
                 .header("content-disposition","attachment; filename = " + dataBundle.getOwner() + "-" + dataBundle.getName() + "/" + dataEntryPath)
+                .build();
+    }
+
+    @Produces(MediaType.APPLICATION_JSON)
+    @POST
+    @Path("{dataBundleId}/directory/{dataEntryPath: .*}")
+    public Response createDirectory(@PathParam("dataBundleId") Long dataBundleId,
+                                    @PathParam("dataEntryPath") String dataEntryPath,
+                                    @Context SecurityContext securityContext) {
+        JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
+        Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
+        dataStorageService.createDirectoryEntry(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat());
+        return Response
+                .created(resourceURI.getBaseUriBuilder()
+                        .path("agent-resource")
+                        .path(dataBundleId.toString())
+                        .path("entry-content")
+                        .path(dataEntryPath)
+                        .build())
                 .build();
     }
 
