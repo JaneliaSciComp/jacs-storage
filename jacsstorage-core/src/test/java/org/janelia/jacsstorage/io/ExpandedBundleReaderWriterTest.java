@@ -121,8 +121,8 @@ public class ExpandedBundleReaderWriterTest {
     public void listContentTree() {
         List<List<String>> expectedResults = ImmutableList.of(
                 ImmutableList.of(""),
-                ImmutableList.of("f_1_1", "d_1_1", "f_1_2", "d_1_2", "d_1_3", "f_1_3"),
-                ImmutableList.of("d_1_1/f_1_1_1", "d_1_2/d_1_2_1", "d_1_2/f_1_2_1", "d_1_3/f_1_3_1"),
+                ImmutableList.of("f_1_1", "d_1_1", "f_1_2", "d_1_2", "d_1_3", "d_1_4", "f_1_3"),
+                ImmutableList.of("d_1_1/f_1_1_1", "d_1_2/d_1_2_1", "d_1_2/f_1_2_1", "d_1_3/f_1_3_1", "d_1_3/f_1_3_2"),
                 ImmutableList.of("d_1_2/d_1_2_1/f_1_2_1_1"),
                 ImmutableList.of(),
                 ImmutableList.of()

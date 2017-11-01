@@ -26,6 +26,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.isIn;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -81,8 +84,8 @@ public class TarBundleReaderWriterTest {
     public void listContentTree() {
         List<List<String>> expectedResults = ImmutableList.of(
                 ImmutableList.of(""),
-                ImmutableList.of("f_1_1", "d_1_1/", "f_1_2", "d_1_2/", "d_1_3/", "f_1_3"),
-                ImmutableList.of("d_1_1/f_1_1_1", "d_1_2/d_1_2_1/", "d_1_2/f_1_2_1", "d_1_3/f_1_3_1"),
+                ImmutableList.of("f_1_1", "d_1_1/", "f_1_2", "d_1_2/", "d_1_3/", "d_1_4/", "f_1_3"),
+                ImmutableList.of("d_1_1/f_1_1_1", "d_1_2/d_1_2_1/", "d_1_2/f_1_2_1", "d_1_3/f_1_3_1", "d_1_3/f_1_3_2"),
                 ImmutableList.of("d_1_2/d_1_2_1/f_1_2_1_1"),
                 ImmutableList.of(),
                 ImmutableList.of()
@@ -175,4 +178,43 @@ public class TarBundleReaderWriterTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("java.lang.IllegalArgumentException: No file found for " + testDataPath.toString());
     }
+
+    @Test
+    public void createDirectoryEntry() {
+        List<String> testData = ImmutableList.of(
+                "d_1_5",
+                "d_1_1/d_1_1_1",
+                "d_1_2/d_1_2_2",
+                "d_1_2/d_1_2_1/d_1_2_1_1",
+                "d_1_3/d_1_3_1",
+                "d_1_4/d_1_4_1",
+                "d_1_5/d_1_5_2"
+        );
+        for (String td : testData) {
+            tarBundleWriter.createDirectoryEntry(testTarFile.toString(), td);
+        }
+        List<String> tarEntryNames = tarBundleReader.listBundleContent(testTarFile.toString(), 10).stream()
+                .map(ni -> ni.getNodePath())
+                .collect(Collectors.toList());
+        testData.forEach(td -> {
+            assertThat(td + "/", isIn(tarEntryNames));
+        });
+    }
+
+    @Test
+    public void tryToCreateDirectoryEntryWhenNoParentEntryExist() {
+        String testData = "d_1_5/d_1_5_2";
+        assertThatThrownBy(() -> tarBundleWriter.createDirectoryEntry(testTarFile.toString(), testData))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No parent entry found for " + testData);
+    }
+
+    @Test
+    public void tryToCreateDirectoryEntryWhenNoParentExistButNotADirectory() {
+        String testData = "d_1_3/f_1_3_1/d_1_3_1_1";
+        assertThatThrownBy(() -> tarBundleWriter.createDirectoryEntry(testTarFile.toString(), testData))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Parent entry found for " + testData + " but it is not a directory");
+    }
+
 }

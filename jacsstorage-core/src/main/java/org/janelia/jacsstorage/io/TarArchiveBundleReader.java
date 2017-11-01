@@ -6,11 +6,13 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -86,7 +88,7 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                 String currentEntryName = normalizeEntryName(sourceEntry.getName());
                 if (currentEntryName.equals(normalizedEntryName)) {
                     if (sourceEntry.isDirectory()) {
-                        tarOutputStream = new TarArchiveOutputStream(outputStream);
+                        tarOutputStream = new TarArchiveOutputStream(new BufferedOutputStream(outputStream), TarConstants.DEFAULT_RCDSIZE);
                     } else {
                         return ByteStreams.copy(ByteStreams.limit(inputStream, sourceEntry.getSize()), outputStream);
                     }
@@ -139,7 +141,9 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
 
     private String normalizeEntryName(String name) {
         return StringUtils.removeEnd(
-                StringUtils.removeStart(name, "./"),
+                StringUtils.removeStart(
+                        StringUtils.removeStart(name, "."),
+                        "/"),
                 "/");
     }
 }

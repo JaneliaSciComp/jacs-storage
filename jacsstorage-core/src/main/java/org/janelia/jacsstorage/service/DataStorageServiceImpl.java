@@ -44,6 +44,12 @@ public class DataStorageServiceImpl implements DataStorageService {
     }
 
     @Override
+    public void createDirectoryEntry(String dataPath, String entryName, JacsStorageFormat dataStorageFormat) throws IOException {
+        BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataStorageFormat);
+        bundleWriter.createDirectoryEntry(dataPath, entryName);
+    }
+
+    @Override
     public long readDataEntryStream(String dataPath, String entryName, JacsStorageFormat dataStorageFormat, OutputStream outputStream) throws IOException {
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
         return bundleReader.readDataEntry(dataPath, entryName, outputStream);

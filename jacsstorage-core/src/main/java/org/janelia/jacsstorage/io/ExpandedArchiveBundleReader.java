@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.io;
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -68,7 +69,7 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
 
     @Override
     protected long readBundleBytes(String source, OutputStream stream) throws Exception {
-        TarArchiveOutputStream outputStream = new TarArchiveOutputStream(stream);
+        TarArchiveOutputStream outputStream = new TarArchiveOutputStream(stream, TarConstants.DEFAULT_RCDSIZE);
         Path sourcePath = getSourcePath(source);
         Path archiverRootDir;
         if (Files.isRegularFile(sourcePath)) {
@@ -107,7 +108,7 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
             throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
         }
         if (Files.isDirectory(entryPath)) {
-            TarArchiveOutputStream tarOutputStream = new TarArchiveOutputStream(outputStream);
+            TarArchiveOutputStream tarOutputStream = new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE);
             ArchiveFileVisitor archiver = new ArchiveFileVisitor(entryPath, tarOutputStream);
             Files.walkFileTree(entryPath, archiver);
             tarOutputStream.finish();
