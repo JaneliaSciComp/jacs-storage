@@ -44,9 +44,9 @@ public class DataStorageServiceImpl implements DataStorageService {
     }
 
     @Override
-    public void createDirectoryEntry(String dataPath, String entryName, JacsStorageFormat dataStorageFormat) {
+    public long createDirectoryEntry(String dataPath, String entryName, JacsStorageFormat dataStorageFormat) {
         BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataStorageFormat);
-        bundleWriter.createDirectoryEntry(dataPath, entryName);
+        return bundleWriter.createDirectoryEntry(dataPath, entryName);
     }
 
     @Override

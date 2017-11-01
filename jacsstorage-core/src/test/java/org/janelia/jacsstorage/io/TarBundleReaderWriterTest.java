@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.io;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.utils.IOUtils;
 import org.hamcrest.Matchers;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
@@ -191,7 +192,8 @@ public class TarBundleReaderWriterTest {
                 "d_1_5/d_1_5_2"
         );
         for (String td : testData) {
-            tarBundleWriter.createDirectoryEntry(testTarFile.toString(), td);
+            long size = tarBundleWriter.createDirectoryEntry(testTarFile.toString(), td);
+            assertTrue(size == TarConstants.DEFAULT_RCDSIZE);
         }
         List<String> tarEntryNames = tarBundleReader.listBundleContent(testTarFile.toString(), 10).stream()
                 .map(ni -> ni.getNodePath())

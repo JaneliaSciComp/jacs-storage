@@ -37,7 +37,7 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
     }
 
     @Override
-    public void createDirectoryEntry(String dataPath, String entryName) {
+    public long createDirectoryEntry(String dataPath, String entryName) {
         Preconditions.checkArgument(StringUtils.isNotBlank(entryName));
         Path rootPath = getRootPath(dataPath);
         if (Files.isDirectory(rootPath)) {
@@ -45,6 +45,7 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
                     rootPath + " is expected to be a tar file not a directory");
         }
         try (RandomAccessFile existingTarFile = new RandomAccessFile(rootPath.toFile(), "rw")) {
+            long oldTarSize = existingTarFile.length();
             String normalizedEntryName = normalizeEntryName(entryName);
             Path relativeEntryPath = Paths.get(normalizedEntryName);
             Path relativeEntryParentPath = relativeEntryPath.getParent();
@@ -62,7 +63,8 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
                 tarArchiveOutputStream.putArchiveEntry(entry);
                 tarArchiveOutputStream.closeArchiveEntry();
                 tarArchiveOutputStream.finish();
-                existingTarFile.close();
+                long newTarSize = existingTarFile.length();
+                return newTarSize - oldTarSize;
             } else if (newEntryPos == -1) {
                 throw new IllegalArgumentException("Parent entry found for " + entryName + " but it is not a directory");
             } else {

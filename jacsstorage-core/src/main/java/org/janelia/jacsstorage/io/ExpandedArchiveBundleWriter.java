@@ -41,21 +41,20 @@ public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
     }
 
     @Override
-    public void createDirectoryEntry(String dataPath, String entryName) {
+    public long createDirectoryEntry(String dataPath, String entryName) {
         Preconditions.checkArgument(StringUtils.isNotBlank(entryName));
         Path rootDataPath = getRootPath(dataPath);
         Path entryPath = rootDataPath.resolve(entryName);
-        Path parentEntry = rootDataPath.getParent();
+        Path parentEntry = entryPath.getParent();
         if (Files.notExists(parentEntry)) {
-            throw new IllegalArgumentException("A new entry can only be created as a child of an existing entry which must be a directory - " +
-                    parentEntry + " does not exist");
+            throw new IllegalArgumentException("No parent entry found for " + entryPath);
         }
         if (!Files.isDirectory(parentEntry)) {
-            throw new IllegalArgumentException("A new entry can only be created as a child of an existing entry which must be a directory - " +
-                    parentEntry + " is not a directory");
+            throw new IllegalArgumentException("Parent entry found for " + entryPath + " but it is not a directory");
         }
         try {
-            Files.createDirectories(entryPath);
+            Files.createDirectory(entryPath);
+            return Files.size(entryPath);
         } catch (IOException e) {
             throw new IllegalStateException("Could not create " + entryPath, e);
         }

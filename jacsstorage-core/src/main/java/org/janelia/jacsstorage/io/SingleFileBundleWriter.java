@@ -27,7 +27,7 @@ public class SingleFileBundleWriter extends AbstractBundleWriter {
     }
 
     @Override
-    public void createDirectoryEntry(String dataPath, String entryName) {
+    public long createDirectoryEntry(String dataPath, String entryName) {
         throw new UnsupportedOperationException("Method is not supported");
     }
 }

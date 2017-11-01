@@ -5,15 +5,18 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
+import java.nio.file.CopyOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiPredicate;
+
 
 public class PathUtils {
     private static class FileSizeVisitor extends SimpleFileVisitor<Path> {
@@ -28,6 +31,37 @@ public class PathUtils {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
             totalSize += Files.size(file);
+            return FileVisitResult.CONTINUE;
+        }
+    }
+
+    private static class DirTreeCopyVisitor extends SimpleFileVisitor<Path> {
+        private final Path source;
+        private final Path target;
+
+        DirTreeCopyVisitor(Path source, Path target) {
+            this.source = source;
+            this.target = target;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            CopyOption[] options = new CopyOption[] {
+                    StandardCopyOption.COPY_ATTRIBUTES
+            };
+            Path newdir = target.resolve(source.relativize(dir));
+            Files.copy(dir, newdir, options);
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            CopyOption[] options = new CopyOption[] {
+                    StandardCopyOption.COPY_ATTRIBUTES,
+                    StandardCopyOption.REPLACE_EXISTING
+            };
+            Path newfile = target.resolve(source.relativize(file));
+            Files.copy(file, newfile, options);
             return FileVisitResult.CONTINUE;
         }
     }
@@ -105,5 +139,11 @@ public class PathUtils {
                 return FileVisitResult.CONTINUE;
             }
         });
+    }
+
+    public static void copyFiles(Path source, Path target) throws IOException {
+        Preconditions.checkArgument(Files.exists(source), "No path found for " + source);
+        DirTreeCopyVisitor pathVisitor = new DirTreeCopyVisitor(source, target);
+        Files.walkFileTree(source, pathVisitor);
     }
 }

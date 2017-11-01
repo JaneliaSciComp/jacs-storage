@@ -22,6 +22,7 @@ public interface BundleWriter {
      * of the entryName must already exist and it must also be a directory.
      * @param dataPath
      * @param entryName - this is the relative path of the new entry.
+     * @return - the additional space required by the new directory entry
      */
-    void createDirectoryEntry(String dataPath, String entryName);
+    long createDirectoryEntry(String dataPath, String entryName);
 }
