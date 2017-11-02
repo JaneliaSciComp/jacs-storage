@@ -126,7 +126,7 @@ public class ExpandedBundleReaderWriterTest {
     public void listContentTree() {
         List<List<String>> expectedResults = ImmutableList.of(
                 ImmutableList.of(""),
-                ImmutableList.of("f_1_1", "d_1_1", "f_1_2", "d_1_2", "d_1_3", "d_1_4", "f_1_3"),
+                ImmutableList.of("f_1_1", "d_1_1", "f_1_2", "d_1_2", "d_1_3", "f_1_3"),
                 ImmutableList.of("d_1_1/f_1_1_1", "d_1_2/d_1_2_1", "d_1_2/f_1_2_1", "d_1_3/f_1_3_1", "d_1_3/f_1_3_2"),
                 ImmutableList.of("d_1_2/d_1_2_1/f_1_2_1_1"),
                 ImmutableList.of(),
@@ -197,8 +197,7 @@ public class ExpandedBundleReaderWriterTest {
                 "d_1_2/d_1_2_2",
                 "d_1_2/d_1_2_1/d_1_2_1_1",
                 "d_1_3/d_1_3_1",
-                "d_1_4/d_1_4_1",
-                "d_1_5/d_1_5_2"
+                "d_1_5/d_1_5_1"
         );
         for (String td : testData) {
             long size = expandedArchiveBundleWriter.createDirectoryEntry(testDataDir.toString(), td);
