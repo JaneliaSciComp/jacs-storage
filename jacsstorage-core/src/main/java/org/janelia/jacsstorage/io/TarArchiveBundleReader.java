@@ -101,7 +101,7 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                     if (sourceEntry.isDirectory()) {
                         newEntryName = StringUtils.appendIfMissing(newEntryName, "/");
                     }
-                    TarArchiveEntry entry = new TarArchiveEntry(newEntryName, true);
+                    TarArchiveEntry entry = new TarArchiveEntry(newEntryName, false);
                     entry.setSize(sourceEntry.getSize());
                     entry.setModTime(sourceEntry.getModTime());
                     entry.setMode(sourceEntry.getMode());

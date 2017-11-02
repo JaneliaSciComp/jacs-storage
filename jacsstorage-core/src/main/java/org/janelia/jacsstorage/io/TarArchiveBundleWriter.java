@@ -7,10 +7,12 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.utils.PathUtils;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
@@ -18,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.function.Function;
 
 public class TarArchiveBundleWriter extends AbstractBundleWriter {
 
@@ -38,6 +41,60 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
 
     @Override
     public long createDirectoryEntry(String dataPath, String entryName) {
+        return createNewEntry(dataPath, entryName, 0L,
+                (String en) -> {
+                    String newEntryName = StringUtils.appendIfMissing(
+                            StringUtils.prependIfMissing(
+                                    StringUtils.prependIfMissing(en, "/"), "."
+                            ),
+                            "/" // append '/' since this is a directory entry
+                    );
+                    return new TarArchiveEntry(newEntryName, false);
+                },
+                (OutputStream os) -> 0L
+        );
+    }
+
+    @Override
+    public long createFileEntry(String dataPath, String entryName, InputStream contentStream) {
+        Path tempPath = null;
+        try {
+            tempPath = Files.createTempDirectory("tempTarEntry");
+            Path entryFile = tempPath.resolve(entryName.replaceAll("/", "_"));
+            Files.copy(contentStream, entryFile);
+            return createNewEntry(dataPath, entryName, Files.size(entryFile),
+                    (en) -> {
+                        String newEntryName = StringUtils.prependIfMissing(
+                                StringUtils.prependIfMissing(en, "/"),
+                                "."
+                        );
+                        TarArchiveEntry tarArchiveEntry = new TarArchiveEntry(newEntryName, false);
+                        tarArchiveEntry.setSize(TarConstants.MAXSIZE);
+                        return tarArchiveEntry;
+                    },
+                    (os) -> {
+                        try {
+                            return Files.copy(entryFile, os);
+                        } catch (IOException e) {
+                            throw new IllegalStateException(e);
+                        }
+                    }
+            );
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (tempPath != null) {
+                try {
+                    PathUtils.deletePath(tempPath);
+                } catch (IOException ignore) {
+                }
+            }
+        }
+    }
+
+    private long createNewEntry(String dataPath, String entryName, long entrySize,
+                                Function<String, TarArchiveEntry> newEntryGenerator,
+                                Function<OutputStream, Long> contentProcessor) {
         Preconditions.checkArgument(StringUtils.isNotBlank(entryName));
         Path rootPath = getRootPath(dataPath);
         if (Files.isDirectory(rootPath)) {
@@ -53,14 +110,10 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
             if (newEntryPos >= 0) {
                 existingTarFile.seek(newEntryPos);
                 TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(Channels.newOutputStream(existingTarFile.getChannel()), TarConstants.DEFAULT_RCDSIZE);
-                String newEntryName = StringUtils.appendIfMissing(
-                        StringUtils.prependIfMissing(
-                                StringUtils.prependIfMissing(normalizedEntryName, "/"), "."
-                        ),
-                        "/" // append '/' since this is a directory entry
-                );
-                TarArchiveEntry entry = new TarArchiveEntry(newEntryName, false);
+                TarArchiveEntry entry = newEntryGenerator.apply(normalizedEntryName);
+                entry.setSize(entrySize);
                 tarArchiveOutputStream.putArchiveEntry(entry);
+                contentProcessor.apply(tarArchiveOutputStream);
                 tarArchiveOutputStream.closeArchiveEntry();
                 tarArchiveOutputStream.finish();
                 long newTarSize = existingTarFile.length();

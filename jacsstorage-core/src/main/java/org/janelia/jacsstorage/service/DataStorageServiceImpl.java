@@ -10,9 +10,12 @@ import org.janelia.jacsstorage.utils.PathUtils;
 
 import javax.inject.Inject;
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -47,6 +50,12 @@ public class DataStorageServiceImpl implements DataStorageService {
     public long createDirectoryEntry(String dataPath, String entryName, JacsStorageFormat dataStorageFormat) {
         BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataStorageFormat);
         return bundleWriter.createDirectoryEntry(dataPath, entryName);
+    }
+
+    @Override
+    public long createFileEntry(String dataPath, String entryName, JacsStorageFormat dataStorageFormat, InputStream contentStream) {
+        BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataStorageFormat);
+        return bundleWriter.createFileEntry(dataPath, entryName, contentStream);
     }
 
     @Override

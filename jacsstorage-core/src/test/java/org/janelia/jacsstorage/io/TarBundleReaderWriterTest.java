@@ -12,6 +12,7 @@ import org.junit.Test;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -217,6 +218,24 @@ public class TarBundleReaderWriterTest {
         assertThatThrownBy(() -> tarBundleWriter.createDirectoryEntry(testTarFile.toString(), testData))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Parent entry found for " + testData + " but it is not a directory");
+    }
+
+    @Test
+    public void createFileEntry() throws FileNotFoundException {
+        List<String> testData = ImmutableList.of(
+                "d_1_1/f_1_1_2",
+                "d_1_2/d_1_2_1/f_1_2_1_2"
+        );
+        for (String td : testData) {
+            long size = tarBundleWriter.createFileEntry(testTarFile.toString(), td, new FileInputStream(Paths.get(TEST_DATA_DIRECTORY, "d_1_1/f_1_1_1").toFile()));
+            assertTrue(size > 2 * TarConstants.DEFAULT_RCDSIZE);
+        }
+        List<String> tarEntryNames = tarBundleReader.listBundleContent(testTarFile.toString(), 10).stream()
+                .map(ni -> ni.getNodePath())
+                .collect(Collectors.toList());
+        testData.forEach(td -> {
+            assertThat(td, isIn(tarEntryNames));
+        });
     }
 
 }

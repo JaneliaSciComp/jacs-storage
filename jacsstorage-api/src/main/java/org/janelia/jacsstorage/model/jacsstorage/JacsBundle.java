@@ -85,6 +85,10 @@ public class JacsBundle extends AbstractEntity {
         return usedSpaceInBytes != null && usedSpaceInBytes != 0L;
     }
 
+    public long size() {
+        return usedSpaceInBytes != null ? usedSpaceInBytes : 0;
+    }
+
     public String getChecksum() {
         return checksum;
     }

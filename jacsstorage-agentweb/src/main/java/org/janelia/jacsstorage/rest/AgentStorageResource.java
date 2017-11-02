@@ -6,6 +6,7 @@ import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
+import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
@@ -147,7 +148,41 @@ public class AgentStorageResource {
                                     @Context SecurityContext securityContext) {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        dataStorageService.createDirectoryEntry(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat());
+        long dirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat());
+        long newBundleSize = dataBundle.size() + dirEntrySize;
+        storageAllocatorService.updateStorage(
+                SecurityUtils.getUserPrincipal(securityContext),
+                new JacsBundleBuilder()
+                        .dataBundleId(dataBundleId)
+                        .usedSpaceInBytes(newBundleSize)
+                        .build());
+        return Response
+                .created(resourceURI.getBaseUriBuilder()
+                        .path("agent-resource")
+                        .path(dataBundleId.toString())
+                        .path("entry-content")
+                        .path(dataEntryPath)
+                        .build())
+                .build();
+    }
+
+    @Produces(MediaType.APPLICATION_JSON)
+    @POST
+    @Path("{dataBundleId}/file/{dataEntryPath: .*}")
+    public Response createFile(@PathParam("dataBundleId") Long dataBundleId,
+                               @PathParam("dataEntryPath") String dataEntryPath,
+                               @Context SecurityContext securityContext,
+                               InputStream contentStream) {
+        JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
+        Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
+        long fileEntrySize = dataStorageService.createFileEntry(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat(), contentStream);
+        long newBundleSize = dataBundle.size() + fileEntrySize;
+        storageAllocatorService.updateStorage(
+                SecurityUtils.getUserPrincipal(securityContext),
+                new JacsBundleBuilder()
+                        .dataBundleId(dataBundleId)
+                        .usedSpaceInBytes(newBundleSize)
+                        .build());
         return Response
                 .created(resourceURI.getBaseUriBuilder()
                         .path("agent-resource")

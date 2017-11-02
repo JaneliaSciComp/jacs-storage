@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.function.Function;
 
 public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
 
@@ -42,6 +43,30 @@ public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
 
     @Override
     public long createDirectoryEntry(String dataPath, String entryName) {
+        return createNewEntry(dataPath, entryName,
+                (Path entryPath) -> {
+                    try {
+                        Files.createDirectory(entryPath);
+                        return Files.size(entryPath);
+                    } catch (IOException e) {
+                        throw new IllegalStateException("Could not create " + entryPath, e);
+                    }
+                });
+    }
+
+    @Override
+    public long createFileEntry(String dataPath, String entryName, InputStream contentStream) {
+        return createNewEntry(dataPath, entryName,
+                (Path entryPath) -> {
+                    try {
+                        return Files.copy(contentStream, entryPath);
+                    } catch (IOException e) {
+                        throw new IllegalStateException("Could not create " + entryPath, e);
+                    }
+                });
+    }
+
+    private long createNewEntry(String dataPath, String entryName, Function<Path, Long> entryCreator) {
         Preconditions.checkArgument(StringUtils.isNotBlank(entryName));
         Path rootDataPath = getRootPath(dataPath);
         Path entryPath = rootDataPath.resolve(entryName);
@@ -52,12 +77,7 @@ public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
         if (!Files.isDirectory(parentEntry)) {
             throw new IllegalArgumentException("Parent entry found for " + entryPath + " but it is not a directory");
         }
-        try {
-            Files.createDirectory(entryPath);
-            return Files.size(entryPath);
-        } catch (IOException e) {
-            throw new IllegalStateException("Could not create " + entryPath, e);
-        }
+        return entryCreator.apply(entryPath);
     }
 
     private Path getRootPath(String rootDir) {

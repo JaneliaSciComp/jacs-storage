@@ -5,7 +5,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
+import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
+import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
+import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.webdav.httpverbs.MKCOL;
 import org.janelia.jacsstorage.webdav.httpverbs.PROPFIND;
@@ -39,6 +42,8 @@ public class WebdavResource {
     @Inject
     @LocalInstance
     private StorageLookupService storageLookupService;
+    @Inject @LocalInstance
+    private StorageAllocatorService storageAllocatorService;
     @Inject
     private DataStorageService dataStorageService;
 
@@ -104,7 +109,14 @@ public class WebdavResource {
                             @Context SecurityContext securityContext) {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        dataStorageService.createDirectoryEntry(dataBundle.getPath(), dataDirPath, dataBundle.getStorageFormat());
+        long dirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getPath(), dataDirPath, dataBundle.getStorageFormat());
+        long newBundleSize = dataBundle.size() + dirEntrySize;
+        storageAllocatorService.updateStorage(
+                SecurityUtils.getUserPrincipal(securityContext),
+                new JacsBundleBuilder()
+                        .dataBundleId(dataBundleId)
+                        .usedSpaceInBytes(newBundleSize)
+                        .build());
         return Response
                 .status(Response.Status.CREATED)
                 .build();

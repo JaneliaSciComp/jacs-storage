@@ -25,4 +25,13 @@ public interface BundleWriter {
      * @return - the additional space required by the new directory entry
      */
     long createDirectoryEntry(String dataPath, String entryName);
+
+    /**
+     * Create a file entry and copy the content. The parent entry must exist and must be a directory.
+     * @param dataPath
+     * @param entryName
+     * @param contentStream
+     * @return the additional space required by the new file entry
+     */
+    long createFileEntry(String dataPath, String entryName, InputStream contentStream);
 }

@@ -14,6 +14,7 @@ public interface DataStorageService {
     TransferInfo retrieveDataStream(String dataPath, JacsStorageFormat dataStorageFormat, OutputStream dataStream) throws IOException;
     List<DataNodeInfo> listDataEntries(String dataPath, JacsStorageFormat dataStorageFormat, int depth);
     long createDirectoryEntry(String dataPath, String entryName, JacsStorageFormat dataStorageFormat);
+    long createFileEntry(String dataPath, String entryName, JacsStorageFormat dataStorageFormat, InputStream contentStream);
     long readDataEntryStream(String dataPath, String entryName, JacsStorageFormat dataStorageFormat, OutputStream outputStream) throws IOException;
     void deleteStorage(String dataPath) throws IOException;
     void cleanupStoragePath(String dataPath) throws IOException;
