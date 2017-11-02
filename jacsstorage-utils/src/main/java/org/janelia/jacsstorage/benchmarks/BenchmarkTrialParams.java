@@ -11,6 +11,8 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 public class BenchmarkTrialParams {
     @Param({""})
     String serverURL;
+    @Param({"false"})
+    Boolean useHttp;
     @Param({""})
     String owner;
     @Param({""})
@@ -23,6 +25,7 @@ public class BenchmarkTrialParams {
     @Setup(Level.Trial)
     public void setUp(BenchmarkParams params) {
         serverURL = params.getParam("serverURL");
+        useHttp = Boolean.valueOf(params.getParam("useHttp"));
         owner = params.getParam("owner");
         dataLocation = params.getParam("dataLocation");
         dataFormat = params.getParam("dataFormat");

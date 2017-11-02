@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.benchmarks;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.janelia.jacsstorage.client.SocketStorageClient;
 import org.janelia.jacsstorage.client.StorageClient;
+import org.janelia.jacsstorage.client.StorageClientHttpImpl;
 import org.janelia.jacsstorage.client.StorageClientImpl;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -24,12 +25,17 @@ public class BenchmarkInvocationParams {
     public void setUp(BenchmarkTrialParams params) {
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
         SeContainer container = containerInit.initialize();
-
-        storageClient = new StorageClientImpl(
-                new SocketStorageClient(
+        if (params.useHttp) {
+            storageClient = new StorageClientHttpImpl(
                     container.select(DataTransferService.class).get()
-                )
-        );
+            );
+        } else {
+            storageClient = new StorageClientImpl(
+                    new SocketStorageClient(
+                            container.select(DataTransferService.class).get()
+                    )
+            );
+        }
         dataStorageInfo = new DataStorageInfo()
                 .setConnectionInfo(params.serverURL)
                 .setStorageFormat(JacsStorageFormat.valueOf(params.dataFormat))

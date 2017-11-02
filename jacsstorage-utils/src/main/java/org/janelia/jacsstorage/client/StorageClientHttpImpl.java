@@ -9,6 +9,7 @@ import org.janelia.jacsstorage.service.DataTransferService;
 import org.janelia.jacsstorage.service.StorageMessageHeader;
 import org.janelia.jacsstorage.service.StorageMessageResponse;
 import org.janelia.jacsstorage.service.TransferState;
+import org.janelia.jacsstorage.utils.StorageClientImplHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +19,6 @@ import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Base64;
 import java.util.Optional;
 
 public class StorageClientHttpImpl implements StorageClient {
@@ -27,7 +27,7 @@ public class StorageClientHttpImpl implements StorageClient {
     private final DataTransferService clientStorageProxy;
     private final StorageClientImplHelper clientImplHelper;
 
-    StorageClientHttpImpl(DataTransferService clientStorageProxy) {
+    public StorageClientHttpImpl(DataTransferService clientStorageProxy) {
         this.clientStorageProxy = clientStorageProxy;
         clientImplHelper = new StorageClientImplHelper();
     }

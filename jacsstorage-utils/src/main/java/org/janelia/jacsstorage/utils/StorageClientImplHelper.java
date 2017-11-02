@@ -1,5 +1,7 @@
-package org.janelia.jacsstorage.client;
+package org.janelia.jacsstorage.utils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.ImmutableMap;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.service.StorageMessageResponse;
@@ -13,6 +15,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -25,8 +28,9 @@ import java.util.Optional;
 
 public class StorageClientImplHelper {
     private static final Logger LOG = LoggerFactory.getLogger(StorageClientImplHelper.class);
+    private static final String AUTH_URL = "http://api.int.janelia.org:8030";
 
-    Optional<DataStorageInfo> allocateStorage(String connectionURL, DataStorageInfo storageRequest, String authToken) {
+    public Optional<DataStorageInfo> allocateStorage(String connectionURL, DataStorageInfo storageRequest, String authToken) {
         String storageEndpoint = "/storage";
         Client httpClient = null;
         try {
@@ -53,7 +57,7 @@ public class StorageClientImplHelper {
         }
     }
 
-    Optional<DataStorageInfo> retrieveStorageInfo(String connectionURL, DataStorageInfo storageRequest, String authToken) {
+    public Optional<DataStorageInfo> retrieveStorageInfo(String connectionURL, DataStorageInfo storageRequest, String authToken) {
         String storageEndpoint = String.format("/storage/%s/%s", storageRequest.getOwner(), storageRequest.getName());
         Client httpClient = null;
         try {
@@ -79,7 +83,7 @@ public class StorageClientImplHelper {
         }
     }
 
-    Optional<DataStorageInfo> streamDataToStore(String connectionURL, DataStorageInfo storageInfo, InputStream dataStream, String authToken) {
+    public Optional<DataStorageInfo> streamDataToStore(String connectionURL, DataStorageInfo storageInfo, InputStream dataStream, String authToken) {
         String dataStreamEndpoint = String.format("/agent-storage/%s", storageInfo.getId());
         Client httpClient = null;
         try {
@@ -105,7 +109,7 @@ public class StorageClientImplHelper {
         }
     }
 
-    Optional<InputStream> streamDataFromStore(String connectionURL, DataStorageInfo storageInfo, String authToken) {
+    public Optional<InputStream> streamDataFromStore(String connectionURL, DataStorageInfo storageInfo, String authToken) {
         String dataStreamEndpoint = String.format("/agent-storage/%s", storageInfo.getId());
         Client httpClient = null;
         try {
@@ -131,7 +135,7 @@ public class StorageClientImplHelper {
         }
     }
 
-    StorageMessageResponse ping(String connectionURL) throws IOException {
+    public StorageMessageResponse ping(String connectionURL) throws IOException {
         String endpoint = "/storage/status";
         Client httpClient = null;
         try {
@@ -146,6 +150,28 @@ public class StorageClientImplHelper {
             } else {
                 return new StorageMessageResponse(StorageMessageResponse.ERROR, "Response status: " + responseStatus);
             }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    public String authenticate(String userName, String password) {
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(AUTH_URL).path("/authenticate");
+            TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String, String>>(){};
+            Map<String, String> tokenResponse = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .post(Entity.json(ImmutableMap.of(
+                            "username", userName,
+                            "password", password
+                    )), new GenericType<>(typeRef.getType()))
+                    ;
+            return tokenResponse.get("token");
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {

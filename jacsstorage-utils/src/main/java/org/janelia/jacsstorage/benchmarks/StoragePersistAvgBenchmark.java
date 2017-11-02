@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.benchmarks;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
+import org.janelia.jacsstorage.utils.StorageClientImplHelper;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -36,7 +37,8 @@ public class StoragePersistAvgBenchmark {
             jc.usage();
             System.exit(1);
         }
-
+        String authToken = new StorageClientImplHelper().authenticate(benchmarksCmdLineParams.username, benchmarksCmdLineParams.password);
+        String dataOwner = benchmarksCmdLineParams.username;
         Options opt = new OptionsBuilder()
                 .include(StoragePersistAvgBenchmark.class.getSimpleName())
                 .warmupIterations(benchmarksCmdLineParams.warmupIterations)
@@ -46,10 +48,11 @@ public class StoragePersistAvgBenchmark {
                 .shouldFailOnError(true)
                 .detectJvmArgs()
                 .param("serverURL", benchmarksCmdLineParams.serverURL)
-                .param("owner", benchmarksCmdLineParams.owner)
+                .param("useHttp", benchmarksCmdLineParams.useHttp.toString())
+                .param("owner", dataOwner)
                 .param("dataLocation", benchmarksCmdLineParams.localPath)
                 .param("dataFormat", benchmarksCmdLineParams.dataFormat.name())
-                .param("authToken", benchmarksCmdLineParams.authToken)
+                .param("authToken", authToken)
                 .build();
 
         Collection<RunResult> runResults = new Runner(opt).run();

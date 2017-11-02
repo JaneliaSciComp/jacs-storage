@@ -7,6 +7,7 @@ import com.beust.jcommander.Parameters;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.service.DataTransferService;
+import org.janelia.jacsstorage.utils.StorageClientImplHelper;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
@@ -16,12 +17,8 @@ public class StorageClientApp {
     private static abstract class AbstractCommand {
         @Parameter(names = "-localPath", description = "Local path")
         protected String localPath;
-        @Parameter(names = "-owner", description = "Data bundle owner")
-        protected String owner;
         @Parameter(names = "-name", description = "Data bundle name")
         protected String name;
-        @Parameter(names = "-authToken", description = "Authentication token")
-        protected String authToken;
     }
 
     private static class CommandMain {
@@ -29,6 +26,10 @@ public class StorageClientApp {
         private String serverURL = "http://localhost:8080/jacsstorage/master-api";
         @Parameter(names = "-useHttp", description = "Use Http to persist/retrieve data")
         private Boolean useHttp = false;
+        @Parameter(names = "-username", description = "User name")
+        protected String username;
+        @Parameter(names = "-password", description = "User password authentication")
+        protected String password;
     }
 
     @Parameters(commandDescription = "Send data to the storage server")
@@ -81,21 +82,22 @@ public class StorageClientApp {
             );
         }
         DataStorageInfo storageInfo;
+        String dataOwner = cm.username;
         switch (jc.getParsedCommand()) {
             case "get":
                 storageInfo = new DataStorageInfo()
                         .setConnectionURL(cm.serverURL)
-                        .setOwner(cmdGet.owner)
+                        .setOwner(dataOwner)
                         .setName(cmdGet.name);
-                storageClient.retrieveData(cmdGet.localPath, storageInfo, cmdGet.authToken);
+                storageClient.retrieveData(cmdGet.localPath, storageInfo, new StorageClientImplHelper().authenticate(cm.username, cm.password));
                 return;
             case "put":
                 storageInfo = new DataStorageInfo()
                         .setConnectionURL(cm.serverURL)
                         .setStorageFormat(cmdPut.dataFormat)
-                        .setOwner(cmdPut.owner)
+                        .setOwner(dataOwner)
                         .setName(cmdPut.name);
-                storageClient.persistData(cmdPut.localPath, storageInfo, cmdPut.authToken);
+                storageClient.persistData(cmdPut.localPath, storageInfo, new StorageClientImplHelper().authenticate(cm.username, cm.password));
                 return;
             case "ping":
                 storageClient.ping(cmdPing.connectionInfo);
