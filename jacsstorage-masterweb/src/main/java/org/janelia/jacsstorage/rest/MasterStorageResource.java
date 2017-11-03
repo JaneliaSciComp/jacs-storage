@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("storage")
-public class StorageResource {
+public class MasterStorageResource {
 
     @Inject @RemoteInstance
     private StorageAllocatorService storageAllocatorService;

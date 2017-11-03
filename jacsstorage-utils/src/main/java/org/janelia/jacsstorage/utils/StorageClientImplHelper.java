@@ -58,7 +58,12 @@ public class StorageClientImplHelper {
     }
 
     public Optional<DataStorageInfo> retrieveStorageInfo(String connectionURL, DataStorageInfo storageRequest, String authToken) {
-        String storageEndpoint = String.format("/storage/%s/%s", storageRequest.getOwner(), storageRequest.getName());
+        String storageEndpoint;
+        if (storageRequest.hasId()) {
+            storageEndpoint = String.format("/storage/%s", storageRequest.getId());
+        } else {
+            storageEndpoint = String.format("/storage/%s/%s", storageRequest.getOwner(), storageRequest.getName());
+        }
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
@@ -135,8 +140,74 @@ public class StorageClientImplHelper {
         }
     }
 
-    public void createNewDirectory(Number dataBundleId, String newDirPath, String authToken) {
-        // !!!!!!!!!!!!!!!!!!!!!!TODO
+    public Optional<String> createNewDirectory(String connectionURL, Number dataBundleId, String newDirPath, String authToken) {
+        DataStorageInfo storageRequest = new DataStorageInfo().setId(dataBundleId);
+        return retrieveStorageInfo(connectionURL, storageRequest, authToken)
+            .flatMap((DataStorageInfo storageInfo) -> {
+                String agentStorageServiceURL = storageInfo.getConnectionURL();
+                return addNewStorageFolder(agentStorageServiceURL, storageInfo.getId(), newDirPath, authToken);
+            });
+    }
+
+    private Optional<String> addNewStorageFolder(String connectionURL, Number storageId, String newDirPath, String authToken) {
+        String dataStreamEndpoint = String.format("/agent-storage/%s/directory/%s", storageId, newDirPath);
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
+            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .header("Authorization", "Bearer " + authToken)
+                    .post(Entity.json("")) // empty request body
+                    ;
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.CREATED.getStatusCode()) {
+                return Optional.of(response.getHeaderString("Location"));
+            } else {
+                LOG.warn("Stream data from {} returned with status {}", target, responseStatus);
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    public Optional<String> createNewFile(String connectionURL, Number dataBundleId, String newDirPath, InputStream contentStream, String authToken) {
+        DataStorageInfo storageRequest = new DataStorageInfo().setId(dataBundleId);
+        return retrieveStorageInfo(connectionURL, storageRequest, authToken)
+                .flatMap((DataStorageInfo storageInfo) -> {
+                    String agentStorageServiceURL = storageInfo.getConnectionURL();
+                    return addNewStorageContent(agentStorageServiceURL, storageInfo.getId(), newDirPath, contentStream, authToken);
+                });
+    }
+
+    private Optional<String> addNewStorageContent(String connectionURL, Number storageId, String newDirPath, InputStream contentStream, String authToken) {
+        String dataStreamEndpoint = String.format("/agent-storage/%s/file/%s", storageId, newDirPath);
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
+            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .header("Authorization", "Bearer " + authToken)
+                    .post(Entity.entity(contentStream, MediaType.APPLICATION_OCTET_STREAM_TYPE))
+                    ;
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.CREATED.getStatusCode()) {
+                return Optional.of(response.getHeaderString("Location"));
+            } else {
+                LOG.warn("Stream data from {} returned with status {}", target, responseStatus);
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
     }
 
     public StorageMessageResponse ping(String connectionURL) throws IOException {

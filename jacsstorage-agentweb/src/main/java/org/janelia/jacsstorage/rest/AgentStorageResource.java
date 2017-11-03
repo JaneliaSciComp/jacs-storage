@@ -174,6 +174,7 @@ public class AgentStorageResource {
                 .build();
     }
 
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
     @POST
     @Path("{dataBundleId}/file/{dataEntryPath: .*}")

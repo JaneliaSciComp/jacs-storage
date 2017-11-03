@@ -47,6 +47,10 @@ public class DataStorageInfo {
         return this;
     }
 
+    public boolean hasId() {
+        return id != null && id.longValue() != 0L;
+    }
+
     public String getName() {
         return name;
     }

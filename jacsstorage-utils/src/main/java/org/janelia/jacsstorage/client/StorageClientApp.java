@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.service.DataTransferService;
@@ -11,6 +12,10 @@ import org.janelia.jacsstorage.utils.StorageClientImplHelper;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
+import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class StorageClientApp {
 
@@ -42,8 +47,8 @@ public class StorageClientApp {
         private JacsStorageFormat dataFormat = JacsStorageFormat.DATA_DIRECTORY;
     }
 
-    @Parameters(commandDescription = "Create new storage storage directory")
-    private static class CommandCreateNewStorageDir extends AbstractCommand {
+    @Parameters(commandDescription = "Create new storage storage content - file or directory")
+    private static class CommandCreateNewStorageContent extends AbstractCommand {
         @Parameter(names = "-bundleId", description = "bundle id", required = true)
         private Long bundleId;
         @Parameter(names = "-newPath", description = "directory path relative to the data bundle", required = true)
@@ -61,22 +66,23 @@ public class StorageClientApp {
         CommandGet cmdGet = new CommandGet();
         CommandPut cmdPut = new CommandPut();
         CommandPing cmdPing = new CommandPing();
-        CommandCreateNewStorageDir cmdCreateNewDir = new CommandCreateNewStorageDir();
+        CommandCreateNewStorageContent cmdCreateNewContent = new CommandCreateNewStorageContent();
         JCommander jc = JCommander.newBuilder()
                 .addObject(cm)
                 .addCommand("get", cmdGet)
                 .addCommand("put", cmdPut)
                 .addCommand("ping", cmdPing)
-                .addCommand("createNewDir", cmdCreateNewDir)
+                .addCommand("createNewDir", cmdCreateNewContent)
+                .addCommand("addNewFile", cmdCreateNewContent)
                 .build();
 
         try {
             jc.parse(args);
         } catch (ParameterException e) {
-            usage(jc);
+            usage("", jc);
         }
         if (jc.getParsedCommand() == null) {
-            usage(jc);
+            usage("", jc);
         }
 
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
@@ -111,17 +117,32 @@ public class StorageClientApp {
                 storageClient.persistData(cmdPut.localPath, storageInfo, storageClientHelper.authenticate(cm.username, cm.password));
                 return;
             case "createNewDir":
-                storageClientHelper.createNewDirectory(cmdCreateNewDir.bundleId, cmdCreateNewDir.newPath, storageClientHelper.authenticate(cm.username, cm.password));
+                storageClientHelper.createNewDirectory(cm.serverURL, cmdCreateNewContent.bundleId, cmdCreateNewContent.newPath, storageClientHelper.authenticate(cm.username, cm.password));
+                return;
+            case "addNewFile":
+                String localFileName = cmdCreateNewContent.localPath;
+                if (StringUtils.isBlank(localFileName)) {
+                    usage("LocalPath - must be specified for adding a new file", jc);
+                }
+                Path localPath = Paths.get(localFileName);
+                if (Files.notExists(localPath)) {
+                    usage("LocalPath - " + localFileName + " not found for adding a new file", jc);
+                }
+                if (Files.isDirectory(localPath)) {
+                    usage("LocalPath - " + localFileName + " must be a file for adding a new file", jc);
+                }
+                storageClientHelper.createNewFile(cm.serverURL, cmdCreateNewContent.bundleId, cmdCreateNewContent.newPath, new FileInputStream(localPath.toFile()), storageClientHelper.authenticate(cm.username, cm.password));
                 return;
             case "ping":
                 storageClient.ping(cmdPing.connectionInfo);
+                return;
             default:
-                usage(jc);
+                usage("", jc);
         }
     }
 
-    private static void usage(JCommander jc) {
-        jc.usage();
+    private static void usage(String message, JCommander jc) {
+        jc.usage(new StringBuilder(message));
         System.exit(1);
     }
 
