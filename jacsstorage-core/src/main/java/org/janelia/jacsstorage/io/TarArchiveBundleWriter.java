@@ -73,9 +73,7 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
                                 StringUtils.prependIfMissing(en, "/"),
                                 "."
                         );
-                        TarArchiveEntry tarArchiveEntry = new TarArchiveEntry(newEntryName, false);
-                        tarArchiveEntry.setSize(TarConstants.MAXSIZE);
-                        return tarArchiveEntry;
+                        return new TarArchiveEntry(newEntryName, false);
                     },
                     (os) -> {
                         try {
