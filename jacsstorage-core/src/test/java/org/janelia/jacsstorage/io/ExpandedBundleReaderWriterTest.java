@@ -234,4 +234,13 @@ public class ExpandedBundleReaderWriterTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Parent entry found for " + testDataDir.resolve(testData) + " but it is not a directory");
     }
+
+    @Test
+    public void tryToCreateFileEntryWhenEntryExist() throws IOException {
+        String testData = "d_1_1/f_1_1_1";
+        assertThatThrownBy(() -> expandedArchiveBundleWriter.createFileEntry(testDataDir.toString(), testData, new FileInputStream(testDataDir.resolve("d_1_1/f_1_1_1").toFile())))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Entry " + testDataDir.resolve(testData) + " already exists");
+    }
+
 }

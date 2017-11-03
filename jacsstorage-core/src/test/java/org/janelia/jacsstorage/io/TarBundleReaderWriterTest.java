@@ -204,6 +204,14 @@ public class TarBundleReaderWriterTest {
     }
 
     @Test
+    public void tryToCreateDirectoryEntryWhenEntryExist() throws IOException {
+        String testData = "d_1_1";
+        assertThatThrownBy(() -> tarBundleWriter.createDirectoryEntry(testTarFile.toString(), testData))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Entry " + testData + " already exists");
+    }
+
+    @Test
     public void tryToCreateDirectoryEntryWhenNoParentEntryExist() {
         String testData = "d_1_5/d_1_5_2";
         assertThatThrownBy(() -> tarBundleWriter.createDirectoryEntry(testTarFile.toString(), testData))
@@ -235,6 +243,14 @@ public class TarBundleReaderWriterTest {
         testData.forEach(td -> {
             assertThat(td, isIn(tarEntryNames));
         });
+    }
+
+    @Test
+    public void tryToCreateFileEntryWhenEntryExist() throws IOException {
+        String testData = "d_1_1/f_1_1_1";
+        assertThatThrownBy(() -> tarBundleWriter.createFileEntry(testTarFile.toString(), testData, new FileInputStream(Paths.get(TEST_DATA_DIRECTORY, "d_1_1/f_1_1_1").toFile())))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Entry " + testData + " already exists");
     }
 
 }
