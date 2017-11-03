@@ -135,6 +135,10 @@ public class StorageClientImplHelper {
         }
     }
 
+    public void createNewDirectory(Number dataBundleId, String newDirPath, String authToken) {
+        // !!!!!!!!!!!!!!!!!!!!!!TODO
+    }
+
     public StorageMessageResponse ping(String connectionURL) throws IOException {
         String endpoint = "/storage/status";
         Client httpClient = null;

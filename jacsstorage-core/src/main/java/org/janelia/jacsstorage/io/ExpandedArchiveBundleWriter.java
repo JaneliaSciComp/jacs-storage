@@ -77,6 +77,9 @@ public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
         if (!Files.isDirectory(parentEntry)) {
             throw new IllegalArgumentException("Parent entry found for " + entryPath + " but it is not a directory");
         }
+        if (Files.exists(entryPath)) {
+            throw new IllegalArgumentException("Entry " + entryPath + " already exists");
+        }
         return entryCreator.apply(entryPath);
     }
 

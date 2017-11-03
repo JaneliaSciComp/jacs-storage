@@ -212,6 +212,14 @@ public class ExpandedBundleReaderWriterTest {
     }
 
     @Test
+    public void tryToCreateDirectoryEntryWhenEntryExist() throws IOException {
+        String testData = "d_1_1";
+        assertThatThrownBy(() -> expandedArchiveBundleWriter.createDirectoryEntry(testDataDir.toString(), testData))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Entry " + testDataDir.resolve(testData) + " already exists");
+    }
+
+    @Test
     public void tryToCreateDirectoryEntryWhenNoParentEntryExist() throws IOException {
         String testData = "d_1_5/d_1_5_2";
         assertThatThrownBy(() -> expandedArchiveBundleWriter.createDirectoryEntry(testDataDir.toString(), testData))

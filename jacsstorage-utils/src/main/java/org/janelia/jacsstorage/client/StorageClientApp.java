@@ -42,6 +42,14 @@ public class StorageClientApp {
         private JacsStorageFormat dataFormat = JacsStorageFormat.DATA_DIRECTORY;
     }
 
+    @Parameters(commandDescription = "Create new storage storage directory")
+    private static class CommandCreateNewStorageDir extends AbstractCommand {
+        @Parameter(names = "-bundleId", description = "bundle id", required = true)
+        private Long bundleId;
+        @Parameter(names = "-newPath", description = "directory path relative to the data bundle", required = true)
+        private String newPath;
+    }
+
     @Parameters(commandDescription = "Ping an agent listener")
     private static class CommandPing extends AbstractCommand {
         @Parameter(names = "-connectionInfo", description = "Connection info", required = true)
@@ -53,11 +61,13 @@ public class StorageClientApp {
         CommandGet cmdGet = new CommandGet();
         CommandPut cmdPut = new CommandPut();
         CommandPing cmdPing = new CommandPing();
+        CommandCreateNewStorageDir cmdCreateNewDir = new CommandCreateNewStorageDir();
         JCommander jc = JCommander.newBuilder()
                 .addObject(cm)
                 .addCommand("get", cmdGet)
                 .addCommand("put", cmdPut)
                 .addCommand("ping", cmdPing)
+                .addCommand("createNewDir", cmdCreateNewDir)
                 .build();
 
         try {
@@ -81,6 +91,7 @@ public class StorageClientApp {
                     container.select(DataTransferService.class).get())
             );
         }
+        StorageClientImplHelper storageClientHelper = new StorageClientImplHelper();
         DataStorageInfo storageInfo;
         String dataOwner = cm.username;
         switch (jc.getParsedCommand()) {
@@ -89,7 +100,7 @@ public class StorageClientApp {
                         .setConnectionURL(cm.serverURL)
                         .setOwner(dataOwner)
                         .setName(cmdGet.name);
-                storageClient.retrieveData(cmdGet.localPath, storageInfo, new StorageClientImplHelper().authenticate(cm.username, cm.password));
+                storageClient.retrieveData(cmdGet.localPath, storageInfo, storageClientHelper.authenticate(cm.username, cm.password));
                 return;
             case "put":
                 storageInfo = new DataStorageInfo()
@@ -97,7 +108,10 @@ public class StorageClientApp {
                         .setStorageFormat(cmdPut.dataFormat)
                         .setOwner(dataOwner)
                         .setName(cmdPut.name);
-                storageClient.persistData(cmdPut.localPath, storageInfo, new StorageClientImplHelper().authenticate(cm.username, cm.password));
+                storageClient.persistData(cmdPut.localPath, storageInfo, storageClientHelper.authenticate(cm.username, cm.password));
+                return;
+            case "createNewDir":
+                storageClientHelper.createNewDirectory(cmdCreateNewDir.bundleId, cmdCreateNewDir.newPath, storageClientHelper.authenticate(cm.username, cm.password));
                 return;
             case "ping":
                 storageClient.ping(cmdPing.connectionInfo);

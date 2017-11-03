@@ -37,7 +37,7 @@ public class BenchmarkInvocationParams {
             );
         }
         dataStorageInfo = new DataStorageInfo()
-                .setConnectionInfo(params.serverURL)
+                .setConnectionURL(params.serverURL)
                 .setStorageFormat(JacsStorageFormat.valueOf(params.dataFormat))
                 .setOwner(params.owner)
                 .setName(RandomStringUtils.randomAlphanumeric(10) + "-" + System.nanoTime())
