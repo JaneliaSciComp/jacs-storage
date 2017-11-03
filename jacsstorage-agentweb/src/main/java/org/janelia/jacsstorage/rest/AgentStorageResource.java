@@ -11,6 +11,8 @@ import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -41,6 +43,7 @@ import java.util.List;
 @Path("agent-storage")
 public class AgentStorageResource {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AgentStorageResource.class);
     private static int MAX_ALLOWED_DEPTH = 20;
 
     @Inject
@@ -58,6 +61,7 @@ public class AgentStorageResource {
     public Response persistStream(@PathParam("dataBundleId") Long dataBundleId,
                                   @Context SecurityContext securityContext,
                                   InputStream bundleStream) throws IOException {
+        LOG.info("Create data storage bundle for {}", dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         TransferInfo ti = dataStorageService.persistDataStream(dataBundle.getPath(), dataBundle.getStorageFormat(), bundleStream);
@@ -74,6 +78,7 @@ public class AgentStorageResource {
     @Path("{dataBundleId}")
     public Response retrieveStream(@PathParam("dataBundleId") Long dataBundleId,
                                    @Context SecurityContext securityContext) {
+        LOG.info("Retrieve the entire stored bundle {}", dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StreamingOutput bundleStream =  new StreamingOutput()
@@ -100,6 +105,7 @@ public class AgentStorageResource {
     public Response listContent(@PathParam("dataBundleId") Long dataBundleId,
                                 @QueryParam("depth") Integer depthParam,
                                 @Context SecurityContext securityContext) {
+        LOG.info("List bundle content {} with a depthParameter {}", dataBundleId, depthParam);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         int depth = depthParam != null && depthParam >= 0 && depthParam < MAX_ALLOWED_DEPTH ? depthParam : MAX_ALLOWED_DEPTH;
@@ -116,6 +122,7 @@ public class AgentStorageResource {
     public Response getEntryContent(@PathParam("dataBundleId") Long dataBundleId,
                                     @PathParam("dataEntryPath") String dataEntryPath,
                                     @Context SecurityContext securityContext) {
+        LOG.info("Get entry {} content from bundle {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StreamingOutput bundleStream =  new StreamingOutput()
@@ -146,6 +153,7 @@ public class AgentStorageResource {
     public Response createDirectory(@PathParam("dataBundleId") Long dataBundleId,
                                     @PathParam("dataEntryPath") String dataEntryPath,
                                     @Context SecurityContext securityContext) {
+        LOG.info("Create new directory {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         long dirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat());
@@ -173,6 +181,7 @@ public class AgentStorageResource {
                                @PathParam("dataEntryPath") String dataEntryPath,
                                @Context SecurityContext securityContext,
                                InputStream contentStream) {
+        LOG.info("Create new file {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         long fileEntrySize = dataStorageService.createFileEntry(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat(), contentStream);
@@ -197,6 +206,7 @@ public class AgentStorageResource {
     @Path("{dataBundleId}")
     public Response deleteStorage(@PathParam("dataBundleId") Long dataBundleId,
                                   @Context SecurityContext securityContext) throws IOException {
+        LOG.info("Delete bundle {}", dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         if (dataBundle != null) {
             dataStorageService.deleteStorage(dataBundle.getPath());
