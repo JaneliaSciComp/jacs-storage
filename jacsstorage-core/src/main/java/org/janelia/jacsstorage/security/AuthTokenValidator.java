@@ -9,8 +9,11 @@ import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
+import org.apache.commons.lang3.StringUtils;
 
 public class AuthTokenValidator {
+    private static final String USERNAME_CLAIM = "user_name";
+
     private final String secretKey;
 
     public AuthTokenValidator(String secretKey) {
@@ -29,7 +32,7 @@ public class AuthTokenValidator {
             JWTClaimsSet claimsSet = jwtProcessor.process(jwt, ctx);
 
             return new JacsCredentials()
-                    .setSubject(claimsSet.getSubject())
+                    .setSubject(StringUtils.defaultIfBlank(claimsSet.getSubject(), claimsSet.getStringClaim(USERNAME_CLAIM)))
                     .setAuthToken(jwt)
                     .setClaims(claimsSet);
         } catch (Exception e) {

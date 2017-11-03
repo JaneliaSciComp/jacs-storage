@@ -5,6 +5,7 @@ import com.beust.jcommander.ParameterException;
 import org.janelia.jacsstorage.utils.StorageClientImplHelper;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Group;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.results.Result;
@@ -17,12 +18,21 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-public class StoragePersistThroughputBenchmark {
+public class StoragePersistBenchmark {
 
+    @Group("Throughput")
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void measureThroughput(BenchmarkTrialParams trialParams, BenchmarkInvocationParams invocationParams) throws Exception {
+        invocationParams.storageClient.persistData(trialParams.dataLocation, invocationParams.dataStorageInfo, trialParams.authToken);
+    }
+
+    @Group("Average")
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void measureAvgPersistTime(BenchmarkTrialParams trialParams, BenchmarkInvocationParams invocationParams) throws Exception {
         invocationParams.storageClient.persistData(trialParams.dataLocation, invocationParams.dataStorageInfo, trialParams.authToken);
     }
 
@@ -40,7 +50,7 @@ public class StoragePersistThroughputBenchmark {
         String authToken = new StorageClientImplHelper().authenticate(benchmarksCmdLineParams.username, benchmarksCmdLineParams.password);
         String dataOwner = benchmarksCmdLineParams.username;
         Options opt = new OptionsBuilder()
-                .include(StoragePersistThroughputBenchmark.class.getSimpleName())
+                .include(StoragePersistBenchmark.class.getSimpleName())
                 .warmupIterations(benchmarksCmdLineParams.warmupIterations)
                 .measurementIterations(benchmarksCmdLineParams.measurementIterations)
                 .forks(benchmarksCmdLineParams.nForks)

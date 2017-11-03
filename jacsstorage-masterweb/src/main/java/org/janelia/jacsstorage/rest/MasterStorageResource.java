@@ -104,7 +104,7 @@ public class MasterStorageResource {
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
-        } else if (SecurityUtils.getUserPrincipal(securityContext).equals(jacsBundle.getName()) || securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
+        } else if (SecurityUtils.getUserPrincipal(securityContext).getName().equals(jacsBundle.getOwner()) || securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
             return Response
                     .ok(DataStorageInfo.fromBundle(jacsBundle))
                     .build();
@@ -125,7 +125,7 @@ public class MasterStorageResource {
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
-        } else if (SecurityUtils.getUserPrincipal(securityContext).equals(jacsBundle.getName()) || securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
+        } else if (SecurityUtils.getUserPrincipal(securityContext).getName().equals(jacsBundle.getOwner()) || securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
             return Response
                     .ok(DataStorageInfo.fromBundle(jacsBundle))
                     .build();

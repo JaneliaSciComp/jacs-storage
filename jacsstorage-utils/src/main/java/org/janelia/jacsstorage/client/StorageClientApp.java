@@ -19,13 +19,6 @@ import java.nio.file.Paths;
 
 public class StorageClientApp {
 
-    private static abstract class AbstractCommand {
-        @Parameter(names = "-localPath", description = "Local path")
-        protected String localPath;
-        @Parameter(names = "-name", description = "Data bundle name")
-        protected String name;
-    }
-
     private static class CommandMain {
         @Parameter(names = "-server", description = "Storage (master) server URL")
         private String serverURL = "http://localhost:8080/jacsstorage/master-api";
@@ -35,6 +28,13 @@ public class StorageClientApp {
         protected String username;
         @Parameter(names = "-password", description = "User password authentication")
         protected String password;
+    }
+
+    private static abstract class AbstractCommand {
+        @Parameter(names = "-localPath", description = "Local path")
+        protected String localPath;
+        @Parameter(names = "-name", description = "Data bundle name")
+        protected String name;
     }
 
     @Parameters(commandDescription = "Send data to the storage server")
@@ -142,7 +142,10 @@ public class StorageClientApp {
     }
 
     private static void usage(String message, JCommander jc) {
-        jc.usage(new StringBuilder(message));
+        if (StringUtils.isNotBlank(message)) {
+            System.err.println(message);
+        }
+        jc.usage();
         System.exit(1);
     }
 
