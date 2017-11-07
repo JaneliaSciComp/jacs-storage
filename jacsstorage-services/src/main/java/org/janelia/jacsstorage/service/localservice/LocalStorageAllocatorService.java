@@ -37,7 +37,6 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
     private final String storageRootDir;
     private final String overflowRootDir;
 
-
     @Inject
     public LocalStorageAllocatorService(JacsStorageVolumeDao storageVolumeDao, JacsBundleDao bundleDao,
                                         @PropertyValue(name = "StorageAgent.agentLocation") String storageLocation,

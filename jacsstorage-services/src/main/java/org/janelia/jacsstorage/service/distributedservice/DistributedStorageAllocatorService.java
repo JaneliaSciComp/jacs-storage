@@ -1,7 +1,6 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
@@ -13,14 +12,10 @@ import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.AbstractStorageAllocatorService;
-import org.janelia.jacsstorage.utils.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 

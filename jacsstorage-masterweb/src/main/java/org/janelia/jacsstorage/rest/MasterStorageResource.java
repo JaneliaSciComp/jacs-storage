@@ -11,6 +11,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.security.JacsSecurityContext;
 import org.janelia.jacsstorage.security.SecurityUtils;
+import org.janelia.jacsstorage.service.LogStorageEvent;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 
@@ -136,6 +137,9 @@ public class MasterStorageResource {
         }
     }
 
+    @LogStorageEvent(
+            eventName = "ALLOCATE_STORAGE_METADATA"
+    )
     @Consumes("application/json")
     @POST
     public Response createBundleInfo(DataStorageInfo dataStorageInfo, @Context SecurityContext securityContext) {
@@ -152,6 +156,9 @@ public class MasterStorageResource {
                         .build());
     }
 
+    @LogStorageEvent(
+            eventName = "UPDATE_STORAGE_METADATA"
+    )
     @Consumes("application/json")
     @PUT
     @Path("{id}")
@@ -170,6 +177,9 @@ public class MasterStorageResource {
         }
     }
 
+    @LogStorageEvent(
+            eventName = "DELETE_STORAGE_METADATA"
+    )
     @DELETE
     @Path("{id}")
     public Response deleteBundleInfo(@PathParam("id") Long id, @Context SecurityContext securityContext) {

@@ -105,6 +105,7 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
                     rootPath + " is expected to be a tar file not a directory");
         }
         try (RandomAccessFile existingTarFile = new RandomAccessFile(rootPath.toFile(), "rw")) {
+            existingTarFile.getChannel().lock();
             long oldTarSize = existingTarFile.length();
             String normalizedEntryName = normalizeEntryName(entryName);
             Path relativeEntryPath = Paths.get(normalizedEntryName);

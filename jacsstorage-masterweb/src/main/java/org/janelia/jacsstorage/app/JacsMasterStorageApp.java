@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.app;
 
 import com.beust.jcommander.JCommander;
 import io.undertow.servlet.api.ListenerInfo;
+import org.janelia.jacsstorage.service.LoggerInterceptor;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
@@ -21,7 +22,9 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
             return;
         }
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
-        SeContainer container = containerInit.initialize();
+        SeContainer container = containerInit
+                .enableInterceptors(LoggerInterceptor.class)
+                .initialize();
         JacsMasterStorageApp app = container.select(JacsMasterStorageApp.class).get();
         app.start(appArgs);
     }

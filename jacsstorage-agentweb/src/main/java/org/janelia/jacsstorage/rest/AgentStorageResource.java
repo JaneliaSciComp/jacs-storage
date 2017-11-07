@@ -9,6 +9,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
+import org.janelia.jacsstorage.service.LogStorageEvent;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.slf4j.Logger;
@@ -55,6 +56,9 @@ public class AgentStorageResource {
     @Context
     private UriInfo resourceURI;
 
+    @LogStorageEvent(
+            eventName = "STREAM_STORAGE_DATA"
+    )
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @POST
     @Path("{dataBundleId}")
@@ -147,6 +151,9 @@ public class AgentStorageResource {
                 .build();
     }
 
+    @LogStorageEvent(
+            eventName = "CREATE_STORAGE_FOLDER"
+    )
     @Produces(MediaType.APPLICATION_JSON)
     @POST
     @Path("{dataBundleId}/directory/{dataEntryPath: .*}")
@@ -174,6 +181,9 @@ public class AgentStorageResource {
                 .build();
     }
 
+    @LogStorageEvent(
+            eventName = "CREATE_STORAGE_FILE"
+    )
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
     @POST
@@ -203,6 +213,9 @@ public class AgentStorageResource {
                 .build();
     }
 
+    @LogStorageEvent(
+            eventName = "DELETE_STORAGE"
+    )
     @DELETE
     @Path("{dataBundleId}")
     public Response deleteStorage(@PathParam("dataBundleId") Long dataBundleId,

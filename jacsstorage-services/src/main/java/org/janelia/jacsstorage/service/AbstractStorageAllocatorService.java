@@ -58,6 +58,10 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
             existingBundle.setChecksum(dataBundle.getChecksum());
             updatedFieldsBuilder.put("checksum", new SetFieldValueHandler<>(existingBundle.getChecksum()));
         }
+        if (dataBundle.hasMetadata()) {
+            existingBundle.addMetadataFields(dataBundle.getMetadata());
+            updatedFieldsBuilder.put("metadata", new SetFieldValueHandler<>(existingBundle.getMetadata()));
+        }
         bundleDao.update(existingBundle, updatedFieldsBuilder.build());
         return existingBundle;
     }

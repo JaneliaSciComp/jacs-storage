@@ -8,6 +8,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
+import org.janelia.jacsstorage.service.LogStorageEvent;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.webdav.httpverbs.MKCOL;
@@ -48,6 +49,9 @@ public class WebdavResource {
     @Context
     private UriInfo resourceURI;
 
+    @LogStorageEvent(
+            eventName = "STORAGE_PROPFIND"
+    )
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
     @PROPFIND
@@ -100,6 +104,9 @@ public class WebdavResource {
         return ms;
     }
 
+    @LogStorageEvent(
+            eventName = "STORAGE_MKCOL"
+    )
     @MKCOL
     @Path("{dataBundleId}/{dataDirPath: .+}")
     public Response makeDir(@PathParam("dataBundleId") Long dataBundleId,

@@ -7,6 +7,7 @@ import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.service.StorageEventLogger;
 import org.janelia.jacsstorage.service.StorageLookupService;
 
 import javax.inject.Inject;

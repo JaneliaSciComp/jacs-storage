@@ -121,6 +121,10 @@ public class JacsBundle extends AbstractEntity {
         this.metadata = metadata;
     }
 
+    public boolean hasMetadata() {
+        return metadata.size() > 0;
+    }
+
     public void addMetadataField(String name, Object value) {
         metadata.put(name, value);
     }
