@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 interface StorageAgentRequest {
-    int read() throws IOException;
+    int read();
     void close();
     Optional<StorageAgentRequestHandler> getRequestHandler();
 }

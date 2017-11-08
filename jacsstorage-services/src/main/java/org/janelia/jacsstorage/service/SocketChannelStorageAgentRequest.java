@@ -28,7 +28,11 @@ class SocketChannelStorageAgentRequest implements StorageAgentRequest {
     ByteBuffer channelOutputBuffer;
     private long nTransferredBytes;
     volatile int lastTransferredBufferSize;
-    SocketChannelStorageAgentRequest(SocketChannel socketChannel, DataTransferService agentStorageProxy, StorageAllocatorService storageAllocatorService, AuthTokenValidator authTokenValidator) {
+
+    SocketChannelStorageAgentRequest(SocketChannel socketChannel,
+                                     DataTransferService agentStorageProxy,
+                                     StorageAllocatorService storageAllocatorService,
+                                     AuthTokenValidator authTokenValidator) {
         this.socketChannel = socketChannel;
         this.agentStorageProxy = agentStorageProxy;
         this.storageAllocatorService = storageAllocatorService;
@@ -41,12 +45,18 @@ class SocketChannelStorageAgentRequest implements StorageAgentRequest {
     }
 
     @Override
-    public int read() throws IOException {
+    public int read() {
         lastTransferredBufferSize = 0;
         if (!channelInputBuffer.hasRemaining()) {
             channelInputBuffer.clear();
-            lastTransferredBufferSize = socketChannel.read(channelInputBuffer);
-            channelInputBuffer.flip();
+            try {
+                lastTransferredBufferSize = socketChannel.read(channelInputBuffer);
+            } catch (IOException e) {
+                LOG.error("Error reading the input channel from {}", getRemoteAddress(), e);
+                lastTransferredBufferSize = -1;
+            } finally {
+                channelInputBuffer.flip();
+            }
         }
         return lastTransferredBufferSize;
     }

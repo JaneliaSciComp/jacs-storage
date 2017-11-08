@@ -62,7 +62,7 @@ public class StorageAgentListener {
 
     public void startServer() throws IOException {
         // keep listener running
-        boolean running = true;
+        running = true;
         while (running) {
             // selects a set of keys whose corresponding channels are ready for I/O operations
             int readyChannels = selector.select(SELECTOR_TIMEOUT);
