@@ -1,5 +1,7 @@
 package org.janelia.jacsstorage.service;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.security.AuthTokenValidator;
 import org.janelia.jacsstorage.security.JacsCredentials;
@@ -10,6 +12,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.Map;
 import java.util.Optional;
 
 class SocketChannelStorageAgentRequest implements StorageAgentRequest {
@@ -20,6 +23,8 @@ class SocketChannelStorageAgentRequest implements StorageAgentRequest {
     private final DataTransferService agentStorageProxy;
     private final StorageAllocatorService storageAllocatorService;
     private final AuthTokenValidator authTokenValidator;
+    private final StorageEventLogger storageEventLogger;
+
     final ByteBuffer channelInputBuffer;
     final TransferState<StorageMessageHeader> transferState;
     private SelectionKey selectionKey;
@@ -32,11 +37,13 @@ class SocketChannelStorageAgentRequest implements StorageAgentRequest {
     SocketChannelStorageAgentRequest(SocketChannel socketChannel,
                                      DataTransferService agentStorageProxy,
                                      StorageAllocatorService storageAllocatorService,
-                                     AuthTokenValidator authTokenValidator) {
+                                     AuthTokenValidator authTokenValidator,
+                                     StorageEventLogger storageEventLogger) {
         this.socketChannel = socketChannel;
         this.agentStorageProxy = agentStorageProxy;
         this.storageAllocatorService = storageAllocatorService;
         this.authTokenValidator = authTokenValidator;
+        this.storageEventLogger = storageEventLogger;
         channelInputBuffer = ByteBuffer.allocate(BUFFER_SIZE);
         channelInputBuffer.limit(0); // empty
         this.transferState = new TransferState<>();
@@ -96,6 +103,13 @@ class SocketChannelStorageAgentRequest implements StorageAgentRequest {
         String authenticationError;
         switch (transferState.getMessageType().getOperation()) {
             case PERSIST_DATA:
+                logEvent(
+                        "TCP_STREAM_STORAGE_DATA",
+                        null,
+                        ImmutableMap.<String, Object>of(
+                                "callerIP", getRemoteAddress(),
+                                "dataBundleId", transferState.getMessageType().getDataBundleId()
+                        ));
                 authenticationError = validateAuthentication();
                 if (StringUtils.isBlank(authenticationError)) {
                     return new PersistStreamStorageAgentRequestHandler(this, agentStorageProxy, storageAllocatorService)
@@ -119,6 +133,16 @@ class SocketChannelStorageAgentRequest implements StorageAgentRequest {
         }
     }
 
+    private void logEvent(String eventName, String eventDescription, Map<String, Object> eventData) {
+        try {
+            storageEventLogger.logStorageEvent(
+                    eventName,
+                    eventDescription,
+                    eventData);
+        } catch (Exception e) {
+            LOG.warn("Error while trying to log storage event", e);
+        }
+    }
     private String validateAuthentication() {
         try {
             jacsCredentials = authTokenValidator.validateJwtToken(transferState.getMessageType().getAuthToken());

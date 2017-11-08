@@ -85,9 +85,6 @@ class PersistStreamStorageAgentRequestHandler extends AbstractSocketChannelStora
         }
     }
 
-    @LogStorageEvent(
-            eventName = "TCP_STREAM_STORAGE_DATA"
-    )
     StorageAgentRequestHandler initRequestHandler() {
         try {
             agentStorageProxy.beginDataTransfer(socketChannelStorageAgentRequest.transferState);

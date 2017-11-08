@@ -85,9 +85,6 @@ class RetrieveStreamStorageAgentRequestHandler extends AbstractSocketChannelStor
         }
     }
 
-    @LogStorageEvent(
-            eventName = "TCP_RETRIEVE_STORAGE_DATA"
-    )
     StorageAgentRequestHandler initRequestHandler() {
         try {
             agentStorageProxy.beginDataTransfer(socketChannelStorageAgentRequest.transferState);

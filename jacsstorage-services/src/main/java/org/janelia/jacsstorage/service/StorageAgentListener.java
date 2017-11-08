@@ -29,6 +29,7 @@ public class StorageAgentListener {
     private final DataTransferService agentStorageProxy;
     private final StorageAllocatorService storageAllocatorService;
     private final AuthTokenValidator authTokenValidator;
+    private final StorageEventLogger storageEventLogger;
 
     private Selector selector;
     private boolean running;
@@ -38,12 +39,14 @@ public class StorageAgentListener {
                                 @PropertyValue(name = "StorageAgent.portNo") int portNo,
                                 @PooledResource DataTransferService agentStorageProxy,
                                 @LocalInstance StorageAllocatorService storageAllocatorService,
-                                @PropertyValue(name = "JWT.SecretKey") String authKey) {
+                                @PropertyValue(name = "JWT.SecretKey") String authKey,
+                                StorageEventLogger storageEventLogger) {
         this.bindingIP = bindingIP;
         this.portNo = portNo;
         this.agentStorageProxy = agentStorageProxy;
         this.storageAllocatorService = storageAllocatorService;
         this.authTokenValidator = new AuthTokenValidator(authKey);
+        this.storageEventLogger = storageEventLogger;
     }
 
     public String open() throws IOException {
@@ -100,7 +103,7 @@ public class StorageAgentListener {
         channel.configureBlocking(false);
         LOG.debug("Accept incoming connection from {}", channel.getRemoteAddress());
         // register channel with selector for further IO
-        SocketChannelStorageAgentRequest storageAgentRequest = new SocketChannelStorageAgentRequest(channel, agentStorageProxy, storageAllocatorService, authTokenValidator);
+        SocketChannelStorageAgentRequest storageAgentRequest = new SocketChannelStorageAgentRequest(channel, agentStorageProxy, storageAllocatorService, authTokenValidator, storageEventLogger);
         storageAgentRequest.initSelectionKey(channel.register(this.selector, SelectionKey.OP_READ, storageAgentRequest));
     }
 

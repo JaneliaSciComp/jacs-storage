@@ -5,7 +5,6 @@ import com.beust.jcommander.Parameter;
 import io.undertow.servlet.api.ListenerInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.agent.AgentState;
-import org.janelia.jacsstorage.service.LoggerInterceptor;
 import org.janelia.jacsstorage.service.StorageAgentListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +37,6 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         }
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
         SeContainer container = containerInit
-                .enableInterceptors(LoggerInterceptor.class)
                 .initialize();
         JacsAgentStorageApp app = container.select(JacsAgentStorageApp.class).get();
         AgentState agentState = container.select(AgentState.class).get();

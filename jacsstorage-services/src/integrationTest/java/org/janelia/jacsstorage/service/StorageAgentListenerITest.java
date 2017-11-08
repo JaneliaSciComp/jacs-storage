@@ -56,6 +56,7 @@ public class StorageAgentListenerITest {
 
     private static StorageAgentListener socketStorageListener;
     private static DataBundleIOProvider dataBundleIOProvider;
+    private static StorageEventLogger storageEventLogger;
     private static String listenerSocketAddr;
 
     @BeforeClass
@@ -63,6 +64,7 @@ public class StorageAgentListenerITest {
         Instance<BundleReader> bundleReaderSource = mock(Instance.class);
         Instance<BundleWriter> bundleWriterSource = mock(Instance.class);
         StorageAllocatorService storageAllocatorService = mock(StorageAllocatorService.class);
+        storageEventLogger = mock(StorageEventLogger.class);
         List<BundleReader> dataReaders = ImmutableList.<BundleReader>of(
                 new SingleFileBundleReader(),
                 new TarArchiveBundleReader(),
@@ -79,7 +81,11 @@ public class StorageAgentListenerITest {
                 .then(invocation -> dataWriters.iterator());
         dataBundleIOProvider = new DataBundleIOProvider(bundleReaderSource, bundleWriterSource);
         CoreCdiProducer cdiProducer = new CoreCdiProducer();
-        socketStorageListener = new StorageAgentListener("localhost", 0, new DataTransferServiceImpl(Executors.newFixedThreadPool(3), dataBundleIOProvider), storageAllocatorService, TEST_AUTH_KEY);
+        socketStorageListener = new StorageAgentListener("localhost", 0,
+                new DataTransferServiceImpl(Executors.newFixedThreadPool(3), dataBundleIOProvider),
+                storageAllocatorService,
+                TEST_AUTH_KEY,
+                storageEventLogger);
         startListener(cdiProducer.createSingleExecutorService());
     }
 
