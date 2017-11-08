@@ -42,8 +42,6 @@ public class DataTransferServiceImpl implements DataTransferService {
             case RETRIEVE_DATA:
                 beginReadingData(new JacsDataLocation(messageHeader.getLocationOrDefault(), messageHeader.getFormat()), transferState);
                 break;
-            case PING:
-                break;
             default:
                 throw new UnsupportedOperationException("Operation " + messageHeader.getOperation() + " is not supported");
         }

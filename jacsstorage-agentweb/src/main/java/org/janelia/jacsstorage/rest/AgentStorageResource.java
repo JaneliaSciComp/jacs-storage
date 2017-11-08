@@ -57,7 +57,7 @@ public class AgentStorageResource {
     private UriInfo resourceURI;
 
     @LogStorageEvent(
-            eventName = "STREAM_STORAGE_DATA"
+            eventName = "HTTP_STREAM_STORAGE_DATA"
     )
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @POST

@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.security.JacsCredentials;
 
@@ -47,5 +48,16 @@ public class StorageMessageHeader {
 
     public String getMessageOrDefault() {
         return message == null ? "" : message;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("dataBundleId", dataBundleId)
+                .append("authToken", authToken)
+                .append("operation", operation)
+                .append("location", location)
+                .append("format", format)
+                .build();
     }
 }

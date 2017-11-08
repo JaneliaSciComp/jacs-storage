@@ -4,9 +4,7 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PooledResource;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.security.AuthTokenValidator;
-import org.janelia.jacsstorage.security.JacsCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,19 +23,6 @@ import java.util.Iterator;
 public class StorageAgentListener {
     private final static Logger LOG = LoggerFactory.getLogger(StorageAgentListener.class);
     private static final long SELECTOR_TIMEOUT = 10000;
-
-    private static class ChannelState {
-        private final ByteBuffer channelInputBuffer;
-        private final TransferState<StorageMessageHeader> transferState;
-        private JacsCredentials jacsCredentials;
-        private ByteBuffer channelOutputBuffer;
-        private long nTransferredBytes;
-        ChannelState(ByteBuffer channelInputBuffer) {
-            this.channelInputBuffer = channelInputBuffer;
-            this.transferState = new TransferState<>();
-            nTransferredBytes = 0;
-        }
-    }
 
     private final String bindingIP;
     private final int portNo;
@@ -115,256 +100,22 @@ public class StorageAgentListener {
         channel.configureBlocking(false);
         LOG.debug("Accept incoming connection from {}", channel.getRemoteAddress());
         // register channel with selector for further IO
-        ByteBuffer channelBuffer = ByteBuffer.allocate(2048);
-        channelBuffer.limit(0); // empty
-        channel.register(this.selector, SelectionKey.OP_READ, new ChannelState(channelBuffer));
+        SocketChannelStorageAgentRequest storageAgentRequest = new SocketChannelStorageAgentRequest(channel, agentStorageProxy, storageAllocatorService, authTokenValidator);
+        storageAgentRequest.initSelectionKey(channel.register(this.selector, SelectionKey.OP_READ, storageAgentRequest));
     }
 
     private void read(SelectionKey key) throws IOException {
-        SocketChannel channel = (SocketChannel) key.channel();
-        ChannelState channelState = (ChannelState) key.attachment();
-        int numRead = 0;
-        if (!channelState.channelInputBuffer.hasRemaining()) {
-            channelState.channelInputBuffer.clear();
-            numRead = channel.read(channelState.channelInputBuffer);
-            channelState.channelInputBuffer.flip();
-        }
-        if (!channelState.transferState.hasReadEntireMessageType()) {
-            if (numRead == -1) {
-                // stream closed - still attempt to write the response and then close the channel
-                LOG.error("Stream closed before reading the request");
-                StorageMessageHeader processErrorResponse = new StorageMessageHeader(
-                        channelState.transferState.getMessageType().getDataBundleId(),
-                        channelState.transferState.getMessageType().getAuthToken(),
-                        DataTransferService.Operation.PROCESS_ERROR,
-                        JacsStorageFormat.ARCHIVE_DATA_FILE,
-                        "",
-                        "Stream closed before the request was read");
-                TransferState<StorageMessageHeader> responseTransfer = new TransferState<>();
-                byte[] processErrorResponseBytes = responseTransfer.writeMessageType(processErrorResponse, new StorageMessageHeaderCodec());
-                try {
-                    writeBuffer(ByteBuffer.wrap(processErrorResponseBytes), channel);
-                } catch (IOException e) {
-                    LOG.warn("Error sending the incompleted request error message to {}", channel.getRemoteAddress());
-                }
-                channel.close();
-                return;
-            }
-            if (channelState.transferState.readMessageType(channelState.channelInputBuffer, new StorageMessageHeaderCodec())) {
-                // if the entire message was read - validate the token if this is a persist or retrieve operation
-                if (channelState.transferState.getMessageType().getOperation() == DataTransferService.Operation.PERSIST_DATA ||
-                        channelState.transferState.getMessageType().getOperation() == DataTransferService.Operation.RETRIEVE_DATA) {
-                    try {
-                        channelState.jacsCredentials = authTokenValidator.validateJwtToken(channelState.transferState.getMessageType().getAuthToken());
-                    } catch (Exception e) {
-                        LOG.warn("Token validation exception {}", channelState.transferState.getMessageType().getAuthToken(), e);
-                        handleAuthTokenValidationException(key, channel, e);
-                        return;
-                    }
-                }
-                agentStorageProxy.beginDataTransfer(channelState.transferState);
-            } else {
-                // message header not fully read
-                return;
-            }
-        }
-        if (channelState.transferState.getMessageType().getOperation() == DataTransferService.Operation.PERSIST_DATA) {
-            if (numRead == -1 || channelState.transferState.getState() == State.WRITE_DATA_ERROR) {
-                // nothing left to read
-                if (channelState.transferState.getState() == State.WRITE_DATA_ERROR) {
-                    prepareForSendResponse(key, channel);
-                }
-                handlePersistDataCompleted(key, channel, channelState);
-            } else {
-                // persist the data
-                handlePersistData(key, channel, channelState);
-            }
-        } else if (channelState.transferState.getMessageType().getOperation() == DataTransferService.Operation.RETRIEVE_DATA) {
-            // switch mode to sending the data
-            key.interestOps(SelectionKey.OP_WRITE);
-        } else if (channelState.transferState.getMessageType().getOperation() == DataTransferService.Operation.PING) {
-            handlePing(key, channel, channelState);
-        } else {
-            handleInvalidOperationError(key, channel, channelState);
-            return;
-        }
-    }
-
-    private void prepareForSendResponse(SelectionKey key, SocketChannel channel) throws IOException {
-        key.interestOps(SelectionKey.OP_WRITE);
-        channel.shutdownInput();
-    }
-
-    private void handlePersistData(SelectionKey key, SocketChannel channel, ChannelState channelState) throws IOException {
-        int numWritten = -1;
-        try {
-            numWritten = agentStorageProxy.writeData(channelState.channelInputBuffer, channelState.transferState);
-        } catch (Exception e) {
-            LOG.error("Error while writing data to {}", channelState.transferState, e);
-        }
-        if (numWritten == -1) {
-            prepareForSendResponse(key, channel);
-        } else {
-            channelState.nTransferredBytes += numWritten;
-        }
-    }
-
-    private void handlePersistDataCompleted(SelectionKey key, SocketChannel channel, ChannelState channelState) throws IOException {
-        // prepare to write the response
-        key.interestOps(SelectionKey.OP_WRITE);
-        try {
-            agentStorageProxy.endDataTransfer(channelState.transferState);
-        } finally {
-            channel.shutdownInput();
-        }
-    }
-
-    private void handleAuthTokenValidationException(SelectionKey key, SocketChannel channel, Exception e) throws IOException {
-        try {
-            channel.shutdownInput();
-            key.interestOps(SelectionKey.OP_WRITE);
-            StorageMessageResponse response = new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage());
-            TransferState<StorageMessageResponse> responseTransfer = new TransferState<>();
-            byte[] responseBytes = responseTransfer.writeMessageType(response, new StorageMessageResponseCodec());
-            writeBuffer(ByteBuffer.wrap(responseBytes), channel);
-        } finally {
-            channel.close();
-        }
-    }
-
-    private void handlePing(SelectionKey key, SocketChannel channel, ChannelState channelState) throws IOException {
-        key.interestOps(SelectionKey.OP_WRITE);
-        try {
-            StorageMessageResponse pingResponse = new StorageMessageResponse(StorageMessageResponse.OK, "OK");
-            TransferState<StorageMessageResponse> responseTransfer = new TransferState<>();
-            byte[] pingOperationResponseBytes = responseTransfer.writeMessageType(pingResponse, new StorageMessageResponseCodec());
-            writeBuffer(ByteBuffer.wrap(pingOperationResponseBytes), channel);
-        } catch (IOException e) {
-            LOG.warn("Error sending ping response {}", channel.getRemoteAddress(), e);
-        } finally {
-            channel.close();
-        }
-    }
-
-    private void handleInvalidOperationError(SelectionKey key, SocketChannel channel, ChannelState channelState) throws IOException {
-        key.interestOps(SelectionKey.OP_WRITE);
-        LOG.error("Invalid operation {} sent by {}", channelState.transferState.getMessageType().getOperation(), channel.getRemoteAddress());
-        StorageMessageResponse invalidOperationResponse = new StorageMessageResponse(StorageMessageResponse.ERROR,
-                "Invalid operation " + channelState.transferState.getMessageType().getOperation());
-        TransferState<StorageMessageResponse> responseTransfer = new TransferState<>();
-        byte[] invalidOperationResponseBytes = responseTransfer.writeMessageType(invalidOperationResponse, new StorageMessageResponseCodec());
-        try {
-            writeBuffer(ByteBuffer.wrap(invalidOperationResponseBytes), channel);
-        } catch (IOException e) {
-            LOG.warn("Error writing the sending invalid operation {} message to the other end: {}", channelState.transferState.getMessageType().getOperation(), channel.getRemoteAddress());
-        } finally {
-            channel.close();
-        }
+        StorageAgentRequest listenerRequest = (StorageAgentRequest) key.attachment();
+        listenerRequest.read();
+        listenerRequest.getRequestHandler()
+                .ifPresent(storageAgentRequestHandler -> storageAgentRequestHandler.handleAgentRequest());
     }
 
     private void write(SelectionKey key) throws IOException {
-        StorageMessageResponse response;
-        TransferState<StorageMessageResponse> responseTransfer;
-        byte[] responseBytes;
-        SocketChannel channel = (SocketChannel) key.channel();
-        ChannelState channelState = (ChannelState) key.attachment();
-        if (channelState.transferState.getMessageType().getOperation() == DataTransferService.Operation.PERSIST_DATA) {
-            switch (channelState.transferState.getState()) {
-                case WRITE_DATA_STARTED:
-                case WRITE_DATA:
-                    // still writing the data to the file system
-                    return;
-                case WRITE_DATA_COMPLETE:
-                    // update the storage for the persisted data bundle
-                    storageAllocatorService.updateStorage(
-                            channelState.jacsCredentials,
-                            new JacsBundleBuilder()
-                                    .dataBundleId(channelState.transferState.getMessageType().getDataBundleId())
-                                    .usedSpaceInBytes(channelState.transferState.getPersistedBytes())
-                                    .checksum(Base64.getEncoder().encodeToString(channelState.transferState.getChecksum()))
-                                    .build());
-                    // and continue sending the response
-                case WRITE_DATA_ERROR:
-                    // write the response
-                    response = new StorageMessageResponse(channelState.transferState.getState() == State.WRITE_DATA_COMPLETE ? StorageMessageResponse.OK : StorageMessageResponse.ERROR,
-                            channelState.transferState.getErrorMessage());
-                    responseTransfer = new TransferState<>();
-                    responseBytes = responseTransfer.writeMessageType(response, new StorageMessageResponseCodec());
-                    writeBuffer(ByteBuffer.wrap(responseBytes), channel);
-                    channel.close();
-                    return;
-                default:
-                    LOG.warn("Invalid state {} while persisting data from {}", channelState.transferState.getState(), channel.getRemoteAddress());
-                    response = new StorageMessageResponse(StorageMessageResponse.ERROR,
-                            "Invalid state " + channelState.transferState.getState() + "while persisting data from " + channel.getRemoteAddress());
-                    responseTransfer = new TransferState<>();
-                    responseBytes = responseTransfer.writeMessageType(response, new StorageMessageResponseCodec());
-                    writeBuffer(ByteBuffer.wrap(responseBytes), channel);
-                    channel.close();
-            }
-        } else if (channelState.transferState.getMessageType().getOperation() == DataTransferService.Operation.RETRIEVE_DATA) {
-            switch (channelState.transferState.getState()) {
-                case READ_DATA_STARTED:
-                    return;
-                case READ_DATA:
-                case READ_DATA_COMPLETE:
-                    if (channelState.channelOutputBuffer == null) {
-                        // no response has been sent yet
-                        ByteBuffer responseBuffer = ByteBuffer.allocate(2048);
-                        int nbytes = agentStorageProxy.readData(responseBuffer, channelState.transferState);
-                        if (nbytes == -1) {
-                            // nothing read from the data channel
-                            if (channelState.transferState.getState() == State.READ_DATA_ERROR) {
-                                response = new StorageMessageResponse(StorageMessageResponse.ERROR, channelState.transferState.getErrorMessage());
-                            } else {
-                                response = new StorageMessageResponse(StorageMessageResponse.OK, channelState.transferState.getErrorMessage());
-                            }
-                            responseTransfer = new TransferState<>();
-                            responseBytes = responseTransfer.writeMessageType(response, new StorageMessageResponseCodec());
-                            writeBuffer(ByteBuffer.wrap(responseBytes), channel);
-                            channel.close();
-                            return;
-                        } else if (nbytes > 0) {
-                            channelState.channelOutputBuffer = responseBuffer;
-                            channelState.channelOutputBuffer.flip();
-                            response = new StorageMessageResponse(StorageMessageResponse.OK, channelState.transferState.getErrorMessage());
-                            responseTransfer = new TransferState<>();
-                            responseBytes = responseTransfer.writeMessageType(response, new StorageMessageResponseCodec());
-                            writeBuffer(ByteBuffer.wrap(responseBytes), channel);
-                        }
-                    }
-                    // the response header was already sent so continue with sending the data
-                    if (!channelState.channelOutputBuffer.hasRemaining()) {
-                        channelState.channelOutputBuffer.clear();
-                        // get more data to send
-                        if (agentStorageProxy.readData(channelState.channelOutputBuffer, channelState.transferState) == -1) {
-                            // nothing more to send so simply close the channel since sending the data will not have a response suffix
-                            channel.close();
-                            return;
-                        }
-                        channelState.channelOutputBuffer.flip();
-                    }
-                    writeBuffer(channelState.channelOutputBuffer, channel);
-                    return;
-                case READ_DATA_ERROR:
-                    if (channelState.channelOutputBuffer == null) {
-                        response = new StorageMessageResponse(StorageMessageResponse.ERROR, channelState.transferState.getErrorMessage());
-                        responseTransfer = new TransferState<>();
-                        responseBytes = responseTransfer.writeMessageType(response, new StorageMessageResponseCodec());
-                        writeBuffer(ByteBuffer.wrap(responseBytes), channel);
-                    } // else it already sent the response header so just close the channel
-                    channel.close();
-                    return;
-                default:
-                    LOG.warn("Invalid state {} while persisting data from {}", channelState.transferState.getState(), channel.getRemoteAddress());
-                    return;
-            }
-        } else {
-            throw new IllegalStateException("Invalid operation " + channelState.transferState.getMessageType().getOperation());
-        }
+        StorageAgentRequest listenerRequest = (StorageAgentRequest) key.attachment();
+        listenerRequest.getRequestHandler()
+                .ifPresent(storageAgentRequestHandler -> storageAgentRequestHandler.handleAgentResponse());
+
     }
 
-    private void writeBuffer(ByteBuffer buffer, SocketChannel channel) throws IOException {
-        while (buffer.hasRemaining()) channel.write(buffer);
-    }
 }
