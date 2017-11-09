@@ -21,6 +21,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -157,9 +158,27 @@ public class AgentStorageResource {
     @Produces(MediaType.APPLICATION_JSON)
     @POST
     @Path("{dataBundleId}/directory/{dataEntryPath: .*}")
-    public Response createDirectory(@PathParam("dataBundleId") Long dataBundleId,
-                                    @PathParam("dataEntryPath") String dataEntryPath,
-                                    @Context SecurityContext securityContext) {
+    public Response postCreateDirectory(@PathParam("dataBundleId") Long dataBundleId,
+                                        @PathParam("dataEntryPath") String dataEntryPath,
+                                        @Context SecurityContext securityContext) {
+        return createDirectory(dataBundleId, dataEntryPath, securityContext);
+    }
+
+    @LogStorageEvent(
+            eventName = "CREATE_STORAGE_FOLDER"
+    )
+    @Produces(MediaType.APPLICATION_JSON)
+    @PUT
+    @Path("{dataBundleId}/directory/{dataEntryPath: .*}")
+    public Response putCreateDirectory(@PathParam("dataBundleId") Long dataBundleId,
+                                       @PathParam("dataEntryPath") String dataEntryPath,
+                                       @Context SecurityContext securityContext) {
+        return createDirectory(dataBundleId, dataEntryPath, securityContext);
+    }
+
+    private Response createDirectory(Long dataBundleId,
+                                    String dataEntryPath,
+                                    SecurityContext securityContext) {
         LOG.info("Create new directory {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
@@ -188,10 +207,31 @@ public class AgentStorageResource {
     @Produces(MediaType.APPLICATION_JSON)
     @POST
     @Path("{dataBundleId}/file/{dataEntryPath: .*}")
-    public Response createFile(@PathParam("dataBundleId") Long dataBundleId,
-                               @PathParam("dataEntryPath") String dataEntryPath,
-                               @Context SecurityContext securityContext,
-                               InputStream contentStream) {
+    public Response postCreateFile(@PathParam("dataBundleId") Long dataBundleId,
+                                   @PathParam("dataEntryPath") String dataEntryPath,
+                                   @Context SecurityContext securityContext,
+                                   InputStream contentStream) {
+        return createFile(dataBundleId, dataEntryPath, securityContext, contentStream);
+    }
+
+    @LogStorageEvent(
+            eventName = "CREATE_STORAGE_FILE"
+    )
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
+    @PUT
+    @Path("{dataBundleId}/file/{dataEntryPath: .*}")
+    public Response putCreateFile(@PathParam("dataBundleId") Long dataBundleId,
+                                  @PathParam("dataEntryPath") String dataEntryPath,
+                                  @Context SecurityContext securityContext,
+                                  InputStream contentStream) {
+        return createFile(dataBundleId, dataEntryPath, securityContext, contentStream);
+    }
+
+    private Response createFile(Long dataBundleId,
+                                String dataEntryPath,
+                                SecurityContext securityContext,
+                                InputStream contentStream) {
         LOG.info("Create new file {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
