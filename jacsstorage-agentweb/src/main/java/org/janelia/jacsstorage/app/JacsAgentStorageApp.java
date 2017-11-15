@@ -23,8 +23,12 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     private static final Logger LOG = LoggerFactory.getLogger(JacsAgentStorageApp.class);
 
     private static class AgentArgs extends AbstractStorageApp.AppArgs {
-        @Parameter(names = "-c", description = "URL of the master service to which to connect", required = false)
-        private String connectTo;
+        @Parameter(names = "-masterURL", description = "URL of the master service to which to connect", required = false)
+        private String masterHttpUrl;
+        @Parameter(names = "-tcpBind", description = "TCP binding IP", required = false)
+        private String agentTCPBindingAddress;
+        @Parameter(names = "-tcpPort", description = "TCP port number", required = false)
+        private int agentTCPPortNumber;
     }
 
     public static void main(String[] args) throws ServletException {
@@ -40,19 +44,19 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
                 .initialize();
         JacsAgentStorageApp app = container.select(JacsAgentStorageApp.class).get();
         AgentState agentState = container.select(AgentState.class).get();
-        agentState.setAgentURL(UriBuilder.fromPath(agentArgs.baseContextPath)
+        agentState.updateAgentHttpURL(UriBuilder.fromPath(agentArgs.baseContextPath)
                 .scheme("http")
-                .host(agentState.getStorageIPAddress())
+                .host(agentState.getStorageHost())
                 .port(agentArgs.portNumber)
                 .path("agent-api")
                 .build()
                 .toString());
-        if (StringUtils.isNotBlank(agentArgs.connectTo)) {
-            agentState.connectTo(agentArgs.connectTo);
+        if (StringUtils.isNotBlank(agentArgs.masterHttpUrl)) {
+            agentState.connectTo(agentArgs.masterHttpUrl);
         }
         StorageAgentListener storageAgentListener = container.select(StorageAgentListener.class).get();
         ExecutorService agentExecutor = container.select(ExecutorService.class).get();
-        app.startAgentListener(agentExecutor, storageAgentListener);
+        agentState.updateAgentTcpPortNo(app.startAgentListener(agentArgs, agentExecutor, storageAgentListener));
         app.start(agentArgs);
     }
 
@@ -72,21 +76,26 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         };
     }
 
-    private void startAgentListener(ExecutorService agentExecutor, StorageAgentListener storageAgentListener) {
-        agentExecutor.execute(() -> {
-            try {
-                storageAgentListener.open();
-                storageAgentListener.startServer();
-            } catch (Exception e) {
-                LOG.error("Error while running the agent listener", e);
-                throw new IllegalStateException(e);
-            } finally {
+    private int startAgentListener(AgentArgs args, ExecutorService agentExecutor, StorageAgentListener storageAgentListener) {
+        try {
+            int listenerPortNumber = storageAgentListener.open(args.agentTCPBindingAddress, args.agentTCPPortNumber);
+            agentExecutor.execute(() -> {
                 try {
-                    storageAgentListener.stopServer();
+                    storageAgentListener.startServer();
                 } catch (Exception e) {
-                    LOG.error("Error while terminating the agent listener", e);
+                    LOG.error("Error while running the agent listener", e);
+                    throw new IllegalStateException(e);
+                } finally {
+                    try {
+                        storageAgentListener.stopServer();
+                    } catch (Exception e) {
+                        LOG.error("Error while terminating the agent listener", e);
+                    }
                 }
-            }
-        });
+            });
+            return listenerPortNumber;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

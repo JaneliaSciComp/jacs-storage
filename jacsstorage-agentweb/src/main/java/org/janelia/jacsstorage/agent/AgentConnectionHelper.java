@@ -1,7 +1,7 @@
 package org.janelia.jacsstorage.agent;
 
 import org.glassfish.jersey.jackson.JacksonFeature;
-import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
+import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,12 +23,14 @@ class AgentConnectionHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(AgentConnectionHelper.class);
 
-    static StorageAgentInfo findRegisteredAgent(String masterServiceUrl, String agentLocation) {
-        String registrationEndpoint = String.format("/agents/%s", agentLocation);
+    static StorageAgentInfo findRegisteredAgent(String masterServiceUrl, String agentURL) {
+        String registrationEndpoint = "/agents/url";
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
-            WebTarget target = httpClient.target(masterServiceUrl).path(registrationEndpoint);
+            WebTarget target = httpClient.target(masterServiceUrl)
+                    .path(registrationEndpoint)
+                    .path(agentURL);
             Response response = target.request()
                     .get()
                     ;
@@ -72,8 +74,8 @@ class AgentConnectionHelper {
         return null;
     }
 
-    static void deregisterAgent(String masterServiceUrl, String agentLocation, String agentToken) {
-        String registrationEndpoint = String.format("/agents/%s", agentLocation);
+    static void deregisterAgent(String masterServiceUrl, String agentURL, String agentToken) {
+        String registrationEndpoint = String.format("/agents/%s", agentURL);
         Client httpClient = null;
         try {
             httpClient = createHttpClient();

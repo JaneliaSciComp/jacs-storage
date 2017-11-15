@@ -15,55 +15,26 @@ import javax.inject.Inject;
 @LocalInstance
 public class LocalStorageLookupService implements StorageLookupService {
 
-    private final JacsStorageVolumeDao storageVolumeDao;
     private final JacsBundleDao bundleDao;
 
     @Inject
-    public LocalStorageLookupService(JacsStorageVolumeDao storageVolumeDao,
-                                     JacsBundleDao bundleDao) {
-        this.storageVolumeDao = storageVolumeDao;
+    public LocalStorageLookupService(JacsBundleDao bundleDao) {
         this.bundleDao = bundleDao;
     }
 
     @Override
     public JacsBundle findDataBundleByOwnerAndName(String owner, String name) {
-        JacsBundle bundle = bundleDao.findByOwnerAndName(owner, name);
-        if (bundle != null) {
-            updateStorageVolume(bundle);
-        }
-        return bundle;
+        return bundleDao.findByOwnerAndName(owner, name);
     }
 
     @Override
     public PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest) {
-        JacsBundle matchingPattern = pattern.getStorageVolume()
-                .map(JacsStorageVolume::getLocation)
-                .flatMap(storageVolumeDao::findStorageByLocation)
-                .map(storageVolume -> {
-                    pattern.setStorageVolumeId(storageVolume.getId());
-                    return pattern;
-                })
-                .orElse(pattern)
-                ;
-        return bundleDao.findMatchingDataBundles(matchingPattern, pageRequest);
+        return bundleDao.findMatchingDataBundles(pattern, pageRequest);
     }
 
     @Override
     public JacsBundle getDataBundleById(Number id) {
-        JacsBundle bundle = bundleDao.findById(id);
-        if (bundle != null) {
-            updateStorageVolume(bundle);
-        }
-        return bundle;
-    }
-
-    private void updateStorageVolume(JacsBundle bundle) {
-        bundle.setStorageVolume(storageVolumeDao.findById(bundle.getStorageVolumeId()))
-                .map(storageVolume -> {
-                    bundle.setConnectionInfo(storageVolume.getMountHostIP());
-                    bundle.setConnectionURL(storageVolume.getMountHostURL());
-                    return bundle;
-                });
+        return bundleDao.findById(id);
     }
 
 }

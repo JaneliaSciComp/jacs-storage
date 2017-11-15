@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import org.apache.commons.lang3.StringUtils;
@@ -93,8 +94,22 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
                     "_id",
                     "referencedVolumes"
                     ));
-            if (StringUtils.isNotBlank(sv.getLocation())) {
-                bundleAggregationOpsBuilder.add(Aggregates.match(eq("referencedVolumes.location", sv.getLocation())));
+            if (sv.isShared()) {
+                bundleAggregationOpsBuilder.add(Aggregates.match(
+                        Filters.or(
+                                Filters.exists("referencedVolumes.storageHost", false),
+                                Filters.eq("referencedVolumes.storageHost", null))
+                        ));
+            } else if (sv.getStorageHost() != null) {
+                if (StringUtils.isBlank(sv.getStorageHost())) {
+                    bundleAggregationOpsBuilder.add(Aggregates.match(Filters.exists("referencedVolumes.storageHost", true)));
+                    bundleAggregationOpsBuilder.add(Aggregates.match(Filters.ne("referencedVolumes.storageHost", null)));
+                } else {
+                    bundleAggregationOpsBuilder.add(Aggregates.match(Filters.eq("referencedVolumes.storageHost", sv.getStorageHost())));
+                }
+            }
+            if (StringUtils.isNotBlank(sv.getName())) {
+                bundleAggregationOpsBuilder.add(Aggregates.match(eq("referencedVolumes.name", sv.getName())));
             }
         });
         List<JacsBundle> results = aggregate(bsonFilter,

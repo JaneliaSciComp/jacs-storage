@@ -35,13 +35,25 @@ public class JacsBundleBuilder {
         return this;
     }
 
-    public JacsBundleBuilder location(String v) {
+    public JacsBundleBuilder storageHost(String v) {
         jacsBundle.setStorageVolume(jacsBundle.getStorageVolume().map(sv -> {
-            sv.setLocation(v);
+            sv.setStorageHost(v);
             return sv;
         }).orElseGet(() -> {
             JacsStorageVolume sv = new JacsStorageVolume();
-            sv.setLocation(v);
+            sv.setStorageHost(v);
+            return sv;
+        }));
+        return this;
+    }
+
+    public JacsBundleBuilder volumeName(String v) {
+        jacsBundle.setStorageVolume(jacsBundle.getStorageVolume().map(sv -> {
+            sv.setName(v);
+            return sv;
+        }).orElseGet(() -> {
+            JacsStorageVolume sv = new JacsStorageVolume();
+            sv.setName(v);
             return sv;
         }));
         return this;

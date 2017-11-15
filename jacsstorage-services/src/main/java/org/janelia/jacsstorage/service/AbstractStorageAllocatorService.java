@@ -18,11 +18,9 @@ import java.util.Optional;
 
 public abstract class AbstractStorageAllocatorService implements StorageAllocatorService {
 
-    protected final JacsStorageVolumeDao storageVolumeDao;
     protected final JacsBundleDao bundleDao;
 
-    public AbstractStorageAllocatorService(JacsStorageVolumeDao storageVolumeDao, JacsBundleDao bundleDao) {
-        this.storageVolumeDao = storageVolumeDao;
+    public AbstractStorageAllocatorService(JacsBundleDao bundleDao) {
         this.bundleDao = bundleDao;
     }
 
@@ -33,11 +31,9 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
                     dataBundle.setOwner(credentials.getSubject());
                     dataBundle.setStorageVolumeId(storageVolume.getId());
                     dataBundle.setStorageVolume(storageVolume);
-                    dataBundle.setConnectionInfo(storageVolume.getMountHostIP());
-                    dataBundle.setConnectionURL(storageVolume.getMountHostURL());
                     bundleDao.save(dataBundle);
                     List<String> dataSubpath = PathUtils.getTreePathComponentsForId(dataBundle.getId());
-                    Path dataPath = Paths.get(storageVolume.getMountPoint(), dataSubpath.toArray(new String[dataSubpath.size()]));
+                    Path dataPath = Paths.get(storageVolume.getVolumePath(), dataSubpath.toArray(new String[dataSubpath.size()]));
                     dataBundle.setPath(dataPath.toString());
                     bundleDao.update(dataBundle, ImmutableMap.of("path", new SetFieldValueHandler<>(dataBundle.getPath())));
                     return dataBundle;

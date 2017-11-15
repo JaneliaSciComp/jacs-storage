@@ -15,23 +15,33 @@ public class JacsStorageVolumeBuilder {
         return this;
     }
 
-    public JacsStorageVolumeBuilder location(String v) {
-        jacsStorageVolume.setLocation(v);
+    public JacsStorageVolumeBuilder storageHost(String v) {
+        jacsStorageVolume.setStorageHost(v);
         return this;
     }
 
-    public JacsStorageVolumeBuilder mountHostIP(String v) {
-        jacsStorageVolume.setMountHostIP(v);
+    public JacsStorageVolumeBuilder tcpPortNo(int v) {
+        jacsStorageVolume.setStorageServiceTCPPortNo(v);
         return this;
     }
 
-    public JacsStorageVolumeBuilder mountHostURL(String v) {
-        jacsStorageVolume.setMountHostURL(v);
+    public JacsStorageVolumeBuilder name(String v) {
+        jacsStorageVolume.setName(v);
         return this;
     }
 
-    public JacsStorageVolumeBuilder mountPoint(String v) {
-        jacsStorageVolume.setMountPoint(v);
+    public JacsStorageVolumeBuilder volumePath(String v) {
+        jacsStorageVolume.setVolumePath(v);
+        return this;
+    }
+
+    public JacsStorageVolumeBuilder addTag(String v) {
+        jacsStorageVolume.addVolumeTag(v);
+        return this;
+    }
+
+    public JacsStorageVolumeBuilder storageServiceURL(String v) {
+        jacsStorageVolume.setStorageServiceURL(v);
         return this;
     }
 }

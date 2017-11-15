@@ -50,6 +50,7 @@ import static org.mockito.Mockito.when;
 
 public class StorageAgentListenerITest {
 
+    private static final String TEST_LISTNER_HOSTNAME = "localhost";
     private static final String TEST_DATA_DIRECTORY = "src/integrationTest/resources/testdata/bundletransfer";
     private static final String TEST_AUTH_KEY = "This key must be at least 32 chars long";
     private Path testDirectory;
@@ -57,7 +58,7 @@ public class StorageAgentListenerITest {
     private static StorageAgentListener socketStorageListener;
     private static DataBundleIOProvider dataBundleIOProvider;
     private static StorageEventLogger storageEventLogger;
-    private static String listenerSocketAddr;
+    private static int listenerPortNumber;
 
     @BeforeClass
     public static void startListener() {
@@ -81,7 +82,7 @@ public class StorageAgentListenerITest {
                 .then(invocation -> dataWriters.iterator());
         dataBundleIOProvider = new DataBundleIOProvider(bundleReaderSource, bundleWriterSource);
         CoreCdiProducer cdiProducer = new CoreCdiProducer();
-        socketStorageListener = new StorageAgentListener("localhost", 0,
+        socketStorageListener = new StorageAgentListener(
                 new DataTransferServiceImpl(Executors.newFixedThreadPool(3), dataBundleIOProvider),
                 storageAllocatorService,
                 TEST_AUTH_KEY,
@@ -93,7 +94,7 @@ public class StorageAgentListenerITest {
         CountDownLatch started = new CountDownLatch(1);
         agentExecutor.execute(() -> {
             try {
-                listenerSocketAddr = socketStorageListener.open();
+                listenerPortNumber = socketStorageListener.open(TEST_LISTNER_HOSTNAME, 0);
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             } finally {
@@ -293,13 +294,14 @@ public class StorageAgentListenerITest {
     @Test
     public void ping() throws IOException {
         StorageClient storageClient = createStorageClient();
-        StorageMessageResponse pingResponse = storageClient.ping(listenerSocketAddr);
+        StorageMessageResponse pingResponse = storageClient.ping(TEST_LISTNER_HOSTNAME + ":" + listenerPortNumber);
         assertThat(pingResponse.getStatus(), equalTo(StorageMessageResponse.OK));
     }
 
     private DataStorageInfo storageInfo(Path targetPath, JacsStorageFormat storageFormat) throws IOException {
         return new DataStorageInfo()
-                .setConnectionInfo(listenerSocketAddr)
+                .setStorageHost(TEST_LISTNER_HOSTNAME)
+                .setTcpPortNo(listenerPortNumber)
                 .setStorageFormat(storageFormat)
                 .setPath(targetPath.toString());
     }

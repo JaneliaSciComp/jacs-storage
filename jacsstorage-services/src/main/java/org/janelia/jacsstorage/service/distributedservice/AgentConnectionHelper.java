@@ -1,8 +1,7 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
-import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.jackson.JacksonFeature;
-import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
+import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +22,7 @@ class AgentConnectionHelper {
     private static final Logger LOG = LoggerFactory.getLogger(AgentConnectionHelper.class);
 
     static StorageAgentInfo getAgentStatus(String agentUrl) {
-        String agentStatusEndpoint = String.format("/connection/status");
+        String agentStatusEndpoint = "/connection/status";
         Client httpClient = null;
         try {
             httpClient = createHttpClient();

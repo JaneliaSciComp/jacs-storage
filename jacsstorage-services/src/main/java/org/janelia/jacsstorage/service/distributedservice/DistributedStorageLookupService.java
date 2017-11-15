@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
@@ -40,16 +41,12 @@ public class DistributedStorageLookupService implements StorageLookupService {
 
     @Override
     public PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest) {
-        JacsBundle matchingPattern = pattern.getStorageVolume()
-                .map(JacsStorageVolume::getLocation)
-                .flatMap(storageVolumeDao::findStorageByLocation)
-                .map(storageVolume -> {
-                    pattern.setStorageVolumeId(storageVolume.getId());
-                    return pattern;
-                })
-                .orElse(pattern)
-                ;
-        return bundleDao.findMatchingDataBundles(matchingPattern, pageRequest);
+        PageResult<JacsBundle> matchingBundles = bundleDao.findMatchingDataBundles(pattern, pageRequest);
+        matchingBundles.getResultList().stream()
+                .filter(db -> !db.hasStorageHost())
+                .forEach(db -> updateStorageVolume(db))
+        ;
+        return matchingBundles;
     }
 
     @Override
@@ -62,12 +59,18 @@ public class DistributedStorageLookupService implements StorageLookupService {
     }
 
     private void updateStorageVolume(JacsBundle bundle) {
-        bundle.setStorageVolume(storageVolumeDao.findById(bundle.getStorageVolumeId()))
-                .flatMap(storageVolume -> agentManager.findRegisteredAgentByLocationOrConnectionInfo(storageVolume.getLocation())) // find a registered agent that serves the given location
-                .map(storageAgent -> {
-                    bundle.setConnectionInfo(storageAgent.getConnectionInfo());
-                    bundle.setConnectionURL(storageAgent.getAgentURL());
-                    return bundle;
+        JacsStorageVolume bundleVol = bundle.getStorageVolume()
+                .orElseGet(() -> {
+                    JacsStorageVolume sv = storageVolumeDao.findById(bundle.getStorageVolumeId());
+                    bundle.setStorageVolume(sv);
+                    return sv;
                 });
+        if (bundleVol.isShared() && StringUtils.isBlank(bundleVol.getStorageHost())) {
+            agentManager.findRandomRegisteredAgent((StorageAgentConnection ac) -> ac.isConnected())
+                    .ifPresent(ai -> {
+                        bundleVol.setStorageServiceURL(ai.getAgentHttpURL());
+                        bundleVol.setStorageServiceTCPPortNo(ai.getTcpPortNo());
+                    });
+        }
     }
 }

@@ -21,11 +21,9 @@ import java.util.Base64;
 import java.util.Iterator;
 
 public class StorageAgentListener {
-    private final static Logger LOG = LoggerFactory.getLogger(StorageAgentListener.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StorageAgentListener.class);
     private static final long SELECTOR_TIMEOUT = 10000;
 
-    private final String bindingIP;
-    private final int portNo;
     private final DataTransferService agentStorageProxy;
     private final StorageAllocatorService storageAllocatorService;
     private final AuthTokenValidator authTokenValidator;
@@ -35,21 +33,17 @@ public class StorageAgentListener {
     private boolean running;
 
     @Inject
-    public StorageAgentListener(@PropertyValue(name = "StorageAgent.bindingIP") String bindingIP,
-                                @PropertyValue(name = "StorageAgent.portNo") int portNo,
-                                @PooledResource DataTransferService agentStorageProxy,
+    public StorageAgentListener(@PooledResource DataTransferService agentStorageProxy,
                                 @LocalInstance StorageAllocatorService storageAllocatorService,
                                 @PropertyValue(name = "JWT.SecretKey") String authKey,
                                 StorageEventLogger storageEventLogger) {
-        this.bindingIP = bindingIP;
-        this.portNo = portNo;
         this.agentStorageProxy = agentStorageProxy;
         this.storageAllocatorService = storageAllocatorService;
         this.authTokenValidator = new AuthTokenValidator(authKey);
         this.storageEventLogger = storageEventLogger;
     }
 
-    public String open() throws IOException {
+    public int open(String bindingIP, int portNo) throws IOException {
         selector = Selector.open();
 
         ServerSocketChannel agentSocketChannel = ServerSocketChannel.open();
@@ -60,7 +54,7 @@ public class StorageAgentListener {
         serverSocket.bind(agentAddr);
         agentSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
         LOG.info("Started an agent listener on {}:{} ({})", bindingIP, portNo, serverSocket.getLocalSocketAddress());
-        return serverSocket.getInetAddress().getHostAddress() + ":" + serverSocket.getLocalPort();
+        return serverSocket.getLocalPort();
     }
 
     public void startServer() throws IOException {

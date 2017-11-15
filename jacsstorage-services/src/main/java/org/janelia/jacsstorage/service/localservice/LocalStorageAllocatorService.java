@@ -7,13 +7,17 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
+import org.janelia.jacsstorage.datarequest.PageRequest;
+import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.jacsstorage.model.DataInterval;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
+import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.AbstractStorageAllocatorService;
+import org.janelia.jacsstorage.utils.NetUtils;
 import org.janelia.jacsstorage.utils.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,22 +36,15 @@ import java.util.Optional;
 public class LocalStorageAllocatorService extends AbstractStorageAllocatorService {
     private static final Logger LOG = LoggerFactory.getLogger(LocalStorageAllocatorService.class);
 
-    private final String storageLocation;
-    private final String storageIPAddress;
-    private final String storageRootDir;
-    private final String overflowRootDir;
+    private final JacsStorageVolumeDao storageVolumeDao;
+    private final String storageHost;
 
     @Inject
     public LocalStorageAllocatorService(JacsStorageVolumeDao storageVolumeDao, JacsBundleDao bundleDao,
-                                        @PropertyValue(name = "StorageAgent.agentLocation") String storageLocation,
-                                        @PropertyValue(name = "StorageAgent.IPAddress") String storageIPAddress,
-                                        @PropertyValue(name = "StorageAgent.storageRootDir") String storageRootDir,
-                                        @PropertyValue(name = "Storage.Overflow.RootDir") String overflowRootDir) {
-        super(storageVolumeDao, bundleDao);
-        this.storageLocation = storageLocation;
-        this.storageIPAddress = storageIPAddress;
-        this.storageRootDir = storageRootDir;
-        this.overflowRootDir = overflowRootDir;
+                                        @PropertyValue(name = "StorageAgent.StorageHost") String storageHost) {
+        super(bundleDao);
+        this.storageVolumeDao = storageVolumeDao;
+        this.storageHost = storageHost;
     }
 
     @Override
@@ -66,7 +63,7 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
                     }
                     List<String> dataSubpath = PathUtils.getTreePathComponentsForId(existingBundle.getId());
                     if (CollectionUtils.isNotEmpty(dataSubpath)) {
-                        Path parentPath = Paths.get(storageVolume.getMountPoint(), dataSubpath.get(0));
+                        Path parentPath = Paths.get(storageVolume.getVolumePath(), dataSubpath.get(0));
                         if (dataPath.startsWith(parentPath)) {
                             try {
                                 PathUtils.deletePathIfEmpty(parentPath);
@@ -83,52 +80,27 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
 
     @Override
     public Optional<JacsStorageVolume> selectStorageVolume(JacsBundle dataBundle) {
-        long availableSpace = getAvailableStorageSpace();
-        String selectedStorageLocation;
-        String rootDir;
-        if (availableSpace > 0 &&
-                (dataBundle.getUsedSpaceInBytes() == null || availableSpace > dataBundle.getUsedSpaceInBytes())) {
-            selectedStorageLocation = getStorageLocation();
-            rootDir = storageRootDir;
+        JacsStorageVolume volumePattern = new JacsStorageVolume();
+        volumePattern.setStorageHost(getStorageHost());
+        volumePattern.setStorageTags(dataBundle.getStorageTags());
+        dataBundle.getStorageVolume()
+                .ifPresent(sv -> {
+                    volumePattern.setId(sv.getId());
+                    volumePattern.setName(sv.getName());
+                });
+        if (dataBundle.hasUsedSpaceSet()) {
+            volumePattern.setAvailableSpaceInBytes(dataBundle.getUsedSpaceInBytes());
+        }
+        PageResult<JacsStorageVolume> storageVolumeResults = storageVolumeDao.findMatchingVolumes(volumePattern, new PageRequest());
+        if (storageVolumeResults.getResultList().isEmpty()) {
+            return Optional.empty();
         } else {
-            selectedStorageLocation = StorageAgentInfo.OVERFLOW_AGENT;
-            rootDir = overflowRootDir;
-        }
-        JacsStorageVolume storageVolume = storageVolumeDao.getStorageByLocationAndCreateIfNotFound(selectedStorageLocation);
-        ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedVolumeFieldsBuilder = ImmutableMap.builder();
-        if (StringUtils.isBlank(storageVolume.getMountPoint())) {
-            storageVolume.setMountPoint(rootDir);
-            updatedVolumeFieldsBuilder.put("mountPoint", new SetFieldValueHandler<>(storageVolume.getMountPoint()));
-        }
-        storageVolumeDao.update(storageVolume, updatedVolumeFieldsBuilder.build());
-        return Optional.of(storageVolume);
-    }
-
-    private String getStorageLocation() {
-        return StringUtils.isBlank(storageLocation) ? getStorageIPAddress() + "/" + storageRootDir : storageLocation;
-    }
-
-    private String getStorageIPAddress() {
-        return StringUtils.isBlank(storageIPAddress) ? getCurrentHostIP() : storageIPAddress;
-    }
-
-    private String getCurrentHostIP() {
-        try {
-            InetAddress ip = InetAddress.getLocalHost();
-            return ip.getHostAddress();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+            return Optional.of(storageVolumeResults.getResultList().get(0));
         }
     }
 
-    private long getAvailableStorageSpace() {
-        try {
-            java.nio.file.Path storageRootPath = Paths.get(storageRootDir);
-            FileStore storageRootStore = Files.getFileStore(storageRootPath);
-            long usableBytes = storageRootStore.getUsableSpace();
-            return usableBytes;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+    private String getStorageHost() {
+        return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostIP());
     }
+
 }

@@ -1,6 +1,6 @@
 package org.janelia.jacsstorage.rest;
 
-import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
+import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.service.distributedservice.StorageAgentManager;
 
 import javax.annotation.security.PermitAll;
@@ -26,10 +26,10 @@ public class StorageAgentsResource {
     private StorageAgentManager agentManager;
 
     @PermitAll
-    @Path("{agentLocationInfo}")
+    @Path("url/{agentURL: .+}")
     @GET
-    public Response findRegisteredAgent(@PathParam("agentLocationInfo") String agentLocationInfo) {
-        return agentManager.findRegisteredAgentByLocationOrConnectionInfo(agentLocationInfo)
+    public Response findRegisteredAgent(@PathParam("agentURL") String agentLocationInfo) {
+        return agentManager.findRegisteredAgent(agentLocationInfo)
                 .map(agentInfo -> Response.ok(agentInfo).build())
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
@@ -53,10 +53,10 @@ public class StorageAgentsResource {
     }
 
     @PermitAll
-    @Path("{agentLocationInfo}")
+    @Path("url/{agentURL: .+}")
     @DELETE
-    public Response deregisterAgent(@PathParam("agentLocationInfo") String agentLocationInfo, @HeaderParam("agentToken") String agentToken) {
-        if (agentManager.deregisterAgent(agentLocationInfo, agentToken) != null) {
+    public Response deregisterAgent(@PathParam("agentURL") String agentURL, @HeaderParam("agentToken") String agentToken) {
+        if (agentManager.deregisterAgent(agentURL, agentToken) != null) {
             return Response
                     .noContent()
                     .build();

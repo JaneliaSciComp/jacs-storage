@@ -5,10 +5,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
-import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.CircuitBreaker;
 import org.janelia.jacsstorage.resilience.CircuitBreakerImpl;
 import org.janelia.jacsstorage.resilience.CircuitTester;
+import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.janelia.jacsstorage.utils.NetUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,83 +20,65 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class AgentState {
 
     private static final Logger LOG = LoggerFactory.getLogger(AgentState.class);
 
-    @PropertyValue(name = "StorageAgent.IPAddress")
     @Inject
-    private String storageIPAddress;
-    @PropertyValue(name = "StorageAgent.agentLocation")
-    @Inject
-    private String agentLocation;
-    @PropertyValue(name = "StorageAgent.portNo")
-    @Inject
-    private Integer agentPortNumber;
-    @PropertyValue(name = "StorageAgent.storageRootDir")
-    @Inject
-    private String storageRootDir;
-    private String agentURL;
+    private StorageVolumeManager storageVolumeManager;
     @Inject @ScheduledResource
     private ScheduledExecutorService scheduler;
+    @Inject @PropertyValue(name = "StorageAgent.StorageHost")
+    private String storageHost;
     @Inject @PropertyValue(name= "StorageAgent.PingPeriodInSeconds")
     private Integer periodInSeconds;
     @Inject @PropertyValue(name= "StorageAgent.InitialPingDelayInSeconds")
     private Integer initialDelayInSeconds;
     @Inject @PropertyValue(name= "StorageAgent.FailureCountTripThreshold")
     private Integer tripThreshold;
-
     private CircuitBreaker<AgentState> agentConnectionBreaker;
-    private String masterURL;
+    private String agentHttpURL;
+    private int agentTcpPortNo;
+    private List<JacsStorageVolume> agentManagedVolumes;
+    private String masterHttpURL;
     private String registeredToken;
 
-    public String getAgentLocation() {
-        return StringUtils.isBlank(agentLocation) ? getStorageIPAddress() + "/" + getStorageRootDir() : agentLocation;
+    public String getStorageHost() {
+        return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostIP());
     }
 
-    private String getCurrentHostIP() {
-        try {
-            InetAddress ip = InetAddress.getLocalHost();
-            return ip.getHostAddress();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+    public String getMasterHttpURL() {
+        return masterHttpURL;
     }
 
-    public String getStorageIPAddress() {
-        return StringUtils.isBlank(storageIPAddress) ? getCurrentHostIP() : storageIPAddress;
+    public String getAgentHttpURL() {
+        return agentHttpURL;
     }
 
-    public String getConnectionInfo() {
-        return getStorageIPAddress() + ":" + agentPortNumber;
+    public void updateAgentHttpURL(String agentHttpURL) {
+        this.agentHttpURL = agentHttpURL;
+        getUpdateLocalVolumesAction().accept(this);
     }
 
-    public String getStorageRootDir() {
-        return storageRootDir;
+    public void updateAgentTcpPortNo(int agentTcpPortNo) {
+        this.agentTcpPortNo = agentTcpPortNo;
+        getUpdateLocalVolumesAction().accept(this);
     }
 
-    public long getAvailableStorageSpaceInBytes() {
-        try {
-            java.nio.file.Path storageRootPath = Paths.get(storageRootDir);
-            FileStore storageRootStore = Files.getFileStore(storageRootPath);
-            long usableBytes = storageRootStore.getUsableSpace();
-            return usableBytes;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    public synchronized void connectTo(String masterURL) {
-        LOG.info("Register agent on {} with {}", this, masterURL);
-        Preconditions.checkArgument(StringUtils.isNotBlank(masterURL));
-        this.masterURL = masterURL;
+    public synchronized void connectTo(String masterHttpURL) {
+        LOG.info("Register agent on {} with {}", this, masterHttpURL);
+        Preconditions.checkArgument(StringUtils.isNotBlank(masterHttpURL));
+        this.masterHttpURL = masterHttpURL;
         agentConnectionBreaker = new CircuitBreakerImpl<>(
                 Optional.empty(), // initial state is undefined
                 scheduler,
@@ -101,14 +86,14 @@ public class AgentState {
                 initialDelayInSeconds,
                 tripThreshold);
 
-        CircuitTester<AgentState> circuitTester = new AgentConnectionTester();
+        CircuitTester<AgentState> circuitTester = new AgentConnectionTester(getUpdateLocalVolumesAction());
 
         agentConnectionBreaker.initialize(this, circuitTester,
                 Optional.of(agentState -> {
-                    LOG.trace("Agent {} registered with {}", agentState, masterURL);
+                    LOG.trace("Agent {} registered with {}", agentState, masterHttpURL);
                 }),
                 Optional.of(agentState -> {
-                    LOG.error("Agent {} got disconnected from {}", agentState, masterURL);
+                    LOG.error("Agent {} got disconnected from {}", agentState, masterHttpURL);
                 }));
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -119,38 +104,31 @@ public class AgentState {
         });
     }
 
+    private Consumer<AgentState> getUpdateLocalVolumesAction() {
+        return (AgentState as) -> {
+            as.updateStorageVolumes(as.agentManagedVolumes, (JacsStorageVolume sv) -> !sv.isShared());
+        };
+    }
+
     public synchronized void disconnect() {
         agentConnectionBreaker.dispose();
-        AgentConnectionHelper.deregisterAgent(masterURL, agentLocation, registeredToken);
-        masterURL = null;
+        AgentConnectionHelper.deregisterAgent(masterHttpURL, agentHttpURL, registeredToken);
+        masterHttpURL = null;
         registeredToken = null;
     }
 
     public StorageAgentInfo getLocalAgentInfo() {
+        String localStorageHost = getStorageHost();
         StorageAgentInfo localAgentInfo = new StorageAgentInfo(
-                getAgentLocation(),
-                getAgentURL(),
-                getConnectionInfo(),
-                getStorageRootDir());
-        localAgentInfo.setStorageSpaceAvailableInBytes(getAvailableStorageSpaceInBytes());
+                localStorageHost,
+                agentHttpURL,
+                agentTcpPortNo);
         if (this.isRegistered()) {
             localAgentInfo.setConnectionStatus("CONNECTED");
         } else {
             localAgentInfo.setConnectionStatus("DISCONNECTED");
         }
         return localAgentInfo;
-    }
-
-    public String getAgentURL() {
-        return agentURL;
-    }
-
-    public void setAgentURL(String agentURL) {
-        this.agentURL = agentURL;
-    }
-
-    public String getMasterURL() {
-        return masterURL;
     }
 
     public boolean isRegistered() {
@@ -163,24 +141,27 @@ public class AgentState {
 
     @PostConstruct
     public void initialize() {
-        if (StringUtils.isNotBlank(storageRootDir)) {
-            try {
-                Files.createDirectories(Paths.get(storageRootDir));
-            } catch (IOException e) {
-                LOG.warn("Error creating storage root directory {}", storageRootDir, e);
-            }
-        }
+        agentManagedVolumes = updateStorageVolumes(storageVolumeManager.getManagedVolumes(), (sv) -> true);
+    }
+
+    private List<JacsStorageVolume> updateStorageVolumes(List<JacsStorageVolume> storageVolumes, Predicate<JacsStorageVolume> filter) {
+        return storageVolumes.stream()
+                .filter(filter)
+                .map(storageVolume -> {
+                    storageVolume.setStorageServiceURL(agentHttpURL);
+                    storageVolume.setStorageServiceTCPPortNo(agentTcpPortNo);
+                    return storageVolumeManager.updateVolumeInfo(storageVolume);
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("agentLocation", agentLocation)
-                .append("connectionInfo", getConnectionInfo())
-                .append("masterURL", masterURL)
+                .append("agentTcpPortNo", agentTcpPortNo)
+                .append("agentHttpURL", agentHttpURL)
+                .append("masterHttpURL", masterHttpURL)
                 .append("registeredToken", registeredToken)
-                .append("storageIPAddress", storageIPAddress)
-                .append("storageRootDir", storageRootDir)
                 .build();
     }
 }

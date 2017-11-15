@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.cdi;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Splitter;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
@@ -19,6 +20,7 @@ import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.InjectionPoint;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -66,6 +68,18 @@ public class ApplicationProducer {
             return applicationConfig.getLongPropertyValue(property.name());
         } else {
             return applicationConfig.getLongPropertyValue(property.name(), Long.valueOf(defaultValue));
+        }
+    }
+
+    @Produces
+    @PropertyValue(name = "")
+    public List<String> listPropertyValue(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
+        final PropertyValue property = injectionPoint.getAnnotated().getAnnotation(PropertyValue.class);
+        String defaultValue = property.defaultValue();
+        if (StringUtils.isBlank(defaultValue)) {
+            return applicationConfig.getStringListPropertyValue(property.name());
+        } else {
+            return applicationConfig.getStringListPropertyValue(property.name(), Splitter.on(',').trimResults().splitToList(defaultValue));
         }
     }
 

@@ -1,6 +1,6 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
-import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
+import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.CircuitBreaker;
 
 public class StorageAgentConnection {
@@ -27,5 +27,9 @@ public class StorageAgentConnection {
         } else {
             agentInfo.setConnectionStatus("DISCONNECTED");
         }
+    }
+
+    public boolean isConnected() {
+        return "CONNECTED".equals(agentInfo.getConnectionStatus());
     }
 }

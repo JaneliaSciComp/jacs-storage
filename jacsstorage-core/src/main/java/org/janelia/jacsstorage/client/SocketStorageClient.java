@@ -39,7 +39,7 @@ public class SocketStorageClient implements StorageClient {
     @Override
     public StorageMessageResponse ping(String connectionInfo) throws IOException {
         try {
-            initTransfer(0L, DataTransferService.Operation.PING, null, null, connectionInfo, SelectionKey.OP_READ, "");
+            initTransfer(0L, DataTransferService.Operation.PING, null, null, getConnectionHost(connectionInfo), getConnectionPort(connectionInfo), SelectionKey.OP_READ, "");
             ByteBuffer dataTransferBuffer = allocateTransferBuffer();
             return retrieveResponse(dataTransferBuffer);
         } finally {
@@ -73,7 +73,8 @@ public class SocketStorageClient implements StorageClient {
                     DataTransferService.Operation.PERSIST_DATA,
                     storageInfo.getStorageFormat(),
                     storageInfo.getPath(),
-                    storageInfo.getConnectionInfo(),
+                    storageInfo.getStorageHost(),
+                    storageInfo.getTcpPortNo(),
                     SelectionKey.OP_WRITE,
                     authToken);
             TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
@@ -106,7 +107,8 @@ public class SocketStorageClient implements StorageClient {
                     DataTransferService.Operation.RETRIEVE_DATA,
                     storageInfo.getStorageFormat(),
                     storageInfo.getPath(),
-                    storageInfo.getConnectionInfo(),
+                    storageInfo.getStorageHost(),
+                    storageInfo.getTcpPortNo(),
                     SelectionKey.OP_READ,
                     authToken);
             // figure out how to write the localservice data
@@ -181,10 +183,10 @@ public class SocketStorageClient implements StorageClient {
         }
     }
 
-    private void initTransfer(Number id, DataTransferService.Operation op, JacsStorageFormat format, String pathName, String connectionInfo, int channelIOOp, String authToken) throws IOException {
+    private void initTransfer(Number id, DataTransferService.Operation op, JacsStorageFormat format, String pathName, String connectionHost, int connectionPort, int channelIOOp, String authToken) throws IOException {
         byte[] remoteOpBytes = createRemoteMessageHeaderBytes(id, op, format, pathName, authToken);
         ByteBuffer remoteOpBuffer = ByteBuffer.wrap(remoteOpBytes);
-        openChannel(remoteOpBuffer, getConnectionHost(connectionInfo), getConnectionPort(connectionInfo), channelIOOp);
+        openChannel(remoteOpBuffer, connectionHost, connectionPort, channelIOOp);
     }
 
     private ByteBuffer allocateTransferBuffer() {

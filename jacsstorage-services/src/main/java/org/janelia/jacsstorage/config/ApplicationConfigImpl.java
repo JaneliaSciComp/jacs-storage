@@ -1,7 +1,12 @@
 package org.janelia.jacsstorage.config;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -46,6 +51,22 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     public Long getLongPropertyValue(String name, Long defaultValue) {
         String stringValue = getStringPropertyValue(name);
         return stringValue == null ? defaultValue : Long.valueOf(stringValue);
+    }
+
+    @Override
+    public List<String> getStringListPropertyValue(String name) {
+        return getStringListPropertyValue(name, ImmutableList.of());
+    }
+
+    @Override
+    public List<String> getStringListPropertyValue(String name, List<String> defaultValue) {
+        String stringValue = getStringPropertyValue(name);
+        if (stringValue == null) {
+            return ImmutableList.of();
+        } else {
+            return Splitter.on(',').trimResults().splitToList(stringValue);
+        }
+
     }
 
     @Override

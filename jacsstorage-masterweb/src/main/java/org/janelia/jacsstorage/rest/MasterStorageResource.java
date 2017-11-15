@@ -58,7 +58,8 @@ public class MasterStorageResource {
     @GET
     public Response listBundleInfo(@QueryParam("id") Long dataBundleId,
                                    @QueryParam("owner") String owner,
-                                   @QueryParam("location") String dataLocation,
+                                   @QueryParam("storageHost") String storageHost,
+                                   @QueryParam("volumeName") String volumeName,
                                    @QueryParam("page") Long pageNumber,
                                    @QueryParam("length") Integer pageLength,
                                    @Context SecurityContext securityContext) {
@@ -77,7 +78,8 @@ public class MasterStorageResource {
         JacsBundle dataBundle = new JacsBundleBuilder()
                 .dataBundleId(dataBundleId)
                 .owner(dataOwner)
-                .location(dataLocation)
+                .storageHost(storageHost)
+                .volumeName(volumeName)
                 .build();
         PageRequest pageRequest = new PageRequestBuilder()
                 .pageNumber(pageNumber)

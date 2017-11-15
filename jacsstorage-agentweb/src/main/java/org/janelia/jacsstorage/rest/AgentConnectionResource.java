@@ -1,7 +1,7 @@
 package org.janelia.jacsstorage.rest;
 
 import org.janelia.jacsstorage.agent.AgentState;
-import org.janelia.jacsstorage.model.jacsstorage.StorageAgentInfo;
+import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 
 import javax.annotation.security.PermitAll;
 import javax.enterprise.context.ApplicationScoped;
@@ -43,7 +43,9 @@ public class AgentConnectionResource {
         agentState.connectTo(connectURL);
         StorageAgentInfo localAgentInfo = agentState.getLocalAgentInfo();
         return Response
-                .created(resourceURI.getRequestUriBuilder().path("status").path(localAgentInfo.getLocation()).build())
+                .created(resourceURI.getRequestUriBuilder()
+                        .path("status")
+                        .build())
                 .entity(localAgentInfo)
                 .build();
     }

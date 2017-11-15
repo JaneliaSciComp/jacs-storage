@@ -13,8 +13,8 @@ public class DataStorageInfo {
     private String owner;
     private String path;
     private String permissions;
-    private String location;
-    private String connectionInfo;
+    private String storageHost;
+    private int tcpPortNo;
     private String connectionURL;
     private JacsStorageFormat storageFormat;
     private Long requestedSpaceInBytes;
@@ -22,7 +22,7 @@ public class DataStorageInfo {
     private Map<String, Object> metadata = new LinkedHashMap<>();
 
     public static DataStorageInfo fromBundle(JacsBundle dataBundle) {
-        return new DataStorageInfo()
+        DataStorageInfo dsi = new DataStorageInfo()
                 .setId(dataBundle.getId())
                 .setName(dataBundle.getName())
                 .setOwner(dataBundle.getOwner())
@@ -32,10 +32,14 @@ public class DataStorageInfo {
                 .setRequestedSpaceInBytes(dataBundle.getUsedSpaceInBytes())
                 .setChecksum(dataBundle.getChecksum())
                 .addMetadata(dataBundle.getMetadata())
-                .setConnectionInfo(dataBundle.getStorageVolume().map(sv -> sv.getMountHostIP()).orElse(dataBundle.getConnectionInfo()))
-                .setConnectionURL(dataBundle.getConnectionURL())
-                .setLocation(dataBundle.getStorageVolume().map(sv -> sv.getLocation()).orElse(null))
                 ;
+        dataBundle.getStorageVolume()
+                .ifPresent(sv -> {
+                    dsi.setStorageHost(sv.getStorageHost());
+                    dsi.setTcpPortNo(sv.getStorageServiceTCPPortNo());
+                    dsi.setConnectionURL(sv.getStorageServiceURL());
+                });
+        return dsi;
     }
 
     public Number getId() {
@@ -87,12 +91,21 @@ public class DataStorageInfo {
         return this;
     }
 
-    public String getConnectionInfo() {
-        return connectionInfo;
+    public String getStorageHost() {
+        return storageHost;
     }
 
-    public DataStorageInfo setConnectionInfo(String connectionInfo) {
-        this.connectionInfo = connectionInfo;
+    public DataStorageInfo setStorageHost(String storageHost) {
+        this.storageHost = storageHost;
+        return this;
+    }
+
+    public int getTcpPortNo() {
+        return tcpPortNo;
+    }
+
+    public DataStorageInfo setTcpPortNo(int tcpPortNo) {
+        this.tcpPortNo = tcpPortNo;
         return this;
     }
 
@@ -102,15 +115,6 @@ public class DataStorageInfo {
 
     public DataStorageInfo setConnectionURL(String connectionURL) {
         this.connectionURL = connectionURL;
-        return this;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public DataStorageInfo setLocation(String location) {
-        this.location = location;
         return this;
     }
 
@@ -173,7 +177,8 @@ public class DataStorageInfo {
                 .append("id", id)
                 .append("name", name)
                 .append("path", path)
-                .append("connectionInfo", connectionInfo)
+                .append("storageHost", storageHost)
+                .append("tcpPortNo", tcpPortNo)
                 .append("connectionURL", connectionURL)
                 .append("storageFormat", storageFormat)
                 .toString();

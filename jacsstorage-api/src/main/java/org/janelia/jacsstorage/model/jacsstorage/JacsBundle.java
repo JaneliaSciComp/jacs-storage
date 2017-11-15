@@ -2,10 +2,12 @@ package org.janelia.jacsstorage.model.jacsstorage;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.AbstractEntity;
 import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,10 +28,7 @@ public class JacsBundle extends AbstractEntity {
     private Date modified = new Date();
     private Map<String, Object> metadata = new LinkedHashMap<>();
     private Number storageVolumeId;
-    @JsonIgnore
-    private String connectionInfo;
-    @JsonIgnore
-    private String connectionURL;
+    private List<String> storageTags; // storage tags - identify certain features of the physical storage
     @JsonIgnore
     private JacsStorageVolume storageVolume;
 
@@ -145,20 +144,25 @@ public class JacsBundle extends AbstractEntity {
         this.storageVolumeId = storageVolumeId;
     }
 
-    public String getConnectionInfo() {
-        return connectionInfo;
+    public List<String> getStorageTags() {
+        return storageTags;
     }
 
-    public void setConnectionInfo(String connectionInfo) {
-        this.connectionInfo = connectionInfo;
+    public void setStorageTags(List<String> storageTags) {
+        this.storageTags = storageTags;
     }
 
-    public String getConnectionURL() {
-        return connectionURL;
+    public void addVolumeTag(String tag) {
+        if (storageTags == null) {
+            storageTags = new ArrayList<>();
+        }
+        if (StringUtils.isNotBlank(tag)) {
+            storageTags.add(tag);
+        }
     }
 
-    public void setConnectionURL(String connectionURL) {
-        this.connectionURL = connectionURL;
+    public boolean hasTags() {
+        return storageTags != null && !storageTags.isEmpty();
     }
 
     @JsonIgnore
@@ -169,6 +173,10 @@ public class JacsBundle extends AbstractEntity {
     public Optional<JacsStorageVolume> setStorageVolume(JacsStorageVolume storageVolume) {
         this.storageVolume = storageVolume;
         return getStorageVolume();
+    }
+
+    public boolean hasStorageHost() {
+        return storageVolume != null && StringUtils.isNotBlank(storageVolume.getStorageHost());
     }
 
     @JsonProperty("referencedVolumes")
@@ -186,8 +194,6 @@ public class JacsBundle extends AbstractEntity {
                 .append("path", path)
                 .append("storageFormat", storageFormat)
                 .append("storageVolumeId", storageVolumeId)
-                .append("storageHostIP", getStorageVolume().map(sv -> sv.getMountHostIP()).orElse(""))
-                .append("storageLocation", getStorageVolume().map(sv -> sv.getLocation()).orElse(""))
                 .toString();
     }
 }
