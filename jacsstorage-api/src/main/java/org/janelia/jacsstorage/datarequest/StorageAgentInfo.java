@@ -56,6 +56,7 @@ public class StorageAgentInfo {
                 .append("agentHttpURL", agentHttpURL)
                 .append("tcpPortNo", tcpPortNo)
                 .append("agentToken", agentToken)
+                .append("connectionStatus", connectionStatus)
                 .toString();
     }
 

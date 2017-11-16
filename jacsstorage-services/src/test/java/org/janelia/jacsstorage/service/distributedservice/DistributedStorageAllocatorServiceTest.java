@@ -6,6 +6,7 @@ import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -136,6 +137,7 @@ public class DistributedStorageAllocatorServiceTest {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void prepareMockServices(TestAllocateData testData) {
         Mockito.reset(storageAgentManager, storageVolumeDao, bundleDao);
         when(storageAgentManager.findRandomRegisteredAgent(any(Predicate.class)))
@@ -143,7 +145,7 @@ public class DistributedStorageAllocatorServiceTest {
                         testData.testHost,
                         testData.testAgentURL,
                         testData.testPort)));
-        when(storageVolumeDao.countMatchingVolumes(any(JacsStorageVolume.class)))
+        when(storageVolumeDao.countMatchingVolumes(any(StorageQuery.class)))
                 .then(invocation -> {
                     if (JacsStorageVolume.OVERFLOW_VOLUME.equals(testData.testVolume.getName())) {
                         return 0L;
@@ -151,7 +153,7 @@ public class DistributedStorageAllocatorServiceTest {
                         return 1L;
                     }
                 });
-        when(storageVolumeDao.findMatchingVolumes(any(JacsStorageVolume.class), any(PageRequest.class)))
+        when(storageVolumeDao.findMatchingVolumes(any(StorageQuery.class), any(PageRequest.class)))
                 .then(invocation -> new PageResult<>(invocation.getArgument(1), ImmutableList.of(testData.testVolume)));
         doAnswer((invocation) -> {
             JacsBundle bundle = invocation.getArgument(0);

@@ -44,6 +44,7 @@ public class StorageClientImplHelper {
             if (responseStatus == Response.Status.CREATED.getStatusCode()) {
                 return Optional.of(response.readEntity(DataStorageInfo.class));
             } else {
+                @SuppressWarnings("unchecked")
                 Map<String, String> errResponse = response.readEntity(Map.class);
                 LOG.warn("Allocate storage request {} returned with status {} - {}", target.getUri(), responseStatus, errResponse);
                 return Optional.empty();

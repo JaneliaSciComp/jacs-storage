@@ -178,7 +178,7 @@ public class StorageAgentManagerImplTest {
     public void getCurrentRegisteredAgents() {
         prepareConnectionTester(true);
         List<StorageAgentInfo> registeredAgents = registerMultipleAgents();
-        assertThat(testStorageAgentManager.getCurrentRegisteredAgents(), hasSize(equalTo(registeredAgents.size())));
+        assertThat(testStorageAgentManager.getCurrentRegisteredAgents(ac -> ac.isConnected()), hasSize(equalTo(registeredAgents.size())));
         registeredAgents.forEach(ai -> {
             assertThat(ai.getConnectionStatus(), equalTo("CONNECTED"));
         });

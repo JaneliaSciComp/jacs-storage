@@ -9,13 +9,14 @@ import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.AbstractStorageAllocatorService;
 import org.janelia.jacsstorage.service.OverflowStorageVolumeSelector;
-import org.janelia.jacsstorage.service.RandomStorageVolumeSelector;
 import org.janelia.jacsstorage.service.StorageVolumeSelector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RemoteInstance
 public class DistributedStorageAllocatorService extends AbstractStorageAllocatorService {
@@ -56,8 +57,11 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
 
     @Override
     public Optional<JacsStorageVolume> selectStorageVolume(JacsBundle dataBundle) {
+        List<StorageAgentInfo> availableAgents = agentManager.getCurrentRegisteredAgents(ac -> ac.isConnected());
         StorageVolumeSelector[] volumeSelectors = new StorageVolumeSelector[] {
-                new RandomStorageVolumeSelector(storageVolumeDao),
+                new RandomStorageVolumeSelector(storageVolumeDao,
+                        availableAgents.stream().map(ai -> ai.getStorageHost()).collect(Collectors.toList()),
+                        availableAgents.stream().map(ai -> ai.getAgentHttpURL()).collect(Collectors.toList())),
                 new OverflowStorageVolumeSelector(storageVolumeDao)
         };
         JacsStorageVolume storageVolume = null;
@@ -75,6 +79,7 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
         if (selectedVolume.getStorageServiceURL() == null) {
             return agentManager.findRandomRegisteredAgent((StorageAgentConnection ac) -> ac.isConnected())
                     .map((StorageAgentInfo ai) -> {
+                        selectedVolume.setStorageHost(ai.getStorageHost());
                         selectedVolume.setStorageServiceURL(ai.getAgentHttpURL());
                         selectedVolume.setStorageServiceTCPPortNo(ai.getTcpPortNo());
                         return selectedVolume;

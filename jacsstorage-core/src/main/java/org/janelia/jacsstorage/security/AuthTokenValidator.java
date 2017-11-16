@@ -22,14 +22,13 @@ public class AuthTokenValidator {
 
     public JacsCredentials validateJwtToken(String jwt) {
         try {
-            ConfigurableJWTProcessor jwtProcessor = new DefaultJWTProcessor<>();
+            ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
             JWSAlgorithm expectedJWSAlg = JWSAlgorithm.HS256;
-            JWKSource jwtKeySource = new ImmutableSecret(secretKey.getBytes());
-            JWSKeySelector keySelector = new JWSVerificationKeySelector(expectedJWSAlg, jwtKeySource);
+            JWKSource<SecurityContext> jwtKeySource = new ImmutableSecret<>(secretKey.getBytes());
+            JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, jwtKeySource);
             jwtProcessor.setJWSKeySelector(keySelector);
 
-            SecurityContext ctx = null; // optional context parameter, not required here
-            JWTClaimsSet claimsSet = jwtProcessor.process(jwt, ctx);
+            JWTClaimsSet claimsSet = jwtProcessor.process(jwt, null);
 
             return new JacsCredentials()
                     .setSubject(StringUtils.defaultIfBlank(claimsSet.getSubject(), claimsSet.getStringClaim(USERNAME_CLAIM)))

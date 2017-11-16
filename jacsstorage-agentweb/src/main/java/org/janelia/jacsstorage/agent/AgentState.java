@@ -65,12 +65,8 @@ public class AgentState {
         return agentHttpURL;
     }
 
-    public void updateAgentHttpURL(String agentHttpURL) {
+    public void updateAgentInfo(String agentHttpURL, int agentTcpPortNo) {
         this.agentHttpURL = agentHttpURL;
-        getUpdateLocalVolumesAction().accept(this);
-    }
-
-    public void updateAgentTcpPortNo(int agentTcpPortNo) {
         this.agentTcpPortNo = agentTcpPortNo;
         getUpdateLocalVolumesAction().accept(this);
     }

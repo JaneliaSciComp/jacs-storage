@@ -49,8 +49,9 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     private String overflowRootDir;
 
     @Override
-    public List<StorageAgentInfo> getCurrentRegisteredAgents() {
+    public List<StorageAgentInfo> getCurrentRegisteredAgents(Predicate<StorageAgentConnection> agentConnectionPredicate) {
         return ImmutableList.copyOf(registeredAgentConnections.values().stream()
+                .filter(agentConnectionPredicate)
                 .map(agentConnection -> {
                     agentConnection.updateConnectionStatus();
                     return agentConnection.getAgentInfo();

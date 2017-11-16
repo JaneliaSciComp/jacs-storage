@@ -15,10 +15,10 @@ public class IOErrorRequestHandler implements ExceptionMapper<IOException> {
 
     @Override
     public Response toResponse(IOException exception) {
-        LOG.error("Illegal state response", exception);
+        LOG.error("Input/Output error", exception);
         String errorMessage = exception.getMessage();
         if (StringUtils.isBlank(errorMessage)) {
-            errorMessage = "Server state error";
+            errorMessage = "Server input/output error";
         }
         return Response
                 .serverError()

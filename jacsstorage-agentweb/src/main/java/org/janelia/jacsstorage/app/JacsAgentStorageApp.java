@@ -43,20 +43,27 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         SeContainer container = containerInit
                 .initialize();
         JacsAgentStorageApp app = container.select(JacsAgentStorageApp.class).get();
+
         AgentState agentState = container.select(AgentState.class).get();
-        agentState.updateAgentHttpURL(UriBuilder.fromPath(agentArgs.baseContextPath)
-                .scheme("http")
-                .host(agentState.getStorageHost())
-                .port(agentArgs.portNumber)
-                .path("agent-api")
-                .build()
-                .toString());
-        if (StringUtils.isNotBlank(agentArgs.masterHttpUrl)) {
-            agentState.connectTo(agentArgs.masterHttpUrl);
-        }
+        // start the TCP listener
         StorageAgentListener storageAgentListener = container.select(StorageAgentListener.class).get();
         ExecutorService agentExecutor = container.select(ExecutorService.class).get();
-        agentState.updateAgentTcpPortNo(app.startAgentListener(agentArgs, agentExecutor, storageAgentListener));
+        int tcpListenerPortNo = app.startAgentListener(agentArgs, agentExecutor, storageAgentListener);
+        // update agent info
+        agentState.updateAgentInfo(
+                UriBuilder.fromPath(agentArgs.baseContextPath)
+                        .scheme("http")
+                        .host(agentState.getStorageHost())
+                        .port(agentArgs.portNumber)
+                        .path("agent-api")
+                        .build()
+                        .toString(),
+                tcpListenerPortNo);
+        if (StringUtils.isNotBlank(agentArgs.masterHttpUrl)) {
+            // register agent
+            agentState.connectTo(agentArgs.masterHttpUrl);
+        }
+        // start the HTTP application
         app.start(agentArgs);
     }
 

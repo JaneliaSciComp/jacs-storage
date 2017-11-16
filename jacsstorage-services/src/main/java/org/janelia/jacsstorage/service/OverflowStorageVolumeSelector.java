@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 
@@ -17,12 +18,11 @@ public class OverflowStorageVolumeSelector implements StorageVolumeSelector {
 
     @Override
     public JacsStorageVolume selectStorageVolume(JacsBundle storageRequest) {
-        JacsStorageVolume volumePattern = new JacsStorageVolume();
-        volumePattern.setStorageHost(null); // require a storageHost not to be set
-        volumePattern.setShared(true);
-        volumePattern.setStorageTags(storageRequest.getStorageTags());
-        volumePattern.setName(JacsStorageVolume.OVERFLOW_VOLUME);
-        PageResult<JacsStorageVolume> storageVolumeResults = storageVolumeDao.findMatchingVolumes(volumePattern, new PageRequest());
+        StorageQuery storageQuery = new StorageQuery()
+                .setShared(true)
+                .setStorageName(JacsStorageVolume.OVERFLOW_VOLUME)
+                .setStorageTags(storageRequest.getStorageTags());
+        PageResult<JacsStorageVolume> storageVolumeResults = storageVolumeDao.findMatchingVolumes(storageQuery, new PageRequest());
         if (storageVolumeResults.getResultList().isEmpty()) {
             return null;
         } else {

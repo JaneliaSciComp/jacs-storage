@@ -27,18 +27,24 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
     @Override
     public Optional<JacsBundle> allocateStorage(JacsCredentials credentials, JacsBundle dataBundle) {
         return selectStorageVolume(dataBundle)
-                .map((JacsStorageVolume storageVolume) -> {
-                    dataBundle.setOwner(credentials.getSubject());
-                    dataBundle.setStorageVolumeId(storageVolume.getId());
-                    dataBundle.setStorageVolume(storageVolume);
-                    bundleDao.save(dataBundle);
-                    List<String> dataSubpath = PathUtils.getTreePathComponentsForId(dataBundle.getId());
-                    Path dataPath = Paths.get(storageVolume.getVolumePath(), dataSubpath.toArray(new String[dataSubpath.size()]));
-                    dataBundle.setPath(dataPath.toString());
-                    bundleDao.update(dataBundle, ImmutableMap.of("path", new SetFieldValueHandler<>(dataBundle.getPath())));
-                    return dataBundle;
-                })
+                .map((JacsStorageVolume storageVolume) -> createStorage(credentials, storageVolume, dataBundle))
                 ;
+    }
+
+    private JacsBundle createStorage(JacsCredentials credentials, JacsStorageVolume storageVolume, JacsBundle dataBundle) {
+        try {
+            dataBundle.setOwner(credentials.getSubject());
+            dataBundle.setStorageVolumeId(storageVolume.getId());
+            dataBundle.setStorageVolume(storageVolume);
+            bundleDao.save(dataBundle);
+            List<String> dataSubpath = PathUtils.getTreePathComponentsForId(dataBundle.getId());
+            Path dataPath = Paths.get(storageVolume.getVolumePath(), dataSubpath.toArray(new String[dataSubpath.size()]));
+            dataBundle.setPath(dataPath.toString());
+            bundleDao.update(dataBundle, ImmutableMap.of("path", new SetFieldValueHandler<>(dataBundle.getPath())));
+            return dataBundle;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override

@@ -9,13 +9,14 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
-import org.janelia.jacsstorage.model.DataInterval;
+import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 
 import javax.inject.Inject;
@@ -35,51 +36,53 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
                 .unique(true)
                 .sparse(true);
         mongoCollection.createIndex(Indexes.ascending("storageHost", "name"), indexOptions);
+        mongoCollection.createIndex(Indexes.ascending("storageServiceURL"));
     }
 
     @Override
-    public Long countMatchingVolumes(JacsStorageVolume pattern) {
-        return mongoCollection.count(Filters.and(createMatchingFilter(pattern)));
-    }
-
-    private List<Bson> createMatchingFilter(JacsStorageVolume pattern) {
-        ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
-        if (pattern.getId() != null) {
-            filtersBuilder.add(Filters.eq("_id", pattern.getId()));
-        }
-        if (pattern.isShared()) {
-            filtersBuilder.add(Filters.or(
-                    Filters.exists("storageHost", false),
-                    Filters.eq("storageHost", null)
-            )); // the storageHost must not be set
-        } else if (pattern.getStorageHost() != null) {
-            if (StringUtils.isBlank(pattern.getStorageHost())) {
-                filtersBuilder.add(Filters.exists("storageHost", true)); // the storageHost must be set
-                filtersBuilder.add(Filters.ne("storageHost", null)); // the storageHost must be set
-            } else {
-                filtersBuilder.add(Filters.eq("storageHost", pattern.getStorageHost()));
-            }
-        }
-        if (pattern.getName() != null) {
-            filtersBuilder.add(Filters.eq("name", pattern.getName()));
-        }
-        if (pattern.hasTags()) {
-            filtersBuilder.add(Filters.all("volumeTags", pattern.getStorageTags()));
-        }
-        if (pattern.hasAvailableSpaceInBytes()) {
-            filtersBuilder.add(Filters.gte("availableSpaceInBytes", pattern.getAvailableSpaceInBytes()));
-        }
-        return filtersBuilder.build();
+    public Long countMatchingVolumes(StorageQuery storageQuery) {
+        return mongoCollection.count(Filters.and(createMatchingFilter(storageQuery)));
     }
 
     @Override
-    public PageResult<JacsStorageVolume> findMatchingVolumes(JacsStorageVolume pattern, PageRequest pageRequest) {
-        List<JacsStorageVolume> results = find(Filters.and(createMatchingFilter(pattern)),
+    public PageResult<JacsStorageVolume> findMatchingVolumes(StorageQuery storageQuery, PageRequest pageRequest) {
+        List<JacsStorageVolume> results = find(Filters.and(createMatchingFilter(storageQuery)),
                 createBsonSortCriteria(pageRequest.getSortCriteria()),
                 pageRequest.getOffset(),
                 pageRequest.getPageSize(),
                 getEntityType());
         return new PageResult<>(pageRequest, results);
+    }
+
+    private List<Bson> createMatchingFilter(StorageQuery storageQuery) {
+        ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
+        if (storageQuery.getId() != null) {
+            filtersBuilder.add(Filters.eq("_id", storageQuery.getId()));
+        }
+        if (CollectionUtils.isNotEmpty(storageQuery.getStorageHosts())) {
+            filtersBuilder.add(Filters.in("storageHost", storageQuery.getStorageHosts()));
+        } else if (storageQuery.isShared()) {
+            filtersBuilder.add(Filters.or(
+                    Filters.exists("storageHost", false), // the storage host should not be set
+                    Filters.eq("storageHost", null)
+            )); // the storageHost must not be set
+        } else if (storageQuery.isLocalToAnyHost()) {
+            filtersBuilder.add(Filters.exists("storageHost", true)); // the storageHost must be set
+            filtersBuilder.add(Filters.ne("storageHost", null));
+        }
+        if (StringUtils.isNotBlank(storageQuery.getStorageName())) {
+            filtersBuilder.add(Filters.eq("name", storageQuery.getStorageName()));
+        }
+        if (CollectionUtils.isNotEmpty(storageQuery.getStorageAgents())) {
+            filtersBuilder.add(Filters.in("storageServiceURL", storageQuery.getStorageAgents()));
+        }
+        if (CollectionUtils.isNotEmpty(storageQuery.getStorageTags())) {
+            filtersBuilder.add(Filters.all("volumeTags", storageQuery.getStorageTags()));
+        }
+        if (storageQuery.hasMinAvailableSpaceInBytes()) {
+            filtersBuilder.add(Filters.gte("availableSpaceInBytes", storageQuery.getMinAvailableSpaceInBytes()));
+        }
+        return filtersBuilder.build();
     }
 
     @Override

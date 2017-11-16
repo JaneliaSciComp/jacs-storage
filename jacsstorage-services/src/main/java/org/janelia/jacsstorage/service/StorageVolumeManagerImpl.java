@@ -40,12 +40,6 @@ public class StorageVolumeManagerImpl implements StorageVolumeManager {
         this.managedVolumes = managedVolumes;
     }
 
-    @Override
-    public List<JacsStorageVolume> findVolume(JacsStorageVolume volumeRef) {
-        PageResult<JacsStorageVolume>  results = storageVolumeDao.findMatchingVolumes(volumeRef, new PageRequest());
-        return results.getResultList();
-    }
-
     public List<JacsStorageVolume> getManagedVolumes() {
         return Stream.concat(managedVolumes.stream(), Stream.of(JacsStorageVolume.OVERFLOW_VOLUME))
                 .map(this::getVolumeInfo)

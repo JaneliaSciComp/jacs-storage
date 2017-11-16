@@ -17,6 +17,9 @@ import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.AbstractStorageAllocatorService;
+import org.janelia.jacsstorage.service.OverflowStorageVolumeSelector;
+import org.janelia.jacsstorage.service.StorageVolumeSelector;
+import org.janelia.jacsstorage.service.distributedservice.RandomStorageVolumeSelector;
 import org.janelia.jacsstorage.utils.NetUtils;
 import org.janelia.jacsstorage.utils.PathUtils;
 import org.slf4j.Logger;
@@ -31,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @LocalInstance
 public class LocalStorageAllocatorService extends AbstractStorageAllocatorService {
@@ -80,22 +84,22 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
 
     @Override
     public Optional<JacsStorageVolume> selectStorageVolume(JacsBundle dataBundle) {
-        JacsStorageVolume volumePattern = new JacsStorageVolume();
-        volumePattern.setStorageHost(getStorageHost());
-        volumePattern.setStorageTags(dataBundle.getStorageTags());
-        dataBundle.getStorageVolume()
-                .ifPresent(sv -> {
-                    volumePattern.setId(sv.getId());
-                    volumePattern.setName(sv.getName());
-                });
-        if (dataBundle.hasUsedSpaceSet()) {
-            volumePattern.setAvailableSpaceInBytes(dataBundle.getUsedSpaceInBytes());
+        StorageVolumeSelector[] volumeSelectors = new StorageVolumeSelector[] {
+                new LocalStorageVolumeSelector(storageVolumeDao, getStorageHost()),
+                new OverflowStorageVolumeSelector(storageVolumeDao)
+        };
+        JacsStorageVolume storageVolume = null;
+        for (StorageVolumeSelector volumeSelector : volumeSelectors) {
+            storageVolume = volumeSelector.selectStorageVolume(dataBundle);
+            if (storageVolume != null) {
+                break;
+            }
         }
-        PageResult<JacsStorageVolume> storageVolumeResults = storageVolumeDao.findMatchingVolumes(volumePattern, new PageRequest());
-        if (storageVolumeResults.getResultList().isEmpty()) {
+        if (storageVolume == null) {
+            LOG.warn("No storage volume selected for {}", dataBundle);
             return Optional.empty();
         } else {
-            return Optional.of(storageVolumeResults.getResultList().get(0));
+            return Optional.of(storageVolume);
         }
     }
 

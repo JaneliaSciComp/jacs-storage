@@ -37,7 +37,7 @@ public class LoggerInterceptor {
             if (StringUtils.isBlank(eventName)) {
                 eventName = m.getName();
             }
-            ImmutableList.Builder eventDataBuilder = ImmutableList.builder();
+            ImmutableList.Builder<Object> eventDataBuilder = ImmutableList.builder();
             for (Object methodParam : invocationContext.getParameters()) {
                 if (methodParam == null) {
                     eventDataBuilder.add("<null>");

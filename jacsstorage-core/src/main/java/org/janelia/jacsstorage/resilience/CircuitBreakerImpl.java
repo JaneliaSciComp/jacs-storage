@@ -45,7 +45,6 @@ public class CircuitBreakerImpl<T> implements CircuitBreaker<T> {
                         return null;
                     });
                 }
-
             } else {
                 if (state == null || state != BreakerState.OPEN && ++numFailures >= tripThreshold) {
                     // only invoke the handler if there was a change in the state of the circuit

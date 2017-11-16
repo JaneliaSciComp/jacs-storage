@@ -41,7 +41,6 @@ import java.util.concurrent.Executors;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -60,6 +59,7 @@ public class StorageAgentListenerITest {
     private static StorageEventLogger storageEventLogger;
     private static int listenerPortNumber;
 
+    @SuppressWarnings("unchecked")
     @BeforeClass
     public static void startListener() {
         Instance<BundleReader> bundleReaderSource = mock(Instance.class);
@@ -132,10 +132,10 @@ public class StorageAgentListenerITest {
     @Test
     public void sendDataDirectory() throws IOException {
         class TestData {
-            final DataStorageInfo persistedDataStorageInfo;
-            final DataStorageInfo retrievedDataStorageInfo;
+            private final DataStorageInfo persistedDataStorageInfo;
+            private final DataStorageInfo retrievedDataStorageInfo;
 
-            public TestData(DataStorageInfo persistedDataStorageInfo, DataStorageInfo retrievedDataStorageInfo) {
+            TestData(DataStorageInfo persistedDataStorageInfo, DataStorageInfo retrievedDataStorageInfo) {
                 this.persistedDataStorageInfo = persistedDataStorageInfo;
                 this.retrievedDataStorageInfo = retrievedDataStorageInfo;
             }
@@ -178,10 +178,10 @@ public class StorageAgentListenerITest {
     @Test
     public void sendDataFile() throws IOException {
         class TestData {
-            final DataStorageInfo persistedDataStorageInfo;
-            final DataStorageInfo retrievedDataStorageInfo;
+            private final DataStorageInfo persistedDataStorageInfo;
+            private final DataStorageInfo retrievedDataStorageInfo;
 
-            public TestData(DataStorageInfo persistedDataStorageInfo, DataStorageInfo retrievedDataStorageInfo) {
+            TestData(DataStorageInfo persistedDataStorageInfo, DataStorageInfo retrievedDataStorageInfo) {
                 this.persistedDataStorageInfo = persistedDataStorageInfo;
                 this.retrievedDataStorageInfo = retrievedDataStorageInfo;
             }
@@ -228,15 +228,15 @@ public class StorageAgentListenerITest {
     @Test
     public void sendError() throws IOException {
         class TestData {
-            final String testName;
-            final Path sourceDataPath;
-            final DataStorageInfo persistedDataStorageInfo;
-            final String expectedErrorMessage;
+            private final String testName;
+            private final Path sourceDataPath;
+            private final DataStorageInfo persistedDataStorageInfo;
+            private final String expectedErrorMessage;
 
-            public TestData(String testName,
-                            Path sourceDataPath,
-                            DataStorageInfo persistedDataStorageInfo,
-                            String expectedErrorMessage) {
+            TestData(String testName,
+                     Path sourceDataPath,
+                     DataStorageInfo persistedDataStorageInfo,
+                     String expectedErrorMessage) {
                 this.testName = testName;
                 this.sourceDataPath = sourceDataPath;
                 this.persistedDataStorageInfo = persistedDataStorageInfo;
