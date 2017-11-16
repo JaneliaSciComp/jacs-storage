@@ -102,7 +102,7 @@ public class StorageVolumeManagerImpl implements StorageVolumeManager {
         }
         storageVolume.setName(volumeName);
         storageVolume.setShared(shared);
-        storageVolume.setStorageHost(shared ? null : StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostIP()));
+        storageVolume.setStorageHost(shared ? null : StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName()));
         storageVolume.setVolumePath(applicationConfig.getStringPropertyValue("StorageVolume." + volumeName + ".RootDir"));
         storageVolume.setStorageTags(getStorageVolumeTags(volumeName));
         storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getVolumePath()));

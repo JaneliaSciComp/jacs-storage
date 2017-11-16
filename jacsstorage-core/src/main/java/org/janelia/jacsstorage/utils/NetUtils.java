@@ -11,4 +11,13 @@ public class NetUtils {
             throw new IllegalStateException(e);
         }
     }
+
+    public static String getCurrentHostName() {
+        try {
+            InetAddress ip = InetAddress.getLocalHost();
+            return ip.getHostName();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
 }
