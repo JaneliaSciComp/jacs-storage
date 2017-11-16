@@ -60,7 +60,7 @@ class AgentConnectionHelper {
                     ;
 
             int responseStatus = response.getStatus();
-            if (responseStatus == Response.Status.OK.getStatusCode()) {
+            if (responseStatus < Response.Status.BAD_REQUEST.getStatusCode()) {
                 return response.readEntity(StorageAgentInfo.class);
             }
             LOG.warn("Register agent returned {}", responseStatus);
@@ -75,12 +75,13 @@ class AgentConnectionHelper {
     }
 
     static void deregisterAgent(String masterServiceUrl, String agentURL, String agentToken) {
-        String registrationEndpoint = String.format("/agents/%s", agentURL);
+        String registrationEndpoint = "/agents/url";
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(masterServiceUrl)
                     .path(registrationEndpoint)
+                    .path(agentURL)
                     ;
             Response response = target.request()
                     .header("agentToken", agentToken)

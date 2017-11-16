@@ -16,8 +16,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
@@ -26,6 +28,8 @@ public class StorageAgentsResource {
 
     @Inject
     private StorageAgentManager agentManager;
+    @Context
+    private UriInfo resourceURI;
 
     @PermitAll
     @Path("url/{agentURL: .+}")
@@ -50,7 +54,8 @@ public class StorageAgentsResource {
     public Response registerAgent(StorageAgentInfo agentInfo) {
         StorageAgentInfo registeterdAgentInfo = agentManager.registerAgent(agentInfo);
         return Response
-                .ok(registeterdAgentInfo)
+                .created(resourceURI.getBaseUriBuilder().path("url/{agentURL: .+}").build(registeterdAgentInfo.getAgentHttpURL()))
+                .entity(registeterdAgentInfo)
                 .build();
     }
 

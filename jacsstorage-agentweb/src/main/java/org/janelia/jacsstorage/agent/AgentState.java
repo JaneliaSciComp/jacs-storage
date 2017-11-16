@@ -108,7 +108,11 @@ public class AgentState {
 
     public synchronized void disconnect() {
         agentConnectionBreaker.dispose();
-        AgentConnectionHelper.deregisterAgent(masterHttpURL, agentHttpURL, registeredToken);
+        if (registeredToken != null) {
+            AgentConnectionHelper.deregisterAgent(masterHttpURL, agentHttpURL, registeredToken);
+        } else {
+            LOG.info("Agent {} was not registered or the registration failed", agentHttpURL);
+        }
         masterHttpURL = null;
         registeredToken = null;
     }
