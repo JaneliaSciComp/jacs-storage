@@ -12,6 +12,7 @@ import org.janelia.jacsstorage.model.DataInterval;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
+import org.janelia.jacsstorage.utils.NetUtils;
 
 import javax.inject.Inject;
 import java.nio.file.FileStore;
@@ -101,7 +102,7 @@ public class StorageVolumeManagerImpl implements StorageVolumeManager {
         }
         storageVolume.setName(volumeName);
         storageVolume.setShared(shared);
-        storageVolume.setStorageHost(shared ? null : storageHost);
+        storageVolume.setStorageHost(shared ? null : StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostIP()));
         storageVolume.setVolumePath(applicationConfig.getStringPropertyValue("StorageVolume." + volumeName + ".RootDir"));
         storageVolume.setStorageTags(getStorageVolumeTags(volumeName));
         storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getVolumePath()));
