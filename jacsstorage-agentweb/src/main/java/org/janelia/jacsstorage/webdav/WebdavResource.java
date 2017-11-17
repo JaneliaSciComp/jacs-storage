@@ -50,7 +50,8 @@ public class WebdavResource {
     private UriInfo resourceURI;
 
     @LogStorageEvent(
-            eventName = "STORAGE_PROPFIND"
+            eventName = "STORAGE_PROPFIND",
+            argList = {0, 1, 2, 3}
     )
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
@@ -105,7 +106,8 @@ public class WebdavResource {
     }
 
     @LogStorageEvent(
-            eventName = "STORAGE_MKCOL"
+            eventName = "STORAGE_MKCOL",
+            argList = {0, 1, 2}
     )
     @MKCOL
     @Path("{dataBundleId}/{dataDirPath: .+}")

@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.service;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,10 @@ import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
 import java.lang.reflect.Method;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Logged
 @Interceptor
@@ -30,20 +35,32 @@ public class LoggerInterceptor {
             String eventDescription = null;
             Method m = invocationContext.getMethod();
             LogStorageEvent logAnnotation = m.getAnnotation(LogStorageEvent.class);
+            Set<Integer> argIndexSet;
             if (logAnnotation != null) {
                 eventName = logAnnotation.eventName();
                 eventDescription = logAnnotation.description();
+                ImmutableSet.Builder<Integer> argIndexBuilder = ImmutableSet.builder();
+                for (int argIndex : logAnnotation.argList()) {
+                    argIndexBuilder.add(argIndex);
+                }
+                argIndexSet = argIndexBuilder.build();
+            } else {
+                argIndexSet = ImmutableSet.of();
             }
             if (StringUtils.isBlank(eventName)) {
                 eventName = m.getName();
             }
             ImmutableList.Builder<Object> eventDataBuilder = ImmutableList.builder();
+            int argIndex = 0;
             for (Object methodParam : invocationContext.getParameters()) {
-                if (methodParam == null) {
-                    eventDataBuilder.add("<null>");
-                } else {
-                    eventDataBuilder.add(methodParam);
+                if (argIndexSet.contains(argIndex)) {
+                    if (methodParam == null) {
+                        eventDataBuilder.add("<null>");
+                    } else {
+                        eventDataBuilder.add(methodParam);
+                    }
                 }
+                argIndex++;
             }
             storageEventLogger.logStorageEvent(
                     eventName,

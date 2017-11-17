@@ -58,7 +58,8 @@ public class AgentStorageResource {
     private UriInfo resourceURI;
 
     @LogStorageEvent(
-            eventName = "HTTP_STREAM_STORAGE_DATA"
+            eventName = "HTTP_STREAM_STORAGE_DATA",
+            argList = {0, 1}
     )
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @POST
@@ -153,7 +154,8 @@ public class AgentStorageResource {
     }
 
     @LogStorageEvent(
-            eventName = "CREATE_STORAGE_FOLDER"
+            eventName = "CREATE_STORAGE_FOLDER",
+            argList = {0, 1}
     )
     @Produces(MediaType.APPLICATION_JSON)
     @POST
@@ -165,7 +167,8 @@ public class AgentStorageResource {
     }
 
     @LogStorageEvent(
-            eventName = "CREATE_STORAGE_FOLDER"
+            eventName = "CREATE_STORAGE_FOLDER",
+            argList = {0, 1, 2}
     )
     @Produces(MediaType.APPLICATION_JSON)
     @PUT
@@ -201,7 +204,8 @@ public class AgentStorageResource {
     }
 
     @LogStorageEvent(
-            eventName = "CREATE_STORAGE_FILE"
+            eventName = "CREATE_STORAGE_FILE",
+            argList = {0, 1, 2}
     )
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
@@ -215,7 +219,8 @@ public class AgentStorageResource {
     }
 
     @LogStorageEvent(
-            eventName = "CREATE_STORAGE_FILE"
+            eventName = "CREATE_STORAGE_FILE",
+            argList = {0, 1, 2}
     )
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
@@ -254,7 +259,8 @@ public class AgentStorageResource {
     }
 
     @LogStorageEvent(
-            eventName = "DELETE_STORAGE"
+            eventName = "DELETE_STORAGE",
+            argList = {0, 1}
     )
     @DELETE
     @Path("{dataBundleId}")

@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service;
 
+import javax.enterprise.util.Nonbinding;
 import javax.interceptor.InterceptorBinding;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -13,6 +14,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface LogStorageEvent {
-    String eventName() default "";
-    String description() default "";
+    @Nonbinding String eventName() default "";
+    @Nonbinding String description() default "";
+    @Nonbinding int[] argList() default {};
 }
