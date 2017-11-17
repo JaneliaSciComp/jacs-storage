@@ -72,9 +72,9 @@ public class DataTransferServiceImpl implements DataTransferService {
             try {
                 transferState.setState(State.READ_DATA);
                 TransferInfo ti = bundleReader.readBundle(dataLocation.getPath(), senderStream);
-                transferState.setState(State.READ_DATA_COMPLETE);
                 transferState.setTransferredBytes(ti.getNumBytes());
                 transferState.setChecksum(ti.getChecksum());
+                transferState.setState(State.READ_DATA_COMPLETE);
             } catch (Exception e) {
                 LOG.error("Error while reading {}", dataLocation, e);
                 transferState.setErrorMessage("Error reading data: " + e.getMessage());
@@ -141,8 +141,8 @@ public class DataTransferServiceImpl implements DataTransferService {
                 TransferInfo ti = bundleWriter.writeBundle(receiverStream, dataLocation.getPath());
                 transferState.setTransferredBytes(ti.getNumBytes());
                 transferState.setPersistedBytes(PathUtils.getSize(dataLocation.getPath()));
-                transferState.setState(State.WRITE_DATA_COMPLETE);
                 transferState.setChecksum(ti.getChecksum());
+                transferState.setState(State.WRITE_DATA_COMPLETE);
             } catch (Exception e) {
                 LOG.error("Error while writing {}", dataLocation, e);
                 transferState.setErrorMessage("Error writing data: " + e.getMessage());

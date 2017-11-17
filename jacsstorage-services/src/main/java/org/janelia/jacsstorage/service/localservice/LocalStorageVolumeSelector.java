@@ -25,7 +25,7 @@ public class LocalStorageVolumeSelector implements StorageVolumeSelector {
     @Override
     public JacsStorageVolume selectStorageVolume(JacsBundle storageRequest) {
         StorageQuery storageQuery = new StorageQuery()
-                .addStorageHost(storageHost)
+                .addStorageHost(getStorageHost())
                 .setStorageTags(storageRequest.getStorageTags());
         storageRequest.getStorageVolume()
                 .ifPresent(sv -> {
