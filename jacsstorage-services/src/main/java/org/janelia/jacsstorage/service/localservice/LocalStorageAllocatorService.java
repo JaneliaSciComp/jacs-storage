@@ -104,7 +104,7 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
     }
 
     private String getStorageHost() {
-        return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostIP());
+        return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
     }
 
 }

@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
@@ -8,7 +7,6 @@ import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.StorageVolumeSelector;
-import org.janelia.jacsstorage.utils.NetUtils;
 
 import java.util.List;
 import java.util.Random;

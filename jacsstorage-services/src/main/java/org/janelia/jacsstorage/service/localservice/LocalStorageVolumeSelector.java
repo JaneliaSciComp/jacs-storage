@@ -44,7 +44,7 @@ public class LocalStorageVolumeSelector implements StorageVolumeSelector {
     }
 
     private String getStorageHost() {
-        return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostIP());
+        return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
     }
 
 }

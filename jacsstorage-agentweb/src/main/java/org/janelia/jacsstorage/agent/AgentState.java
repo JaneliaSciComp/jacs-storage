@@ -54,7 +54,7 @@ public class AgentState {
     private String registeredToken;
 
     public String getStorageHost() {
-        return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostIP());
+        return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
     }
 
     public String getMasterHttpURL() {
