@@ -19,9 +19,17 @@ class BenchmarksCmdLineParams {
     @Parameter(names = "-dataFormat", description = "Data bundle format")
     JacsStorageFormat dataFormat = JacsStorageFormat.DATA_DIRECTORY;
     @Parameter(names = "-localPath", description = "Local path")
-    String localPath;
+    String localPath = "";
+    // authentication params
     @Parameter(names = "-username", description = "User name")
     String username;
     @Parameter(names = "-password", description = "User password")
     String password;
+    // storage update params
+    @Parameter(names = "-bundleId", description = "bundle id")
+    Long bundleId;
+    @Parameter(names = "-updatedPath", description = "updated bundle path")
+    String updatedPath = "";
+    @Parameter(names = "-benchmarksRegex", description = "benchmarks to be run regex")
+    String benchmarksRegex;
 }

@@ -15,11 +15,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 public class TarArchiveBundleWriter extends AbstractBundleWriter {
@@ -104,8 +109,13 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
             throw new IllegalArgumentException("Invalid root data path" +
                     rootPath + " is expected to be a tar file not a directory");
         }
+        ConcurrentMap<Path, Path> activeDataFiles = new ConcurrentHashMap<>();
+        if (activeDataFiles.putIfAbsent(rootPath, rootPath) != null) {
+
+        }
+        FileLock tarLock = null;
         try (RandomAccessFile existingTarFile = new RandomAccessFile(rootPath.toFile(), "rw")) {
-            existingTarFile.getChannel().lock();
+            tarLock = lockTarFile(existingTarFile.getChannel());
             long oldTarSize = existingTarFile.length();
             String normalizedEntryName = normalizeEntryName(entryName);
             Path relativeEntryPath = Paths.get(normalizedEntryName);
@@ -133,6 +143,14 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
             }
         } catch (IOException e) {
             throw new IllegalStateException(e);
+        } finally {
+            if (tarLock != null) {
+                try {
+                    tarLock.release();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
         }
     }
 
@@ -142,6 +160,23 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
             throw new IllegalArgumentException("No path found for " + rootDir);
         }
         return rootPath;
+    }
+
+    private FileLock lockTarFile(FileChannel tarFileChannel) throws IOException{
+        FileLock lock = null;
+        for (;;) {
+            try {
+                try {
+                    lock = tarFileChannel.tryLock();
+                } catch (OverlappingFileLockException e) {
+                    continue;
+                }
+            } finally {
+                if (lock != null)
+                    break;
+            }
+        }
+        return lock;
     }
 
     private String normalizeEntryName(String name) {

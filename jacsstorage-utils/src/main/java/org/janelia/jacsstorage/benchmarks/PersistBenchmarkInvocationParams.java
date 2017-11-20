@@ -17,7 +17,7 @@ import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
 
 @State(Scope.Thread)
-public class BenchmarkInvocationParams {
+public class PersistBenchmarkInvocationParams {
     StorageClient storageClient;
     DataStorageInfo dataStorageInfo;
 
