@@ -153,7 +153,14 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
     private Path getRootPath(String rootDir) {
         Path rootPath = Paths.get(rootDir);
         if (Files.notExists(rootPath)) {
-            throw new IllegalArgumentException("No path found for " + rootDir);
+            Path parentDir = rootPath.getParent();
+            if (parentDir != null) {
+                try {
+                    Files.createDirectories(rootPath.getParent());
+                } catch (IOException e) {
+                    throw new SecurityException("Could not create parent directory for missing archive - " + rootDir, e);
+                }
+            }
         }
         return rootPath;
     }
@@ -193,13 +200,13 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
         long prevEntryEnd = 0;
         boolean parentEntryNameFound = StringUtils.isBlank(parentEntryName);
         boolean entryNameFound = false;
-        boolean entryIsDir = parentEntryNameFound;
+        boolean parentEntryIsDir = parentEntryNameFound;
         for (TarArchiveEntry sourceEntry = tarArchiveInputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = tarArchiveInputStream.getNextTarEntry()) {
             String currentEntryName = normalizeEntryName(sourceEntry.getName());
             if (currentEntryName.equals(parentEntryName)) {
                 if (sourceEntry.isDirectory()) {
                     parentEntryNameFound = true;
-                    entryIsDir = true;
+                    parentEntryIsDir = true;
                 } else {
                     parentEntryNameFound = true;
                 }
@@ -213,11 +220,11 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
             }
             prevEntryEnd = prevEntryStart + recordSize + sourceEntry.getSize() + fillingBytes;
         }
-        if (parentEntryNameFound && entryIsDir && !entryNameFound)
+        if (parentEntryNameFound && parentEntryIsDir && !entryNameFound)
             return prevEntryEnd;
         else if (!parentEntryNameFound)
             return PARENT_ENTRY_NOT_FOUND_ERRORCODE;
-        else if (parentEntryNameFound && !entryIsDir)
+        else if (parentEntryNameFound && !parentEntryIsDir)
             return PARENT_ENTRY_NOT_DIR_ERRORCODE;
         else if (entryNameFound)
             return ENTRY_ALREADY_EXISTS_ERRORCODE;

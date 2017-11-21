@@ -42,8 +42,10 @@ import java.util.List;
 
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
-@Path("agent-storage")
+@Path(AgentStorageResource.AGENTSTORAGE_URI_PATH)
 public class AgentStorageResource {
+
+    public static final String AGENTSTORAGE_URI_PATH = "agent-storage";
 
     private static final Logger LOG = LoggerFactory.getLogger(AgentStorageResource.class);
     private static int MAX_ALLOWED_DEPTH = 20;
@@ -194,7 +196,7 @@ public class AgentStorageResource {
                         .build());
         return Response
                 .created(resourceURI.getBaseUriBuilder()
-                        .path("agent-resource")
+                        .path(AGENTSTORAGE_URI_PATH)
                         .path(dataBundleId.toString())
                         .path("entry-content")
                         .path(dataEntryPath)
@@ -248,7 +250,7 @@ public class AgentStorageResource {
                         .build());
         return Response
                 .created(resourceURI.getBaseUriBuilder()
-                        .path("agent-resource")
+                        .path(AGENTSTORAGE_URI_PATH)
                         .path(dataBundleId.toString())
                         .path("entry-content")
                         .path(dataEntryPath)

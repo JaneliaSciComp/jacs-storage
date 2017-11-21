@@ -86,7 +86,11 @@ public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
     private Path getRootPath(String rootDir) {
         Path rootPath = Paths.get(rootDir);
         if (Files.notExists(rootPath)) {
-            throw new IllegalArgumentException("No path found for " + rootDir);
+            try {
+                Files.createDirectories(rootPath);
+            } catch (IOException e) {
+                throw new SecurityException("Could not create missing directory - " + rootDir, e);
+            }
         }
         return rootPath;
     }

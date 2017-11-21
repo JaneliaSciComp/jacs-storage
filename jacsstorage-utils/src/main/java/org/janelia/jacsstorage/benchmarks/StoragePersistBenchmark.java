@@ -49,7 +49,7 @@ public class StoragePersistBenchmark {
         String dataOwner = benchmarksCmdLineParams.username;
         String benchmarks;
         if (StringUtils.isNotBlank(benchmarksCmdLineParams.benchmarksRegex)) {
-            benchmarks =  StorageUpdateBenchmark.class.getSimpleName() + "." + benchmarksCmdLineParams.benchmarksRegex;
+            benchmarks =  benchmarksCmdLineParams.benchmarksRegex;
         } else {
             benchmarks =  StorageUpdateBenchmark.class.getSimpleName();
         }

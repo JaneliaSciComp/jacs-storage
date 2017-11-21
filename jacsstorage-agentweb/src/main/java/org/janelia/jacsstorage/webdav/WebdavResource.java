@@ -1,11 +1,15 @@
 package org.janelia.jacsstorage.webdav;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.rest.AgentStorageResource;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.LogStorageEvent;
@@ -31,6 +35,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Path("agent-webdav")
@@ -50,17 +55,17 @@ public class WebdavResource {
     private UriInfo resourceURI;
 
     @LogStorageEvent(
-            eventName = "STORAGE_PROPFIND",
+            eventName = "DATASTORAGE_PROPFIND",
             argList = {0, 1, 2, 3}
     )
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
     @PROPFIND
-    @Path("{dataBundleId}")
-    public Response propfind(@PathParam("dataBundleId") Long dataBundleId,
-                             @HeaderParam("Depth") String depth,
-                             Propfind propfindRequest,
-                             @Context SecurityContext securityContext) {
+    @Path("dataStorage/{dataBundleId}")
+    public Response dataStoragePropFind(@PathParam("dataBundleId") Long dataBundleId,
+                                        @HeaderParam("Depth") String depth,
+                                        Propfind propfindRequest,
+                                        @Context SecurityContext securityContext) {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         int depthValue = getDepth(depth);
@@ -93,7 +98,7 @@ public class WebdavResource {
                             ?  StringUtils.appendIfMissing(nodeInfo.getNodePath(), "/")
                             : nodeInfo.getNodePath();
                     propfindResponse.setHref(resourceURI.getBaseUriBuilder()
-                            .path("agent-resource")
+                            .path(AgentStorageResource.AGENTSTORAGE_URI_PATH)
                             .path(dataBundleId.toString())
                             .path(nodeInfoRelPath)
                             .build()
@@ -106,14 +111,15 @@ public class WebdavResource {
     }
 
     @LogStorageEvent(
-            eventName = "STORAGE_MKCOL",
+            eventName = "DATASTORAGE_MKCOL",
             argList = {0, 1, 2}
     )
+    @Produces(MediaType.APPLICATION_JSON)
     @MKCOL
-    @Path("{dataBundleId}/{dataDirPath: .+}")
-    public Response makeDir(@PathParam("dataBundleId") Long dataBundleId,
-                            @PathParam("dataDirPath") String dataDirPath,
-                            @Context SecurityContext securityContext) {
+    @Path("dataStorage/{dataBundleId}/{dataDirPath: .+}")
+    public Response createDataStorageDir(@PathParam("dataBundleId") Long dataBundleId,
+                                         @PathParam("dataDirPath") String dataDirPath,
+                                         @Context SecurityContext securityContext) {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         long dirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getPath(), dataDirPath, dataBundle.getStorageFormat());
@@ -125,8 +131,39 @@ public class WebdavResource {
                         .usedSpaceInBytes(newBundleSize)
                         .build());
         return Response
-                .status(Response.Status.CREATED)
+                .created(resourceURI.getBaseUriBuilder().path(AgentStorageResource.AGENTSTORAGE_URI_PATH).path("{dataBundleId}").build(dataBundleId))
                 .build();
+    }
+
+    @LogStorageEvent(
+            eventName = "STORAGE_MKCOL",
+            argList = {0, 1}
+    )
+    @Produces(MediaType.APPLICATION_JSON)
+    @MKCOL
+    @Path("namedDataStorage/{storageName}{format:(/format/[^/]+?)?}")
+    public Response createDataStorage(@PathParam("storageName") String storageName,
+                                      @PathParam("format") String format,
+                                      @Context SecurityContext securityContext) {
+        JacsStorageFormat storageFormat;
+        if (StringUtils.isBlank(format)) {
+            storageFormat = JacsStorageFormat.DATA_DIRECTORY;
+        } else {
+            storageFormat = JacsStorageFormat.valueOf(format.substring(8)); // 8 is "/format/".length()
+        }
+        JacsBundle dataBundle = new JacsBundleBuilder()
+                .name(storageName)
+                .storageFormat(storageFormat)
+                .build();
+        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(SecurityUtils.getUserPrincipal(securityContext), dataBundle);
+        return dataBundleInfo
+                .map(bi -> Response
+                        .created(resourceURI.getBaseUriBuilder().path(AgentStorageResource.AGENTSTORAGE_URI_PATH).path("{dataBundleId}").build(bi.getId()))
+                        .build())
+                .orElse(Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity(ImmutableMap.of("errormessage", "Error allocating the storage"))
+                        .build());
     }
 
     private int getDepth(String depth) {
