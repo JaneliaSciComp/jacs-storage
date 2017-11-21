@@ -23,6 +23,7 @@ import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.SortCriteria;
 import org.janelia.jacsstorage.datarequest.SortDirection;
+import org.janelia.jacsstorage.model.support.IncFieldValueHandler;
 import org.janelia.jacsstorage.model.support.AppendFieldValueHandler;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
@@ -222,6 +223,8 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
             } else {
                 return Updates.push(fieldName, value);
             }
+        } else if (valueHandler instanceof IncFieldValueHandler) {
+            return Updates.inc(fieldName, (Number) valueHandler.getFieldValue());
         } else {
             return Updates.set(fieldName, valueHandler.getFieldValue());
         }

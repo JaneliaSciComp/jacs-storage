@@ -109,10 +109,6 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
             throw new IllegalArgumentException("Invalid root data path" +
                     rootPath + " is expected to be a tar file not a directory");
         }
-        ConcurrentMap<Path, Path> activeDataFiles = new ConcurrentHashMap<>();
-        if (activeDataFiles.putIfAbsent(rootPath, rootPath) != null) {
-
-        }
         FileLock tarLock = null;
         try (RandomAccessFile existingTarFile = new RandomAccessFile(rootPath.toFile(), "rw")) {
             tarLock = lockTarFile(existingTarFile.getChannel());
@@ -169,11 +165,13 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
                 try {
                     lock = tarFileChannel.tryLock();
                 } catch (OverlappingFileLockException e) {
+                    // capture exceptions thrown when the lock is held by the current JVM
                     continue;
                 }
             } finally {
-                if (lock != null)
+                if (lock != null) {
                     break;
+                }
             }
         }
         return lock;

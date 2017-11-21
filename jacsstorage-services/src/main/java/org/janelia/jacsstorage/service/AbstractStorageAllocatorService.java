@@ -3,9 +3,9 @@ package org.janelia.jacsstorage.service;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
-import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.support.IncFieldValueHandler;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
@@ -54,7 +54,7 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedFieldsBuilder = ImmutableMap.builder();
         if (dataBundle.hasUsedSpaceSet()) {
             existingBundle.setUsedSpaceInBytes(dataBundle.getUsedSpaceInBytes());
-            updatedFieldsBuilder.put("usedSpaceInBytes", new SetFieldValueHandler<>(existingBundle.getUsedSpaceInBytes()));
+            updatedFieldsBuilder.put("usedSpaceInBytes", new IncFieldValueHandler<>(existingBundle.getUsedSpaceInBytes()));
         }
         if (StringUtils.isNotBlank(dataBundle.getChecksum())) {
             existingBundle.setChecksum(dataBundle.getChecksum());

@@ -185,13 +185,12 @@ public class AgentStorageResource {
         LOG.info("Create new directory {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        long dirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat());
-        long newBundleSize = dataBundle.size() + dirEntrySize;
+        long newDirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat());
         storageAllocatorService.updateStorage(
                 SecurityUtils.getUserPrincipal(securityContext),
                 new JacsBundleBuilder()
                         .dataBundleId(dataBundleId)
-                        .usedSpaceInBytes(newBundleSize)
+                        .usedSpaceInBytes(newDirEntrySize)
                         .build());
         return Response
                 .created(resourceURI.getBaseUriBuilder()
@@ -240,13 +239,12 @@ public class AgentStorageResource {
         LOG.info("Create new file {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        long fileEntrySize = dataStorageService.createFileEntry(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat(), contentStream);
-        long newBundleSize = dataBundle.size() + fileEntrySize;
+        long newFileEntrySize = dataStorageService.createFileEntry(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat(), contentStream);
         storageAllocatorService.updateStorage(
                 SecurityUtils.getUserPrincipal(securityContext),
                 new JacsBundleBuilder()
                         .dataBundleId(dataBundleId)
-                        .usedSpaceInBytes(newBundleSize)
+                        .usedSpaceInBytes(newFileEntrySize)
                         .build());
         return Response
                 .created(resourceURI.getBaseUriBuilder()
