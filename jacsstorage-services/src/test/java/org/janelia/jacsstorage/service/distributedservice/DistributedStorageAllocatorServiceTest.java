@@ -12,15 +12,12 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
-import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -28,9 +25,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -96,7 +91,7 @@ public class DistributedStorageAllocatorServiceTest {
                         new JacsBundleBuilder().owner("anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .storageHost("testHost")
-                                .volumePath("/storage")
+                                .storageRootDir("/storage")
                                 .storageServiceURL("http://agentURL")
                                 .tcpPortNo(100)
                                 .build()
@@ -111,7 +106,7 @@ public class DistributedStorageAllocatorServiceTest {
                         new JacsBundleBuilder().owner("anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .name(JacsStorageVolume.OVERFLOW_VOLUME)
-                                .volumePath("/overflowStorage")
+                                .storageRootDir("/overflowStorage")
                                 .build()
                 ),
                 new TestAllocateData(10L,
@@ -124,7 +119,7 @@ public class DistributedStorageAllocatorServiceTest {
                         new JacsBundleBuilder().owner("anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .storageHost("testHost")
-                                .volumePath("/storage")
+                                .storageRootDir("/storage")
                                 .storageServiceURL("http://agentURL")
                                 .build()
                 )

@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public class ApplicationConfigProvider {
 
@@ -24,8 +25,10 @@ public class ApplicationConfigProvider {
 
     private ApplicationConfig applicationConfig = new ApplicationConfigImpl();
 
-    public ApplicationConfigProvider fromDefaultResource() {
-        return fromResource(DEFAULT_APPLICATION_CONFIG_RESOURCES);
+    public ApplicationConfigProvider fromDefaultResources() {
+        return fromProperties(System.getProperties())
+                .fromMap(System.getenv())
+                .fromResource(DEFAULT_APPLICATION_CONFIG_RESOURCES);
     }
 
     public ApplicationConfigProvider fromResource(String resourceName) {
@@ -62,6 +65,11 @@ public class ApplicationConfigProvider {
                 throw new UncheckedIOException(e);
             }
         }
+        return this;
+    }
+
+    public ApplicationConfigProvider fromProperties(Properties properties) {
+        properties.stringPropertyNames().forEach(k -> applicationConfig.put(k, properties.getProperty(k)));
         return this;
     }
 

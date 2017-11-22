@@ -15,7 +15,8 @@ public class JacsStorageVolume extends AbstractEntity {
 
     private String storageHost; // storage host
     private String name; // volume name
-    private String volumePath; // volume real path
+    private String storagePathPrefix; // storage path prefix
+    private String storageRootDir; // storage real root directory path
     private List<String> storageTags; // storage tags - identify certain features of the physical storage
     private String storageServiceURL;
     private int storageServiceTCPPortNo;
@@ -39,12 +40,20 @@ public class JacsStorageVolume extends AbstractEntity {
         this.name = name;
     }
 
-    public String getVolumePath() {
-        return volumePath;
+    public String getStoragePathPrefix() {
+        return storagePathPrefix;
     }
 
-    public void setVolumePath(String volumePath) {
-        this.volumePath = volumePath;
+    public void setStoragePathPrefix(String storagePathPrefix) {
+        this.storagePathPrefix = storagePathPrefix;
+    }
+
+    public String getStorageRootDir() {
+        return storageRootDir;
+    }
+
+    public void setStorageRootDir(String storageRootDir) {
+        this.storageRootDir = storageRootDir;
     }
 
     public List<String> getStorageTags() {
@@ -119,7 +128,7 @@ public class JacsStorageVolume extends AbstractEntity {
                 .append("storageHost", storageHost)
                 .append("name", name)
                 .append("storageTags", storageTags)
-                .append("volumePath", volumePath)
+                .append("storageRootDir", storageRootDir)
                 .append("availableSpaceInBytes", availableSpaceInBytes)
                 .append("storageServiceURL", storageServiceURL)
                 .toString();

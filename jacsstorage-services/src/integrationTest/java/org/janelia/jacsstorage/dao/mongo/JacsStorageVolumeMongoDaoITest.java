@@ -139,11 +139,11 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
         });
     }
 
-    private JacsStorageVolume createTestEntity(String host, int port, String volumeName, String volumePath, Long available) {
+    private JacsStorageVolume createTestEntity(String host, int port, String volumeName, String storageRootDir, Long available) {
         JacsStorageVolume v = new JacsStorageVolume();
         v.setStorageHost(host);
         v.setName(volumeName);
-        v.setVolumePath(volumePath);
+        v.setStorageRootDir(storageRootDir);
         if (StringUtils.isNotBlank(host)) {
             v.setStorageServiceURL("http://" + host);
             v.setStorageServiceTCPPortNo(port);

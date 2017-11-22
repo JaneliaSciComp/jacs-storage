@@ -10,9 +10,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.StorageVolumeSelector;
 import org.janelia.jacsstorage.utils.NetUtils;
 
-import java.util.List;
-import java.util.Optional;
-
 public class LocalStorageVolumeSelector implements StorageVolumeSelector {
     private final JacsStorageVolumeDao storageVolumeDao;
     private final String storageHost;
@@ -31,6 +28,7 @@ public class LocalStorageVolumeSelector implements StorageVolumeSelector {
                 .ifPresent(sv -> {
                     storageQuery.setId(sv.getId());
                     storageQuery.setStorageName(sv.getName());
+                    storageQuery.setStoragePathPrefix(sv.getStoragePathPrefix());
                 });
         if (storageRequest.hasUsedSpaceSet()) {
             storageQuery.setMinAvailableSpaceInBytes(storageRequest.getUsedSpaceInBytes());

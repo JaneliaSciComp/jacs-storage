@@ -6,7 +6,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequestBuilder;
-import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -119,11 +117,11 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
         assertNotSame(te, retrievedTe);
     }
 
-    private JacsStorageVolume createTestVolume(String host, int port, String volumeName, String volumePath, Long available) {
+    private JacsStorageVolume createTestVolume(String host, int port, String volumeName, String storageRootDir, Long available) {
         JacsStorageVolume v = new JacsStorageVolume();
         v.setStorageHost(host);
         v.setName(volumeName);
-        v.setVolumePath(volumePath);
+        v.setStorageRootDir(storageRootDir);
         if (StringUtils.isNotBlank(host)) {
             v.setStorageServiceURL("http://" + host);
             v.setStorageServiceTCPPortNo(port);

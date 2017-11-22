@@ -16,5 +16,7 @@ public interface ApplicationConfig {
     List<String> getStringListPropertyValue(String name);
     List<String> getStringListPropertyValue(String name, List<String> defaultValue);
     void load(InputStream stream) throws IOException;
+    void put(String key, String value);
     void putAll(Map<String, String> properties);
+    Map<String, String> asMap();
 }

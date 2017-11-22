@@ -88,7 +88,7 @@ public class ApplicationProducer {
     @Produces
     public ApplicationConfig applicationConfig() throws IOException {
         return new ApplicationConfigProvider()
-                .fromDefaultResource()
+                .fromDefaultResources()
                 .fromEnvVar("JACSSTORAGE_CONFIG")
                 .fromMap(ApplicationConfigProvider.applicationArgs())
                 .build();

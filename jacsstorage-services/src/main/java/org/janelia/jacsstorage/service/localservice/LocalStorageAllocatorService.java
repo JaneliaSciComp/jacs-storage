@@ -1,25 +1,17 @@
 package org.janelia.jacsstorage.service.localservice;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
-import org.janelia.jacsstorage.datarequest.PageRequest;
-import org.janelia.jacsstorage.datarequest.PageResult;
-import org.janelia.jacsstorage.model.DataInterval;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
-import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
-import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.AbstractStorageAllocatorService;
 import org.janelia.jacsstorage.service.OverflowStorageVolumeSelector;
 import org.janelia.jacsstorage.service.StorageVolumeSelector;
-import org.janelia.jacsstorage.service.distributedservice.RandomStorageVolumeSelector;
 import org.janelia.jacsstorage.utils.NetUtils;
 import org.janelia.jacsstorage.utils.PathUtils;
 import org.slf4j.Logger;
@@ -27,14 +19,10 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.nio.file.FileStore;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @LocalInstance
 public class LocalStorageAllocatorService extends AbstractStorageAllocatorService {
@@ -67,7 +55,7 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
                     }
                     List<String> dataSubpath = PathUtils.getTreePathComponentsForId(existingBundle.getId());
                     if (CollectionUtils.isNotEmpty(dataSubpath)) {
-                        Path parentPath = Paths.get(storageVolume.getVolumePath(), dataSubpath.get(0));
+                        Path parentPath = Paths.get(storageVolume.getStorageRootDir(), dataSubpath.get(0));
                         if (dataPath.startsWith(parentPath)) {
                             try {
                                 PathUtils.deletePathIfEmpty(parentPath);

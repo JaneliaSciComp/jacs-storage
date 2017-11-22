@@ -111,6 +111,9 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
             if (StringUtils.isNotBlank(sv.getName())) {
                 bundleAggregationOpsBuilder.add(Aggregates.match(eq("referencedVolumes.name", sv.getName())));
             }
+            if (StringUtils.isNotBlank(sv.getStoragePathPrefix())) {
+                bundleAggregationOpsBuilder.add(Aggregates.match(eq("referencedVolumes.storagePathPrefix", sv.getStoragePathPrefix())));
+            }
         });
         List<JacsBundle> results = aggregate(bsonFilter,
                 bundleAggregationOpsBuilder.build(),

@@ -38,7 +38,7 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
             dataBundle.setStorageVolume(storageVolume);
             bundleDao.save(dataBundle);
             List<String> dataSubpath = PathUtils.getTreePathComponentsForId(dataBundle.getId());
-            Path dataPath = Paths.get(storageVolume.getVolumePath(), dataSubpath.toArray(new String[dataSubpath.size()]));
+            Path dataPath = Paths.get(storageVolume.getStorageRootDir(), dataSubpath.toArray(new String[dataSubpath.size()]));
             dataBundle.setPath(dataPath.toString());
             bundleDao.update(dataBundle, ImmutableMap.of("path", new SetFieldValueHandler<>(dataBundle.getPath())));
             return dataBundle;

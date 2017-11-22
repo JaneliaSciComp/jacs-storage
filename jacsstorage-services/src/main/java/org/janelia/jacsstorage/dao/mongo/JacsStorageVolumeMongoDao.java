@@ -73,6 +73,9 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         if (StringUtils.isNotBlank(storageQuery.getStorageName())) {
             filtersBuilder.add(Filters.eq("name", storageQuery.getStorageName()));
         }
+        if (StringUtils.isNotBlank(storageQuery.getStoragePathPrefix())) {
+            filtersBuilder.add(Filters.eq("storagePathPrefix", storageQuery.getStoragePathPrefix()));
+        }
         if (CollectionUtils.isNotEmpty(storageQuery.getStorageAgents())) {
             filtersBuilder.add(Filters.in("storageServiceURL", storageQuery.getStorageAgents()));
         }

@@ -12,6 +12,7 @@ public class StorageQuery {
     private List<String> storageHosts;
     private List<String> storageAgents;
     private String storageName;
+    private String storagePathPrefix;
     private List<String> storageTags;
     private Long minAvailableSpaceInBytes;
 
@@ -82,6 +83,15 @@ public class StorageQuery {
 
     public StorageQuery setStorageName(String storageName) {
         this.storageName = storageName;
+        return this;
+    }
+
+    public String getStoragePathPrefix() {
+        return storagePathPrefix;
+    }
+
+    public StorageQuery setStoragePathPrefix(String storagePathPrefix) {
+        this.storagePathPrefix = storagePathPrefix;
         return this;
     }
 

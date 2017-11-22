@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.config;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -75,7 +76,23 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     }
 
     @Override
+    public void put(String key, String value) {
+        configProperties.put(key, value);
+    }
+
+    @Override
     public void putAll(Map<String, String> properties) {
         configProperties.putAll(properties);
     }
+
+    @Override
+    public Map<String, String> asMap() {
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+        configProperties.stringPropertyNames().forEach(k -> {
+            String v = configProperties.getProperty(k);
+            if (k != null && v != null) builder.put(k, v);
+        });
+        return builder.build();
+    }
+
 }
