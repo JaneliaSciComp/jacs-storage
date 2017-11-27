@@ -1,7 +1,6 @@
 package org.janelia.jacsstorage.webdav;
 
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -59,7 +58,7 @@ public class WebdavResource {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         int depthValue = WebdavUtils.getDepth(depth);
-        List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataBundle.getPath(), dataBundle.getStorageFormat(), depthValue);
+        List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), depthValue);
         Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeRelPath) -> resourceURI.getBaseUriBuilder()
                 .path(AgentStorageResource.AGENTSTORAGE_URI_PATH)
                 .path(dataBundleId.toString())
@@ -83,7 +82,7 @@ public class WebdavResource {
                                          @Context SecurityContext securityContext) {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        long dirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getPath(), dataDirPath, dataBundle.getStorageFormat());
+        long dirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getRealStoragePath(), dataDirPath, dataBundle.getStorageFormat());
         long newBundleSize = dataBundle.size() + dirEntrySize;
         storageAllocatorService.updateStorage(
                 SecurityUtils.getUserPrincipal(securityContext),

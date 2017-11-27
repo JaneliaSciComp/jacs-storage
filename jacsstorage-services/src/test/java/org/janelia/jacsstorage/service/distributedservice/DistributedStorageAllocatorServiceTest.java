@@ -18,6 +18,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -167,7 +168,8 @@ public class DistributedStorageAllocatorServiceTest {
             });
             Mockito.verify(bundleDao).save(dataBundle);
             assertThat(dataBundle.getId(), equalTo(testData.testBundleId));
-            assertThat(dataBundle.getPath(), equalTo(testData.testAgentMountPoint + "/" + testData.testBundleId));
+            assertThat(dataBundle.getPath(), equalTo(testData.testBundleId.toString()));
+            assertThat(dataBundle.getRealStoragePath(), equalTo(Paths.get(testData.testVolume.getStorageRootDir(), testData.testBundleId.toString())));
             Mockito.verify(bundleDao).update(dataBundle, ImmutableMap.of(
                     "path", new SetFieldValueHandler<>(dataBundle.getPath())
             ));

@@ -29,48 +29,48 @@ public class DataStorageServiceImpl implements DataStorageService {
     }
 
     @Override
-    public TransferInfo persistDataStream(String dataPath, JacsStorageFormat dataStorageFormat, InputStream dataStream) throws IOException {
+    public TransferInfo persistDataStream(Path dataPath, JacsStorageFormat dataStorageFormat, InputStream dataStream) throws IOException {
         BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataStorageFormat);
-        return bundleWriter.writeBundle(new BufferedInputStream(dataStream), dataPath);
+        return bundleWriter.writeBundle(new BufferedInputStream(dataStream), dataPath.toString());
     }
 
     @Override
-    public TransferInfo retrieveDataStream(String dataPath, JacsStorageFormat dataStorageFormat, OutputStream dataStream) throws IOException {
+    public TransferInfo retrieveDataStream(Path dataPath, JacsStorageFormat dataStorageFormat, OutputStream dataStream) throws IOException {
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
-        return bundleReader.readBundle(dataPath, dataStream);
+        return bundleReader.readBundle(dataPath.toString(), dataStream);
     }
 
     @Override
-    public List<DataNodeInfo> listDataEntries(String dataPath, JacsStorageFormat dataStorageFormat, int depth) {
+    public List<DataNodeInfo> listDataEntries(Path dataPath, JacsStorageFormat dataStorageFormat, int depth) {
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
-        return bundleReader.listBundleContent(dataPath, depth);
+        return bundleReader.listBundleContent(dataPath.toString(), depth);
     }
 
     @Override
-    public long createDirectoryEntry(String dataPath, String entryName, JacsStorageFormat dataStorageFormat) {
+    public long createDirectoryEntry(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat) {
         BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataStorageFormat);
-        return bundleWriter.createDirectoryEntry(dataPath, entryName);
+        return bundleWriter.createDirectoryEntry(dataPath.toString(), entryName);
     }
 
     @Override
-    public long createFileEntry(String dataPath, String entryName, JacsStorageFormat dataStorageFormat, InputStream contentStream) {
+    public long createFileEntry(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, InputStream contentStream) {
         BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataStorageFormat);
-        return bundleWriter.createFileEntry(dataPath, entryName, contentStream);
+        return bundleWriter.createFileEntry(dataPath.toString(), entryName, contentStream);
     }
 
     @Override
-    public long readDataEntryStream(String dataPath, String entryName, JacsStorageFormat dataStorageFormat, OutputStream outputStream) throws IOException {
+    public long readDataEntryStream(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, OutputStream outputStream) throws IOException {
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
-        return bundleReader.readDataEntry(dataPath, entryName, outputStream);
+        return bundleReader.readDataEntry(dataPath.toString(), entryName, outputStream);
     }
 
     @Override
-    public void deleteStorage(String dataPath) throws IOException {
-        PathUtils.deletePath(Paths.get(dataPath));
+    public void deleteStorage(Path dataPath) throws IOException {
+        PathUtils.deletePath(dataPath);
     }
 
     @Override
-    public void cleanupStoragePath(String dataPath) throws IOException {
-        PathUtils.deletePathIfEmpty(Paths.get(dataPath));
+    public void cleanupStoragePath(Path dataPath) throws IOException {
+        PathUtils.deletePathIfEmpty(dataPath);
     }
 }

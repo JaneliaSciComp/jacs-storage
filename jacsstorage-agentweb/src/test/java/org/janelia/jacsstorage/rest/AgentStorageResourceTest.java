@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.nio.file.Paths;
 import java.util.Set;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -132,7 +133,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                         .build());
         DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
         String testData = "Test data";
-        when(dataStorageService.retrieveDataStream(eq(testPath), eq(testFormat), any(OutputStream.class)))
+        when(dataStorageService.retrieveDataStream(eq(Paths.get(testPath)), eq(testFormat), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(2);
                     String checksum = "check";

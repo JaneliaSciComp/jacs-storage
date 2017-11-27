@@ -46,7 +46,7 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
         LOG.info("Delete {}", existingBundle);
         return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
                 .map(storageVolume -> {
-                    Path dataPath = Paths.get(existingBundle.getPath());
+                    Path dataPath = existingBundle.getRealStoragePath();
                     try {
                         PathUtils.deletePath(dataPath);
                     } catch (IOException e) {

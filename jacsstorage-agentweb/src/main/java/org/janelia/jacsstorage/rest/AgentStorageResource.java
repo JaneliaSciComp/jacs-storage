@@ -36,7 +36,6 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.List;
 
@@ -72,7 +71,7 @@ public class AgentStorageResource {
         LOG.info("Create data storage bundle for {}", dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        TransferInfo ti = dataStorageService.persistDataStream(dataBundle.getPath(), dataBundle.getStorageFormat(), bundleStream);
+        TransferInfo ti = dataStorageService.persistDataStream(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), bundleStream);
         dataBundle.setChecksum(Base64.getEncoder().encodeToString(ti.getChecksum()));
         dataBundle.setUsedSpaceInBytes(ti.getNumBytes());
         storageAllocatorService.updateStorage(SecurityUtils.getUserPrincipal(securityContext), dataBundle);
@@ -94,7 +93,7 @@ public class AgentStorageResource {
             @Override
             public void write(OutputStream output) throws IOException, WebApplicationException {
                 try {
-                    dataStorageService.retrieveDataStream(dataBundle.getPath(), dataBundle.getStorageFormat(), output);
+                    dataStorageService.retrieveDataStream(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), output);
                     output.flush();
                 } catch (Exception e) {
                     throw new WebApplicationException(e);
@@ -117,7 +116,7 @@ public class AgentStorageResource {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         int depth = depthParam != null && depthParam >= 0 && depthParam < MAX_ALLOWED_DEPTH ? depthParam : MAX_ALLOWED_DEPTH;
-        List<DataNodeInfo> dataBundleCotent = dataStorageService.listDataEntries(dataBundle.getPath(), dataBundle.getStorageFormat(), depth);
+        List<DataNodeInfo> dataBundleCotent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), depth);
         return Response
                 .ok(dataBundleCotent, MediaType.APPLICATION_JSON)
                 .header("content-disposition","attachment; filename = " + dataBundle.getOwner() + "-" + dataBundle.getName())
@@ -139,7 +138,7 @@ public class AgentStorageResource {
             public void write(java.io.OutputStream output) throws IOException, WebApplicationException {
                 try {
                     dataStorageService.readDataEntryStream(
-                            dataBundle.getPath(),
+                            dataBundle.getRealStoragePath(),
                             dataEntryPath,
                             dataBundle.getStorageFormat(),
                             output);
@@ -187,7 +186,7 @@ public class AgentStorageResource {
         LOG.info("Create new directory {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        long newDirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat());
+        long newDirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat());
         storageAllocatorService.updateStorage(
                 SecurityUtils.getUserPrincipal(securityContext),
                 new JacsBundleBuilder()
@@ -241,7 +240,7 @@ public class AgentStorageResource {
         LOG.info("Create new file {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        long newFileEntrySize = dataStorageService.createFileEntry(dataBundle.getPath(), dataEntryPath, dataBundle.getStorageFormat(), contentStream);
+        long newFileEntrySize = dataStorageService.createFileEntry(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), contentStream);
         storageAllocatorService.updateStorage(
                 SecurityUtils.getUserPrincipal(securityContext),
                 new JacsBundleBuilder()
@@ -269,8 +268,8 @@ public class AgentStorageResource {
         LOG.info("Delete bundle {}", dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         if (dataBundle != null) {
-            dataStorageService.deleteStorage(dataBundle.getPath());
-            dataStorageService.cleanupStoragePath(Paths.get(dataBundle.getPath()).getParent().toString());
+            dataStorageService.deleteStorage(dataBundle.getRealStoragePath());
+            dataStorageService.cleanupStoragePath(dataBundle.getRealStoragePath().getParent());
         }
         return Response
                 .status(Response.Status.NO_CONTENT)

@@ -7,6 +7,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.AbstractEntity;
 import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -50,6 +52,28 @@ public class JacsBundle extends AbstractEntity {
 
     public String getPath() {
         return path;
+    }
+
+    @JsonIgnore
+    public Path getRealStoragePath() {
+        if (storageVolume == null) {
+            return Paths.get(path);
+        } else if (StringUtils.isNotBlank(storageVolume.getStorageRootDir())) {
+            return Paths.get(storageVolume.getStorageRootDir(), path);
+        } else {
+            return Paths.get(path);
+        }
+    }
+
+    @JsonIgnore
+    public Path getVirtualStoragePath() {
+        if (storageVolume == null) {
+            return Paths.get(path);
+        } else if (StringUtils.isNotBlank(storageVolume.getStoragePathPrefix())) {
+            return Paths.get(storageVolume.getStoragePathPrefix(), path);
+        } else {
+            return Paths.get(path);
+        }
     }
 
     public void setPath(String path) {

@@ -1,9 +1,12 @@
 package org.janelia.jacsstorage.datarequest;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -13,6 +16,8 @@ public class DataStorageInfo {
     private String owner;
     private String path;
     private String permissions;
+    private String storageRootPrefixDir;
+    private String storageRootRealDir;
     private String storageHost;
     private int tcpPortNo;
     private String connectionURL;
@@ -36,6 +41,8 @@ public class DataStorageInfo {
         dataBundle.getStorageVolume()
                 .ifPresent(sv -> {
                     dsi.setStorageHost(sv.getStorageHost());
+                    dsi.setStorageRootRealDir(sv.getStorageRootDir());
+                    dsi.setStorageRootPrefixDir(sv.getStoragePathPrefix());
                     dsi.setTcpPortNo(sv.getStorageServiceTCPPortNo());
                     dsi.setConnectionURL(sv.getStorageServiceURL());
                 });
@@ -82,12 +89,37 @@ public class DataStorageInfo {
         return this;
     }
 
+    @JsonIgnore
+    public String getDataStoragePath() {
+        return StringUtils.isNotBlank(storageRootRealDir)
+                ? Paths.get(storageRootRealDir, path).toString()
+                : Paths.get(path).toString();
+    }
+
     public String getPermissions() {
         return permissions;
     }
 
     public DataStorageInfo setPermissions(String permissions) {
         this.permissions = permissions;
+        return this;
+    }
+
+    public String getStorageRootPrefixDir() {
+        return storageRootPrefixDir;
+    }
+
+    public DataStorageInfo setStorageRootPrefixDir(String storageRootPrefixDir) {
+        this.storageRootPrefixDir = storageRootPrefixDir;
+        return this;
+    }
+
+    public String getStorageRootRealDir() {
+        return storageRootRealDir;
+    }
+
+    public DataStorageInfo setStorageRootRealDir(String storageRootRealDir) {
+        this.storageRootRealDir = storageRootRealDir;
         return this;
     }
 
