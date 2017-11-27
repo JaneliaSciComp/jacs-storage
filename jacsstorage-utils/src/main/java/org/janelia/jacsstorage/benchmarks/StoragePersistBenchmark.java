@@ -49,9 +49,9 @@ public class StoragePersistBenchmark {
         String dataOwner = benchmarksCmdLineParams.username;
         String benchmarks;
         if (StringUtils.isNotBlank(benchmarksCmdLineParams.benchmarksRegex)) {
-            benchmarks =  benchmarksCmdLineParams.benchmarksRegex;
+            benchmarks =  StoragePersistBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
         } else {
-            benchmarks =  StorageUpdateBenchmark.class.getSimpleName();
+            benchmarks =  StoragePersistBenchmark.class.getSimpleName();
         }
         Options opt = new OptionsBuilder()
                 .include(benchmarks)

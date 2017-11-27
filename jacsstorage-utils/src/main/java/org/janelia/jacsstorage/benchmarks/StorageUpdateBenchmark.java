@@ -87,7 +87,7 @@ public class StorageUpdateBenchmark {
         String dataOwner = benchmarksCmdLineParams.username;
         String benchmarks;
         if (StringUtils.isNotBlank(benchmarksCmdLineParams.benchmarksRegex)) {
-            benchmarks =  benchmarksCmdLineParams.benchmarksRegex;
+            benchmarks =  StorageUpdateBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
         } else {
             benchmarks =  StorageUpdateBenchmark.class.getSimpleName();
         }
@@ -107,9 +107,6 @@ public class StorageUpdateBenchmark {
                 .param("updatedDataPath", benchmarksCmdLineParams.updatedPath)
                 .param("authToken", authToken)
                 .build();
-
-        System.out.println("!!!!!!!!!!!! BENCHMARKS:" + opt.getIncludes() + "!!!!" + opt.getExcludes());
-
         Collection<RunResult> runResults = new Runner(opt).run();
         for (RunResult runResult : runResults) {
             Result result = runResult.getAggregatedResult().getPrimaryResult();
