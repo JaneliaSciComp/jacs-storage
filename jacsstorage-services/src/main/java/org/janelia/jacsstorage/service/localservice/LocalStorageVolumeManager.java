@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.service.localservice;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
@@ -11,10 +10,7 @@ import org.janelia.jacsstorage.config.ApplicationConfigValueResolver;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
-import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.service.AbstractStorageVolumeManager;
-import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.utils.NetUtils;
 
 import javax.inject.Inject;
@@ -22,7 +18,6 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
