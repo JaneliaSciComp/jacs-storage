@@ -17,11 +17,16 @@ import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
+import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 
 import javax.inject.Inject;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -37,6 +42,14 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
                 .sparse(true);
         mongoCollection.createIndex(Indexes.ascending("storageHost", "name"), indexOptions);
         mongoCollection.createIndex(Indexes.ascending("storageServiceURL"));
+    }
+
+    @Override
+    public void update(JacsStorageVolume entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+        Map<String, EntityFieldValueHandler<?>> fieldsWithUpdatedDate = new LinkedHashMap<>(fieldsToUpdate);
+        entity.setModified(new Date());
+        fieldsWithUpdatedDate.put("modified", new SetFieldValueHandler<>(entity.getModified()));
+        super.update(entity, fieldsWithUpdatedDate);
     }
 
     @Override

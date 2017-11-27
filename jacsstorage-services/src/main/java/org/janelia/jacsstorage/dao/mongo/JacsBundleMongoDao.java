@@ -44,7 +44,7 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
     public void update(JacsBundle entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         Map<String, EntityFieldValueHandler<?>> fieldsWithUpdatedDate = new LinkedHashMap<>(fieldsToUpdate);
         entity.setModified(new Date());
-        fieldsWithUpdatedDate.put("modificationDate", new SetFieldValueHandler<>(entity.getModified()));
+        fieldsWithUpdatedDate.put("modified", new SetFieldValueHandler<>(entity.getModified()));
         super.update(entity, fieldsWithUpdatedDate);
     }
 

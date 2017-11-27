@@ -24,29 +24,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class StorageVolumeManagerImpl implements StorageVolumeManager {
+public abstract class AbstractStorageVolumeManager implements StorageVolumeManager {
 
-    private final JacsStorageVolumeDao storageVolumeDao;
-    private final ApplicationConfig applicationConfig;
-    private final String storageHost;
-    private final List<String> managedVolumes;
-    private final ApplicationConfigValueResolver configValueResolver = new ApplicationConfigValueResolver();
+    protected final JacsStorageVolumeDao storageVolumeDao;
 
     @Inject
-    public StorageVolumeManagerImpl(JacsStorageVolumeDao storageVolumeDao,
-                                    @ApplicationProperties ApplicationConfig applicationConfig,
-                                    @PropertyValue(name = "StorageAgent.StorageHost") String storageHost,
-                                    @PropertyValue(name = "StorageAgent.StorageVolumes") List<String> managedVolumes) {
+    public AbstractStorageVolumeManager(JacsStorageVolumeDao storageVolumeDao) {
         this.storageVolumeDao = storageVolumeDao;
-        this.applicationConfig = applicationConfig;
-        this.storageHost = storageHost;
-        this.managedVolumes = managedVolumes;
-    }
-
-    public List<JacsStorageVolume> getManagedVolumes() {
-        return Stream.concat(managedVolumes.stream(), Stream.of(JacsStorageVolume.OVERFLOW_VOLUME))
-                .map(this::getVolumeInfo)
-                .collect(Collectors.toList());
     }
 
     public JacsStorageVolume updateVolumeInfo(JacsStorageVolume storageVolume) {
@@ -95,50 +79,24 @@ public class StorageVolumeManagerImpl implements StorageVolumeManager {
         return currentVolumeInfo;
     }
 
-    private JacsStorageVolume getVolumeInfo(String volumeName) {
-        JacsStorageVolume storageVolume = new JacsStorageVolume();
-        boolean shared;
-        if (JacsStorageVolume.OVERFLOW_VOLUME.equals(volumeName)) {
-            shared = true;
-        } else {
-            shared = applicationConfig.getBooleanPropertyValue("StorageVolume." + volumeName + ".Shared");
-        }
-        storageVolume.setName(volumeName);
-        storageVolume.setShared(shared);
-        storageVolume.setStorageHost(shared ? null : getStorageHost());
-        storageVolume.setStorageRootDir(applicationConfig.getStringPropertyValue("StorageVolume." + volumeName + ".RootDir"));
-        storageVolume.setStoragePathPrefix(getStoragePathPrefix(volumeName));
-        storageVolume.setStorageTags(getStorageVolumeTags(volumeName));
-        storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getStorageRootDir()));
-        return storageVolume;
-    }
-
-    private String getStoragePathPrefix(String volumeName) {
-        String storagePathPrefix = applicationConfig.getStringPropertyValue("StorageVolume." + volumeName + ".PathPrefix");
-        return configValueResolver.resolve(storagePathPrefix, ImmutableMap.<String, String>builder().putAll(applicationConfig.asMap()).put("storageHost", getStorageHost()).build());
-    }
-
-    private List<String> getStorageVolumeTags(String volumeName) {
-        List<String> tags = applicationConfig.getStringListPropertyValue("StorageVolume." + volumeName + ".Tags");
-        return tags.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
-    }
-
     private long getAvailableStorageSpaceInBytes(String storageDirName) {
         try {
-            java.nio.file.Path storagePath = Paths.get(storageDirName);
-            if (Files.notExists(storagePath)) {
-                Files.createDirectories(storagePath);
-            }
-            FileStore storageFileStore = Files.getFileStore(storagePath);
-            long usableBytes = storageFileStore.getUsableSpace();
-            return usableBytes;
+            return getFileStore(storageDirName).getUsableSpace();
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private String getStorageHost() {
-        return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
+    private FileStore getFileStore(String storageDirName) {
+        try {
+            java.nio.file.Path storagePath = Paths.get(storageDirName);
+            if (Files.notExists(storagePath)) {
+                Files.createDirectories(storagePath);
+            }
+            return Files.getFileStore(storagePath);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
 }

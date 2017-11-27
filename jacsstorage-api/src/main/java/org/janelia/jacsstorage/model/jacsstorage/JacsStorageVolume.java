@@ -23,6 +23,7 @@ public class JacsStorageVolume extends AbstractEntity {
     private Long availableSpaceInBytes;
     private boolean shared;
     private Date created = new Date();
+    private Date modified = new Date();
 
     public String getStorageHost() {
         return storageHost;
@@ -119,6 +120,14 @@ public class JacsStorageVolume extends AbstractEntity {
 
     public void setCreated(Date created) {
         this.created = created;
+    }
+
+    public Date getModified() {
+        return modified;
+    }
+
+    public void setModified(Date modified) {
+        this.modified = modified;
     }
 
     @Override

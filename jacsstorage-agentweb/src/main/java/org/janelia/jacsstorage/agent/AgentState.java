@@ -3,8 +3,10 @@ package org.janelia.jacsstorage.agent;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
+import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.CircuitBreaker;
@@ -34,7 +36,7 @@ public class AgentState {
 
     private static final Logger LOG = LoggerFactory.getLogger(AgentState.class);
 
-    @Inject
+    @Inject @LocalInstance
     private StorageVolumeManager storageVolumeManager;
     @Inject @ScheduledResource
     private ScheduledExecutorService scheduler;
@@ -141,7 +143,7 @@ public class AgentState {
 
     @PostConstruct
     public void initialize() {
-        agentManagedVolumes = updateStorageVolumes(storageVolumeManager.getManagedVolumes(), (sv) -> true);
+        agentManagedVolumes = updateStorageVolumes(storageVolumeManager.getManagedVolumes(new StorageQuery()), (sv) -> true);
     }
 
     private List<JacsStorageVolume> updateStorageVolumes(List<JacsStorageVolume> storageVolumes, Predicate<JacsStorageVolume> filter) {

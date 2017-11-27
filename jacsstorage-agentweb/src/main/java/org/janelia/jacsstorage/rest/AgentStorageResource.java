@@ -126,7 +126,7 @@ public class AgentStorageResource {
 
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    @Path("{dataBundleId}/entry-content/{dataEntryPath: .*}")
+    @Path("{dataBundleId}/entry-content/{dataEntryPath:.*}")
     public Response getEntryContent(@PathParam("dataBundleId") Long dataBundleId,
                                     @PathParam("dataEntryPath") String dataEntryPath,
                                     @Context SecurityContext securityContext) {
@@ -161,7 +161,7 @@ public class AgentStorageResource {
     )
     @Produces(MediaType.APPLICATION_JSON)
     @POST
-    @Path("{dataBundleId}/directory/{dataEntryPath: .*}")
+    @Path("{dataBundleId}/directory/{dataEntryPath:.*}")
     public Response postCreateDirectory(@PathParam("dataBundleId") Long dataBundleId,
                                         @PathParam("dataEntryPath") String dataEntryPath,
                                         @Context SecurityContext securityContext) {
@@ -174,7 +174,7 @@ public class AgentStorageResource {
     )
     @Produces(MediaType.APPLICATION_JSON)
     @PUT
-    @Path("{dataBundleId}/directory/{dataEntryPath: .*}")
+    @Path("{dataBundleId}/directory/{dataEntryPath:.*}")
     public Response putCreateDirectory(@PathParam("dataBundleId") Long dataBundleId,
                                        @PathParam("dataEntryPath") String dataEntryPath,
                                        @Context SecurityContext securityContext) {
@@ -211,7 +211,7 @@ public class AgentStorageResource {
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
     @POST
-    @Path("{dataBundleId}/file/{dataEntryPath: .*}")
+    @Path("{dataBundleId}/file/{dataEntryPath:.*}")
     public Response postCreateFile(@PathParam("dataBundleId") Long dataBundleId,
                                    @PathParam("dataEntryPath") String dataEntryPath,
                                    @Context SecurityContext securityContext,
@@ -226,7 +226,7 @@ public class AgentStorageResource {
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
     @PUT
-    @Path("{dataBundleId}/file/{dataEntryPath: .*}")
+    @Path("{dataBundleId}/file/{dataEntryPath:.*}")
     public Response putCreateFile(@PathParam("dataBundleId") Long dataBundleId,
                                   @PathParam("dataEntryPath") String dataEntryPath,
                                   @Context SecurityContext securityContext,

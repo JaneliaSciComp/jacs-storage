@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.service.localservice;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -7,9 +7,12 @@ import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
+import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
+import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.janelia.jacsstorage.service.AbstractStorageVolumeManager;
 import org.janelia.jacsstorage.utils.NetUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,8 +37,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({StorageVolumeManagerImpl.class})
-public class StorageVolumeManagerImplTest {
+@PrepareForTest({LocalStorageVolumeManager.class})
+public class LocalStorageVolumeManagerTest {
 
     private JacsStorageVolumeDao storageVolumeDao;
 
@@ -122,13 +125,13 @@ public class StorageVolumeManagerImplTest {
                 )
         };
         for (TestData td : testData) {
-            StorageVolumeManager storageVolumeManager = new StorageVolumeManagerImpl(
+            StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
                     storageVolumeDao,
                     td.applicationConfig,
                     td.applicationConfig.getStringPropertyValue("StorageAgent.StorageHost"),
                     ImmutableList.of("v1", "v2")
             );
-            List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes();
+            List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery());
             assertThat(storageVolumes, td.matcher);
         }
     }
@@ -170,7 +173,7 @@ public class StorageVolumeManagerImplTest {
 
         Mockito.when(storageVolumeDao.getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName()))
                 .then(invocation -> newlyCreatedTestVolume);
-        StorageVolumeManager storageVolumeManager = new StorageVolumeManagerImpl(
+        StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
                 storageVolumeDao,
                 applicationConfig,
                 testHost,
@@ -205,7 +208,7 @@ public class StorageVolumeManagerImplTest {
 
         Mockito.when(storageVolumeDao.findById(testVolume.getId())).thenReturn(testVolume);
 
-        StorageVolumeManager storageVolumeManager = new StorageVolumeManagerImpl(
+        StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
                 storageVolumeDao,
                 applicationConfig,
                 testHost,
@@ -238,7 +241,7 @@ public class StorageVolumeManagerImplTest {
 
         Mockito.when(storageVolumeDao.getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName()))
                 .then(invocation -> newlyCreatedTestVolume);
-        StorageVolumeManager storageVolumeManager = new StorageVolumeManagerImpl(
+        StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
                 storageVolumeDao,
                 applicationConfig,
                 testHost,
@@ -271,7 +274,7 @@ public class StorageVolumeManagerImplTest {
 
         Mockito.when(storageVolumeDao.findById(testVolume.getId())).thenReturn(testVolume);
 
-        StorageVolumeManager storageVolumeManager = new StorageVolumeManagerImpl(
+        StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
                 storageVolumeDao,
                 applicationConfig,
                 testHost,

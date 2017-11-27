@@ -32,7 +32,7 @@ public class StorageAgentsResource {
     private UriInfo resourceURI;
 
     @PermitAll
-    @Path("url/{agentURL: .+}")
+    @Path("url/{agentURL:.+}")
     @GET
     public Response findRegisteredAgent(@PathParam("agentURL") String agentLocationInfo) {
         return agentManager.findRegisteredAgent(agentLocationInfo)
@@ -54,13 +54,13 @@ public class StorageAgentsResource {
     public Response registerAgent(StorageAgentInfo agentInfo) {
         StorageAgentInfo registeterdAgentInfo = agentManager.registerAgent(agentInfo);
         return Response
-                .created(resourceURI.getBaseUriBuilder().path("url/{agentURL: .+}").build(registeterdAgentInfo.getAgentHttpURL()))
+                .created(resourceURI.getBaseUriBuilder().path("url/{agentURL:.+}").build(registeterdAgentInfo.getAgentHttpURL()))
                 .entity(registeterdAgentInfo)
                 .build();
     }
 
     @PermitAll
-    @Path("url/{agentURL: .+}")
+    @Path("url/{agentURL:.+}")
     @DELETE
     public Response deregisterAgent(@PathParam("agentURL") String agentURL, @HeaderParam("agentToken") String agentToken) {
         if (agentManager.deregisterAgent(agentURL, agentToken) != null) {
