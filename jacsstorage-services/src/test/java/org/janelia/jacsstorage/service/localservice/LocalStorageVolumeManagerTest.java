@@ -12,7 +12,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.jacsstorage.service.AbstractStorageVolumeManager;
 import org.janelia.jacsstorage.utils.NetUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,11 +53,12 @@ public class LocalStorageVolumeManagerTest {
             private final ApplicationConfig applicationConfig;
             private final Matcher<Iterable<JacsStorageVolume>> matcher;
 
-            public TestData(ApplicationConfig applicationConfig, Matcher<Iterable<JacsStorageVolume>> matcher) {
+            private TestData(ApplicationConfig applicationConfig, Matcher<Iterable<JacsStorageVolume>> matcher) {
                 this.applicationConfig = applicationConfig;
                 this.matcher = matcher;
             }
         }
+        @SuppressWarnings("unchecked")
         TestData[] testData = new TestData[] {
                 new TestData(
                         new ApplicationConfigProvider()

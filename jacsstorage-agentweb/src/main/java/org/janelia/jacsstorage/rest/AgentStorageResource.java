@@ -7,6 +7,7 @@ import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.LogStorageEvent;
@@ -35,16 +36,15 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.List;
 
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
-@Path(AgentStorageResource.AGENTSTORAGE_URI_PATH)
+@Path(Constants.AGENTSTORAGE_URI_PATH)
 public class AgentStorageResource {
-
-    public static final String AGENTSTORAGE_URI_PATH = "agent-storage";
 
     private static final Logger LOG = LoggerFactory.getLogger(AgentStorageResource.class);
     private static int MAX_ALLOWED_DEPTH = 20;
@@ -88,21 +88,45 @@ public class AgentStorageResource {
         LOG.info("Retrieve the entire stored bundle {}", dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        StreamingOutput bundleStream =  new StreamingOutput()
-        {
-            @Override
-            public void write(OutputStream output) throws IOException, WebApplicationException {
-                try {
-                    dataStorageService.retrieveDataStream(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), output);
-                    output.flush();
-                } catch (Exception e) {
-                    throw new WebApplicationException(e);
-                }
+        StreamingOutput bundleStream = output -> {
+            try {
+                dataStorageService.retrieveDataStream(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), output);
+                output.flush();
+            } catch (Exception e) {
+                throw new WebApplicationException(e);
             }
         };
         return Response
                 .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)
                 .header("content-disposition","attachment; filename = " + dataBundle.getOwner() + "-" + dataBundle.getName())
+                .build();
+    }
+
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @GET
+    @Path("path/{filePath:.*}")
+    public Response retrieveFile(@PathParam("filePath") String fullFileName,
+                                 @Context SecurityContext securityContext,
+                                 InputStream contentStream) {
+        java.nio.file.Path filePath = Paths.get(fullFileName);
+        if (Files.notExists(filePath)) {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No path exists for " + fullFileName))
+                    .build();
+        }
+        JacsStorageFormat storageFormat = Files.isRegularFile(filePath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
+        StreamingOutput fileStream = output -> {
+            try {
+                dataStorageService.retrieveDataStream(filePath, storageFormat, output);
+                output.flush();
+            } catch (Exception e) {
+                throw new WebApplicationException(e);
+            }
+        };
+        return Response
+                .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
+                .header("content-disposition","attachment; filename = " + filePath.toFile().getName())
                 .build();
     }
 
@@ -132,20 +156,16 @@ public class AgentStorageResource {
         LOG.info("Get entry {} content from bundle {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        StreamingOutput bundleStream =  new StreamingOutput()
-        {
-            @Override
-            public void write(java.io.OutputStream output) throws IOException, WebApplicationException {
-                try {
-                    dataStorageService.readDataEntryStream(
-                            dataBundle.getRealStoragePath(),
-                            dataEntryPath,
-                            dataBundle.getStorageFormat(),
-                            output);
-                    output.flush();
-                } catch (Exception e) {
-                    throw new WebApplicationException(e);
-                }
+        StreamingOutput bundleStream = output -> {
+            try {
+                dataStorageService.readDataEntryStream(
+                        dataBundle.getRealStoragePath(),
+                        dataEntryPath,
+                        dataBundle.getStorageFormat(),
+                        output);
+                output.flush();
+            } catch (Exception e) {
+                throw new WebApplicationException(e);
             }
         };
         return Response
@@ -195,7 +215,7 @@ public class AgentStorageResource {
                         .build());
         return Response
                 .created(resourceURI.getBaseUriBuilder()
-                        .path(AGENTSTORAGE_URI_PATH)
+                        .path(Constants.AGENTSTORAGE_URI_PATH)
                         .path(dataBundleId.toString())
                         .path("entry-content")
                         .path(dataEntryPath)
@@ -249,7 +269,7 @@ public class AgentStorageResource {
                         .build());
         return Response
                 .created(resourceURI.getBaseUriBuilder()
-                        .path(AGENTSTORAGE_URI_PATH)
+                        .path(Constants.AGENTSTORAGE_URI_PATH)
                         .path(dataBundleId.toString())
                         .path("entry-content")
                         .path(dataEntryPath)

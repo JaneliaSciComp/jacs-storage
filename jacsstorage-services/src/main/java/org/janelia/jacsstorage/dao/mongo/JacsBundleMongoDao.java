@@ -20,6 +20,7 @@ import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 
 import javax.inject.Inject;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,12 +58,12 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
         filtersBuilder.add(eq("owner", owner));
         filtersBuilder.add(eq("name", name));
 
-        List<JacsBundle> results = find(and(filtersBuilder.build()),
+        Iterator<JacsBundle> resultsItr = findIterable(and(filtersBuilder.build()),
                 null,
                 0,
                 0,
-                getEntityType());
-        return results.isEmpty() ? null : results.get(0);
+                getEntityType()).iterator();
+        return resultsItr.hasNext() ? resultsItr.next() : null;
     }
 
     @Override
@@ -115,7 +116,7 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
                 bundleAggregationOpsBuilder.add(Aggregates.match(eq("referencedVolumes.storagePathPrefix", sv.getStoragePathPrefix())));
             }
         });
-        List<JacsBundle> results = aggregate(bsonFilter,
+        List<JacsBundle> results = aggregateAsList(bsonFilter,
                 bundleAggregationOpsBuilder.build(),
                 createBsonSortCriteria(pageRequest.getSortCriteria()),
                 (int) pageRequest.getOffset(),

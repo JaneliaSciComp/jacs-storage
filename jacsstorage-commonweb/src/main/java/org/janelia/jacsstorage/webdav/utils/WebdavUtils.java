@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.webdav.utils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.webdav.propfind.Multistatus;
 import org.janelia.jacsstorage.webdav.propfind.Prop;
 import org.janelia.jacsstorage.webdav.propfind.PropfindResponse;
@@ -31,7 +32,7 @@ public class WebdavUtils {
         }
     }
 
-    public static Multistatus convertStorageVolumes(List<JacsStorageVolume> storageVolumes) {
+    public static Multistatus convertStorageVolumes(List<JacsStorageVolume> storageVolumes, Function<JacsStorageVolume, String> storageToUriMapper) {
         Multistatus ms = new Multistatus();
         ms.getResponse().addAll(storageVolumes.stream()
                 .map(storageVolume -> {
@@ -46,7 +47,7 @@ public class WebdavUtils {
                     propstat.setStatus("HTTP/1.1 200 OK");
 
                     PropfindResponse propfindResponse = new PropfindResponse();
-                    propfindResponse.setHref(StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/"));
+                    propfindResponse.setHref(storageToUriMapper.apply(storageVolume));
                     propfindResponse.setPropstat(propstat);
                     return propfindResponse;
                 })
@@ -55,7 +56,7 @@ public class WebdavUtils {
 
     }
 
-    public static Multistatus convertNodeList(List<DataNodeInfo> nodeInfoList, Function<String, String> nodeRelPathToUriMapper) {
+    public static Multistatus convertNodeList(List<DataNodeInfo> nodeInfoList, Function<DataNodeInfo, String> nodeInfoToUriMapper) {
         Multistatus ms = new Multistatus();
         ms.getResponse().addAll(nodeInfoList.stream()
                 .map(nodeInfo -> {
@@ -73,10 +74,7 @@ public class WebdavUtils {
                     propstat.setStatus("HTTP/1.1 200 OK");
 
                     PropfindResponse propfindResponse = new PropfindResponse();
-                    String nodeInfoRelPath = nodeInfo.isCollectionFlag()
-                            ?  StringUtils.appendIfMissing(nodeInfo.getNodePath(), "/")
-                            : nodeInfo.getNodePath();
-                    propfindResponse.setHref(nodeRelPathToUriMapper.apply(nodeInfoRelPath));
+                    propfindResponse.setHref(nodeInfoToUriMapper.apply(nodeInfo));
                     propfindResponse.setPropstat(propstat);
                     return propfindResponse;
                 })

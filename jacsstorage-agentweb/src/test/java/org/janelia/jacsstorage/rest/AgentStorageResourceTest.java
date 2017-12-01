@@ -140,7 +140,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                     out.write(testData.getBytes());
                     return new TransferInfo(testData.length(), checksum.getBytes());
                 });
-        InputStream response = target().path(AgentStorageResource.AGENTSTORAGE_URI_PATH).path(testBundleId.toString()).request().get(InputStream.class);
+        InputStream response = target().path(Constants.AGENTSTORAGE_URI_PATH).path(testBundleId.toString()).request().get(InputStream.class);
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response));
     }
 

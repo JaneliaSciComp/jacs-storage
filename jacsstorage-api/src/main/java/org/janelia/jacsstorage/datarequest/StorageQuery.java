@@ -9,6 +9,7 @@ public class StorageQuery {
     private Number id;
     private boolean shared;
     private boolean localToAnyHost;
+    private String dataStoragePath;
     private List<String> storageHosts;
     private List<String> storageAgents;
     private String storageName;
@@ -40,6 +41,15 @@ public class StorageQuery {
 
     public StorageQuery setLocalToAnyHost(boolean localToAnyHost) {
         this.localToAnyHost = localToAnyHost;
+        return this;
+    }
+
+    public String getDataStoragePath() {
+        return dataStoragePath;
+    }
+
+    public StorageQuery setDataStoragePath(String dataStoragePath) {
+        this.dataStoragePath = dataStoragePath;
         return this;
     }
 

@@ -8,6 +8,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.LogStorageEvent;
@@ -34,32 +35,55 @@ import java.util.List;
 import java.util.Optional;
 
 @Path("webdav")
-public class WebdavResource {
+public class MasterWebdavResource {
 
     @Inject @RemoteInstance
     private StorageAllocatorService storageAllocatorService;
     @Inject @RemoteInstance
     private StorageVolumeManager storageVolumeManager;
-    @Inject
-    private DataStorageService dataStorageService;
 
     @Context
     private UriInfo resourceURI;
 
     @LogStorageEvent(
             eventName = "DATASTORAGE_PROPFIND",
-            argList = {0, 1, 2, 3}
+            argList = {0, 1, 2}
     )
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
     @PROPFIND
     @Path("storagePrefix/{storagePrefix:.+}")
-    public Response dataStoragePropFind(@PathParam("storagePrefix") String storagePrefix,
-                                        Propfind propfindRequest,
-                                        @Context SecurityContext securityContext) {
+    public Response dataStoragePropFindByStoragePrefix(@PathParam("storagePrefix") String storagePrefix,
+                                                       Propfind propfindRequest,
+                                                       @Context SecurityContext securityContext) {
         StorageQuery storageQuery = new StorageQuery().setStoragePathPrefix(storagePrefix);
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
-        Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes);
+        Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes, (storageVolume) ->{
+            String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
+            return storageServiceURL + Constants.AGENTSTORAGE_URI_PATH;
+        });
+        return Response.status(207)
+                .entity(propfindResponse)
+                .build();
+    }
+
+    @LogStorageEvent(
+            eventName = "DATASTORAGE_PROPFIND",
+            argList = {0, 1, 2}
+    )
+    @Consumes(MediaType.APPLICATION_XML)
+    @Produces(MediaType.APPLICATION_XML)
+    @PROPFIND
+    @Path("storagePath/{storagePath:.+}")
+    public Response dataStoragePropFindByStoragePath(@PathParam("storagePath") String storagePath,
+                                                       Propfind propfindRequest,
+                                                       @Context SecurityContext securityContext) {
+        StorageQuery storageQuery = new StorageQuery().setDataStoragePath(storagePath);
+        List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
+        Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes, (storageVolume) ->{
+            String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
+            return storageServiceURL + Constants.AGENTSTORAGE_URI_PATH + "/" + storagePath;
+        });
         return Response.status(207)
                 .entity(propfindResponse)
                 .build();

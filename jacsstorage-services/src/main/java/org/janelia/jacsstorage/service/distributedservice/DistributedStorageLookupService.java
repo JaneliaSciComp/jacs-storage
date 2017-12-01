@@ -1,10 +1,8 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
-import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -12,14 +10,13 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.StorageLookupService;
 
 import javax.inject.Inject;
-import java.util.List;
 
 @RemoteInstance
 public class DistributedStorageLookupService implements StorageLookupService {
 
     private final JacsStorageVolumeDao storageVolumeDao;
     private final JacsBundleDao bundleDao;
-    private final StorageAgentManager agentManager;
+    private final DistributedStorageHelper storageHelper;
 
     @Inject
     public DistributedStorageLookupService(JacsStorageVolumeDao storageVolumeDao,
@@ -27,7 +24,7 @@ public class DistributedStorageLookupService implements StorageLookupService {
                                            StorageAgentManager agentManager) {
         this.storageVolumeDao = storageVolumeDao;
         this.bundleDao = bundleDao;
-        this.agentManager = agentManager;
+        this.storageHelper = new DistributedStorageHelper(agentManager);
     }
 
     @Override
@@ -65,12 +62,6 @@ public class DistributedStorageLookupService implements StorageLookupService {
                     bundle.setStorageVolume(sv);
                     return sv;
                 });
-        if (bundleVol.isShared() && StringUtils.isBlank(bundleVol.getStorageHost())) {
-            agentManager.findRandomRegisteredAgent((StorageAgentConnection ac) -> ac.isConnected())
-                    .ifPresent(ai -> {
-                        bundleVol.setStorageServiceURL(ai.getAgentHttpURL());
-                        bundleVol.setStorageServiceTCPPortNo(ai.getTcpPortNo());
-                    });
-        }
+        storageHelper.updateStorageServiceInfo(bundleVol);
     }
 }

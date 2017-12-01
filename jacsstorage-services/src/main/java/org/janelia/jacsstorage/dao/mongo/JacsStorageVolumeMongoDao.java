@@ -16,6 +16,8 @@ import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.jacsstorage.datarequest.SortCriteria;
+import org.janelia.jacsstorage.datarequest.SortDirection;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -23,10 +25,13 @@ import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -37,10 +42,12 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
     @Inject
     public JacsStorageVolumeMongoDao(MongoDatabase mongoDatabase, IdGenerator idGenerator) {
         super(mongoDatabase, idGenerator);
-        IndexOptions indexOptions = new IndexOptions()
-                .unique(true)
-                .sparse(true);
-        mongoCollection.createIndex(Indexes.ascending("storageHost", "name"), indexOptions);
+        mongoCollection.createIndex(Indexes.ascending("storageHost", "name"),
+                new IndexOptions()
+                        .unique(true)
+                        .sparse(true));
+        mongoCollection.createIndex(Indexes.ascending("storagePathPrefix"),
+                new IndexOptions().unique(true).sparse(true));
         mongoCollection.createIndex(Indexes.ascending("storageServiceURL"));
     }
 
@@ -59,11 +66,20 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
 
     @Override
     public PageResult<JacsStorageVolume> findMatchingVolumes(StorageQuery storageQuery, PageRequest pageRequest) {
-        List<JacsStorageVolume> results = find(Filters.and(createMatchingFilter(storageQuery)),
-                createBsonSortCriteria(pageRequest.getSortCriteria()),
+        List<JacsStorageVolume> results = new ArrayList<>();
+
+        Iterable<JacsStorageVolume> resultsItr = findIterable(Filters.and(createMatchingFilter(storageQuery)),
+                createBsonSortCriteria(ImmutableList.of(new SortCriteria("storagePathPrefix", SortDirection.DESC)), pageRequest.getSortCriteria()),
                 pageRequest.getOffset(),
                 pageRequest.getPageSize(),
                 getEntityType());
+        if (StringUtils.isBlank(storageQuery.getDataStoragePath())) {
+            resultsItr.forEach(results::add);
+        } else {
+            StreamSupport.stream(resultsItr.spliterator(), false)
+                    .filter(r -> storageQuery.getDataStoragePath().startsWith(r.getStoragePathPrefix()))
+                    .forEach(results::add);
+        }
         return new PageResult<>(pageRequest, results);
     }
 

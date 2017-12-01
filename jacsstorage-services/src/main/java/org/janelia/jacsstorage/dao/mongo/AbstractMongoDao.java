@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -68,8 +69,8 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
 
     @Override
     public T findById(Number id) {
-        List<T> entityDocs = find(eq("_id", id), null, 0, 2, getEntityType());
-        return CollectionUtils.isEmpty(entityDocs) ? null : entityDocs.get(0);
+        Iterator<T> entityDocsItr = findIterable(eq("_id", id), null, 0, 2, getEntityType()).iterator();
+        return entityDocsItr.hasNext() ? entityDocsItr.next() : null;
     }
 
     @Override
@@ -77,30 +78,36 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.emptyList();
         } else {
-            return find(Filters.in("_id", ids), null, 0, 0, getEntityType());
+            return findAsList(Filters.in("_id", ids), null, 0, 0, getEntityType());
         }
     }
 
     @Override
     public PageResult<T> findAll(PageRequest pageRequest) {
-        List<T> results = find(null,
-                createBsonSortCriteria(pageRequest.getSortCriteria()),
-                pageRequest.getOffset(),
-                pageRequest.getPageSize(),
-                getEntityType());
-        return new PageResult<>(pageRequest, results);
+        return new PageResult<>(pageRequest,
+                findAsList(null,
+                        createBsonSortCriteria(pageRequest.getSortCriteria()),
+                        pageRequest.getOffset(),
+                        pageRequest.getPageSize(),
+                        getEntityType()));
     }
 
-    protected Bson createBsonSortCriteria(List<SortCriteria> sortCriteria) {
+    Bson createBsonSortCriteria(List<SortCriteria> sortCriteria) {
+        return createBsonSortCriteria(sortCriteria, ImmutableList.of());
+    }
+
+    Bson createBsonSortCriteria(List<SortCriteria> sortCriteria, List<SortCriteria> additionalCriteria) {
         Bson bsonSortCriteria = null;
-        if (CollectionUtils.isNotEmpty(sortCriteria)) {
-            Map<String, Object> sortCriteriaAsMap = sortCriteria.stream()
+        Map<String, Object> sortCriteriaAsMap = Stream.of(sortCriteria)
+                .filter(lsc -> CollectionUtils.isNotEmpty(lsc))
+                .flatMap(lsc -> lsc.stream())
                 .filter(sc -> StringUtils.isNotBlank(sc.getField()))
                 .collect(Collectors.toMap(
                         SortCriteria::getField,
                         sc -> sc.getDirection() == SortDirection.DESC ? -1 : 1,
                         (sc1, sc2) -> sc2,
                         LinkedHashMap::new));
+        if (!sortCriteriaAsMap.isEmpty()) {
             bsonSortCriteria = new Document(sortCriteriaAsMap);
         }
         return bsonSortCriteria;
@@ -111,8 +118,13 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
         return mongoCollection.count();
     }
 
-    protected <R> List<R> find(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType) {
-        List<R> entityDocs = new ArrayList<>();
+    <R> List<R> findAsList(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType) {
+        List<R> results = new ArrayList<>();
+        findIterable(queryFilter, sortCriteria, offset, length, resultType).forEach(results::add);
+        return results;
+    }
+
+    <R> Iterable<R> findIterable(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType) {
         FindIterable<R> results = mongoCollection.find(resultType);
         if (queryFilter != null) {
             results = results.filter(queryFilter);
@@ -124,12 +136,11 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
             results = results.limit(length);
         }
         return results
-                .sort(sortCriteria)
-                .into(entityDocs);
+                .sort(sortCriteria);
     }
 
-    protected <R> List<R> aggregate(Bson queryFilter, List<Bson> aggregationOperators, Bson sortCriteria, int offset, int length, Class<R> resultType) {
-        List<R> entityDocs = new ArrayList<>();
+    <R> List<R> aggregateAsList(Bson queryFilter, List<Bson> aggregationOperators, Bson sortCriteria, int offset, int length, Class<R> resultType) {
+        List<R> results = new ArrayList<>();
         ImmutableList.Builder<Bson> aggregatePipelineBuilder = ImmutableList.builder();
         if (queryFilter != null) {
             aggregatePipelineBuilder.add(Aggregates.match(queryFilter));
@@ -146,8 +157,8 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
         if (length > 0) {
             aggregatePipelineBuilder.add(Aggregates.limit(length));
         }
-        AggregateIterable<R> results = mongoCollection.aggregate(aggregatePipelineBuilder.build(), resultType);
-        return results.into(entityDocs);
+        AggregateIterable<R> resultsItr = mongoCollection.aggregate(aggregatePipelineBuilder.build(), resultType);
+        return resultsItr.into(results);
     }
 
     @Override

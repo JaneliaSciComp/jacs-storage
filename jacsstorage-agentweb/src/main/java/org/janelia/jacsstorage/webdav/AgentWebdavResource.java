@@ -1,11 +1,13 @@
 package org.janelia.jacsstorage.webdav;
 
 import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.rest.AgentStorageResource;
+import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.LogStorageEvent;
@@ -30,8 +32,8 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
-@Path("agent-webdav")
-public class WebdavResource {
+@Path(Constants.AGENTSTORAGE_URI_PATH)
+public class AgentWebdavResource {
 
     @Inject @LocalInstance
     private StorageAllocatorService storageAllocatorService;
@@ -59,12 +61,17 @@ public class WebdavResource {
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         int depthValue = WebdavUtils.getDepth(depth);
         List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), depthValue);
-        Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeRelPath) -> resourceURI.getBaseUriBuilder()
-                .path(AgentStorageResource.AGENTSTORAGE_URI_PATH)
-                .path(dataBundleId.toString())
-                .path(nodeRelPath)
-                .build()
-                .toString());
+        Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeInfo) -> {
+            String nodeInfoRelPath = nodeInfo.isCollectionFlag()
+                    ?  StringUtils.appendIfMissing(nodeInfo.getNodePath(), "/")
+                    : nodeInfo.getNodePath();
+            return resourceURI.getBaseUriBuilder()
+                    .path(Constants.AGENTSTORAGE_URI_PATH)
+                    .path(dataBundleId.toString())
+                    .path(nodeInfoRelPath)
+                    .build()
+                    .toString();
+        });
         return Response.status(207)
                 .entity(propfindResponse)
                 .build();
@@ -91,7 +98,7 @@ public class WebdavResource {
                         .usedSpaceInBytes(newBundleSize)
                         .build());
         return Response
-                .created(resourceURI.getBaseUriBuilder().path(AgentStorageResource.AGENTSTORAGE_URI_PATH).path("{dataBundleId}").build(dataBundleId))
+                .created(resourceURI.getBaseUriBuilder().path(Constants.AGENTSTORAGE_URI_PATH).path("{dataBundleId}").build(dataBundleId))
                 .build();
     }
 

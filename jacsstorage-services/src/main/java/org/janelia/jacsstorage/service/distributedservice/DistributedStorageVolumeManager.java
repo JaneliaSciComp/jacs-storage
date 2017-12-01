@@ -13,14 +13,20 @@ import java.util.List;
 @RemoteInstance
 public class DistributedStorageVolumeManager extends AbstractStorageVolumeManager {
 
+    private final DistributedStorageHelper storageHelper;
+
     @Inject
-    public DistributedStorageVolumeManager(JacsStorageVolumeDao storageVolumeDao) {
+    public DistributedStorageVolumeManager(JacsStorageVolumeDao storageVolumeDao,
+                                           StorageAgentManager agentManager) {
         super(storageVolumeDao);
+        this.storageHelper = new DistributedStorageHelper(agentManager);
     }
 
     public List<JacsStorageVolume> getManagedVolumes(StorageQuery storageQuery) {
         PageRequest pageRequest = new PageRequest();
-        return storageVolumeDao.findMatchingVolumes(storageQuery, pageRequest).getResultList();
+        List<JacsStorageVolume> managedVolumes = storageVolumeDao.findMatchingVolumes(storageQuery, pageRequest).getResultList();
+        managedVolumes.forEach(storageHelper::updateStorageServiceInfo);
+        return managedVolumes;
     }
 
 }
