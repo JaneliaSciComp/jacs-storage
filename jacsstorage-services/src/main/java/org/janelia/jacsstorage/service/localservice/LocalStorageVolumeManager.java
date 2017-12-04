@@ -66,7 +66,8 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
 
     private String getStoragePathPrefix(String volumeName) {
         String storagePathPrefix = applicationConfig.getStringPropertyValue("StorageVolume." + volumeName + ".PathPrefix");
-        return configValueResolver.resolve(storagePathPrefix, ImmutableMap.<String, String>builder().putAll(applicationConfig.asMap()).put("storageHost", getStorageHost()).build());
+        String resolvedStoragePathPrefix = configValueResolver.resolve(storagePathPrefix, ImmutableMap.<String, String>builder().putAll(applicationConfig.asMap()).put("storageHost", getStorageHost()).build());
+        return StringUtils.prependIfMissing(resolvedStoragePathPrefix, "/");
     }
 
     private List<String> getStorageVolumeTags(String volumeName) {

@@ -10,6 +10,7 @@ import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
+import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.utils.NetUtils;
@@ -79,7 +80,7 @@ public class LocalStorageVolumeManagerTest {
                         hasItems(
                                 allOf(new HasPropertyWithValue<>("name", equalTo("v1")),
                                         new HasPropertyWithValue<>("storageRootDir", equalTo("/data/jadestorage")),
-                                        new HasPropertyWithValue<>("storagePathPrefix", equalTo(NetUtils.getCurrentHostName() + "/jadestorage/${otherKey}/storage/${andAnother}")),
+                                        new HasPropertyWithValue<>("storagePathPrefix", equalTo("/" + NetUtils.getCurrentHostName() + "/jadestorage/${otherKey}/storage/${andAnother}")),
                                         new HasPropertyWithValue<>("shared", equalTo(false))
                                 ),
                                 allOf(new HasPropertyWithValue<>("name", equalTo("v2")),
@@ -112,7 +113,7 @@ public class LocalStorageVolumeManagerTest {
                         hasItems(
                                 allOf(new HasPropertyWithValue<>("name", equalTo("v1")),
                                         new HasPropertyWithValue<>("storageRootDir", equalTo("/data/jadestorage")),
-                                        new HasPropertyWithValue<>("storagePathPrefix", equalTo("TheHost/jadestorage/${otherKey}/storage"))
+                                        new HasPropertyWithValue<>("storagePathPrefix", equalTo("/TheHost/jadestorage/${otherKey}/storage"))
                                 ),
                                 allOf(new HasPropertyWithValue<>("name", equalTo("v2")),
                                         new HasPropertyWithValue<>("storageRootDir", equalTo("/data/jadestorage")),
@@ -181,13 +182,15 @@ public class LocalStorageVolumeManagerTest {
         );
         storageVolumeManager.updateVolumeInfo(testVolume);
         Mockito.verify(storageVolumeDao).getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName());
-        Mockito.verify(storageVolumeDao).update(newlyCreatedTestVolume, ImmutableMap.of(
-                "storageRootDir", new SetFieldValueHandler<>(testVolume.getStorageRootDir()),
-                "availableSpaceInBytes", new SetFieldValueHandler<>(testVolume.getAvailableSpaceInBytes()),
-                "storageServiceURL", new SetFieldValueHandler<>(testVolume.getStorageServiceURL()),
-                "storageServiceTCPPortNo", new SetFieldValueHandler<>(testVolume.getStorageServiceTCPPortNo()),
-                "volumeTags", new SetFieldValueHandler<>(testVolume.getStorageTags())
-        ));
+        Mockito.verify(storageVolumeDao).update(newlyCreatedTestVolume, ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
+                .put("storageRootDir", new SetFieldValueHandler<>(testVolume.getStorageRootDir()))
+                .put("storagePathPrefix", new SetFieldValueHandler<>(testVolume.getStoragePathPrefix()))
+                .put("availableSpaceInBytes", new SetFieldValueHandler<>(testVolume.getAvailableSpaceInBytes()))
+                .put("storageServiceURL", new SetFieldValueHandler<>(testVolume.getStorageServiceURL()))
+                .put("storageServiceTCPPortNo", new SetFieldValueHandler<>(testVolume.getStorageServiceTCPPortNo()))
+                .put("volumeTags", new SetFieldValueHandler<>(testVolume.getStorageTags()))
+                .build()
+        );
         Mockito.verifyNoMoreInteractions(storageVolumeDao);
     }
 
@@ -198,6 +201,7 @@ public class LocalStorageVolumeManagerTest {
                 .storageVolumeId(1L)
                 .storageHost(testHost)
                 .storageRootDir("/root/testDir")
+                .storagePathPrefix("/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
                 .tcpPortNo(100)
@@ -235,6 +239,7 @@ public class LocalStorageVolumeManagerTest {
                 .storageHost(testHost)
                 .name(testVolume.getName())
                 .build();
+        newlyCreatedTestVolume.setShared(true);
         ApplicationConfig applicationConfig = mock(ApplicationConfig.class);
 
         prepareGetAvailableStorageBytes();
@@ -251,6 +256,7 @@ public class LocalStorageVolumeManagerTest {
         Mockito.verify(storageVolumeDao).getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName());
         Mockito.verify(storageVolumeDao).update(newlyCreatedTestVolume, ImmutableMap.of(
                 "storageRootDir", new SetFieldValueHandler<>(testVolume.getStorageRootDir()),
+                "storagePathPrefix", new SetFieldValueHandler<>(testVolume.getStoragePathPrefix()),
                 "volumeTags", new SetFieldValueHandler<>(testVolume.getStorageTags())
         ));
         Mockito.verifyNoMoreInteractions(storageVolumeDao);
@@ -263,6 +269,7 @@ public class LocalStorageVolumeManagerTest {
                 .storageVolumeId(1L)
                 .storageHost(testHost)
                 .storageRootDir("/root/testDir")
+                .storagePathPrefix("/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
                 .tcpPortNo(100)

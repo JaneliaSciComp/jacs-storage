@@ -50,6 +50,10 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
             currentVolumeInfo.setStorageRootDir(storageVolume.getStorageRootDir());
             updatedVolumeFieldsBuilder.put("storageRootDir", new SetFieldValueHandler<>(currentVolumeInfo.getStorageRootDir()));
         }
+        if (currentVolumeInfo.getStoragePathPrefix() == null) {
+            currentVolumeInfo.setStoragePathPrefix(storageVolume.getStoragePathPrefix());
+            updatedVolumeFieldsBuilder.put("storagePathPrefix", new SetFieldValueHandler<>(currentVolumeInfo.getStoragePathPrefix()));
+        }
         if (!storageVolume.isShared()) {
             storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getStorageRootDir()));
             if (!storageVolume.getAvailableSpaceInBytes().equals(currentVolumeInfo.getAvailableSpaceInBytes())) {
@@ -67,6 +71,16 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
                 currentVolumeInfo.setStorageServiceTCPPortNo(storageVolume.getStorageServiceTCPPortNo());
                 updatedVolumeFieldsBuilder.put("storageServiceTCPPortNo", new SetFieldValueHandler<>(currentVolumeInfo.getStorageServiceTCPPortNo()));
             }
+        } else if (!currentVolumeInfo.isShared()) {
+            // if somehow the current volume is not shared make it shared
+            currentVolumeInfo.setShared(true);
+            currentVolumeInfo.setStorageServiceURL(null);
+            currentVolumeInfo.setStorageHost(null);
+            currentVolumeInfo.setStorageServiceTCPPortNo(0);
+            updatedVolumeFieldsBuilder.put("shared", new SetFieldValueHandler<>(currentVolumeInfo.isShared()));
+            updatedVolumeFieldsBuilder.put("storageServiceURL", new SetFieldValueHandler<>(currentVolumeInfo.getStorageServiceURL()));
+            updatedVolumeFieldsBuilder.put("storageHost", new SetFieldValueHandler<>(currentVolumeInfo.getStorageHost()));
+            updatedVolumeFieldsBuilder.put("storageServiceTCPPortNo", new SetFieldValueHandler<>(currentVolumeInfo.getStorageServiceTCPPortNo()));
         }
         if (!currentVolumeInfo.hasTags() && storageVolume.hasTags()) {
             currentVolumeInfo.setStorageTags(storageVolume.getStorageTags());
