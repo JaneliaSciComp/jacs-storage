@@ -44,7 +44,7 @@ public class StorageAgentsResource {
     @GET
     public Response getCurrentRegisteredAgents(@QueryParam("connStatus") String connectionStatus) {
         return Response
-                .ok(agentManager.getCurrentRegisteredAgents(ac -> StringUtils.equals(connectionStatus, ac.getAgentInfo().getConnectionStatus())))
+                .ok(agentManager.getCurrentRegisteredAgents(ac -> StringUtils.isBlank(connectionStatus) || StringUtils.equals(connectionStatus, ac.getAgentInfo().getConnectionStatus())))
                 .build();
     }
 
