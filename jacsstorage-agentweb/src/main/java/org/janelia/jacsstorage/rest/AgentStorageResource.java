@@ -1,18 +1,24 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
+import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
+import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.LogStorageEvent;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
+import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +62,9 @@ public class AgentStorageResource {
     private StorageAllocatorService storageAllocatorService;
     @Inject @LocalInstance
     private StorageLookupService storageLookupService;
+    @Inject @LocalInstance
+    private StorageVolumeManager storageVolumeManager;
+
     @Context
     private UriInfo resourceURI;
 
@@ -106,22 +115,40 @@ public class AgentStorageResource {
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("path/{filePath:.+}")
-    public Response retrieveFile(@PathParam("filePath") String fullFileName,
+    public Response retrieveFile(@PathParam("filePath") String fullFileNameParam,
                                  @Context SecurityContext securityContext) {
-        java.nio.file.Path filePath = Paths.get(fullFileName);
-        String bundleIdComponent = filePath.getName(0).toString();
+        String fullFileName = StringUtils.prependIfMissing(fullFileNameParam, "/");
+        List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(fullFileName));
+        if (localVolumes.isEmpty()) {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(ImmutableMap.of("errormessage", "No managed volume found for " + fullFileNameParam))
+                    .build();
+        } else if (localVolumes.size() > 1) {
+            return Response
+                    .status(Response.Status.CONFLICT)
+                    .entity(ImmutableMap.of("errormessage", "More than one volume found for " + fullFileNameParam))
+                    .build();
+        }
+        JacsStorageVolume storageVolume = localVolumes.get(0);
+        java.nio.file.Path storagePathPrefix = Paths.get(storageVolume.getStoragePathPrefix());
+        java.nio.file.Path storageRelativeFileDataPath = storagePathPrefix.relativize(Paths.get(fullFileName));
+        int fileDataPathComponents = storageRelativeFileDataPath.getNameCount();
         JacsBundle dataBundle = null;
         try {
-            Number bundleId = new BigInteger(bundleIdComponent);
-            dataBundle = storageLookupService.getDataBundleById(bundleId);
+            if (fileDataPathComponents > 0) {
+                String bundleIdComponent = storageRelativeFileDataPath.getName(0).toString();
+                Number bundleId = new BigInteger(bundleIdComponent);
+                dataBundle = storageLookupService.getDataBundleById(bundleId);
+            }
         } catch (NumberFormatException e) {
-            LOG.info("Path {} is not a data bundle - first component is not numeric", fullFileName);
+            LOG.info("Path {} is not a data bundle - first component is not numeric", storageRelativeFileDataPath);
         }
         if (dataBundle == null) {
-            return retrieveFileUsingFilePath(filePath);
+            return retrieveFileUsingFilePath(Paths.get(storageVolume.getStorageRootDir()).resolve(storageRelativeFileDataPath));
         } else {
-            String dataEntryPath = filePath.getNameCount() > 1
-                    ? filePath.subpath(1, filePath.getNameCount()).toString()
+            String dataEntryPath = fileDataPathComponents > 1
+                    ? storageRelativeFileDataPath.subpath(1, fileDataPathComponents).toString()
                     : "";
             return retrieveFileFromBundle(dataBundle, dataEntryPath);
         }

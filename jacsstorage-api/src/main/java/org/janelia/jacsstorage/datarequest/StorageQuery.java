@@ -1,6 +1,8 @@
 package org.janelia.jacsstorage.datarequest;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -125,5 +127,43 @@ public class StorageQuery {
 
     public boolean hasMinAvailableSpaceInBytes() {
         return minAvailableSpaceInBytes != null && minAvailableSpaceInBytes > 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        StorageQuery that = (StorageQuery) o;
+
+        return new EqualsBuilder()
+                .append(shared, that.shared)
+                .append(localToAnyHost, that.localToAnyHost)
+                .append(id, that.id)
+                .append(dataStoragePath, that.dataStoragePath)
+                .append(storageHosts, that.storageHosts)
+                .append(storageAgents, that.storageAgents)
+                .append(storageName, that.storageName)
+                .append(storagePathPrefix, that.storagePathPrefix)
+                .append(storageTags, that.storageTags)
+                .append(minAvailableSpaceInBytes, that.minAvailableSpaceInBytes)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(id)
+                .append(shared)
+                .append(localToAnyHost)
+                .append(dataStoragePath)
+                .append(storageHosts)
+                .append(storageAgents)
+                .append(storageName)
+                .append(storagePathPrefix)
+                .append(storageTags)
+                .append(minAvailableSpaceInBytes)
+                .toHashCode();
     }
 }

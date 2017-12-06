@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.service.localservice;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
@@ -43,6 +44,10 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     public List<JacsStorageVolume> getManagedVolumes(StorageQuery storageQuery) {
         return Stream.concat(managedVolumes.stream(), Stream.of(JacsStorageVolume.OVERFLOW_VOLUME))
                 .map(this::getVolumeInfo)
+                .filter(sv -> StringUtils.isBlank(storageQuery.getDataStoragePath()) || storageQuery.getDataStoragePath().startsWith(sv.getStoragePathPrefix()))
+                .filter(sv -> StringUtils.isBlank(storageQuery.getStoragePathPrefix()) || storageQuery.getStoragePathPrefix().equals(sv.getStoragePathPrefix()))
+                .filter(sv -> StringUtils.isBlank(storageQuery.getStorageName()) || storageQuery.getStorageName().equals(sv.getName()))
+                .filter(sv -> CollectionUtils.isEmpty(storageQuery.getStorageTags()) || sv.getStorageTags().containsAll(storageQuery.getStorageTags()))
                 .collect(Collectors.toList());
     }
 
