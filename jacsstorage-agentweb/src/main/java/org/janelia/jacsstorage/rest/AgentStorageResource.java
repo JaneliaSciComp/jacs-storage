@@ -81,7 +81,7 @@ public class AgentStorageResource {
                 .build();
     }
 
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("{dataBundleId}")
     public Response retrieveStream(@PathParam("dataBundleId") Long dataBundleId,
@@ -103,7 +103,7 @@ public class AgentStorageResource {
                 .build();
     }
 
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("path/{filePath:.+}")
     public Response retrieveFile(@PathParam("filePath") String fullFileName,
