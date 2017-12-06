@@ -10,9 +10,12 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AuthTokenValidator {
     private static final String USERNAME_CLAIM = "user_name";
+    private static final Logger LOG = LoggerFactory.getLogger(AuthTokenValidator.class);
 
     private final String secretKey;
 
@@ -35,6 +38,7 @@ public class AuthTokenValidator {
                     .setAuthToken(jwt)
                     .setClaims(claimsSet);
         } catch (Exception e) {
+            LOG.error("Error while validating {}", jwt, e);
             throw new SecurityException(e);
         }
     }
