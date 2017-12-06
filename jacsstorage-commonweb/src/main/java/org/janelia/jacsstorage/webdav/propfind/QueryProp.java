@@ -5,23 +5,23 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.util.Date;
 
-public class Prop {
-    @JacksonXmlProperty(localName = "D:resourcetype")
+public class QueryProp {
+    @JacksonXmlProperty(namespace = "D", localName = "resourcetype")
     String resourceType;
 
-    @JacksonXmlProperty(localName = "D:creationdate")
+    @JacksonXmlProperty(namespace = "D", localName = "creationdate")
     Date creationDate;
 
-    @JacksonXmlProperty(localName = "D:getlastmodified")
+    @JacksonXmlProperty(namespace = "D", localName = "getlastmodified")
     Date lastmodified;
 
-    @JacksonXmlProperty(localName = "D:getetag")
+    @JacksonXmlProperty(namespace = "D", localName = "getetag")
     String etag;
 
-    @JacksonXmlProperty(localName = "D:getcontenttype")
+    @JacksonXmlProperty(namespace = "D", localName = "getcontenttype")
     String contentType;
 
-    @JacksonXmlProperty(localName = "D:getcontentlength")
+    @JacksonXmlProperty(namespace = "D", localName = "getcontentlength")
     String contentLength;
 
     public String getResourceType() {

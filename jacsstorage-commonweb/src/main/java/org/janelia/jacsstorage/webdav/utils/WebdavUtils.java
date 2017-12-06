@@ -38,6 +38,7 @@ public class WebdavUtils {
                 .map(storageVolume -> {
                     Prop prop = new Prop();
                     prop.setEtag(storageVolume.getName());
+
                     prop.setCreationDate(storageVolume.getCreated());
                     prop.setLastmodified(storageVolume.getModified());
                     prop.setResourceType("collection");

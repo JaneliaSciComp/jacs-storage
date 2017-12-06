@@ -8,16 +8,13 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-@JacksonXmlRootElement(namespace = "D", localName = "multistatus")
+@JacksonXmlRootElement(localName = "D:multistatus")
 public class Multistatus {
-    @JacksonXmlProperty(namespace = "xmlns", localName = "D", isAttribute = true)
-    private final String davNamespace = "DAV:";
-
-    @JacksonXmlProperty(namespace = "xmlns", localName = "lp1", isAttribute = true)
-    private final String apacheNamespace = "http://apache.org/dav/props/";
+    @JacksonXmlProperty(localName = "xmlns:D", isAttribute = true)
+    final String davNamespace = "DAV:";
 
     @JacksonXmlElementWrapper(useWrapping = false)
-    @JacksonXmlProperty(namespace = "D", localName = "response")
+    @JacksonXmlProperty(localName = "D:response")
     private List<PropfindResponse> response = new ArrayList<>();
 
     public List<PropfindResponse> getResponse() {

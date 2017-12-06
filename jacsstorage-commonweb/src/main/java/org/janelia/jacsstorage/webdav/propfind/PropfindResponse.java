@@ -1,13 +1,14 @@
 package org.janelia.jacsstorage.webdav.propfind;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class PropfindResponse {
-    @JacksonXmlProperty(namespace = "D", localName = "href")
+    @JacksonXmlProperty(localName = "D:href")
     private String href;
 
-    @JacksonXmlProperty(namespace = "D", localName = "propstat")
+    @JacksonXmlProperty(localName = "D:propstat")
     private Propstat propstat;
 
     public Propstat getPropstat() {

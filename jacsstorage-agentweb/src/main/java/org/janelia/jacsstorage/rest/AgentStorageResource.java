@@ -36,6 +36,7 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Base64;
@@ -104,15 +105,33 @@ public class AgentStorageResource {
 
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @GET
-    @Path("path/{filePath:.*}")
+    @Path("path/{filePath:.+}")
     public Response retrieveFile(@PathParam("filePath") String fullFileName,
-                                 @Context SecurityContext securityContext,
-                                 InputStream contentStream) {
+                                 @Context SecurityContext securityContext) {
         java.nio.file.Path filePath = Paths.get(fullFileName);
+        String bundleIdComponent = filePath.getName(0).toString();
+        JacsBundle dataBundle = null;
+        try {
+            Number bundleId = new BigInteger(bundleIdComponent);
+            dataBundle = storageLookupService.getDataBundleById(bundleId);
+        } catch (NumberFormatException e) {
+            LOG.info("Path {} is not a data bundle - first component is not numeric", fullFileName);
+        }
+        if (dataBundle == null) {
+            return retrieveFileUsingFilePath(filePath);
+        } else {
+            String dataEntryPath = filePath.getNameCount() > 1
+                    ? filePath.subpath(1, filePath.getNameCount()).toString()
+                    : "";
+            return retrieveFileFromBundle(dataBundle, dataEntryPath);
+        }
+    }
+
+    private Response retrieveFileUsingFilePath(java.nio.file.Path filePath) {
         if (Files.notExists(filePath)) {
             return Response
                     .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No path exists for " + fullFileName))
+                    .entity(new ErrorResponse("No path exists for " + filePath))
                     .build();
         }
         JacsStorageFormat storageFormat = Files.isRegularFile(filePath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
@@ -127,6 +146,25 @@ public class AgentStorageResource {
         return Response
                 .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
                 .header("content-disposition","attachment; filename = " + filePath.toFile().getName())
+                .build();
+    }
+
+    private Response retrieveFileFromBundle(JacsBundle dataBundle, String dataEntryPath) {
+        StreamingOutput bundleStream = output -> {
+            try {
+                dataStorageService.readDataEntryStream(
+                        dataBundle.getRealStoragePath(),
+                        dataEntryPath,
+                        dataBundle.getStorageFormat(),
+                        output);
+                output.flush();
+            } catch (Exception e) {
+                throw new WebApplicationException(e);
+            }
+        };
+        return Response
+                .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)
+                .header("content-disposition","attachment; filename = " + dataBundle.getOwner() + "-" + dataBundle.getName() + "/" + dataEntryPath)
                 .build();
     }
 
@@ -156,22 +194,7 @@ public class AgentStorageResource {
         LOG.info("Get entry {} content from bundle {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        StreamingOutput bundleStream = output -> {
-            try {
-                dataStorageService.readDataEntryStream(
-                        dataBundle.getRealStoragePath(),
-                        dataEntryPath,
-                        dataBundle.getStorageFormat(),
-                        output);
-                output.flush();
-            } catch (Exception e) {
-                throw new WebApplicationException(e);
-            }
-        };
-        return Response
-                .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)
-                .header("content-disposition","attachment; filename = " + dataBundle.getOwner() + "-" + dataBundle.getName() + "/" + dataEntryPath)
-                .build();
+        return retrieveFileFromBundle(dataBundle, dataEntryPath);
     }
 
     @LogStorageEvent(

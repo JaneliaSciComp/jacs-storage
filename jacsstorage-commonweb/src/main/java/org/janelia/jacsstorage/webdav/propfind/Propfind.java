@@ -6,21 +6,17 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 @JacksonXmlRootElement(namespace = "D", localName = "propfind")
 public class Propfind {
-    @JacksonXmlProperty(namespace = "xmlns", localName = "D", isAttribute = true)
+    @JacksonXmlProperty(namespace = "xmlns:D", isAttribute = true)
     private final String davNamespace = "DAV:";
 
     @JacksonXmlProperty(namespace = "D", localName = "prop")
-    private Prop prop;
+    private QueryProp prop;
 
-    public String getDavNamespace() {
-        return davNamespace;
-    }
-
-    public Prop getProp() {
+    public QueryProp getProp() {
         return prop;
     }
 
-    public void setProp(Prop prop) {
+    public void setProp(QueryProp prop) {
         this.prop = prop;
     }
 

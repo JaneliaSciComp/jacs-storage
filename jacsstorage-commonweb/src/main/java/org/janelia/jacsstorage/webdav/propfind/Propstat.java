@@ -1,13 +1,14 @@
 package org.janelia.jacsstorage.webdav.propfind;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Propstat {
-    @JacksonXmlProperty(namespace = "D", localName = "prop")
+    @JacksonXmlProperty(localName = "D:prop")
     private Prop prop;
 
-    @JacksonXmlProperty(namespace = "D", localName = "status")
+    @JacksonXmlProperty(localName = "D:status")
     private String status;
 
     public String getStatus() {
