@@ -59,8 +59,8 @@ public class MasterWebdavResource {
         StorageQuery storageQuery = new StorageQuery().setStoragePathPrefix(storagePrefix);
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
         Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes, (storageVolume) ->{
-            String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/path");
-            return storageServiceURL + Constants.AGENTSTORAGE_URI_PATH;
+            String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
+            return storageServiceURL + Constants.AGENTSTORAGE_URI_PATH + "/path";
         });
         return Response.status(207)
                 .entity(propfindResponse)
@@ -82,7 +82,7 @@ public class MasterWebdavResource {
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
         Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes, (storageVolume) ->{
             String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
-            return storageServiceURL + Constants.AGENTSTORAGE_URI_PATH + "/" + storagePath;
+            return storageServiceURL + Constants.AGENTSTORAGE_URI_PATH + "/path/" + storagePath;
         });
         return Response.status(207)
                 .entity(propfindResponse)
