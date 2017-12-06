@@ -145,7 +145,16 @@ public class AgentStorageResource {
             LOG.info("Path {} is not a data bundle - first component is not numeric", storageRelativeFileDataPath);
         }
         if (dataBundle == null) {
-            return retrieveFileUsingFilePath(Paths.get(storageVolume.getStorageRootDir()).resolve(storageRelativeFileDataPath));
+            if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(storageRelativeFileDataPath))) {
+                return retrieveFileUsingFilePath(Paths.get(storageVolume.getStorageRootDir()).resolve(storageRelativeFileDataPath));
+            } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(storageRelativeFileDataPath))) {
+                return retrieveFileUsingFilePath(Paths.get(storageVolume.getStoragePathPrefix()).resolve(storageRelativeFileDataPath));
+            } else {
+                return Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No path found for " + fullFileName))
+                        .build();
+            }
         } else {
             String dataEntryPath = fileDataPathComponents > 1
                     ? storageRelativeFileDataPath.subpath(1, fileDataPathComponents).toString()
@@ -155,18 +164,13 @@ public class AgentStorageResource {
     }
 
     private Response retrieveFileUsingFilePath(java.nio.file.Path filePath) {
-        if (Files.notExists(filePath)) {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No path exists for " + filePath))
-                    .build();
-        }
         JacsStorageFormat storageFormat = Files.isRegularFile(filePath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
         StreamingOutput fileStream = output -> {
             try {
                 dataStorageService.retrieveDataStream(filePath, storageFormat, output);
                 output.flush();
             } catch (Exception e) {
+                LOG.error("Error streaming data file content for {}", filePath, e);
                 throw new WebApplicationException(e);
             }
         };
@@ -186,6 +190,7 @@ public class AgentStorageResource {
                         output);
                 output.flush();
             } catch (Exception e) {
+                LOG.error("Error streaming data file content for {}:{}", dataBundle, dataEntryPath, e);
                 throw new WebApplicationException(e);
             }
         };

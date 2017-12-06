@@ -174,7 +174,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
     }
 
     @Test
-    public void retrieveDataStreamUsingDataPath() throws IOException {
+    public void retrieveDataStreamUsingDataPathRelativeToVolumeRoot() throws IOException {
         String testPath = "volPrefix/testPath";
         DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
@@ -188,7 +188,38 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 );
         PowerMockito.mockStatic(Files.class);
         Path expectedDataPath = Paths.get("/volRoot/testPath");
-        Mockito.when(Files.notExists(eq(expectedDataPath))).thenReturn(false);
+        Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
+        Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
+        String testData = "Test data";
+        JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
+        when(dataStorageService.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(OutputStream.class)))
+                .then(invocation -> {
+                    OutputStream out = invocation.getArgument(2);
+                    String checksum = "check";
+                    out.write(testData.getBytes());
+                    return new TransferInfo(testData.length(), checksum.getBytes());
+                });
+        InputStream response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("path").path(testPath).request().get(InputStream.class);
+        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response));
+    }
+
+    @Test
+    public void retrieveDataStreamUsingDataPathRelativeToVolumePrefix() throws IOException {
+        String testPath = "volPrefix/testPath";
+        DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
+        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
+                .thenReturn(ImmutableList.of(
+                        new JacsStorageVolumeBuilder()
+                                .storagePathPrefix("/volPrefix")
+                                .storageRootDir("/volRoot")
+                                .build()
+                        )
+                );
+        PowerMockito.mockStatic(Files.class);
+        Path expectedDataPath = Paths.get("/volPrefix/testPath");
+        Mockito.when(Files.exists(eq(Paths.get("/volRoot", "testPath")))).thenReturn(false);
+        Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
         Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
         String testData = "Test data";
         JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
