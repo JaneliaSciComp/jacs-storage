@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.io;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Ordering;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.utils.IOUtils;
@@ -26,6 +27,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -140,6 +142,33 @@ public class ExpandedBundleReaderWriterTest {
                     .sorted()
                     .collect(Collectors.toList());
             assertEquals(currentExpectedResults, nodeList.stream().map(ni -> ni.getNodePath()).sorted().collect(Collectors.toList()));
+        }
+    }
+
+    @Test
+    public void listContentSubTree() {
+        class TestData {
+            final String entryName;
+            final int depth;
+            final List<String> expectedResults;
+
+            public TestData(String entryName, int depth, List<String> expectedResults) {
+                this.entryName = entryName;
+                this.depth = depth;
+                this.expectedResults = expectedResults;
+            }
+        }
+        List<TestData> testData = ImmutableList.of(
+                new TestData("f_1_1", 0, ImmutableList.of("f_1_1")),
+                new TestData("d_1_2/d_1_2_1", 1, ImmutableList.of("d_1_2/d_1_2_1", "d_1_2/d_1_2_1/f_1_2_1_1")),
+                new TestData("d_1_2", 1, ImmutableList.of("d_1_2", "d_1_2/d_1_2_1", "d_1_2/f_1_2_1")),
+                new TestData("d_1_2", 2, ImmutableList.of("d_1_2", "d_1_2/d_1_2_1", "d_1_2/f_1_2_1", "d_1_2/d_1_2_1/f_1_2_1_1")),
+                new TestData("d_1_3", 2, ImmutableList.of("d_1_3", "d_1_3/f_1_3_1", "d_1_3/f_1_3_2"))
+        );
+        for (TestData td : testData) {
+            List<DataNodeInfo> nodeList = expandedBundleReader.listBundleContent(testDataDir.toString(), td.entryName, td.depth);
+            List<String> currentExpectedResults = td.expectedResults.stream().sorted().collect(Collectors.toList());
+            assertEquals("For entry " + td.entryName + " depth " + td.depth, currentExpectedResults, nodeList.stream().map(ni -> ni.getNodePath()).sorted().collect(Collectors.toList()));
         }
     }
 
