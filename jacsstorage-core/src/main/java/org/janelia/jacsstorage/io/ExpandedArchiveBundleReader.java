@@ -98,7 +98,7 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
         }
         try {
             // start to collect the files from the startPath but return the data relative to sourcePath
-            return Files.walk(startPath, depth).map(p -> pathToDataNodeInfo(sourcePath, p)).collect(Collectors.toList());
+            return Files.walk(startPath, depth).map(p -> pathToDataNodeInfo(sourcePath, p, (rootPath, nodePath) -> rootPath.relativize(nodePath).toString())).collect(Collectors.toList());
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

@@ -35,7 +35,7 @@ public class SingleFileBundleReader extends AbstractBundleReader {
     public List<DataNodeInfo> listBundleContent(String source, String entryName, int depth) {
         Path sourcePath = getSourcePath(source);
         Preconditions.checkArgument(StringUtils.isBlank(entryName), "Single file reader does not accept entryName: " + entryName);
-        return ImmutableList.of(pathToDataNodeInfo(sourcePath, sourcePath));
+        return ImmutableList.of(pathToDataNodeInfo(sourcePath, sourcePath, (rootPath, nodePath) -> rootPath.toString()));
     }
 
     @Override

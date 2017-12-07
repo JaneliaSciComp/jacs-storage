@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
+import java.util.function.BiFunction;
 
 public abstract class AbstractBundleReader implements BundleReader {
 
@@ -27,11 +28,11 @@ public abstract class AbstractBundleReader implements BundleReader {
 
     protected abstract long readBundleBytes(String source, OutputStream stream) throws Exception;
 
-    protected DataNodeInfo pathToDataNodeInfo(Path rootPath, Path nodePath) {
+    DataNodeInfo pathToDataNodeInfo(Path rootPath, Path nodePath, BiFunction<Path, Path, String> nodePathMapper) {
         try {
             DataNodeInfo dataNodeInfo = new DataNodeInfo();
             BasicFileAttributes attrs = Files.readAttributes(nodePath, BasicFileAttributes.class);
-            dataNodeInfo.setNodePath(rootPath.relativize(nodePath).toString());
+            dataNodeInfo.setNodePath(nodePathMapper.apply(rootPath, nodePath));
             dataNodeInfo.setSize(attrs.size());
             dataNodeInfo.setMimeType(new MimetypesFileTypeMap().getContentType(nodePath.toFile()));
             dataNodeInfo.setCollectionFlag(attrs.isDirectory());
