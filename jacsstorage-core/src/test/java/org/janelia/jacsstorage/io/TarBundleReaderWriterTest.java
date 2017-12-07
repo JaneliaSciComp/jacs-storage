@@ -85,7 +85,7 @@ public class TarBundleReaderWriterTest {
     @Test
     public void listContentTree() {
         List<List<String>> expectedResults = ImmutableList.of(
-                ImmutableList.of(""),
+                ImmutableList.of("/"),
                 ImmutableList.of("f_1_1", "d_1_1/", "f_1_2", "d_1_2/", "d_1_3/", "f_1_3"),
                 ImmutableList.of("d_1_1/f_1_1_1", "d_1_2/d_1_2_1/", "d_1_2/f_1_2_1", "d_1_3/f_1_3_1", "d_1_3/f_1_3_2"),
                 ImmutableList.of("d_1_2/d_1_2_1/f_1_2_1_1"),
@@ -93,7 +93,7 @@ public class TarBundleReaderWriterTest {
                 ImmutableList.of()
         );
         for (int depth = 1; depth < expectedResults.size(); depth++) {
-            List<DataNodeInfo> nodeList = tarBundleReader.listBundleContent(testTarFile.toString(), depth);
+            List<DataNodeInfo> nodeList = tarBundleReader.listBundleContent(testTarFile.toString(), null, depth);
             List<String> currentExpectedResults = IntStream.rangeClosed(0, depth)
                     .mapToObj(i -> expectedResults.get(i))
                     .flatMap(l -> l.stream())
@@ -195,7 +195,7 @@ public class TarBundleReaderWriterTest {
             long size = tarBundleWriter.createDirectoryEntry(testTarFile.toString(), td);
             assertTrue(size == TarConstants.DEFAULT_RCDSIZE);
         }
-        List<String> tarEntryNames = tarBundleReader.listBundleContent(testTarFile.toString(), 10).stream()
+        List<String> tarEntryNames = tarBundleReader.listBundleContent(testTarFile.toString(), null, 10).stream()
                 .map(ni -> ni.getNodePath())
                 .collect(Collectors.toList());
         testData.forEach(td -> {
@@ -237,7 +237,7 @@ public class TarBundleReaderWriterTest {
             long size = tarBundleWriter.createFileEntry(testTarFile.toString(), td, new FileInputStream(Paths.get(TEST_DATA_DIRECTORY, "d_1_1/f_1_1_1").toFile()));
             assertTrue(size > 2 * TarConstants.DEFAULT_RCDSIZE);
         }
-        List<String> tarEntryNames = tarBundleReader.listBundleContent(testTarFile.toString(), 10).stream()
+        List<String> tarEntryNames = tarBundleReader.listBundleContent(testTarFile.toString(), null, 10).stream()
                 .map(ni -> ni.getNodePath())
                 .collect(Collectors.toList());
         testData.forEach(td -> {

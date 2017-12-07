@@ -13,7 +13,7 @@ import java.util.List;
 public interface DataStorageService {
     TransferInfo persistDataStream(Path dataPath, JacsStorageFormat dataStorageFormat, InputStream dataStream) throws IOException;
     TransferInfo retrieveDataStream(Path dataPath, JacsStorageFormat dataStorageFormat, OutputStream dataStream) throws IOException;
-    List<DataNodeInfo> listDataEntries(Path dataPath, JacsStorageFormat dataStorageFormat, int depth);
+    List<DataNodeInfo> listDataEntries(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, int depth);
     long createDirectoryEntry(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat);
     long createFileEntry(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, InputStream contentStream);
     long readDataEntryStream(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, OutputStream outputStream) throws IOException;

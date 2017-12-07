@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.msgpack.core.Preconditions;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,8 +32,9 @@ public class SingleFileBundleReader extends AbstractBundleReader {
     }
 
     @Override
-    public List<DataNodeInfo> listBundleContent(String source, int depth) {
+    public List<DataNodeInfo> listBundleContent(String source, String entryName, int depth) {
         Path sourcePath = getSourcePath(source);
+        Preconditions.checkArgument(StringUtils.isBlank(entryName), "Single file reader does not accept entryName: " + entryName);
         return ImmutableList.of(pathToDataNodeInfo(sourcePath, sourcePath));
     }
 

@@ -42,26 +42,44 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     }
 
     @Override
-    public List<DataNodeInfo> listBundleContent(String source, int depth) {
+    public List<DataNodeInfo> listBundleContent(String source, String entryName, int depth) {
         Path sourcePath = getSourcePath(source);
         try {
             TarArchiveInputStream inputStream = new TarArchiveInputStream(new FileInputStream(sourcePath.toFile()));
             List<DataNodeInfo> dataNodeList = new ArrayList<>();
+            String normalizedEntryName = normalizeEntryName(entryName);
+            int normalizedEntryNameLength = normalizedEntryName.length();
             for (ArchiveEntry sourceEntry = inputStream.getNextEntry(); sourceEntry != null; sourceEntry = inputStream.getNextEntry()) {
-                String entryName = StringUtils.removeStart(sourceEntry.getName(), "./");
-                int currentDepth = Splitter.on('/').omitEmptyStrings().splitToList(entryName).size();
-                if (currentDepth > depth) {
-                    continue;
+                String currentEntryName = normalizeEntryName(sourceEntry.getName());
+                if (currentEntryName.equals(normalizedEntryName)) {
+                    if (!sourceEntry.isDirectory()) {
+                        DataNodeInfo dataNodeInfo = new DataNodeInfo();
+                        dataNodeInfo.setCollectionFlag(false);
+                        dataNodeInfo.setNodePath(currentEntryName);
+                        dataNodeInfo.setSize(sourceEntry.getSize());
+                        dataNodeInfo.setCreationTime(sourceEntry.getLastModifiedDate());
+                        dataNodeInfo.setLastModified(sourceEntry.getLastModifiedDate());
+                        dataNodeList.add(dataNodeInfo);
+                        break;
+                    }
                 }
-                DataNodeInfo dataNodeInfo = new DataNodeInfo();
-                if (sourceEntry.isDirectory()) {
-                    dataNodeInfo.setCollectionFlag(true);
+                if (currentEntryName.startsWith(normalizedEntryName)) {
+                    int currentDepth = Splitter.on('/').omitEmptyStrings().splitToList(currentEntryName.substring(normalizedEntryNameLength)).size();
+                    if (currentDepth > depth) {
+                        continue;
+                    }
+                    DataNodeInfo dataNodeInfo = new DataNodeInfo();
+                    if (sourceEntry.isDirectory()) {
+                        dataNodeInfo.setCollectionFlag(true);
+                        dataNodeInfo.setNodePath(StringUtils.appendIfMissing(currentEntryName, "/"));
+                    }  else {
+                        dataNodeInfo.setNodePath(currentEntryName);
+                    }
+                    dataNodeInfo.setSize(sourceEntry.getSize());
+                    dataNodeInfo.setCreationTime(sourceEntry.getLastModifiedDate());
+                    dataNodeInfo.setLastModified(sourceEntry.getLastModifiedDate());
+                    dataNodeList.add(dataNodeInfo);
                 }
-                dataNodeInfo.setNodePath(entryName);
-                dataNodeInfo.setSize(sourceEntry.getSize());
-                dataNodeInfo.setCreationTime(sourceEntry.getLastModifiedDate());
-                dataNodeInfo.setLastModified(sourceEntry.getLastModifiedDate());
-                dataNodeList.add(dataNodeInfo);
             }
             return dataNodeList;
         } catch (Exception e) {
@@ -110,9 +128,6 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                         nbytes += ByteStreams.copy(ByteStreams.limit(inputStream, sourceEntry.getSize()), tarOutputStream);
                     }
                     tarOutputStream.closeArchiveEntry();
-                } else if (tarOutputStream != null) {
-                    tarOutputStream.finish();
-                    return nbytes;
                 }
             }
             if (tarOutputStream == null)
@@ -140,6 +155,7 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     }
 
     private String normalizeEntryName(String name) {
+        if (StringUtils.isBlank(name)) return "";
         return StringUtils.removeEnd(
                 StringUtils.removeStart(
                         StringUtils.removeStart(name, "."),

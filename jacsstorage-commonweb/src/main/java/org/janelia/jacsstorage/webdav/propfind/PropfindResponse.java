@@ -11,6 +11,9 @@ public class PropfindResponse {
     @JacksonXmlProperty(localName = "D:propstat")
     private Propstat propstat;
 
+    @JacksonXmlProperty(localName = "D:responsedescription")
+    private String responseDescription;
+
     public Propstat getPropstat() {
         return propstat;
     }
@@ -25,6 +28,14 @@ public class PropfindResponse {
 
     public void setHref(String href) {
         this.href = href;
+    }
+
+    public String getResponseDescription() {
+        return responseDescription;
+    }
+
+    public void setResponseDescription(String responseDescription) {
+        this.responseDescription = responseDescription;
     }
 
     @Override

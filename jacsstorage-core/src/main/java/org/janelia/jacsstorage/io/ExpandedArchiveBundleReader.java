@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -84,10 +85,20 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
     }
 
     @Override
-    public List<DataNodeInfo> listBundleContent(String source, int depth) {
+    public List<DataNodeInfo> listBundleContent(String source, String entryName, int depth) {
         Path sourcePath = getSourcePath(source);
+        Path startPath;
+        if (StringUtils.isBlank(entryName)) {
+            startPath = sourcePath;
+        } else {
+            startPath = sourcePath.resolve(entryName);
+            if (Files.notExists(startPath)) {
+                return Collections.emptyList();
+            }
+        }
         try {
-            return Files.walk(sourcePath, depth).map(p -> pathToDataNodeInfo(sourcePath, p)).collect(Collectors.toList());
+            // start to collect the files from the startPath but return the data relative to sourcePath
+            return Files.walk(startPath, depth).map(p -> pathToDataNodeInfo(sourcePath, p)).collect(Collectors.toList());
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

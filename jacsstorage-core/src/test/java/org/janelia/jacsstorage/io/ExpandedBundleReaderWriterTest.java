@@ -133,7 +133,7 @@ public class ExpandedBundleReaderWriterTest {
                 ImmutableList.of()
         );
         for (int depth = 1; depth < expectedResults.size(); depth++) {
-            List<DataNodeInfo> nodeList = expandedBundleReader.listBundleContent(testDataDir.toString(), depth);
+            List<DataNodeInfo> nodeList = expandedBundleReader.listBundleContent(testDataDir.toString(), null, depth);
             List<String> currentExpectedResults = IntStream.rangeClosed(0, depth)
                     .mapToObj(i -> expectedResults.get(i))
                     .flatMap(l -> l.stream())
@@ -203,7 +203,7 @@ public class ExpandedBundleReaderWriterTest {
             long size = expandedArchiveBundleWriter.createDirectoryEntry(testDataDir.toString(), td);
             assertTrue(size > 0);
         }
-        List<String> tarEntryNames = expandedBundleReader.listBundleContent(testDataDir.toString(), 10).stream()
+        List<String> tarEntryNames = expandedBundleReader.listBundleContent(testDataDir.toString(), "", 10).stream()
                 .map(ni -> ni.getNodePath())
                 .collect(Collectors.toList());
         testData.forEach(td -> {

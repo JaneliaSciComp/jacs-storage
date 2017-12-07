@@ -24,10 +24,11 @@ public interface BundleReader {
     /**
      * List bundle content.
      * @param source bundle
+     * @param entryName
      * @param depth
      * @return
      */
-    List<DataNodeInfo> listBundleContent(String source, int depth);
+    List<DataNodeInfo> listBundleContent(String source, String entryName, int depth);
 
     /**
      * Read the specified entry from the bundle.

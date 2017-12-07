@@ -202,15 +202,19 @@ public class AgentStorageResource {
 
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    @Path("{dataBundleId}/list")
+    @Path("{dataBundleId}/list{entry:(/entry/[^/]+?)?}")
     public Response listContent(@PathParam("dataBundleId") Long dataBundleId,
+                                @PathParam("entry") String entry,
                                 @QueryParam("depth") Integer depthParam,
                                 @Context SecurityContext securityContext) {
         LOG.info("List bundle content {} with a depthParameter {}", dataBundleId, depthParam);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
+        String entryName = StringUtils.isNotBlank(entry)
+                ? entry.substring("/entry/".length())
+                : null;
         int depth = depthParam != null && depthParam >= 0 && depthParam < MAX_ALLOWED_DEPTH ? depthParam : MAX_ALLOWED_DEPTH;
-        List<DataNodeInfo> dataBundleCotent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), depth);
+        List<DataNodeInfo> dataBundleCotent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depth);
         return Response
                 .ok(dataBundleCotent, MediaType.APPLICATION_JSON)
                 .header("content-disposition","attachment; filename = " + dataBundle.getOwner() + "-" + dataBundle.getName())

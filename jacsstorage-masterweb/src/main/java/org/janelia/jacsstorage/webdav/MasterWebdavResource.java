@@ -60,29 +60,7 @@ public class MasterWebdavResource {
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
         Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes, (storageVolume) ->{
             String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
-            return storageServiceURL + Constants.AGENTSTORAGE_URI_PATH + "/path";
-        });
-        return Response.status(207)
-                .entity(propfindResponse)
-                .build();
-    }
-
-    @LogStorageEvent(
-            eventName = "DATASTORAGE_PROPFIND",
-            argList = {0, 1, 2}
-    )
-    @Consumes(MediaType.APPLICATION_XML)
-    @Produces(MediaType.APPLICATION_XML)
-    @PROPFIND
-    @Path("storagePath/{storagePath:.+}")
-    public Response dataStoragePropFindByStoragePath(@PathParam("storagePath") String storagePath,
-                                                       Propfind propfindRequest,
-                                                       @Context SecurityContext securityContext) {
-        StorageQuery storageQuery = new StorageQuery().setDataStoragePath(storagePath);
-        List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
-        Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes, (storageVolume) ->{
-            String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
-            return storageServiceURL + Constants.AGENTSTORAGE_URI_PATH + "/path/" + storagePath;
+            return storageServiceURL + Constants.AGENTSTORAGE_URI_PATH;
         });
         return Response.status(207)
                 .entity(propfindResponse)

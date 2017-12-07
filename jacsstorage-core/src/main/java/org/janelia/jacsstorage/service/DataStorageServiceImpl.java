@@ -41,9 +41,9 @@ public class DataStorageServiceImpl implements DataStorageService {
     }
 
     @Override
-    public List<DataNodeInfo> listDataEntries(Path dataPath, JacsStorageFormat dataStorageFormat, int depth) {
+    public List<DataNodeInfo> listDataEntries(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, int depth) {
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
-        return bundleReader.listBundleContent(dataPath.toString(), depth);
+        return bundleReader.listBundleContent(dataPath.toString(), entryName, depth);
     }
 
     @Override
