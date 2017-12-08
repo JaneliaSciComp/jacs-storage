@@ -73,7 +73,7 @@ public class MasterWebdavResource {
     )
     @Produces(MediaType.APPLICATION_JSON)
     @MKCOL
-    @Path("storageName/{storageName}{format:(/format/[^/]+?)?}")
+    @Path("storage/{storageName}{format:(/format/[^/]+?)?}")
     public Response createDataStorage(@PathParam("storageName") String storageName,
                                       @PathParam("format") String format,
                                       @Context SecurityContext securityContext) {
