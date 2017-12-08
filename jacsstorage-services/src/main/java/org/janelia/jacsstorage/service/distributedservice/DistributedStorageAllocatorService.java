@@ -77,6 +77,7 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
         }
         JacsStorageVolume selectedVolume = storageVolume;
         if (selectedVolume.getStorageServiceURL() == null) {
+            // find any connected agent
             return agentManager.findRandomRegisteredAgent((StorageAgentConnection ac) -> ac.isConnected())
                     .map((StorageAgentInfo ai) -> {
                         selectedVolume.setStorageHost(ai.getStorageHost());
@@ -85,7 +86,10 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
                         return selectedVolume;
                     });
         } else {
-            return Optional.of(selectedVolume);
+            // check that the agent which serves the volume is still connected
+            return agentManager.findRegisteredAgent(selectedVolume.getStorageServiceURL())
+                    .filter(ai -> StorageAgentConnection.CONNECTED_STATUS_VALUE.equals(ai.getConnectionStatus()))
+                    .map(ai -> selectedVolume);
         }
     }
 }

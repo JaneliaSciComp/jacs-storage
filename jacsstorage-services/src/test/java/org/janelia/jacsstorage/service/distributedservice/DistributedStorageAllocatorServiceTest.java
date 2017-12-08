@@ -136,11 +136,15 @@ public class DistributedStorageAllocatorServiceTest {
     @SuppressWarnings("unchecked")
     private void prepareMockServices(TestAllocateData testData) {
         Mockito.reset(storageAgentManager, storageVolumeDao, bundleDao);
+        StorageAgentInfo testAgentInfo = new StorageAgentInfo(
+                testData.testHost,
+                testData.testAgentURL,
+                testData.testPort);
+        testAgentInfo.setConnectionStatus("CONNECTED");
         when(storageAgentManager.findRandomRegisteredAgent(any(Predicate.class)))
-                .thenReturn(Optional.of(new StorageAgentInfo(
-                        testData.testHost,
-                        testData.testAgentURL,
-                        testData.testPort)));
+                .thenReturn(Optional.of(testAgentInfo));
+        when(storageAgentManager.findRegisteredAgent(testData.testVolume.getStorageServiceURL()))
+                .thenReturn(Optional.of(testAgentInfo));
         when(storageVolumeDao.countMatchingVolumes(any(StorageQuery.class)))
                 .then(invocation -> {
                     if (JacsStorageVolume.OVERFLOW_VOLUME.equals(testData.testVolume.getName())) {

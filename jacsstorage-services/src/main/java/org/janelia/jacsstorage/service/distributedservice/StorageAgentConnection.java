@@ -5,6 +5,9 @@ import org.janelia.jacsstorage.resilience.CircuitBreaker;
 
 public class StorageAgentConnection {
 
+    static final String CONNECTED_STATUS_VALUE = "CONNECTED";
+    static final String DISCONNECTED_STATUS_VALUE = "DISCONNECTED";
+
     private final StorageAgentInfo agentInfo;
     private final CircuitBreaker<StorageAgentInfo> agentConnectionBreaker;
 
@@ -23,9 +26,9 @@ public class StorageAgentConnection {
 
     public void updateConnectionStatus() {
         if (agentConnectionBreaker.getState() == CircuitBreaker.BreakerState.CLOSED) {
-            agentInfo.setConnectionStatus("CONNECTED");
+            agentInfo.setConnectionStatus(CONNECTED_STATUS_VALUE);
         } else {
-            agentInfo.setConnectionStatus("DISCONNECTED");
+            agentInfo.setConnectionStatus(DISCONNECTED_STATUS_VALUE);
         }
     }
 
