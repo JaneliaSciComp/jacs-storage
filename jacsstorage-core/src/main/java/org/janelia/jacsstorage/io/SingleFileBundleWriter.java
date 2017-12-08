@@ -33,7 +33,16 @@ public class SingleFileBundleWriter extends AbstractBundleWriter {
 
     @Override
     public long createFileEntry(String dataPath, String entryName, InputStream contentStream) {
-        throw new UnsupportedOperationException("Method is not supported");
+        Path filePath = Paths.get(dataPath);
+        if (Files.exists(filePath)) {
+            throw new IllegalArgumentException("File path " + filePath + " already exists");
+        }
+        try {
+            Files.createDirectories(filePath.getParent());
+            return Files.copy(contentStream, filePath);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
 }
