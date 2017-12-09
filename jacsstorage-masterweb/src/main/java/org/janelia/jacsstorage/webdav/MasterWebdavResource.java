@@ -10,7 +10,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.security.SecurityUtils;
-import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.LogStorageEvent;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -93,7 +92,11 @@ public class MasterWebdavResource {
                         .created(
                                 bi.getStorageVolume()
                                         .map(sv -> sv.getStorageServiceURL())
-                                        .map(serviceURL -> UriBuilder.fromUri(serviceURL).path(bi.getId().toString()).build())
+                                        .map(serviceURL -> UriBuilder
+                                                .fromUri(serviceURL)
+                                                .path(Constants.AGENTSTORAGE_URI_PATH)
+                                                .path(bi.getId().toString())
+                                                .build())
                                         .orElseThrow(() -> new IllegalStateException("No volume set for allocated resource " + bi.getId())))
                         .build())
                 .orElse(Response
