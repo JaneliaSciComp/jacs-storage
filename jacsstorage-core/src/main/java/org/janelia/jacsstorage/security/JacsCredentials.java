@@ -8,16 +8,26 @@ import java.security.Principal;
 public class JacsCredentials implements Principal {
     public static final String UNAUTHENTICATED = "Unauthenticated";
 
-    private String subject;
+    private String authSubject;
+    private String subjectProxy;
     private String authToken;
     private JWTClaimsSet claims;
 
-    public String getSubject() {
-        return getName();
+    public String getSubjectProxy() {
+        return subjectProxy;
     }
 
-    public JacsCredentials setSubject(String subject) {
-        this.subject = subject;
+    public String getAuthSubject() {
+        return authSubject;
+    }
+
+    public JacsCredentials setAuthSubject(String authSubject) {
+        this.authSubject = authSubject;
+        return this;
+    }
+
+    public JacsCredentials setSubjectProxy(String subjectProxy) {
+        this.subjectProxy = subjectProxy;
         return this;
     }
 
@@ -41,7 +51,13 @@ public class JacsCredentials implements Principal {
 
     @Override
     public String getName() {
-        return StringUtils.isBlank(subject) ? UNAUTHENTICATED : subject;
+        if (StringUtils.isNotBlank(subjectProxy)) {
+            return subjectProxy;
+        } else if (StringUtils.isNotBlank(authSubject)) {
+            return authSubject;
+        } else {
+            return UNAUTHENTICATED;
+        }
     }
 
 }

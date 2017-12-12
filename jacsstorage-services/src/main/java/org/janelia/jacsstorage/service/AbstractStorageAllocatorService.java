@@ -33,9 +33,10 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
 
     private JacsBundle createStorage(JacsCredentials credentials, JacsStorageVolume storageVolume, JacsBundle dataBundle) {
         try {
-            dataBundle.setOwner(credentials.getSubject());
+            dataBundle.setOwner(credentials.getName());
             dataBundle.setStorageVolumeId(storageVolume.getId());
             dataBundle.setStorageVolume(storageVolume);
+            dataBundle.setCreatedBy(credentials.getAuthSubject());
             bundleDao.save(dataBundle);
             List<String> dataSubpath = PathUtils.getTreePathComponentsForId(dataBundle.getId());
             Path dataPath = Paths.get("", dataSubpath.toArray(new String[dataSubpath.size()]));
@@ -77,8 +78,8 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
     }
 
     protected void checkStorageAccess(JacsCredentials credentials, JacsBundle dataBundle) {
-        if (!credentials.getSubject().equals(dataBundle.getOwner())) {
-            throw new SecurityException("Access not allowed to " + dataBundle.getName() + " for " + credentials.getSubject());
+        if (!credentials.getName().equals(dataBundle.getOwner())) {
+            throw new SecurityException("Access not allowed to " + dataBundle.getName() + " for " + credentials.getAuthSubject() + " as " + credentials.getName());
         }
     }
 }

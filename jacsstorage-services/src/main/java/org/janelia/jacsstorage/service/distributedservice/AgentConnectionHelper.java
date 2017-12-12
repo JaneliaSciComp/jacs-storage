@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.slf4j.Logger;
@@ -10,6 +11,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.security.SecureRandom;
@@ -45,17 +47,18 @@ class AgentConnectionHelper {
         return null;
     }
 
-    static boolean deleteStorage(String agentUrl, Number dataBundleId, String authToken) {
+    static boolean deleteStorage(String agentUrl, Number dataBundleId, String subject, String authToken) {
         String deleteStorageEndpoint = String.format("/agent-storage/%d", dataBundleId);
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(agentUrl)
                         .path(deleteStorageEndpoint);
-            Response response = target.request()
+            Invocation.Builder targetRequestBuilder = target.request()
                     .header("Authorization", "Bearer " + authToken)
-                    .delete()
+                    .header("JacsSubject", subject)
                     ;
+            Response response = targetRequestBuilder.delete();
             if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
                 LOG.warn("Agent delete storage returned {}", response.getStatus());
             } else {

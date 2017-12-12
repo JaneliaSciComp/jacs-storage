@@ -23,7 +23,7 @@ public class AuthTokenValidator {
         this.secretKey = secretKey;
     }
 
-    public JacsCredentials validateJwtToken(String jwt) {
+    public JacsCredentials validateJwtToken(String jwt, String subjectProxy) {
         try {
             ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
             JWSAlgorithm expectedJWSAlg = JWSAlgorithm.HS256;
@@ -34,7 +34,8 @@ public class AuthTokenValidator {
             JWTClaimsSet claimsSet = jwtProcessor.process(jwt, null);
 
             return new JacsCredentials()
-                    .setSubject(StringUtils.defaultIfBlank(claimsSet.getSubject(), claimsSet.getStringClaim(USERNAME_CLAIM)))
+                    .setAuthSubject(StringUtils.defaultIfBlank(claimsSet.getSubject(), claimsSet.getStringClaim(USERNAME_CLAIM)))
+                    .setSubjectProxy(subjectProxy)
                     .setAuthToken(jwt)
                     .setClaims(claimsSet);
         } catch (Exception e) {

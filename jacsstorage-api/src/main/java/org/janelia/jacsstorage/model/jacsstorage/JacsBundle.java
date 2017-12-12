@@ -26,6 +26,7 @@ public class JacsBundle extends AbstractEntity {
     private JacsStorageFormat storageFormat;
     private Long usedSpaceInBytes;
     private String checksum;
+    private String createdBy;
     private Date created = new Date();
     private Date modified = new Date();
     private Map<String, Object> metadata = new LinkedHashMap<>();
@@ -118,6 +119,14 @@ public class JacsBundle extends AbstractEntity {
 
     public void setChecksum(String checksum) {
         this.checksum = checksum;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 
     public Date getCreated() {

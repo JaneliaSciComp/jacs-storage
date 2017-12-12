@@ -44,7 +44,7 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
         return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
                 .flatMap(sv -> agentManager.findRegisteredAgent(sv.getStorageServiceURL()))
                 .map(storageAgentInfo -> {
-                    if (AgentConnectionHelper.deleteStorage(storageAgentInfo.getAgentHttpURL(), existingBundle.getId(), credentials.getAuthToken())) {
+                    if (AgentConnectionHelper.deleteStorage(storageAgentInfo.getAgentHttpURL(), existingBundle.getId(), credentials.getSubjectProxy(), credentials.getAuthToken())) {
                         LOG.info("Delete {}", existingBundle);
                         bundleDao.delete(existingBundle);
                         return true;

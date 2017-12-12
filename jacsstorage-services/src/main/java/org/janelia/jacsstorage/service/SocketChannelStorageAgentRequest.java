@@ -145,7 +145,7 @@ class SocketChannelStorageAgentRequest implements StorageAgentRequest {
     }
     private String validateAuthentication() {
         try {
-            jacsCredentials = authTokenValidator.validateJwtToken(transferState.getMessageType().getAuthToken());
+            jacsCredentials = authTokenValidator.validateJwtToken(transferState.getMessageType().getAuthToken(), null);
             return null;
         } catch (Exception e) {
             LOG.warn("Token validation exception {}", transferState.getMessageType().getAuthToken(), e);

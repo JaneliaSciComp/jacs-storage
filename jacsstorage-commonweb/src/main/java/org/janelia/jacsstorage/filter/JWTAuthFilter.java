@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 public class JWTAuthFilter implements ContainerRequestFilter {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String SUBJECT_HEADER = "JacsSubject";
     private static final String BEARER_PREFIX = "Bearer ";
 
     @Context
@@ -51,9 +52,10 @@ public class JWTAuthFilter implements ContainerRequestFilter {
             );
             return;
         }
+        String subject = headers.getFirst(SUBJECT_HEADER);
         AuthTokenValidator tokenValidator = new AuthTokenValidator(jwtSecretKey);
         try {
-            JacsSecurityContext securityContext = new JacsSecurityContext(tokenValidator.validateJwtToken(jwt),
+            JacsSecurityContext securityContext = new JacsSecurityContext(tokenValidator.validateJwtToken(jwt, subject),
                     "https".equals(requestContext.getUriInfo().getRequestUri().getScheme()),
                     "JWT");
             requestContext.setSecurityContext(securityContext);
