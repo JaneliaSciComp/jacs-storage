@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service.distributedservice;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
+import org.janelia.jacsstorage.utils.HttpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,7 @@ class AgentConnectionHelper {
         String agentStatusEndpoint = "/connection/status";
         Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = HttpUtils.createHttpClient();
             WebTarget target = httpClient.target(agentUrl).path(agentStatusEndpoint);
             Response response = target.request()
                     .get()
@@ -51,7 +52,7 @@ class AgentConnectionHelper {
         String deleteStorageEndpoint = String.format("/agent-storage/%d", dataBundleId);
         Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = HttpUtils.createHttpClient();
             WebTarget target = httpClient.target(agentUrl)
                         .path(deleteStorageEndpoint);
             Invocation.Builder targetRequestBuilder = target.request()
@@ -72,33 +73,6 @@ class AgentConnectionHelper {
             }
         }
         return false;
-    }
-
-    private static Client createHttpClient() throws Exception {
-        SSLContext sslContext = SSLContext.getInstance("TLSv1");
-        TrustManager[] trustManagers = {
-                new X509TrustManager() {
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
-                        // Everyone is trusted
-                    }
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] x509Certificates, String authType) throws CertificateException {
-                        // Everyone is trusted
-                    }
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
-                }
-        };
-        sslContext.init(null, trustManagers, new SecureRandom());
-        return ClientBuilder.newBuilder()
-                .connectTimeout(5, TimeUnit.SECONDS)
-                .sslContext(sslContext)
-                .hostnameVerifier((s, sslSession) -> true)
-                .register(new JacksonFeature())
-                .build();
     }
 
 }

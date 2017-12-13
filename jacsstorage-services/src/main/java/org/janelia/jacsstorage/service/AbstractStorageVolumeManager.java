@@ -33,6 +33,11 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
         this.storageVolumeDao = storageVolumeDao;
     }
 
+    @Override
+    public JacsStorageVolume getVolumeById(Number volumeId) {
+        return storageVolumeDao.findById(volumeId);
+    }
+
     public JacsStorageVolume updateVolumeInfo(JacsStorageVolume storageVolume) {
         JacsStorageVolume currentVolumeInfo;
 

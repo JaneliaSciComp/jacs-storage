@@ -1,12 +1,12 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
@@ -116,49 +116,50 @@ public class AgentStorageResource {
     @Path("path/{filePath:.+}")
     public Response retrieveFile(@PathParam("filePath") String fullFileNameParam,
                                  @Context SecurityContext securityContext) {
-        String fullFileName = StringUtils.prependIfMissing(fullFileNameParam, "/");
-        List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(fullFileName));
-        if (localVolumes.isEmpty()) {
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageLookupService, storageVolumeManager);
+        return storageResourceHelper.retrieveFileContent(
+                fullFileNameParam,
+                () -> Response
+                        .status(Response.Status.CONFLICT)
+                        .entity(new ErrorResponse("More than one volume found for " + fullFileNameParam))
+                        .build(),
+                (dataBundle, dataEntryPath) -> retrieveFileFromBundle(dataBundle, dataEntryPath),
+                (storageVolume, dataEntryPath) -> {
+                    if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath))) {
+                        return retrieveFileUsingFilePath(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath));
+                    } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath))) {
+                        return retrieveFileUsingFilePath(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath));
+                    } else {
+                        return Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(new ErrorResponse("No path found for " + fullFileNameParam))
+                                .build();
+                    }
+                }
+        );
+    }
+
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @GET
+    @Path("storageVolume/{storageVolumeId}/{storageRelativePath:.+}")
+    public Response retrieveFileFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
+                                                  @PathParam("storageRelativePath") String storageRelativeFilePath) {
+        JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
+        if (storageVolume == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
-                    .entity(ImmutableMap.of("errormessage", "No managed volume found for " + fullFileNameParam))
-                    .build();
-        } else if (localVolumes.size() > 1) {
-            return Response
-                    .status(Response.Status.CONFLICT)
-                    .entity(ImmutableMap.of("errormessage", "More than one volume found for " + fullFileNameParam))
+                    .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
                     .build();
         }
-        JacsStorageVolume storageVolume = localVolumes.get(0);
-        java.nio.file.Path storagePathPrefix = Paths.get(storageVolume.getStoragePathPrefix());
-        java.nio.file.Path storageRelativeFileDataPath = storagePathPrefix.relativize(Paths.get(fullFileName));
-        int fileDataPathComponents = storageRelativeFileDataPath.getNameCount();
-        JacsBundle dataBundle = null;
-        try {
-            if (fileDataPathComponents > 0) {
-                String bundleIdComponent = storageRelativeFileDataPath.getName(0).toString();
-                Number bundleId = new BigInteger(bundleIdComponent);
-                dataBundle = storageLookupService.getDataBundleById(bundleId);
-            }
-        } catch (NumberFormatException e) {
-            LOG.info("Path {} is not a data bundle - first component is not numeric", storageRelativeFileDataPath);
-        }
-        if (dataBundle == null) {
-            if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(storageRelativeFileDataPath))) {
-                return retrieveFileUsingFilePath(Paths.get(storageVolume.getStorageRootDir()).resolve(storageRelativeFileDataPath));
-            } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(storageRelativeFileDataPath))) {
-                return retrieveFileUsingFilePath(Paths.get(storageVolume.getStoragePathPrefix()).resolve(storageRelativeFileDataPath));
-            } else {
-                return Response
-                        .status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("No path found for " + fullFileName))
-                        .build();
-            }
+        if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(storageRelativeFilePath))) {
+            return retrieveFileUsingFilePath(Paths.get(storageVolume.getStorageRootDir()).resolve(storageRelativeFilePath));
+        } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(storageRelativeFilePath))) {
+            return retrieveFileUsingFilePath(Paths.get(storageVolume.getStoragePathPrefix()).resolve(storageRelativeFilePath));
         } else {
-            String dataEntryPath = fileDataPathComponents > 1
-                    ? storageRelativeFileDataPath.subpath(1, fileDataPathComponents).toString()
-                    : "";
-            return retrieveFileFromBundle(dataBundle, dataEntryPath);
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No path found for " + storageRelativeFilePath + " on " + storageVolumeId))
+                    .build();
         }
     }
 
