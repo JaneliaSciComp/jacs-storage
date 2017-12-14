@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.io.ByteStreams;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -72,8 +73,9 @@ public class ContentStorageResource {
     }
 
     private Response retrieveFileFromVolume(JacsStorageVolume storageVolume, java.nio.file.Path dataEntryPath, JacsCredentials jacsCredentials) {
+        String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
         StreamingOutput stream = streamFromURL(
-                            storageVolume.getStorageServiceURL() + "/agent-api/agent-storage/storageVolume" + storageVolume.getId() + "/" + dataEntryPath,
+                            storageServiceURL + "agent-storage/storageVolume/" + storageVolume.getId() + "/" + dataEntryPath,
                             jacsCredentials);
         return Response
                 .ok(stream, MediaType.APPLICATION_OCTET_STREAM)
