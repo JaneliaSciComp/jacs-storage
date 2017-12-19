@@ -35,7 +35,7 @@ public class JWTAuthFilter implements ContainerRequestFilter {
     private ResourceInfo resourceInfo;
     @Inject @PropertyValue(name = "JWT.SecretKey")
     private String jwtSecretKey;
-    @PropertyValue(name = "StorageService.ApiKey")
+    @Inject @PropertyValue(name = "StorageService.ApiKey")
     private String apiKey;
 
     @Override
