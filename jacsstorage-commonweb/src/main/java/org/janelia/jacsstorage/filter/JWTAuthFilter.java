@@ -1,10 +1,16 @@
 package org.janelia.jacsstorage.filter;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.rest.ErrorResponse;
-import org.janelia.jacsstorage.security.AuthTokenValidator;
+import org.janelia.jacsstorage.security.AggregatedTokenCredentialsValidator;
+import org.janelia.jacsstorage.security.ApiKeyCredentialsValidator;
+import org.janelia.jacsstorage.security.JwtTokenCredentialsValidator;
+import org.janelia.jacsstorage.security.CachedTokenCredentialsValidator;
+import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.security.JacsSecurityContext;
+import org.janelia.jacsstorage.security.TokenCredentialsValidator;
 
 import javax.annotation.Priority;
 import javax.annotation.security.PermitAll;
@@ -24,12 +30,13 @@ public class JWTAuthFilter implements ContainerRequestFilter {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String SUBJECT_HEADER = "JacsSubject";
-    private static final String BEARER_PREFIX = "Bearer ";
 
     @Context
     private ResourceInfo resourceInfo;
     @Inject @PropertyValue(name = "JWT.SecretKey")
     private String jwtSecretKey;
+    @PropertyValue(name = "StorageService.ApiKey")
+    private String apiKey;
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
@@ -39,32 +46,27 @@ public class JWTAuthFilter implements ContainerRequestFilter {
             return;
         }
         MultivaluedMap<String, String> headers = requestContext.getHeaders();
-        String authProperty = headers.getFirst(AUTHORIZATION_HEADER);
-        String jwt = null;
-        if (StringUtils.startsWithIgnoreCase(authProperty, BEARER_PREFIX)) {
-            jwt = authProperty.substring(BEARER_PREFIX.length());
-        }
-        if (StringUtils.isBlank(jwt)) {
-            requestContext.abortWith(
-                    Response.status(Response.Status.FORBIDDEN)
-                            .entity(new ErrorResponse("Resource is not accessible without proper authentication"))
-                            .build()
-            );
-            return;
-        }
+        String authHeaderValue = headers.getFirst(AUTHORIZATION_HEADER);
         String subject = headers.getFirst(SUBJECT_HEADER);
-        AuthTokenValidator tokenValidator = new AuthTokenValidator(jwtSecretKey);
+        TokenCredentialsValidator tokenValidator = getTokenValidator();
         try {
-            JacsSecurityContext securityContext = new JacsSecurityContext(tokenValidator.validateJwtToken(jwt, subject),
+            JacsSecurityContext securityContext = new JacsSecurityContext(tokenValidator.validateToken(authHeaderValue, subject),
                     "https".equals(requestContext.getUriInfo().getRequestUri().getScheme()),
                     "JWT");
             requestContext.setSecurityContext(securityContext);
-        } catch (SecurityException e) {
+        } catch (Exception e) {
             requestContext.abortWith(
                     Response.status(Response.Status.FORBIDDEN)
                             .entity(new ErrorResponse(e.getMessage()))
                             .build()
             );
         }
+    }
+
+    private TokenCredentialsValidator getTokenValidator() {
+        return new AggregatedTokenCredentialsValidator(ImmutableList.of(
+                new ApiKeyCredentialsValidator(apiKey),
+                new CachedTokenCredentialsValidator(new JwtTokenCredentialsValidator(jwtSecretKey))
+        ));
     }
 }

@@ -13,17 +13,25 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AuthTokenValidator {
+public class JwtTokenCredentialsValidator implements TokenCredentialsValidator {
     private static final String USERNAME_CLAIM = "user_name";
-    private static final Logger LOG = LoggerFactory.getLogger(AuthTokenValidator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JwtTokenCredentialsValidator.class);
 
     private final String secretKey;
 
-    public AuthTokenValidator(String secretKey) {
+    public JwtTokenCredentialsValidator(String secretKey) {
         this.secretKey = secretKey;
     }
 
-    public JacsCredentials validateJwtToken(String jwt, String subjectProxy) {
+    @Override
+    public String authorizationScheme() {
+        return "Bearer";
+    }
+
+    public JacsCredentials validateToken(String token, String subject) {
+        if (StringUtils.isBlank(token)) {
+            throw new SecurityException("Authentication token is empty");
+        }
         try {
             ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
             JWSAlgorithm expectedJWSAlg = JWSAlgorithm.HS256;
@@ -31,15 +39,15 @@ public class AuthTokenValidator {
             JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, jwtKeySource);
             jwtProcessor.setJWSKeySelector(keySelector);
 
-            JWTClaimsSet claimsSet = jwtProcessor.process(jwt, null);
+            JWTClaimsSet claimsSet = jwtProcessor.process(token, null);
 
             return new JacsCredentials()
                     .setAuthSubject(StringUtils.defaultIfBlank(claimsSet.getSubject(), claimsSet.getStringClaim(USERNAME_CLAIM)))
-                    .setSubjectProxy(subjectProxy)
-                    .setAuthToken(jwt)
+                    .setSubjectProxy(subject)
+                    .setAuthToken(token)
                     .setClaims(claimsSet);
         } catch (Exception e) {
-            LOG.error("Error while validating {}", jwt, e);
+            LOG.error("Error while validating {}", token, e);
             throw new SecurityException(e);
         }
     }

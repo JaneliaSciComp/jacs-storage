@@ -152,7 +152,7 @@ public class AgentWebdavResource {
                 dataBundle = storageLookupService.getDataBundleById(bundleId);
             }
         } catch (NumberFormatException e) {
-            LOG.info("Path {} is not a data bundle - first component is not numeric", storageRelativeFileDataPath);
+            LOG.debug("Path {} is not a data bundle - first component is not numeric", storageRelativeFileDataPath);
         }
         if (dataBundle == null) {
             if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(storageRelativeFileDataPath))) {

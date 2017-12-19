@@ -3,8 +3,7 @@ package org.janelia.jacsstorage.service;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PooledResource;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
-import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
-import org.janelia.jacsstorage.security.AuthTokenValidator;
+import org.janelia.jacsstorage.security.JwtTokenCredentialsValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,12 +11,10 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.Base64;
 import java.util.Iterator;
 
 public class StorageAgentListener {
@@ -26,7 +23,7 @@ public class StorageAgentListener {
 
     private final DataTransferService agentStorageProxy;
     private final StorageAllocatorService storageAllocatorService;
-    private final AuthTokenValidator authTokenValidator;
+    private final JwtTokenCredentialsValidator authTokenValidator;
     private final StorageEventLogger storageEventLogger;
 
     private Selector selector;
@@ -39,7 +36,7 @@ public class StorageAgentListener {
                                 StorageEventLogger storageEventLogger) {
         this.agentStorageProxy = agentStorageProxy;
         this.storageAllocatorService = storageAllocatorService;
-        this.authTokenValidator = new AuthTokenValidator(authKey);
+        this.authTokenValidator = new JwtTokenCredentialsValidator(authKey);
         this.storageEventLogger = storageEventLogger;
     }
 

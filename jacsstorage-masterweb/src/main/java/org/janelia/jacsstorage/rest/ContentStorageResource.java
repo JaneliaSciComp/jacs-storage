@@ -98,7 +98,6 @@ public class ContentStorageResource {
                     InputStream stream = response.readEntity(InputStream.class);
                     ByteStreams.copy(stream, output);
                     output.flush();
-                    return;
                 } else {
                     LOG.warn("{} returned {} status", url, responseStatus);
                     throw new WebApplicationException(responseStatus);

@@ -1,9 +1,8 @@
 package org.janelia.jacsstorage.service;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.security.AuthTokenValidator;
+import org.janelia.jacsstorage.security.JwtTokenCredentialsValidator;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +21,7 @@ class SocketChannelStorageAgentRequest implements StorageAgentRequest {
     private SocketChannel socketChannel;
     private final DataTransferService agentStorageProxy;
     private final StorageAllocatorService storageAllocatorService;
-    private final AuthTokenValidator authTokenValidator;
+    private final JwtTokenCredentialsValidator authTokenValidator;
     private final StorageEventLogger storageEventLogger;
 
     final ByteBuffer channelInputBuffer;
@@ -37,7 +36,7 @@ class SocketChannelStorageAgentRequest implements StorageAgentRequest {
     SocketChannelStorageAgentRequest(SocketChannel socketChannel,
                                      DataTransferService agentStorageProxy,
                                      StorageAllocatorService storageAllocatorService,
-                                     AuthTokenValidator authTokenValidator,
+                                     JwtTokenCredentialsValidator authTokenValidator,
                                      StorageEventLogger storageEventLogger) {
         this.socketChannel = socketChannel;
         this.agentStorageProxy = agentStorageProxy;
@@ -145,7 +144,7 @@ class SocketChannelStorageAgentRequest implements StorageAgentRequest {
     }
     private String validateAuthentication() {
         try {
-            jacsCredentials = authTokenValidator.validateJwtToken(transferState.getMessageType().getAuthToken(), null);
+            jacsCredentials = authTokenValidator.validateToken(transferState.getMessageType().getAuthToken(), null);
             return null;
         } catch (Exception e) {
             LOG.warn("Token validation exception {}", transferState.getMessageType().getAuthToken(), e);
