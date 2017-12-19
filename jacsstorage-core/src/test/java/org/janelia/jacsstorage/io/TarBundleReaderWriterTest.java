@@ -3,7 +3,6 @@ package org.janelia.jacsstorage.io;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.utils.IOUtils;
-import org.hamcrest.Matchers;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.junit.After;
 import org.junit.Before;
@@ -99,7 +98,7 @@ public class TarBundleReaderWriterTest {
                     .flatMap(l -> l.stream())
                     .sorted()
                     .collect(Collectors.toList());
-            assertEquals(currentExpectedResults, nodeList.stream().map(ni -> ni.getNodePath()).sorted().collect(Collectors.toList()));
+            assertEquals(currentExpectedResults, nodeList.stream().map(ni -> ni.getNodeRelativePath()).sorted().collect(Collectors.toList()));
         }
     }
 
@@ -126,7 +125,7 @@ public class TarBundleReaderWriterTest {
         for (TestData td : testData) {
             List<DataNodeInfo> nodeList = tarBundleReader.listBundleContent(testTarFile.toString(), td.entryName, td.depth);
             List<String> currentExpectedResults = td.expectedResults.stream().sorted().collect(Collectors.toList());
-            assertEquals("For entry " + td.entryName + " depth " + td.depth, currentExpectedResults, nodeList.stream().map(ni -> ni.getNodePath()).sorted().collect(Collectors.toList()));
+            assertEquals("For entry " + td.entryName + " depth " + td.depth, currentExpectedResults, nodeList.stream().map(ni -> ni.getNodeRelativePath()).sorted().collect(Collectors.toList()));
         }
     }
 
@@ -223,7 +222,7 @@ public class TarBundleReaderWriterTest {
             assertTrue(size == TarConstants.DEFAULT_RCDSIZE);
         }
         List<String> tarEntryNames = tarBundleReader.listBundleContent(testTarFile.toString(), null, 10).stream()
-                .map(ni -> ni.getNodePath())
+                .map(ni -> ni.getNodeRelativePath())
                 .collect(Collectors.toList());
         testData.forEach(td -> {
             assertThat(td + "/", isIn(tarEntryNames));
@@ -265,7 +264,7 @@ public class TarBundleReaderWriterTest {
             assertTrue(size > 2 * TarConstants.DEFAULT_RCDSIZE);
         }
         List<String> tarEntryNames = tarBundleReader.listBundleContent(testTarFile.toString(), null, 10).stream()
-                .map(ni -> ni.getNodePath())
+                .map(ni -> ni.getNodeRelativePath())
                 .collect(Collectors.toList());
         testData.forEach(td -> {
             assertThat(td, isIn(tarEntryNames));

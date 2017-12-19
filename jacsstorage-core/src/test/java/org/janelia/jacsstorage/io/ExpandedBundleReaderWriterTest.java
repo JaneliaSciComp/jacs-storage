@@ -1,9 +1,6 @@
 package org.janelia.jacsstorage.io;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Ordering;
-import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.utils.IOUtils;
 import org.hamcrest.Matchers;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
@@ -13,7 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -27,8 +23,6 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -141,7 +135,7 @@ public class ExpandedBundleReaderWriterTest {
                     .flatMap(l -> l.stream())
                     .sorted()
                     .collect(Collectors.toList());
-            assertEquals(currentExpectedResults, nodeList.stream().map(ni -> ni.getNodePath()).sorted().collect(Collectors.toList()));
+            assertEquals(currentExpectedResults, nodeList.stream().map(ni -> ni.getNodeRelativePath()).sorted().collect(Collectors.toList()));
         }
     }
 
@@ -168,7 +162,7 @@ public class ExpandedBundleReaderWriterTest {
         for (TestData td : testData) {
             List<DataNodeInfo> nodeList = expandedBundleReader.listBundleContent(testDataDir.toString(), td.entryName, td.depth);
             List<String> currentExpectedResults = td.expectedResults.stream().sorted().collect(Collectors.toList());
-            assertEquals("For entry " + td.entryName + " depth " + td.depth, currentExpectedResults, nodeList.stream().map(ni -> ni.getNodePath()).sorted().collect(Collectors.toList()));
+            assertEquals("For entry " + td.entryName + " depth " + td.depth, currentExpectedResults, nodeList.stream().map(ni -> ni.getNodeRelativePath()).sorted().collect(Collectors.toList()));
         }
     }
 
@@ -233,7 +227,7 @@ public class ExpandedBundleReaderWriterTest {
             assertTrue(size > 0);
         }
         List<String> tarEntryNames = expandedBundleReader.listBundleContent(testDataDir.toString(), "", 10).stream()
-                .map(ni -> ni.getNodePath())
+                .map(ni -> ni.getNodeRelativePath())
                 .collect(Collectors.toList());
         testData.forEach(td -> {
             assertThat(td, isIn(tarEntryNames));

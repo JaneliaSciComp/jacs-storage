@@ -5,7 +5,6 @@ import com.google.common.hash.HashingOutputStream;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 
 import javax.activation.MimetypesFileTypeMap;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,11 +27,12 @@ public abstract class AbstractBundleReader implements BundleReader {
 
     protected abstract long readBundleBytes(String source, OutputStream stream) throws Exception;
 
-    DataNodeInfo pathToDataNodeInfo(Path rootPath, Path nodePath, BiFunction<Path, Path, String> nodePathMapper) {
+    DataNodeInfo pathToDataNodeInfo(Path rootPath, Path nodePath) {
         try {
             DataNodeInfo dataNodeInfo = new DataNodeInfo();
             BasicFileAttributes attrs = Files.readAttributes(nodePath, BasicFileAttributes.class);
-            dataNodeInfo.setNodePath(nodePathMapper.apply(rootPath, nodePath));
+            dataNodeInfo.setRootLocation(rootPath.toString());
+            dataNodeInfo.setNodeRelativePath(rootPath.relativize(nodePath).toString());
             dataNodeInfo.setSize(attrs.size());
             dataNodeInfo.setMimeType(new MimetypesFileTypeMap().getContentType(nodePath.toFile()));
             dataNodeInfo.setCollectionFlag(attrs.isDirectory());

@@ -15,11 +15,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.Pipe;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,8 +50,9 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                 if (currentEntryName.equals(normalizedEntryName)) {
                     if (!sourceEntry.isDirectory()) {
                         DataNodeInfo dataNodeInfo = new DataNodeInfo();
+                        dataNodeInfo.setRootLocation(sourcePath.toString());
                         dataNodeInfo.setCollectionFlag(false);
-                        dataNodeInfo.setNodePath(currentEntryName);
+                        dataNodeInfo.setNodeRelativePath(currentEntryName);
                         dataNodeInfo.setSize(sourceEntry.getSize());
                         dataNodeInfo.setCreationTime(sourceEntry.getLastModifiedDate());
                         dataNodeInfo.setLastModified(sourceEntry.getLastModifiedDate());
@@ -71,9 +68,9 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                     DataNodeInfo dataNodeInfo = new DataNodeInfo();
                     if (sourceEntry.isDirectory()) {
                         dataNodeInfo.setCollectionFlag(true);
-                        dataNodeInfo.setNodePath(StringUtils.appendIfMissing(currentEntryName, "/"));
+                        dataNodeInfo.setNodeRelativePath(StringUtils.appendIfMissing(currentEntryName, "/"));
                     }  else {
-                        dataNodeInfo.setNodePath(currentEntryName);
+                        dataNodeInfo.setNodeRelativePath(currentEntryName);
                     }
                     dataNodeInfo.setSize(sourceEntry.getSize());
                     dataNodeInfo.setCreationTime(sourceEntry.getLastModifiedDate());

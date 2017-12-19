@@ -82,8 +82,8 @@ public class AgentWebdavResource {
         List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depthValue);
         Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeInfo) -> {
             String nodeInfoRelPath = nodeInfo.isCollectionFlag()
-                    ?  StringUtils.appendIfMissing(nodeInfo.getNodePath(), "/")
-                    : nodeInfo.getNodePath();
+                    ?  StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
+                    : nodeInfo.getNodeRelativePath();
             return resourceURI.getBaseUriBuilder()
                     .path(Constants.AGENTSTORAGE_URI_PATH)
                     .path(dataBundleId.toString())
@@ -178,8 +178,8 @@ public class AgentWebdavResource {
         List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(storagePath, null, storageFormat, depth);
         Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeInfo) -> {
             String nodeInfoRelPath = nodeInfo.isCollectionFlag()
-                    ?  StringUtils.appendIfMissing(nodeInfo.getNodePath(), "/")
-                    : nodeInfo.getNodePath();
+                    ?  StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
+                    : nodeInfo.getNodeRelativePath();
             return resourceURI.getBaseUriBuilder()
                     .path(Constants.AGENTSTORAGE_URI_PATH)
                     .path("path")
@@ -196,8 +196,8 @@ public class AgentWebdavResource {
         List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(storageBundle.getRealStoragePath(), dataEntryPath, storageBundle.getStorageFormat(), depth);
         Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeInfo) -> {
             String nodeInfoRelPath = nodeInfo.isCollectionFlag()
-                    ?  StringUtils.appendIfMissing(nodeInfo.getNodePath(), "/")
-                    : nodeInfo.getNodePath();
+                    ?  StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
+                    : nodeInfo.getNodeRelativePath();
             return resourceURI.getBaseUriBuilder()
                     .path(Constants.AGENTSTORAGE_URI_PATH)
                     .path(storageBundle.getId().toString())
