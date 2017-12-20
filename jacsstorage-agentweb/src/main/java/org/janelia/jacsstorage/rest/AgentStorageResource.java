@@ -265,6 +265,19 @@ public class AgentStorageResource {
         LOG.info("Create new directory {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
+        List<DataNodeInfo> existingEntries = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), 0);
+        if (CollectionUtils.isNotEmpty(existingEntries)) {
+            return Response
+                    .status(Response.Status.CONFLICT)
+                    .location(resourceURI.getBaseUriBuilder()
+                            .path(Constants.AGENTSTORAGE_URI_PATH)
+                            .path(dataBundleId.toString())
+                            .path("entry-content")
+                            .path(dataEntryPath)
+                            .build())
+                    .build();
+        }
+
         long newDirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat());
         storageAllocatorService.updateStorage(
                 SecurityUtils.getUserPrincipal(securityContext),
