@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -34,12 +35,16 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     @Override
     protected long readBundleBytes(String source, OutputStream stream) throws Exception {
         Path sourcePath = getSourcePath(source);
+        checkSourcePath(sourcePath);
         return Files.copy(sourcePath, stream);
     }
 
     @Override
     public List<DataNodeInfo> listBundleContent(String source, String entryName, int depth) {
         Path sourcePath = getSourcePath(source);
+        if (Files.notExists(sourcePath)) {
+            return Collections.emptyList();
+        }
         try {
             TarArchiveInputStream inputStream = new TarArchiveInputStream(new FileInputStream(sourcePath.toFile()));
             List<DataNodeInfo> dataNodeList = new ArrayList<>();
@@ -87,6 +92,7 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     @Override
     public long readDataEntry(String source, String entryName, OutputStream outputStream) throws IOException {
         Path sourcePath = getSourcePath(source);
+        checkSourcePath(sourcePath);
         if (StringUtils.isBlank(entryName)) {
             try {
                 return readBundleBytes(source, outputStream);
@@ -142,13 +148,15 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     }
 
     private Path getSourcePath(String source) {
-        Path sourcePath = Paths.get(source);
+        return Paths.get(source);
+    }
+
+    private void checkSourcePath(Path sourcePath) {
         if (Files.notExists(sourcePath)) {
-            throw new IllegalArgumentException("No file found for " + source);
+            throw new IllegalArgumentException("No file found for " + sourcePath);
         } else if (!Files.isRegularFile(sourcePath)) {
-            throw new IllegalArgumentException("Source " + source + " expected to be a file");
+            throw new IllegalArgumentException("Path " + sourcePath + " expected to be a file");
         }
-        return sourcePath;
     }
 
     private String normalizeEntryName(String name) {

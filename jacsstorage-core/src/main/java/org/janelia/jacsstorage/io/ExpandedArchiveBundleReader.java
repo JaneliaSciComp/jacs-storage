@@ -7,13 +7,10 @@ import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.msgpack.core.Preconditions;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.Channels;
-import java.nio.channels.Pipe;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,6 +69,7 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
     protected long readBundleBytes(String source, OutputStream stream) throws Exception {
         TarArchiveOutputStream outputStream = new TarArchiveOutputStream(stream, TarConstants.DEFAULT_RCDSIZE);
         Path sourcePath = getSourcePath(source);
+        Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
         Path archiverRootDir;
         if (Files.isRegularFile(sourcePath)) {
             archiverRootDir = sourcePath.getParent();
@@ -87,6 +85,9 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
     @Override
     public List<DataNodeInfo> listBundleContent(String source, String entryName, int depth) {
         Path sourcePath = getSourcePath(source);
+        if (Files.notExists(sourcePath)) {
+            return Collections.emptyList();
+        }
         Path startPath;
         if (StringUtils.isBlank(entryName)) {
             startPath = sourcePath;
@@ -107,6 +108,7 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
     @Override
     public long readDataEntry(String source, String entryName, OutputStream outputStream) throws IOException {
         Path sourcePath = getSourcePath(source);
+        Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
         if (StringUtils.isBlank(entryName)) {
             try {
                 return readBundleBytes(source, outputStream);
@@ -130,11 +132,7 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
     }
 
     private Path getSourcePath(String source) {
-        Path sourcePath = Paths.get(source);
-        if (Files.notExists(sourcePath)) {
-            throw new IllegalArgumentException("No path found for " + source);
-        }
-        return sourcePath;
+        return Paths.get(source);
     }
 
 }
