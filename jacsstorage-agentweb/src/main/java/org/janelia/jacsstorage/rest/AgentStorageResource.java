@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.base.Preconditions;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
@@ -318,6 +319,18 @@ public class AgentStorageResource {
         LOG.info("Create new file {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
+        List<DataNodeInfo> existingEntries = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), 0);
+        if (CollectionUtils.isNotEmpty(existingEntries)) {
+            return Response
+                    .status(Response.Status.CONFLICT)
+                    .location(resourceURI.getBaseUriBuilder()
+                            .path(Constants.AGENTSTORAGE_URI_PATH)
+                            .path(dataBundleId.toString())
+                            .path("entry-content")
+                            .path(dataEntryPath)
+                            .build())
+                    .build();
+        }
         long newFileEntrySize = dataStorageService.createFileEntry(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), contentStream);
         storageAllocatorService.updateStorage(
                 SecurityUtils.getUserPrincipal(securityContext),
