@@ -6,7 +6,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
-import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -214,11 +213,20 @@ public class AgentStorageResource {
                 ? entry.substring("/entry/".length())
                 : null;
         int depth = depthParam != null && depthParam >= 0 && depthParam < MAX_ALLOWED_DEPTH ? depthParam : MAX_ALLOWED_DEPTH;
-        List<DataNodeInfo> dataBundleCotent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depth);
+        List<DataNodeInfo> dataBundleCotent = listDataEntries(dataBundle, entryName, depth);
         return Response
                 .ok(dataBundleCotent, MediaType.APPLICATION_JSON)
                 .header("content-disposition","attachment; filename = " + dataBundle.getOwner() + "-" + dataBundle.getName())
                 .build();
+    }
+
+    private List<DataNodeInfo> listDataEntries(JacsBundle dataBundle, String entryName, int depth) {
+        List<DataNodeInfo> dataBundleCotent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depth);
+        if (CollectionUtils.isNotEmpty(dataBundleCotent) && dataBundle.getVirtualStoragePath() != null) {
+            String virtualStoragePath = dataBundle.getVirtualStoragePath().toString();
+            dataBundleCotent.forEach(dn -> dn.setRootPrefix(virtualStoragePath));
+        }
+        return dataBundleCotent;
     }
 
     @Produces(MediaType.APPLICATION_JSON)
@@ -265,7 +273,7 @@ public class AgentStorageResource {
         LOG.info("Create new directory {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        List<DataNodeInfo> existingEntries = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), 0);
+        List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         if (CollectionUtils.isNotEmpty(existingEntries)) {
             return Response
                     .status(Response.Status.CONFLICT)
@@ -275,6 +283,7 @@ public class AgentStorageResource {
                             .path("entry-content")
                             .path(dataEntryPath)
                             .build())
+                    .entity(existingEntries.get(0))
                     .build();
         }
 
@@ -285,6 +294,11 @@ public class AgentStorageResource {
                         .dataBundleId(dataBundleId)
                         .usedSpaceInBytes(newDirEntrySize)
                         .build());
+        DataNodeInfo newDataNode = new DataNodeInfo();
+        newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
+        newDataNode.setRootPrefix(dataBundle.getVirtualStoragePath().toString());
+        newDataNode.setNodeRelativePath(dataEntryPath);
+        newDataNode.setCollectionFlag(true);
         return Response
                 .created(resourceURI.getBaseUriBuilder()
                         .path(Constants.AGENTSTORAGE_URI_PATH)
@@ -292,6 +306,7 @@ public class AgentStorageResource {
                         .path("entry-content")
                         .path(dataEntryPath)
                         .build())
+                .entity(newDataNode)
                 .build();
     }
 
@@ -332,7 +347,7 @@ public class AgentStorageResource {
         LOG.info("Create new file {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        List<DataNodeInfo> existingEntries = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), 0);
+        List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         if (CollectionUtils.isNotEmpty(existingEntries)) {
             return Response
                     .status(Response.Status.CONFLICT)
@@ -342,6 +357,7 @@ public class AgentStorageResource {
                             .path("entry-content")
                             .path(dataEntryPath)
                             .build())
+                    .entity(existingEntries.get(0))
                     .build();
         }
         long newFileEntrySize = dataStorageService.createFileEntry(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), contentStream);
@@ -351,6 +367,11 @@ public class AgentStorageResource {
                         .dataBundleId(dataBundleId)
                         .usedSpaceInBytes(newFileEntrySize)
                         .build());
+        DataNodeInfo newDataNode = new DataNodeInfo();
+        newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
+        newDataNode.setRootPrefix(dataBundle.getVirtualStoragePath().toString());
+        newDataNode.setNodeRelativePath(dataEntryPath);
+        newDataNode.setCollectionFlag(false);
         return Response
                 .created(resourceURI.getBaseUriBuilder()
                         .path(Constants.AGENTSTORAGE_URI_PATH)
@@ -358,6 +379,7 @@ public class AgentStorageResource {
                         .path("entry-content")
                         .path(dataEntryPath)
                         .build())
+                .entity(newDataNode)
                 .build();
     }
 

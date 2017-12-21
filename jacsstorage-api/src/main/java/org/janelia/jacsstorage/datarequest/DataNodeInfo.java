@@ -4,6 +4,7 @@ import java.util.Date;
 
 public class DataNodeInfo {
     private String rootLocation;
+    private String rootPrefix;
     private String nodeRelativePath; // node path relative to the root
     private long size;
     private String mimeType;
@@ -17,6 +18,14 @@ public class DataNodeInfo {
 
     public void setRootLocation(String rootLocation) {
         this.rootLocation = rootLocation;
+    }
+
+    public String getRootPrefix() {
+        return rootPrefix;
+    }
+
+    public void setRootPrefix(String rootPrefix) {
+        this.rootPrefix = rootPrefix;
     }
 
     public String getNodeRelativePath() {
