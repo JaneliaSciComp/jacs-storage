@@ -67,13 +67,13 @@ public class JacsBundle extends AbstractEntity {
     }
 
     @JsonIgnore
-    public Path getVirtualStoragePath() {
+    public String getVirtualRoot() {
         if (storageVolume == null) {
-            return Paths.get(path);
+            return null;
         } else if (StringUtils.isNotBlank(storageVolume.getStoragePathPrefix())) {
-            return Paths.get(storageVolume.getStoragePathPrefix(), path);
+            return Paths.get(storageVolume.getStoragePathPrefix(), getId().toString()).toString();
         } else {
-            return Paths.get(path);
+            return getId().toString();
         }
     }
 

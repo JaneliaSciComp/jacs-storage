@@ -221,12 +221,12 @@ public class AgentStorageResource {
     }
 
     private List<DataNodeInfo> listDataEntries(JacsBundle dataBundle, String entryName, int depth) {
-        List<DataNodeInfo> dataBundleCotent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depth);
-        if (CollectionUtils.isNotEmpty(dataBundleCotent) && dataBundle.getVirtualStoragePath() != null) {
-            String virtualStoragePath = dataBundle.getVirtualStoragePath().toString();
-            dataBundleCotent.forEach(dn -> dn.setRootPrefix(virtualStoragePath));
+        List<DataNodeInfo> dataBundleContent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depth);
+        if (CollectionUtils.isNotEmpty(dataBundleContent) && dataBundle.getVirtualRoot() != null) {
+            String virtualStoragePath = dataBundle.getVirtualRoot();
+            dataBundleContent.forEach(dn -> dn.setRootPrefix(virtualStoragePath));
         }
-        return dataBundleCotent;
+        return dataBundleContent;
     }
 
     @Produces(MediaType.APPLICATION_JSON)
@@ -296,7 +296,7 @@ public class AgentStorageResource {
                         .build());
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
-        newDataNode.setRootPrefix(dataBundle.getVirtualStoragePath().toString());
+        newDataNode.setRootPrefix(dataBundle.getVirtualRoot());
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(true);
         return Response
@@ -369,7 +369,7 @@ public class AgentStorageResource {
                         .build());
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
-        newDataNode.setRootPrefix(dataBundle.getVirtualStoragePath().toString());
+        newDataNode.setRootPrefix(dataBundle.getVirtualRoot());
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(false);
         return Response
