@@ -40,7 +40,7 @@ public class SingleFileBundleReader extends AbstractBundleReader {
             return Collections.emptyList();
         }
         Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
-        return ImmutableList.of(pathToDataNodeInfo(sourcePath, sourcePath));
+        return ImmutableList.of(pathToDataNodeInfo(sourcePath, sourcePath, (rootPath, nodePath) -> rootPath.toString()));
     }
 
     @Override
