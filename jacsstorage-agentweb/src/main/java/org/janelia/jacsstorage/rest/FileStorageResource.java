@@ -8,6 +8,7 @@ import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.LogStorageEvent;
@@ -58,6 +59,7 @@ public class FileStorageResource {
     @Context
     private UriInfo resourceURI;
 
+    @RequireAuthentication
     @HEAD
     @Path("path/{filePath:.*}")
     public Response checkPath(@PathParam("filePath") String fullFileName,
@@ -76,6 +78,7 @@ public class FileStorageResource {
         }
     }
 
+    @RequireAuthentication
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @GET
     @Path("path/{dataPath:.*}")

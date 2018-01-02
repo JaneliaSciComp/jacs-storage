@@ -1,12 +1,17 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.io.ByteStreams;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.security.JacsCredentials;
+import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -33,6 +38,7 @@ import java.io.InputStream;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("storage-content")
+@Api(value = "File path based API for retrieving storage content")
 public class ContentStorageResource {
     private static final Logger LOG = LoggerFactory.getLogger(ContentStorageResource.class);
 
@@ -41,9 +47,14 @@ public class ContentStorageResource {
     @Inject @RemoteInstance
     private StorageVolumeManager storageVolumeManager;
 
+    @RequireAuthentication
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("path/{filePath:.+}")
+    @ApiOperation(value = "Get file content", notes = "")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success"),
+            @ApiResponse(code = 404, message = "Specified file path not found") })
     public Response getContentStream(@PathParam("filePath") String fullFileNameParam, @Context SecurityContext securityContext) {
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageLookupService, storageVolumeManager);
         return storageResourceHelper.retrieveFileContent(

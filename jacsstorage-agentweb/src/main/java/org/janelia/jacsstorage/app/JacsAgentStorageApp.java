@@ -31,7 +31,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         private int agentTCPPortNumber;
     }
 
-    public static void main(String[] args) throws ServletException {
+    public static void main(String[] args) {
         final AgentArgs agentArgs = new AgentArgs();
         JCommander cmdline = new JCommander(agentArgs);
         cmdline.parse(args);
@@ -51,11 +51,10 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         int tcpListenerPortNo = app.startAgentListener(agentArgs, agentExecutor, storageAgentListener);
         // update agent info
         agentState.updateAgentInfo(
-                UriBuilder.fromPath(agentArgs.baseContextPath)
+                UriBuilder.fromPath(app.getRestApi(agentArgs))
                         .scheme("http")
                         .host(agentState.getStorageHost())
                         .port(agentArgs.portNumber)
-                        .path("agent-api")
                         .build()
                         .toString(),
                 tcpListenerPortNo);
@@ -68,17 +67,23 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     }
 
     @Override
-    protected String getJaxConfigName() {
+    String getJaxConfigName() {
         return JAXAgentStorageApp.class.getName();
     }
 
     @Override
-    protected String getRestApiMapping() {
-        return "/agent-api/*";
+    String getRestApi(AppArgs appArgs) {
+        StringBuilder apiPathBuilder = new StringBuilder();
+        if (StringUtils.isNotBlank(appArgs.baseContextPath)) {
+            apiPathBuilder.append(StringUtils.prependIfMissing(appArgs.baseContextPath, "/"));
+        }
+        apiPathBuilder.append("/agent-api/")
+                .append(getApiVersion());
+        return apiPathBuilder.toString();
     }
 
     @Override
-    protected ListenerInfo[] getAppListeners() {
+    ListenerInfo[] getAppListeners() {
         return new ListenerInfo[] {
         };
     }

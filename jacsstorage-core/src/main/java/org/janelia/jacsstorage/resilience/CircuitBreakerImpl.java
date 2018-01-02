@@ -1,5 +1,8 @@
 package org.janelia.jacsstorage.resilience;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -8,6 +11,7 @@ import java.util.function.Consumer;
 
 public class CircuitBreakerImpl<T> implements CircuitBreaker<T> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CircuitBreakerImpl.class);
     private final ScheduledExecutorService scheduler;
     private final int periodInSeconds;
     private final int initialDelayInSeconds;
@@ -36,26 +40,35 @@ public class CircuitBreakerImpl<T> implements CircuitBreaker<T> {
     @Override
     public void initialize(T connState, CircuitTester<T> circuitTester, Optional<Consumer<T>> onSuccess, Optional<Consumer<T>> onFailure) {
         Runnable scheduleTask = () -> {
-            if (circuitTester.testConnection(connState)) {
-                if (state != BreakerState.CLOSED) {
-                    reset();
-                    // only invoke the handler if there was a change in the state of the circuit
-                    onSuccess.map(action -> {
-                        action.accept(connState);
-                        return null;
-                    });
+            try {
+                if (circuitTester.testConnection(connState)) {
+                    if (state != BreakerState.CLOSED) {
+                        reset();
+                        // only invoke the handler if there was a change in the state of the circuit
+                        onSuccess.map(action -> {
+                            action.accept(connState);
+                            return null;
+                        });
+                    }
+                } else {
+                    if (state == null || state != BreakerState.OPEN && ++numFailures >= tripThreshold) {
+                        // only invoke the handler if there was a change in the state of the circuit
+                        state = BreakerState.OPEN;
+                        onFailure.map(action -> {
+                            action.accept(connState);
+                            return null;
+                        });
+                    } else if (state == BreakerState.CLOSED) {
+                        state = BreakerState.HALF_CLOSED;
+                    }
                 }
-            } else {
-                if (state == null || state != BreakerState.OPEN && ++numFailures >= tripThreshold) {
-                    // only invoke the handler if there was a change in the state of the circuit
-                    state = BreakerState.OPEN;
-                    onFailure.map(action -> {
-                        action.accept(connState);
-                        return null;
-                    });
-                } else if (state == BreakerState.CLOSED) {
-                    state = BreakerState.HALF_CLOSED;
-                }
+            } catch (Exception e) {
+                LOG.error("Error testing connection", e);
+                state = BreakerState.OPEN;
+                onFailure.map(action -> {
+                    action.accept(connState);
+                    return null;
+                });
             }
         };
         if (initialDelayInSeconds == 0) {

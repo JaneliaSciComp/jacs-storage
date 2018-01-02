@@ -14,6 +14,14 @@ subprojects {
             mavenCentral()
         }
 
+        configurations {
+            provided
+            implementation.extendsFrom(provided)
+            integrationTestCompileOnly.extendsFrom(testCompileOnly)
+            integrationTestImplementation.extendsFrom(testImplementation)
+            integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+        }
+
         sourceSets {
             integrationTest {
                 java {
@@ -23,16 +31,8 @@ subprojects {
                 }
                 resources {
                     srcDir file('src/integrationTest/resources')
-                 }
+                }
              }
-        }
-
-        configurations {
-            provided
-            implementation.extendsFrom(provided)
-            integrationTestCompileOnly.extendsFrom(testCompileOnly)
-            integrationTestImplementation.extendsFrom(testImplementation)
-            integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
         }
 
         idea {
@@ -61,5 +61,5 @@ subprojects {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "4.3"
+    gradleVersion = "4.4.1"
 }

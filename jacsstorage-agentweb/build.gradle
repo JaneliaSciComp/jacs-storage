@@ -1,4 +1,5 @@
 apply plugin: 'application'
+apply plugin: 'distribution'
 
 mainClassName = 'org.janelia.jacsstorage.app.JacsAgentStorageApp'
 
@@ -14,6 +15,21 @@ project(":jacsstorage-agentweb") {
         testImplementation JERSEY_TEST_LIB,
                            JERSEY_TEST_PROVIDER_LIB
 
+    }
+
+    distributions {
+        main {
+	    contents {
+                into('swagger-webapp') {
+                    from(new File(project(':jacsstorage-commonweb').projectDir, 'src/main/swagger-webapp')) {
+		        include '**'
+		    }
+                    from(new File(projectDir, 'src/main/swagger-webapp')) {
+		        include 'index.html'
+		    }
+                }
+	    }
+	}
     }
 }
 

@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.app;
 
 import com.fasterxml.jackson.jaxrs.xml.JacksonJaxbXMLProvider;
 import com.google.common.collect.ImmutableSet;
+import io.swagger.jaxrs.listing.ApiListingResource;
 import org.janelia.jacsstorage.filter.CORSResponseFilter;
 import org.janelia.jacsstorage.filter.JWTAuthFilter;
 import org.janelia.jacsstorage.provider.ObjectMapperResolver;
@@ -19,7 +20,8 @@ public abstract class AbstractJAXApp extends Application {
     @Override
     public Set<Class<?>> getClasses() {
         return ImmutableSet.<Class<?>>builder()
-                .add(ObjectMapperResolver.class,
+                .add(ApiListingResource.class,
+                        ObjectMapperResolver.class,
                         JacksonJaxbXMLProvider.class,
                         JWTAuthFilter.class,
                         CORSResponseFilter.class,

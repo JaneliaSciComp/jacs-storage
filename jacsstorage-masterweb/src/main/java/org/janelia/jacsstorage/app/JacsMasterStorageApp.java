@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.app;
 
 import com.beust.jcommander.JCommander;
 import io.undertow.servlet.api.ListenerInfo;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
@@ -12,7 +13,7 @@ import javax.servlet.ServletException;
  */
 public class JacsMasterStorageApp extends AbstractStorageApp {
 
-    public static void main(String[] args) throws ServletException {
+    public static void main(String[] args) {
         final AppArgs appArgs = new AppArgs();
         JCommander cmdline = new JCommander(appArgs);
         cmdline.parse(args);
@@ -28,17 +29,23 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
     }
 
     @Override
-    protected String getJaxConfigName() {
+    String getJaxConfigName() {
         return JAXMasterStorageApp.class.getName();
     }
 
     @Override
-    protected String getRestApiMapping() {
-        return "/master-api/*";
+    String getRestApi(AppArgs appArgs) {
+        StringBuilder apiPathBuilder = new StringBuilder();
+        if (StringUtils.isNotBlank(appArgs.baseContextPath)) {
+            apiPathBuilder.append(StringUtils.prependIfMissing(appArgs.baseContextPath, "/"));
+        }
+        apiPathBuilder.append("/master-api/")
+                .append(getApiVersion());
+        return apiPathBuilder.toString();
     }
 
     @Override
-    protected ListenerInfo[] getAppListeners() {
+    ListenerInfo[] getAppListeners() {
         return new ListenerInfo[] {
         };
     }

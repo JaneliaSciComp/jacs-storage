@@ -10,12 +10,12 @@ import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.security.JacsSecurityContext;
+import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.LogStorageEvent;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 
-import javax.annotation.security.PermitAll;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -47,7 +47,6 @@ public class MasterStorageResource {
     @Context
     private UriInfo resourceURI;
 
-    @PermitAll
     @Produces(MediaType.TEXT_PLAIN)
     @GET
     @Path("status")
@@ -55,6 +54,7 @@ public class MasterStorageResource {
         return "OK";
     }
 
+    @RequireAuthentication
     @GET
     public Response listBundleInfo(@QueryParam("id") Long dataBundleId,
                                    @QueryParam("owner") String owner,
@@ -99,6 +99,7 @@ public class MasterStorageResource {
                 .build();
     }
 
+    @RequireAuthentication
     @GET
     @Path("{id}")
     public Response getBundleInfo(@PathParam("id") Long id, @Context SecurityContext securityContext) {
@@ -118,6 +119,7 @@ public class MasterStorageResource {
         }
     }
 
+    @RequireAuthentication
     @GET
     @Path("{owner}/{name}")
     public Response getBundleInfoByOwnerAndName(@PathParam("owner") String owner,
@@ -142,6 +144,7 @@ public class MasterStorageResource {
     @LogStorageEvent(
             eventName = "ALLOCATE_STORAGE_METADATA"
     )
+    @RequireAuthentication
     @Consumes("application/json")
     @POST
     public Response createBundleInfo(DataStorageInfo dataStorageInfo, @Context SecurityContext securityContext) {
@@ -161,6 +164,7 @@ public class MasterStorageResource {
     @LogStorageEvent(
             eventName = "UPDATE_STORAGE_METADATA"
     )
+    @RequireAuthentication
     @Consumes("application/json")
     @PUT
     @Path("{id}")
@@ -182,6 +186,7 @@ public class MasterStorageResource {
     @LogStorageEvent(
             eventName = "DELETE_STORAGE_METADATA"
     )
+    @RequireAuthentication
     @DELETE
     @Path("{id}")
     public Response deleteBundleInfo(@PathParam("id") Long id, @Context SecurityContext securityContext) {

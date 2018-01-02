@@ -1,6 +1,10 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.base.Preconditions;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
@@ -12,6 +16,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.LogStorageEvent;
@@ -49,6 +54,7 @@ import java.util.List;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path(Constants.AGENTSTORAGE_URI_PATH)
+@Api(value = "Agent storage API")
 public class AgentStorageResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(AgentStorageResource.class);
@@ -70,9 +76,16 @@ public class AgentStorageResource {
             eventName = "HTTP_STREAM_STORAGE_DATA",
             argList = {0, 1}
     )
+    @RequireAuthentication
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @POST
     @Path("{dataBundleId}")
+    @ApiOperation(value = "Persist the input stream")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Return the storage metadata"),
+            @ApiResponse(code = 404, message = "Invalid bundle ID"),
+            @ApiResponse(code = 500, message = "Persistence error")
+    })
     public Response persistStream(@PathParam("dataBundleId") Long dataBundleId,
                                   @Context SecurityContext securityContext,
                                   InputStream bundleStream) throws IOException {
@@ -88,6 +101,7 @@ public class AgentStorageResource {
                 .build();
     }
 
+    @RequireAuthentication
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("{dataBundleId}")
@@ -110,6 +124,7 @@ public class AgentStorageResource {
                 .build();
     }
 
+    @RequireAuthentication
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("path/{filePath:.+}")
@@ -138,6 +153,7 @@ public class AgentStorageResource {
         );
     }
 
+    @RequireAuthentication
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("storageVolume/{storageVolumeId}/{storageRelativePath:.+}")
@@ -199,6 +215,7 @@ public class AgentStorageResource {
                 .build();
     }
 
+    @RequireAuthentication
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     @Path("{dataBundleId}/list{entry:(/entry/[^/]+?)?}")
@@ -229,6 +246,7 @@ public class AgentStorageResource {
         return dataBundleContent;
     }
 
+    @RequireAuthentication
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     @Path("{dataBundleId}/entry-content/{dataEntryPath:.*}")
@@ -245,6 +263,7 @@ public class AgentStorageResource {
             eventName = "CREATE_STORAGE_FOLDER",
             argList = {0, 1}
     )
+    @RequireAuthentication
     @Produces(MediaType.APPLICATION_JSON)
     @POST
     @Path("{dataBundleId}/directory/{dataEntryPath:.*}")
@@ -258,6 +277,7 @@ public class AgentStorageResource {
             eventName = "CREATE_STORAGE_FOLDER",
             argList = {0, 1, 2}
     )
+    @RequireAuthentication
     @Produces(MediaType.APPLICATION_JSON)
     @PUT
     @Path("{dataBundleId}/directory/{dataEntryPath:.*}")
@@ -314,6 +334,7 @@ public class AgentStorageResource {
             eventName = "CREATE_STORAGE_FILE",
             argList = {0, 1, 2}
     )
+    @RequireAuthentication
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
     @POST
@@ -329,6 +350,7 @@ public class AgentStorageResource {
             eventName = "CREATE_STORAGE_FILE",
             argList = {0, 1, 2}
     )
+    @RequireAuthentication
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
     @PUT
@@ -387,6 +409,7 @@ public class AgentStorageResource {
             eventName = "DELETE_STORAGE",
             argList = {0, 1}
     )
+    @RequireAuthentication
     @DELETE
     @Path("{dataBundleId}")
     public Response deleteStorage(@PathParam("dataBundleId") Long dataBundleId,

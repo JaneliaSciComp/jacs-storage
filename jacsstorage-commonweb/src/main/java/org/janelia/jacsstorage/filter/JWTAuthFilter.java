@@ -1,19 +1,17 @@
 package org.janelia.jacsstorage.filter;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.security.AggregatedTokenCredentialsValidator;
 import org.janelia.jacsstorage.security.ApiKeyCredentialsValidator;
-import org.janelia.jacsstorage.security.JwtTokenCredentialsValidator;
 import org.janelia.jacsstorage.security.CachedTokenCredentialsValidator;
-import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.security.JacsSecurityContext;
+import org.janelia.jacsstorage.security.JwtTokenCredentialsValidator;
+import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.TokenCredentialsValidator;
 
 import javax.annotation.Priority;
-import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -41,7 +39,7 @@ public class JWTAuthFilter implements ContainerRequestFilter {
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
         Method method = resourceInfo.getResourceMethod();
-        if (method.isAnnotationPresent(PermitAll.class)) {
+        if (!method.isAnnotationPresent(RequireAuthentication.class)) {
             // everybody is allowed to access the method
             return;
         }

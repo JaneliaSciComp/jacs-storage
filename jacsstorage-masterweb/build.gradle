@@ -1,4 +1,5 @@
 apply plugin: 'application'
+apply plugin: 'distribution'
 
 mainClassName = 'org.janelia.jacsstorage.app.JacsMasterStorageApp'
 
@@ -8,6 +9,21 @@ project(":jacsstorage-masterweb") {
                        CDI_SE_CORE_LIB,
                        JERSEY_CDI_SERVLET_LIB,
                        JERSEY_INJECT_LIB
+    }
+
+    distributions {
+        main {
+	    contents {
+                into('swagger-webapp') {
+                    from(new File(project(':jacsstorage-commonweb').projectDir, 'src/main/swagger-webapp')) {
+		        include '**'
+		    }
+                    from(new File(projectDir, 'src/main/swagger-webapp')) {
+		        include 'index.html'
+		    }
+                }
+	    }
+	}
     }
 }
 
