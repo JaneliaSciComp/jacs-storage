@@ -52,9 +52,10 @@ import java.util.Base64;
 import java.util.List;
 
 @RequestScoped
+@RequireAuthentication
 @Produces(MediaType.APPLICATION_JSON)
 @Path(Constants.AGENTSTORAGE_URI_PATH)
-@Api(value = "Agent storage API")
+@Api(value = "Agent storage API. This API requires an authenticated subject.")
 public class AgentStorageResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(AgentStorageResource.class);
@@ -76,14 +77,13 @@ public class AgentStorageResource {
             eventName = "HTTP_STREAM_STORAGE_DATA",
             argList = {0, 1}
     )
-    @RequireAuthentication
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @POST
     @Path("{dataBundleId}")
-    @ApiOperation(value = "Persist the input stream")
+    @ApiOperation(value = "Persist the input stream in the specified data bundle.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Return the storage metadata"),
-            @ApiResponse(code = 404, message = "Invalid bundle ID"),
+            @ApiResponse(code = 404, message = "Invalid data bundle identifier"),
             @ApiResponse(code = 500, message = "Persistence error")
     })
     public Response persistStream(@PathParam("dataBundleId") Long dataBundleId,
@@ -101,10 +101,15 @@ public class AgentStorageResource {
                 .build();
     }
 
-    @RequireAuthentication
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("{dataBundleId}")
+    @ApiOperation(value = "Stream the entire data bundle.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The stream was successfull"),
+            @ApiResponse(code = 404, message = "Invalid data bundle identifier"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
     public Response retrieveStream(@PathParam("dataBundleId") Long dataBundleId,
                                    @Context SecurityContext securityContext) {
         LOG.info("Retrieve the entire stored bundle {}", dataBundleId);
@@ -124,10 +129,16 @@ public class AgentStorageResource {
                 .build();
     }
 
-    @RequireAuthentication
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("path/{filePath:.+}")
+    @ApiOperation(value = "Stream the specified data file. The file is specified using the full file path.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The stream was successfull"),
+            @ApiResponse(code = 404, message = "Invalid data bundle identifier"),
+            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
     public Response retrieveFile(@PathParam("filePath") String fullFileNameParam,
                                  @Context SecurityContext securityContext) {
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageLookupService, storageVolumeManager);
@@ -153,10 +164,15 @@ public class AgentStorageResource {
         );
     }
 
-    @RequireAuthentication
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("storageVolume/{storageVolumeId}/{storageRelativePath:.+}")
+    @ApiOperation(value = "Stream the specified data file identified by the relative path to the volume mount point.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The stream was successfull"),
+            @ApiResponse(code = 404, message = "Invalid volume identifier or invalid file path"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
     public Response retrieveFileFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                   @PathParam("storageRelativePath") String storageRelativeFilePath) {
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
@@ -215,10 +231,15 @@ public class AgentStorageResource {
                 .build();
     }
 
-    @RequireAuthentication
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     @Path("{dataBundleId}/list{entry:(/entry/[^/]+?)?}")
+    @ApiOperation(value = "List the data bundle content.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully read the data bundle content."),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
     public Response listContent(@PathParam("dataBundleId") Long dataBundleId,
                                 @PathParam("entry") String entry,
                                 @QueryParam("depth") Integer depthParam,
@@ -246,10 +267,15 @@ public class AgentStorageResource {
         return dataBundleContent;
     }
 
-    @RequireAuthentication
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     @Path("{dataBundleId}/entry-content/{dataEntryPath:.*}")
+    @ApiOperation(value = "Retrieve the content of the specified data bundle entry.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully read the data bundle entry's content."),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
     public Response getEntryContent(@PathParam("dataBundleId") Long dataBundleId,
                                     @PathParam("dataEntryPath") String dataEntryPath,
                                     @Context SecurityContext securityContext) {
@@ -263,10 +289,16 @@ public class AgentStorageResource {
             eventName = "CREATE_STORAGE_FOLDER",
             argList = {0, 1}
     )
-    @RequireAuthentication
     @Produces(MediaType.APPLICATION_JSON)
     @POST
     @Path("{dataBundleId}/directory/{dataEntryPath:.*}")
+    @ApiOperation(value = "Create a new folder in the specified data bundle.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 202, message = "The new folder was created successfully. Return the URL of the corresponding entry in the location header attribute."),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
+            @ApiResponse(code = 409, message = "A folder with this name already exists"),
+            @ApiResponse(code = 500, message = "Data write error")
+    })
     public Response postCreateDirectory(@PathParam("dataBundleId") Long dataBundleId,
                                         @PathParam("dataEntryPath") String dataEntryPath,
                                         @Context SecurityContext securityContext) {
@@ -277,10 +309,16 @@ public class AgentStorageResource {
             eventName = "CREATE_STORAGE_FOLDER",
             argList = {0, 1, 2}
     )
-    @RequireAuthentication
     @Produces(MediaType.APPLICATION_JSON)
     @PUT
     @Path("{dataBundleId}/directory/{dataEntryPath:.*}")
+    @ApiOperation(value = "Create a new folder in the specified data bundle.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 202, message = "The new folder was created successfully. Return the URL of the corresponding entry in the location header attribute."),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
+            @ApiResponse(code = 409, message = "A folder with this name already exists"),
+            @ApiResponse(code = 500, message = "Data write error")
+    })
     public Response putCreateDirectory(@PathParam("dataBundleId") Long dataBundleId,
                                        @PathParam("dataEntryPath") String dataEntryPath,
                                        @Context SecurityContext securityContext) {
@@ -334,11 +372,17 @@ public class AgentStorageResource {
             eventName = "CREATE_STORAGE_FILE",
             argList = {0, 1, 2}
     )
-    @RequireAuthentication
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
     @POST
     @Path("{dataBundleId}/file/{dataEntryPath:.*}")
+    @ApiOperation(value = "Create a new content entry in the specified data bundle.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 202, message = "The new content was created successfully. Return the URL of the corresponding entry in the location header attribute."),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
+            @ApiResponse(code = 409, message = "A file with this name already exists"),
+            @ApiResponse(code = 500, message = "Data write error")
+    })
     public Response postCreateFile(@PathParam("dataBundleId") Long dataBundleId,
                                    @PathParam("dataEntryPath") String dataEntryPath,
                                    @Context SecurityContext securityContext,
@@ -350,11 +394,17 @@ public class AgentStorageResource {
             eventName = "CREATE_STORAGE_FILE",
             argList = {0, 1, 2}
     )
-    @RequireAuthentication
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
     @PUT
     @Path("{dataBundleId}/file/{dataEntryPath:.*}")
+    @ApiOperation(value = "Create a new content entry in the specified data bundle.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 202, message = "The new content was created successfully. Return the URL of the corresponding entry in the location header attribute."),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
+            @ApiResponse(code = 409, message = "A file with this name already exists"),
+            @ApiResponse(code = 500, message = "Data write error")
+    })
     public Response putCreateFile(@PathParam("dataBundleId") Long dataBundleId,
                                   @PathParam("dataEntryPath") String dataEntryPath,
                                   @Context SecurityContext securityContext,
@@ -409,9 +459,15 @@ public class AgentStorageResource {
             eventName = "DELETE_STORAGE",
             argList = {0, 1}
     )
-    @RequireAuthentication
     @DELETE
     @Path("{dataBundleId}")
+    @ApiOperation(value = "Delete the entire specified data bundle. Use this operation with caution because at this point there's no backup and data cannot be restored")
+    @ApiResponses(value = {
+            @ApiResponse(code = 202, message = "The new content was created successfully. Return the URL of the corresponding entry in the location header attribute."),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
+            @ApiResponse(code = 409, message = "A file with this name already exists"),
+            @ApiResponse(code = 500, message = "Data write error")
+    })
     public Response deleteStorage(@PathParam("dataBundleId") Long dataBundleId,
                                   @Context SecurityContext securityContext) throws IOException {
         LOG.info("Delete bundle {}", dataBundleId);

@@ -41,10 +41,10 @@ public class AgentConnectionResource {
 
     @Consumes(MediaType.APPLICATION_JSON)
     @POST
-    @ApiOperation(value = "Connect an agent to the master")
+    @ApiOperation(value = "Connect this agent to the specified master URL")
     @ApiResponses(value = {
-            @ApiResponse(code = 202, message = "Return the agent status URL in the location header attribute"),
-            @ApiResponse(code = 404, message = "Agent URL is invalid")
+            @ApiResponse(code = 202, message = "Return this agent's connection status URL in the location header attribute"),
+            @ApiResponse(code = 404, message = "Master URL is invalid")
     })
     public Response connect(String connectURL) {
         agentState.connectTo(connectURL);

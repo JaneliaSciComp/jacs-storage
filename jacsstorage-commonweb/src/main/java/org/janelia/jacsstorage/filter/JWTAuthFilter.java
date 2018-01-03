@@ -39,7 +39,9 @@ public class JWTAuthFilter implements ContainerRequestFilter {
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
         Method method = resourceInfo.getResourceMethod();
-        if (!method.isAnnotationPresent(RequireAuthentication.class)) {
+        boolean authenticationRequired = method.isAnnotationPresent(RequireAuthentication.class) ||
+                method.getDeclaringClass().isAnnotationPresent(RequireAuthentication.class);
+        if (!authenticationRequired) {
             // everybody is allowed to access the method
             return;
         }
