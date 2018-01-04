@@ -184,7 +184,7 @@ public class AgentWebdavResource {
                     : nodeInfo.getNodeRelativePath();
             return resourceURI.getBaseUriBuilder()
                     .path(Constants.AGENTSTORAGE_URI_PATH)
-                    .path("path")
+                    .path("storage_path")
                     .path(nodeInfoRelPath)
                     .build()
                     .toString();
