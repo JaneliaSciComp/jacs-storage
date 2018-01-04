@@ -69,7 +69,7 @@ public class AgentWebdavResource {
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
     @PROPFIND
-    @Path("dataStorage/{dataBundleId}{entry:(/entry/[^/]+?)?}")
+    @Path("data_storage/{dataBundleId}{entry:(/entry/[^/]+?)?}")
     public Response dataStoragePropFindByStorageId(@PathParam("dataBundleId") Long dataBundleId,
                                                    @PathParam("entry") String entry,
                                                    @HeaderParam("Depth") String depth,
@@ -105,7 +105,7 @@ public class AgentWebdavResource {
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
     @PROPFIND
-    @Path("dataStoragePath/{dataStoragePath:.+}")
+    @Path("data_storage_path/{dataStoragePath:.+}")
     public Response dataStoragePropFindByPath(@PathParam("dataStoragePath") String dataStoragePath,
                                               @HeaderParam("Depth") String depth,
                                               Propfind propfindRequest,
@@ -218,7 +218,7 @@ public class AgentWebdavResource {
     )
     @Produces(MediaType.APPLICATION_JSON)
     @MKCOL
-    @Path("dataStorage/{dataBundleId}/{dataDirPath: .+}")
+    @Path("data_storage/{dataBundleId}/{dataDirPath: .+}")
     public Response createDataStorageDir(@PathParam("dataBundleId") Long dataBundleId,
                                          @PathParam("dataDirPath") String dataDirPath,
                                          @Context SecurityContext securityContext) {

@@ -53,7 +53,7 @@ public class MasterWebdavResource {
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
     @PROPFIND
-    @Path("storagePrefix/{storagePrefix:.+}")
+    @Path("storage_prefix/{storagePrefix:.+}")
     public Response dataStoragePropFindByStoragePrefix(@PathParam("storagePrefix") String storagePrefix,
                                                        Propfind propfindRequest,
                                                        @Context SecurityContext securityContext) {

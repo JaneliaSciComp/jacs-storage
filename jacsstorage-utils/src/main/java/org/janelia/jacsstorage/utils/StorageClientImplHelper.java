@@ -92,7 +92,7 @@ public class StorageClientImplHelper {
     }
 
     public Optional<DataStorageInfo> streamDataToStore(String connectionURL, DataStorageInfo storageInfo, InputStream dataStream, String authToken) {
-        String dataStreamEndpoint = String.format("/agent-storage/%s", storageInfo.getId());
+        String dataStreamEndpoint = String.format("/agent_storage/%s", storageInfo.getId());
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
@@ -118,7 +118,7 @@ public class StorageClientImplHelper {
     }
 
     public Optional<InputStream> streamDataFromStore(String connectionURL, DataStorageInfo storageInfo, String authToken) {
-        String dataStreamEndpoint = String.format("/agent-storage/%s", storageInfo.getId());
+        String dataStreamEndpoint = String.format("/agent_storage/%s", storageInfo.getId());
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
@@ -155,7 +155,7 @@ public class StorageClientImplHelper {
     }
 
     private Optional<String> addNewStorageFolder(String connectionURL, Number storageId, String newDirPath, String authToken) {
-        String dataStreamEndpoint = String.format("/agent-storage/%s/directory/%s", storageId, newDirPath);
+        String dataStreamEndpoint = String.format("/agent_storage/%s/directory/%s", storageId, newDirPath);
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
@@ -192,7 +192,7 @@ public class StorageClientImplHelper {
     }
 
     private Optional<String> addNewStorageContent(String connectionURL, Number storageId, String newDirPath, InputStream contentStream, String authToken) {
-        String dataStreamEndpoint = String.format("/agent-storage/%s/file/%s", storageId, newDirPath);
+        String dataStreamEndpoint = String.format("/agent_storage/%s/file/%s", storageId, newDirPath);
         Client httpClient = null;
         try {
             httpClient = createHttpClient();

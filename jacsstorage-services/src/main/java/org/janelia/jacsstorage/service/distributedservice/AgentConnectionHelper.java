@@ -49,7 +49,7 @@ class AgentConnectionHelper {
     }
 
     static boolean deleteStorage(String agentUrl, Number dataBundleId, String subject, String authToken) {
-        String deleteStorageEndpoint = String.format("/agent-storage/%d", dataBundleId);
+        String deleteStorageEndpoint = String.format("/agent_storage/%d", dataBundleId);
         Client httpClient = null;
         try {
             httpClient = HttpUtils.createHttpClient();

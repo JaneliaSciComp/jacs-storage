@@ -21,6 +21,7 @@ import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.LogStorageEvent;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
+import org.janelia.jacsstorage.service.StorageContentReader;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
@@ -129,108 +130,6 @@ public class AgentStorageResource {
                 .build();
     }
 
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-    @GET
-    @Path("path/{filePath:.+}")
-    @ApiOperation(value = "Stream the specified data file. The file is specified using the full file path.")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The stream was successfull"),
-            @ApiResponse(code = 404, message = "Invalid data bundle identifier"),
-            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
-            @ApiResponse(code = 500, message = "Data read error")
-    })
-    public Response retrieveFile(@PathParam("filePath") String fullFileNameParam,
-                                 @Context SecurityContext securityContext) {
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageLookupService, storageVolumeManager);
-        return storageResourceHelper.retrieveFileContent(
-                fullFileNameParam,
-                () -> Response
-                        .status(Response.Status.CONFLICT)
-                        .entity(new ErrorResponse("More than one volume found for " + fullFileNameParam))
-                        .build(),
-                (dataBundle, dataEntryPath) -> retrieveFileFromBundle(dataBundle, dataEntryPath),
-                (storageVolume, dataEntryPath) -> {
-                    if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath))) {
-                        return retrieveFileUsingFilePath(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath));
-                    } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath))) {
-                        return retrieveFileUsingFilePath(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath));
-                    } else {
-                        return Response
-                                .status(Response.Status.NOT_FOUND)
-                                .entity(new ErrorResponse("No path found for " + fullFileNameParam))
-                                .build();
-                    }
-                }
-        );
-    }
-
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-    @GET
-    @Path("storageVolume/{storageVolumeId}/{storageRelativePath:.+}")
-    @ApiOperation(value = "Stream the specified data file identified by the relative path to the volume mount point.")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The stream was successfull"),
-            @ApiResponse(code = 404, message = "Invalid volume identifier or invalid file path"),
-            @ApiResponse(code = 500, message = "Data read error")
-    })
-    public Response retrieveFileFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
-                                                  @PathParam("storageRelativePath") String storageRelativeFilePath) {
-        JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
-        if (storageVolume == null) {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
-                    .build();
-        }
-        if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(storageRelativeFilePath))) {
-            return retrieveFileUsingFilePath(Paths.get(storageVolume.getStorageRootDir()).resolve(storageRelativeFilePath));
-        } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(storageRelativeFilePath))) {
-            return retrieveFileUsingFilePath(Paths.get(storageVolume.getStoragePathPrefix()).resolve(storageRelativeFilePath));
-        } else {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No path found for " + storageRelativeFilePath + " on " + storageVolumeId))
-                    .build();
-        }
-    }
-
-    private Response retrieveFileUsingFilePath(java.nio.file.Path filePath) {
-        JacsStorageFormat storageFormat = Files.isRegularFile(filePath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
-        StreamingOutput fileStream = output -> {
-            try {
-                dataStorageService.retrieveDataStream(filePath, storageFormat, output);
-                output.flush();
-            } catch (Exception e) {
-                LOG.error("Error streaming data file content for {}", filePath, e);
-                throw new WebApplicationException(e);
-            }
-        };
-        return Response
-                .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-                .header("content-disposition","attachment; filename = " + filePath.toFile().getName())
-                .build();
-    }
-
-    private Response retrieveFileFromBundle(JacsBundle dataBundle, String dataEntryPath) {
-        StreamingOutput bundleStream = output -> {
-            try {
-                dataStorageService.readDataEntryStream(
-                        dataBundle.getRealStoragePath(),
-                        dataEntryPath,
-                        dataBundle.getStorageFormat(),
-                        output);
-                output.flush();
-            } catch (Exception e) {
-                LOG.error("Error streaming data file content for {}:{}", dataBundle, dataEntryPath, e);
-                throw new WebApplicationException(e);
-            }
-        };
-        return Response
-                .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)
-                .header("content-disposition","attachment; filename = " + dataBundle.getOwner() + "-" + dataBundle.getName() + "/" + dataEntryPath)
-                .build();
-    }
-
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     @Path("{dataBundleId}/list{entry:(/entry/[^/]+?)?}")
@@ -269,7 +168,7 @@ public class AgentStorageResource {
 
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    @Path("{dataBundleId}/entry-content/{dataEntryPath:.*}")
+    @Path("{dataBundleId}/entry_content/{dataEntryPath:.*}")
     @ApiOperation(value = "Retrieve the content of the specified data bundle entry.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully read the data bundle entry's content."),
@@ -282,7 +181,8 @@ public class AgentStorageResource {
         LOG.info("Get entry {} content from bundle {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        return retrieveFileFromBundle(dataBundle, dataEntryPath);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        return storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath);
     }
 
     @LogStorageEvent(
@@ -338,7 +238,7 @@ public class AgentStorageResource {
                     .location(resourceURI.getBaseUriBuilder()
                             .path(Constants.AGENTSTORAGE_URI_PATH)
                             .path(dataBundleId.toString())
-                            .path("entry-content")
+                            .path("entry_content")
                             .path(dataEntryPath)
                             .build())
                     .entity(existingEntries.get(0))
@@ -361,7 +261,7 @@ public class AgentStorageResource {
                 .created(resourceURI.getBaseUriBuilder()
                         .path(Constants.AGENTSTORAGE_URI_PATH)
                         .path(dataBundleId.toString())
-                        .path("entry-content")
+                        .path("entry_content")
                         .path(dataEntryPath)
                         .build())
                 .entity(newDataNode)
@@ -426,7 +326,7 @@ public class AgentStorageResource {
                     .location(resourceURI.getBaseUriBuilder()
                             .path(Constants.AGENTSTORAGE_URI_PATH)
                             .path(dataBundleId.toString())
-                            .path("entry-content")
+                            .path("entry_content")
                             .path(dataEntryPath)
                             .build())
                     .entity(existingEntries.get(0))
@@ -448,7 +348,7 @@ public class AgentStorageResource {
                 .created(resourceURI.getBaseUriBuilder()
                         .path(Constants.AGENTSTORAGE_URI_PATH)
                         .path(dataBundleId.toString())
-                        .path("entry-content")
+                        .path("entry_content")
                         .path(dataEntryPath)
                         .build())
                 .entity(newDataNode)

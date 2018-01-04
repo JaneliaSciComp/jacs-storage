@@ -39,7 +39,7 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
         if (StringUtils.isNotBlank(appArgs.baseContextPath)) {
             apiPathBuilder.append(StringUtils.prependIfMissing(appArgs.baseContextPath, "/"));
         }
-        apiPathBuilder.append("/master-api/")
+        apiPathBuilder.append("/master_api/")
                 .append(getApiVersion());
         return apiPathBuilder.toString();
     }

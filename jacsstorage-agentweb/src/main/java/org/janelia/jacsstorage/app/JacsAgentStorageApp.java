@@ -77,7 +77,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         if (StringUtils.isNotBlank(appArgs.baseContextPath)) {
             apiPathBuilder.append(StringUtils.prependIfMissing(appArgs.baseContextPath, "/"));
         }
-        apiPathBuilder.append("/agent-api/")
+        apiPathBuilder.append("/agent_api/")
                 .append(getApiVersion());
         return apiPathBuilder.toString();
     }

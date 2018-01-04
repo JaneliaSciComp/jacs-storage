@@ -21,7 +21,7 @@ public class StorageClientApp {
 
     private static class CommandMain {
         @Parameter(names = "-server", description = "Storage (master) server URL")
-        private String serverURL = "http://localhost:8080/jacsstorage/master-api";
+        private String serverURL = "http://localhost:8080/jacsstorage/master_api";
         @Parameter(names = "-useHttp", description = "Use Http to persist/retrieve data")
         private Boolean useHttp = false;
         @Parameter(names = "-username", description = "User name")

@@ -10,13 +10,10 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
 
-public interface DataStorageService {
-    TransferInfo persistDataStream(Path dataPath, JacsStorageFormat dataStorageFormat, InputStream dataStream) throws IOException;
-    TransferInfo retrieveDataStream(Path dataPath, JacsStorageFormat dataStorageFormat, OutputStream dataStream) throws IOException;
+public interface DataStorageService extends StorageContentReader, StorageContentWriter {
     List<DataNodeInfo> listDataEntries(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, int depth);
     long createDirectoryEntry(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat);
     long createFileEntry(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, InputStream contentStream);
-    long readDataEntryStream(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, OutputStream outputStream) throws IOException;
     void deleteStorage(Path dataPath) throws IOException;
     void cleanupStoragePath(Path dataPath) throws IOException;
 }
