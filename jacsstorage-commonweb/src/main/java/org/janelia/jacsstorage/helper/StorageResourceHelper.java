@@ -80,6 +80,23 @@ public class StorageResourceHelper {
         }
     }
 
+    public Response checkContentFromFile(JacsStorageVolume storageVolume, String dataEntryPath) {
+        if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath))) {
+            return Response
+                    .ok()
+                    .build();
+        } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath))) {
+            return Response
+                    .ok()
+                    .build();
+        } else {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No path found for " + dataEntryPath + " on volume " + storageVolume.getName()))
+                    .build();
+        }
+    }
+
     public Response retrieveContentFromFile(JacsStorageVolume storageVolume, String dataEntryPath) {
         if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath))) {
             return retrieveContentFromFile(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath));

@@ -52,21 +52,23 @@ public class PathBasedAgentStorageResource {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The content was found"),
             @ApiResponse(code = 404, message = "Invalid file path"),
+            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response checkPath(@PathParam("filePath") String fullFileName,
+    public Response checkPath(@PathParam("filePath") String fullDataPathNameParam,
                               @Context SecurityContext securityContext) {
-        java.nio.file.Path filePath = Paths.get(fullFileName);
-        if (Files.notExists(filePath)) {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No path exists for " + fullFileName))
-                    .build();
-        } else {
-            return Response
-                    .ok()
-                    .build();
-        }
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
+        return storageResourceHelper.handleResponseForFullDataPathParam(
+                fullDataPathNameParam,
+                () -> Response
+                        .status(Response.Status.CONFLICT)
+                        .entity(new ErrorResponse("More than one volume found for " + fullDataPathNameParam))
+                        .build(),
+                (dataBundle, dataEntryPath) -> Response
+                        .ok()
+                        .build(),
+                (storageVolume, dataEntryPath) -> storageResourceHelper.checkContentFromFile(storageVolume, dataEntryPath)
+        );
     }
 
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
