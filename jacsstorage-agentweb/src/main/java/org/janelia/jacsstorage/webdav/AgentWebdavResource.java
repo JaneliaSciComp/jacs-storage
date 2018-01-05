@@ -203,6 +203,7 @@ public class AgentWebdavResource {
             return resourceURI.getBaseUriBuilder()
                     .path(Constants.AGENTSTORAGE_URI_PATH)
                     .path(storageBundle.getId().toString())
+                    .path("entry_content")
                     .path(nodeInfoRelPath)
                     .build()
                     .toString();
