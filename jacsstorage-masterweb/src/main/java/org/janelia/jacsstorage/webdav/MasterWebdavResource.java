@@ -22,6 +22,7 @@ import org.janelia.jacsstorage.webdav.utils.WebdavUtils;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -77,6 +78,7 @@ public class MasterWebdavResource {
     @Path("storage/{storageName}{format:(/format/[^/]+?)?}")
     public Response createDataStorage(@PathParam("storageName") String storageName,
                                       @PathParam("format") String format,
+                                      @HeaderParam("storageTags") String storageTags,
                                       @Context SecurityContext securityContext) {
         JacsStorageFormat storageFormat;
         if (StringUtils.isBlank(format)) {
@@ -87,6 +89,7 @@ public class MasterWebdavResource {
         JacsBundle dataBundle = new JacsBundleBuilder()
                 .name(storageName)
                 .storageFormat(storageFormat)
+                .storageTags(storageTags)
                 .build();
         Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(SecurityUtils.getUserPrincipal(securityContext), dataBundle);
         return dataBundleInfo

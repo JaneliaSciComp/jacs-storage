@@ -41,7 +41,7 @@ public class JacsStorageVolumeBuilder {
     }
 
     public JacsStorageVolumeBuilder addTag(String v) {
-        jacsStorageVolume.addVolumeTag(v);
+        jacsStorageVolume.addStorageTag(v);
         return this;
     }
 

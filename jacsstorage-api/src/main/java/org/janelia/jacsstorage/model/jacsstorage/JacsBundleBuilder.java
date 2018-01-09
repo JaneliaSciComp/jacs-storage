@@ -1,5 +1,12 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
+
 public class JacsBundleBuilder {
 
     private JacsBundle jacsBundle = new JacsBundle();
@@ -36,45 +43,40 @@ public class JacsBundleBuilder {
     }
 
     public JacsBundleBuilder storagePathPrefix(String v) {
-        jacsBundle.setStorageVolume(
-                jacsBundle.getStorageVolume()
-                        .map(sv -> {
-                            sv.setStoragePathPrefix(v);
-                            return sv;
-                        })
-                        .orElseGet(() -> {
-                            JacsStorageVolume sv = new JacsStorageVolume();
-                            sv.setStoragePathPrefix(v);
-                            return sv;
-                        })
-        );
+        updateBundleStorageVolume(sv -> {
+            sv.setStoragePathPrefix(v);
+        });
+        return this;
+    }
+
+    public JacsBundleBuilder storageTags(String tags) {
+        if (StringUtils.isNotBlank(tags)) {
+            return storageTags(Arrays.asList(tags.split(",")));
+        }
+        return this;
+    }
+
+    private JacsBundleBuilder storageTags(List<String> tags) {
+        updateBundleStorageVolume(sv -> {
+            tags.stream()
+                    .filter(StringUtils::isNotBlank)
+                    .map(String::trim)
+                    .forEach(sv::addStorageTag);
+        });
         return this;
     }
 
     public JacsBundleBuilder storageHost(String v) {
-        jacsBundle.setStorageVolume(
-                jacsBundle.getStorageVolume()
-                        .map(sv -> {
-                            sv.setStorageHost(v);
-                            return sv;
-                        })
-                        .orElseGet(() -> {
-                            JacsStorageVolume sv = new JacsStorageVolume();
-                            sv.setStorageHost(v);
-                            return sv;
-                        }));
+        updateBundleStorageVolume(sv -> {
+            sv.setStorageHost(v);
+        });
         return this;
     }
 
     public JacsBundleBuilder volumeName(String v) {
-        jacsBundle.setStorageVolume(jacsBundle.getStorageVolume().map(sv -> {
+        updateBundleStorageVolume(sv -> {
             sv.setName(v);
-            return sv;
-        }).orElseGet(() -> {
-            JacsStorageVolume sv = new JacsStorageVolume();
-            sv.setName(v);
-            return sv;
-        }));
+        });
         return this;
     }
 
@@ -91,5 +93,13 @@ public class JacsBundleBuilder {
     public JacsBundleBuilder storageVolumeId(Number v) {
         jacsBundle.setStorageVolumeId(v);
         return this;
+    }
+
+    private Optional<JacsStorageVolume> updateBundleStorageVolume(Consumer<JacsStorageVolume> storageVolumeUpdater) {
+        return jacsBundle.setStorageVolume(jacsBundle.getStorageVolume().orElse(new JacsStorageVolume()))
+                .map(sv -> {
+                    storageVolumeUpdater.accept(sv);
+                    return sv;
+                });
     }
 }
