@@ -9,7 +9,7 @@ public class JacsSubjectHelper {
         if (StringUtils.isBlank(subjectKey)) {
             return null;
         }
-        int typeNameSeparatorIndex = subjectKey.indexOf(subjectKey);
+        int typeNameSeparatorIndex = subjectKey.indexOf(':');
         if (typeNameSeparatorIndex == -1) {
             return subjectKey.trim();
         } else {
@@ -21,11 +21,11 @@ public class JacsSubjectHelper {
         if (StringUtils.isBlank(subjectKey)) {
             return null;
         }
-        int typeNameSeparatorIndex = subjectKey.indexOf(subjectKey);
+        int typeNameSeparatorIndex = subjectKey.indexOf(':');
         if (typeNameSeparatorIndex == -1) {
             return DEFAULT_SUBJECT_TYPE;
         } else {
-            return StringUtils.defaultIfBlank(subjectKey.substring(0, typeNameSeparatorIndex), DEFAULT_SUBJECT_TYPE);
+            return StringUtils.defaultIfBlank(subjectKey.substring(0, typeNameSeparatorIndex).trim(), DEFAULT_SUBJECT_TYPE);
         }
     }
 
