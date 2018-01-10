@@ -76,11 +76,12 @@ public class MasterWebdavResource {
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
     @PROPFIND
-    @Path("storage_path/{storagePath:.+}")
-    public Response dataStoragePropFindByStoragePath(@PathParam("storagePath") String storagePath,
+    @Path("data_storage_path/{dataStoragePath:.+}")
+    public Response dataStoragePropFindByStoragePath(@PathParam("dataStoragePath") String dataStoragePath,
                                                      Propfind propfindRequest,
                                                      @Context SecurityContext securityContext) {
-        StorageQuery storageQuery = new StorageQuery().setDataStoragePath(storagePath);
+        String fullDataStoragePath = StringUtils.prependIfMissing(dataStoragePath, "/");
+        StorageQuery storageQuery = new StorageQuery().setDataStoragePath(fullDataStoragePath);
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
         Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes, (storageVolume) ->{
             String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
