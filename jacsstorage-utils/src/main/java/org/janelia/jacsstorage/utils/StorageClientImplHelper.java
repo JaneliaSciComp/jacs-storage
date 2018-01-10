@@ -71,7 +71,7 @@ public class StorageClientImplHelper {
             if (bundleId != null) {
                 target = target.queryParam("id", bundleId);
             }
-            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+            Response response = target.request(MediaType.APPLICATION_JSON_TYPE, MediaType.TEXT_HTML_TYPE, MediaType.TEXT_PLAIN_TYPE)
                     .header("Authorization", "Bearer " + authToken)
                     .get()
                     ;

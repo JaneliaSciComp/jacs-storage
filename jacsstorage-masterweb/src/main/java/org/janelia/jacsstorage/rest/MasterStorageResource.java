@@ -54,6 +54,7 @@ public class MasterStorageResource {
         return "OK";
     }
 
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML})
     @RequireAuthentication
     @GET
     @Path("size")
@@ -82,7 +83,7 @@ public class MasterStorageResource {
                 .build();
         long nMatchingBundles = storageLookupService.countMatchingDataBundles(dataBundle);
         return Response
-                .ok(nMatchingBundles, MediaType.APPLICATION_JSON)
+                .ok(nMatchingBundles)
                 .build();
     }
 
