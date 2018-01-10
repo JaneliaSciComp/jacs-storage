@@ -67,7 +67,25 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
     }
 
     @Override
+    public long countMatchingDataBundles(JacsBundle pattern) {
+        Bson bsonFilter = getBsonFilter(pattern);
+        return countAggregate(bsonFilter, getAggregationOps(pattern));
+    }
+
+    @Override
     public PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest) {
+        Bson bsonFilter = getBsonFilter(pattern);
+        List<JacsBundle> results = aggregateAsList(bsonFilter,
+                getAggregationOps(pattern),
+                createBsonSortCriteria(pageRequest.getSortCriteria()),
+                (int) pageRequest.getOffset(),
+                pageRequest.getPageSize(),
+                getEntityType());
+
+        return new PageResult<>(pageRequest, results);
+    }
+
+    private Bson getBsonFilter(JacsBundle pattern) {
         ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
         if (pattern.getId() != null) {
             filtersBuilder.add(eq("_id", pattern.getId()));
@@ -87,6 +105,10 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
 
         if (!filters.isEmpty()) bsonFilter = and(filters);
 
+        return bsonFilter;
+    }
+
+    private List<Bson> getAggregationOps(JacsBundle pattern) {
         ImmutableList.Builder<Bson> bundleAggregationOpsBuilder = ImmutableList.builder();
         pattern.getStorageVolume().ifPresent(sv -> {
             bundleAggregationOpsBuilder.add(Aggregates.lookup(
@@ -94,13 +116,13 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
                     "storageVolumeId",
                     "_id",
                     "referencedVolumes"
-                    ));
+            ));
             if (sv.isShared()) {
                 bundleAggregationOpsBuilder.add(Aggregates.match(
                         Filters.or(
                                 Filters.exists("referencedVolumes.storageHost", false),
                                 Filters.eq("referencedVolumes.storageHost", null))
-                        ));
+                ));
             } else if (sv.getStorageHost() != null) {
                 if (StringUtils.isBlank(sv.getStorageHost())) {
                     bundleAggregationOpsBuilder.add(Aggregates.match(Filters.exists("referencedVolumes.storageHost", true)));
@@ -116,13 +138,6 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
                 bundleAggregationOpsBuilder.add(Aggregates.match(eq("referencedVolumes.storagePathPrefix", sv.getStoragePathPrefix())));
             }
         });
-        List<JacsBundle> results = aggregateAsList(bsonFilter,
-                bundleAggregationOpsBuilder.build(),
-                createBsonSortCriteria(pageRequest.getSortCriteria()),
-                (int) pageRequest.getOffset(),
-                pageRequest.getPageSize(),
-                getEntityType());
-
-        return new PageResult<>(pageRequest, results);
+        return bundleAggregationOpsBuilder.build();
     }
 }

@@ -29,7 +29,6 @@ public class BenchmarkTrialParams {
     @Param({""})
     String updatedDataPath;
 
-
     @Setup(Level.Trial)
     public void setUp(BenchmarkParams params) {
         serverURL = params.getParam("serverURL");

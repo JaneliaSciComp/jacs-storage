@@ -28,12 +28,26 @@ public class DistributedStorageLookupService implements StorageLookupService {
     }
 
     @Override
+    public JacsBundle getDataBundleById(Number id) {
+        JacsBundle bundle = bundleDao.findById(id);
+        if (bundle != null) {
+            updateStorageVolume(bundle);
+        }
+        return bundle;
+    }
+
+    @Override
     public JacsBundle findDataBundleByOwnerAndName(String owner, String name) {
         JacsBundle bundle = bundleDao.findByOwnerAndName(owner, name);
         if (bundle != null) {
             updateStorageVolume(bundle);
         }
         return bundle;
+    }
+
+    @Override
+    public long countMatchingDataBundles(JacsBundle pattern) {
+        return bundleDao.countMatchingDataBundles(pattern);
     }
 
     @Override
@@ -44,15 +58,6 @@ public class DistributedStorageLookupService implements StorageLookupService {
                 .forEach(this::updateStorageVolume)
         ;
         return matchingBundles;
-    }
-
-    @Override
-    public JacsBundle getDataBundleById(Number id) {
-        JacsBundle bundle = bundleDao.findById(id);
-        if (bundle != null) {
-            updateStorageVolume(bundle);
-        }
-        return bundle;
     }
 
     private void updateStorageVolume(JacsBundle bundle) {

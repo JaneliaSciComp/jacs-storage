@@ -22,7 +22,6 @@ public class UpdateBenchmarkInvocationParams {
     Number storageBundleId;
     String newPath;
 
-
     @Setup(Level.Invocation)
     public void setUp(BenchmarkTrialParams params) {
         storageBundleId = params.dataBundleId;

@@ -3,48 +3,31 @@ package org.janelia.jacsstorage.benchmarks;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.datarequest.DataStorageInfo;
+import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.utils.StorageClientImplHelper;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Group;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import java.io.FileInputStream;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-public class StorageUpdateBenchmark {
+public class StorageRetrieveBenchmark {
 
     @Benchmark
     @BenchmarkMode(Mode.All)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void createDir(BenchmarkTrialParams trialParams, UpdateBenchmarkInvocationParams invocationParams) throws Exception {
-        trialParams.storageClientHelper.createNewDirectory(
-                trialParams.serverURL,
-                invocationParams.storageBundleId,
-                invocationParams.newPath,
-                trialParams.authToken
-        );
-    }
-
-    @Benchmark
-    @BenchmarkMode(Mode.All)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void createNewFile(BenchmarkTrialParams trialParams, UpdateBenchmarkInvocationParams invocationParams) throws Exception {
-        trialParams.storageClientHelper.createNewFile(
-                trialParams.serverURL,
-                invocationParams.storageBundleId,
-                invocationParams.newPath,
-                new FileInputStream(trialParams.dataLocation),
-                trialParams.authToken
-        );
+    public void listStorage(BenchmarkTrialParams trialParams, RetrieveBenchmarkInvocationParams invocationParams) throws Exception {
+        PageResult<DataStorageInfo> storageRecords = trialParams.storageClientHelper.listStorageRecords(trialParams.serverURL, invocationParams.storageBundleId, invocationParams.pageRequest, trialParams.authToken);
     }
 
     public static void main(String[] args) throws RunnerException {
@@ -58,15 +41,17 @@ public class StorageUpdateBenchmark {
             jc.usage();
             System.exit(1);
         }
-        String authToken = new StorageClientImplHelper().authenticate(benchmarksCmdLineParams.username, benchmarksCmdLineParams.password);
+        StorageClientImplHelper storageClientImplHelper = new StorageClientImplHelper();
+        String authToken = storageClientImplHelper.authenticate(benchmarksCmdLineParams.username, benchmarksCmdLineParams.password);
         String dataOwner = benchmarksCmdLineParams.username;
+        long nStorageRecords = storageClientImplHelper.countStorageRecords(benchmarksCmdLineParams.serverURL, benchmarksCmdLineParams.bundleId, authToken);
         String benchmarks;
         if (StringUtils.isNotBlank(benchmarksCmdLineParams.benchmarksRegex)) {
-            benchmarks =  StorageUpdateBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
+            benchmarks =  StorageRetrieveBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
         } else {
-            benchmarks =  StorageUpdateBenchmark.class.getSimpleName();
+            benchmarks =  StorageRetrieveBenchmark.class.getSimpleName();
         }
-        Options opt = new OptionsBuilder()
+        ChainedOptionsBuilder optBuilder = new OptionsBuilder()
                 .include(benchmarks)
                 .warmupIterations(benchmarksCmdLineParams.warmupIterations)
                 .measurementIterations(benchmarksCmdLineParams.measurementIterations)
@@ -78,10 +63,15 @@ public class StorageUpdateBenchmark {
                 .param("useHttp", benchmarksCmdLineParams.useHttp.toString())
                 .param("owner", dataOwner)
                 .param("dataLocation", benchmarksCmdLineParams.localPath)
-                .param("dataBundleId", benchmarksCmdLineParams.bundleId.toString())
-                .param("updatedDataPath", benchmarksCmdLineParams.updatedPath)
                 .param("authToken", authToken)
-                .build();
+                .param("nStorageRecords", String.valueOf(nStorageRecords))
+                ;
+        if (benchmarksCmdLineParams.bundleId != null) {
+            optBuilder = optBuilder.param("dataBundleId", benchmarksCmdLineParams.bundleId.toString());
+        }
+
+        Options opt = optBuilder.build();
+
         Collection<RunResult> runResults = new Runner(opt).run();
         for (RunResult runResult : runResults) {
             Result result = runResult.getAggregatedResult().getPrimaryResult();

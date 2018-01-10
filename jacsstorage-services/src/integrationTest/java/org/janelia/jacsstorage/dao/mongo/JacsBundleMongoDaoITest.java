@@ -106,6 +106,21 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
     }
 
     @Test
+    public void countMatchingDataBundlesUsingAggregationOps() {
+        String testHost = "testHost";
+        String testUser = "user";
+        String testName = "test";
+        JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume(testHost, 1000,"vol", "mountPoint", 100L));
+        persistEntity(testDao, createTestEntity(testUser, testName, storageVolume.getId(), "/tmp", 100L, 512, ImmutableMap.of("f1", 1, "f2", "v2")));
+        ImmutableMap<JacsBundle, Long> testData = ImmutableMap.of(
+                new JacsBundleBuilder().storageHost(testHost).build(), 1L
+        );
+        testData.forEach((filter, expectedResult) -> {
+            assertThat(testDao.countMatchingDataBundles(filter), equalTo(expectedResult));
+        });
+    }
+
+    @Test
     public void updateChecksum() {
         String testUser = "user";
         String testName = "test";

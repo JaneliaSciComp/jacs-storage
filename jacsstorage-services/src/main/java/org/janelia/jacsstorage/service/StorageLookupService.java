@@ -6,6 +6,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 
 public interface StorageLookupService {
     JacsBundle getDataBundleById(Number id);
-    PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest);
     JacsBundle findDataBundleByOwnerAndName(String owner, String name);
+    long countMatchingDataBundles(JacsBundle pattern);
+    PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest);
 }

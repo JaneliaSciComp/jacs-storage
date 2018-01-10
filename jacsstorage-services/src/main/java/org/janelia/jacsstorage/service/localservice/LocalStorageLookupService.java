@@ -29,6 +29,15 @@ public class LocalStorageLookupService implements StorageLookupService {
     }
 
     @Override
+    public JacsBundle getDataBundleById(Number id) {
+        JacsBundle bundle = bundleDao.findById(id);
+        if (bundle != null) {
+            updateStorageVolume(bundle);
+        }
+        return bundle;
+    }
+
+    @Override
     public JacsBundle findDataBundleByOwnerAndName(String owner, String name) {
         JacsBundle bundle = bundleDao.findByOwnerAndName(owner, name);
         if (bundle != null) {
@@ -38,17 +47,13 @@ public class LocalStorageLookupService implements StorageLookupService {
     }
 
     @Override
-    public PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest) {
-        return bundleDao.findMatchingDataBundles(pattern, pageRequest);
+    public long countMatchingDataBundles(JacsBundle pattern) {
+        return bundleDao.countMatchingDataBundles(pattern);
     }
 
     @Override
-    public JacsBundle getDataBundleById(Number id) {
-        JacsBundle bundle = bundleDao.findById(id);
-        if (bundle != null) {
-            updateStorageVolume(bundle);
-        }
-        return bundle;
+    public PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest) {
+        return bundleDao.findMatchingDataBundles(pattern, pageRequest);
     }
 
     private void updateStorageVolume(JacsBundle bundle) {

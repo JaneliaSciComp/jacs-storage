@@ -21,16 +21,9 @@ import java.util.concurrent.TimeUnit;
 public class StoragePersistBenchmark {
 
     @Benchmark
-    @BenchmarkMode(Mode.Throughput)
+    @BenchmarkMode(Mode.All)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void persistThroughput(BenchmarkTrialParams trialParams, PersistBenchmarkInvocationParams invocationParams) throws Exception {
-        invocationParams.storageClient.persistData(trialParams.dataLocation, invocationParams.dataStorageInfo, trialParams.authToken);
-    }
-
-    @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void persistAverageTime(BenchmarkTrialParams trialParams, PersistBenchmarkInvocationParams invocationParams) throws Exception {
+    public void persist(BenchmarkTrialParams trialParams, PersistBenchmarkInvocationParams invocationParams) throws Exception {
         invocationParams.storageClient.persistData(trialParams.dataLocation, invocationParams.dataStorageInfo, trialParams.authToken);
     }
 

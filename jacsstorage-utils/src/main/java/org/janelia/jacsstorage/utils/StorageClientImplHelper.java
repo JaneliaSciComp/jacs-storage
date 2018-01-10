@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
+import org.janelia.jacsstorage.datarequest.PageRequest;
+import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.service.StorageMessageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +25,8 @@ import java.io.InputStream;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -48,6 +52,70 @@ public class StorageClientImplHelper {
                 Map<String, String> errResponse = response.readEntity(Map.class);
                 LOG.warn("Allocate storage request {} returned with status {} - {}", target.getUri(), responseStatus, errResponse);
                 return Optional.empty();
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    public long countStorageRecords(String connectionURL, Number bundleId, String authToken) {
+        String storageEndpoint = "/storage/size";
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
+            if (bundleId != null) {
+                target = target.queryParam("id", bundleId);
+            }
+            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .header("Authorization", "Bearer " + authToken)
+                    .get()
+                    ;
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return response.readEntity(Long.class);
+            } else {
+                LOG.warn("Retrieve storage info request returned with status {}", responseStatus);
+                return -1;
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    public PageResult<DataStorageInfo> listStorageRecords(String connectionURL, Number bundleId, PageRequest request, String authToken) {
+        String storageEndpoint = "/storage";
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
+            if (bundleId != null) {
+                target = target.queryParam("id", bundleId);
+            }
+            if (request.getPageNumber() > 0) {
+                target = target.queryParam("page", request.getPageNumber());
+            }
+            if (request.getPageSize() > 0) {
+                target = target.queryParam("length", request.getPageSize());
+            }
+            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .header("Authorization", "Bearer " + authToken)
+                    .get()
+                    ;
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return response.readEntity(new GenericType<PageResult<DataStorageInfo>>() {});
+            } else {
+                LOG.warn("Retrieve storage info request returned with status {}", responseStatus);
+                return new PageResult<>(request, Collections.emptyList());
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);

@@ -18,29 +18,37 @@ project(":jacsstorage-utils") {
 
     task createStorageClientApp(type: CreateStartScripts) {
         mainClassName = "org.janelia.jacsstorage.client.StorageClientApp"
-	classpath = startScripts.classpath
-	outputDir = startScripts.outputDir
-	applicationName = "storageClientApp"
+        classpath = startScripts.classpath
+        outputDir = startScripts.outputDir
+        applicationName = "storageClientApp"
     }
 
     task createStoragePersistBenchmark(type: CreateStartScripts) {
         mainClassName = "org.janelia.jacsstorage.benchmarks.StoragePersistBenchmark"
-	classpath = startScripts.classpath
-	outputDir = startScripts.outputDir
-	applicationName = "storagePersistBenchmarks"
+        classpath = startScripts.classpath
+        outputDir = startScripts.outputDir
+        applicationName = "storagePersistBenchmarks"
+    }
+
+    task createStorageRetrieveBenchmark(type: CreateStartScripts) {
+        mainClassName = "org.janelia.jacsstorage.benchmarks.StorageRetrieveBenchmark"
+        classpath = startScripts.classpath
+        outputDir = startScripts.outputDir
+        applicationName = "storageRetrieveBenchmarks"
     }
 
     task createStorageUpdateBenchmark(type: CreateStartScripts) {
         mainClassName = "org.janelia.jacsstorage.benchmarks.StorageUpdateBenchmark"
-	classpath = startScripts.classpath
-	outputDir = startScripts.outputDir
-	applicationName = "storageUpdateBenchmarks"
+        classpath = startScripts.classpath
+        outputDir = startScripts.outputDir
+        applicationName = "storageUpdateBenchmarks"
     }
 
-applicationDistribution.into("bin") {
+    applicationDistribution.into("bin") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         from(createStorageClientApp)
         from(createStoragePersistBenchmark)
+        from(createStorageRetrieveBenchmark)
         from(createStorageUpdateBenchmark)
         fileMode = 0755
     }

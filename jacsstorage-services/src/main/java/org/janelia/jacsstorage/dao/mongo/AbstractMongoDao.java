@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.dao.mongo;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.AggregateIterable;
@@ -159,6 +160,19 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
         }
         AggregateIterable<R> resultsItr = mongoCollection.aggregate(aggregatePipelineBuilder.build(), resultType);
         return resultsItr.into(results);
+    }
+
+    Long countAggregate(Bson queryFilter, List<Bson> aggregationOperators) {
+        ImmutableList.Builder<Bson> aggregatePipelineBuilder = ImmutableList.builder();
+        if (queryFilter != null) {
+            aggregatePipelineBuilder.add(Aggregates.match(queryFilter));
+        }
+        if (CollectionUtils.isNotEmpty(aggregationOperators)) {
+            aggregatePipelineBuilder.addAll(aggregationOperators);
+        }
+        aggregatePipelineBuilder.add(Aggregates.count("recordsCount"));
+        Object recordsCount = mongoCollection.aggregate(aggregatePipelineBuilder.build(), Document.class).first().get("recordsCount");
+        return recordsCount instanceof Integer ? ((Integer) recordsCount).longValue() : (Long) recordsCount;
     }
 
     @Override

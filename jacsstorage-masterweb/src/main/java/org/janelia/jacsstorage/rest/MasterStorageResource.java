@@ -56,6 +56,38 @@ public class MasterStorageResource {
 
     @RequireAuthentication
     @GET
+    @Path("size")
+    public Response countBundleInfo(@QueryParam("id") Long dataBundleId,
+                                    @QueryParam("owner") String owner,
+                                    @QueryParam("storageHost") String storageHost,
+                                    @QueryParam("volumeName") String volumeName,
+                                    @Context SecurityContext securityContext) {
+        String dataOwner;
+        if (securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
+            // if it's an admin use the owner param if set or allow it not to be set
+            dataOwner = owner;
+        } else {
+            // otherwise if the owner is not set use the subject from the security context
+            if (StringUtils.isNotBlank(owner)) {
+                dataOwner = owner;
+            } else {
+                dataOwner = SecurityUtils.getUserPrincipal(securityContext).getName();
+            }
+        }
+        JacsBundle dataBundle = new JacsBundleBuilder()
+                .dataBundleId(dataBundleId)
+                .owner(dataOwner)
+                .storageHost(storageHost)
+                .volumeName(volumeName)
+                .build();
+        long nMatchingBundles = storageLookupService.countMatchingDataBundles(dataBundle);
+        return Response
+                .ok(nMatchingBundles)
+                .build();
+    }
+
+    @RequireAuthentication
+    @GET
     public Response listBundleInfo(@QueryParam("id") Long dataBundleId,
                                    @QueryParam("owner") String owner,
                                    @QueryParam("storageHost") String storageHost,
