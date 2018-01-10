@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.dao.mongo;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.AggregateIterable;
@@ -52,6 +51,7 @@ import static com.mongodb.client.model.Filters.eq;
 public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao<T> implements ReadWriteDao<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoDao.class);
+    private static final String RECORDS_COUNT_FIELD = "recordsCount";
 
     protected final IdGenerator idGenerator;
     protected final MongoCollection<T> mongoCollection;
@@ -170,9 +170,18 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
         if (CollectionUtils.isNotEmpty(aggregationOperators)) {
             aggregatePipelineBuilder.addAll(aggregationOperators);
         }
-        aggregatePipelineBuilder.add(Aggregates.count("recordsCount"));
-        Object recordsCount = mongoCollection.aggregate(aggregatePipelineBuilder.build(), Document.class).first().get("recordsCount");
-        return recordsCount instanceof Integer ? ((Integer) recordsCount).longValue() : (Long) recordsCount;
+        aggregatePipelineBuilder.add(Aggregates.count(RECORDS_COUNT_FIELD));
+        Document recordsCountDoc = mongoCollection.aggregate(aggregatePipelineBuilder.build(), Document.class).first();
+        if (recordsCountDoc == null) {
+            return 0L;
+        } else if (recordsCountDoc.get(RECORDS_COUNT_FIELD) instanceof Integer) {
+            return recordsCountDoc.getInteger(RECORDS_COUNT_FIELD).longValue();
+        } else if (recordsCountDoc.get(RECORDS_COUNT_FIELD) instanceof Long) {
+            return recordsCountDoc.getLong(RECORDS_COUNT_FIELD);
+        } else {
+            LOG.error("Unknown records count field type: {}", recordsCountDoc);
+            throw new IllegalStateException("Unknown RECORDS COUNT FIELD TYPE " + recordsCountDoc);
+        }
     }
 
     @Override

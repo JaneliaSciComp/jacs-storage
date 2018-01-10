@@ -82,7 +82,7 @@ public class MasterStorageResource {
                 .build();
         long nMatchingBundles = storageLookupService.countMatchingDataBundles(dataBundle);
         return Response
-                .ok(nMatchingBundles)
+                .ok(nMatchingBundles, MediaType.APPLICATION_JSON)
                 .build();
     }
 
