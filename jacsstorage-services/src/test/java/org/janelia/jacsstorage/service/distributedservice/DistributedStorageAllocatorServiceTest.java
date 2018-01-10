@@ -89,7 +89,7 @@ public class DistributedStorageAllocatorServiceTest {
                         100,
                         "http://agentURL",
                         "/storage",
-                        new JacsBundleBuilder().owner("anowner").name("aname").build(),
+                        new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .storageHost("testHost")
                                 .storageRootDir("/storage")
@@ -104,7 +104,7 @@ public class DistributedStorageAllocatorServiceTest {
                         100,
                         "http://agentURL",
                         "/overflowStorage",
-                        new JacsBundleBuilder().owner("anowner").name("aname").build(),
+                        new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .name(JacsStorageVolume.OVERFLOW_VOLUME)
                                 .storageRootDir("/overflowStorage")
@@ -117,7 +117,7 @@ public class DistributedStorageAllocatorServiceTest {
                         100,
                         "http://agentURL",
                         "/storage",
-                        new JacsBundleBuilder().owner("anowner").name("aname").build(),
+                        new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .storageHost("testHost")
                                 .storageRootDir("/storage")

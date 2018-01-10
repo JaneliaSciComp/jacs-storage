@@ -1,7 +1,6 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
@@ -59,25 +58,21 @@ public class MasterStorageResource {
     @GET
     @Path("size")
     public Response countBundleInfo(@QueryParam("id") Long dataBundleId,
-                                    @QueryParam("owner") String owner,
+                                    @QueryParam("ownerKey") String ownerKey,
                                     @QueryParam("storageHost") String storageHost,
                                     @QueryParam("volumeName") String volumeName,
                                     @Context SecurityContext securityContext) {
-        String dataOwner;
+        String dataOwnerKey;
         if (securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
             // if it's an admin use the owner param if set or allow it not to be set
-            dataOwner = owner;
+            dataOwnerKey = ownerKey;
         } else {
-            // otherwise if the owner is not set use the subject from the security context
-            if (StringUtils.isNotBlank(owner)) {
-                dataOwner = owner;
-            } else {
-                dataOwner = SecurityUtils.getUserPrincipal(securityContext).getName();
-            }
+            // otherwise use the subject from the security context
+            dataOwnerKey = SecurityUtils.getUserPrincipal(securityContext).getSubjectKey();
         }
         JacsBundle dataBundle = new JacsBundleBuilder()
                 .dataBundleId(dataBundleId)
-                .owner(dataOwner)
+                .ownerKey(dataOwnerKey)
                 .storageHost(storageHost)
                 .volumeName(volumeName)
                 .build();
@@ -90,27 +85,23 @@ public class MasterStorageResource {
     @RequireAuthentication
     @GET
     public Response listBundleInfo(@QueryParam("id") Long dataBundleId,
-                                   @QueryParam("owner") String owner,
+                                   @QueryParam("ownerKey") String ownerKey,
                                    @QueryParam("storageHost") String storageHost,
                                    @QueryParam("volumeName") String volumeName,
                                    @QueryParam("page") Long pageNumber,
                                    @QueryParam("length") Integer pageLength,
                                    @Context SecurityContext securityContext) {
-        String dataOwner;
+        String dataOwnerKey;
         if (securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
             // if it's an admin use the owner param if set or allow it not to be set
-            dataOwner = owner;
+            dataOwnerKey = ownerKey;
         } else {
-            // otherwise if the owner is not set use the subject from the security context
-            if (StringUtils.isNotBlank(owner)) {
-                dataOwner = owner;
-            } else {
-                dataOwner = SecurityUtils.getUserPrincipal(securityContext).getName();
-            }
+            // otherwise use the subject from the security context
+            dataOwnerKey = SecurityUtils.getUserPrincipal(securityContext).getSubjectKey();
         }
         JacsBundle dataBundle = new JacsBundleBuilder()
                 .dataBundleId(dataBundleId)
-                .owner(dataOwner)
+                .ownerKey(dataOwnerKey)
                 .storageHost(storageHost)
                 .volumeName(volumeName)
                 .build();
@@ -141,7 +132,7 @@ public class MasterStorageResource {
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
-        } else if (SecurityUtils.getUserPrincipal(securityContext).getName().equals(jacsBundle.getOwner()) || securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
+        } else if (SecurityUtils.getUserPrincipal(securityContext).getSubjectKey().equals(jacsBundle.getOwnerKey()) || securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
             return Response
                     .ok(DataStorageInfo.fromBundle(jacsBundle))
                     .build();
@@ -154,16 +145,16 @@ public class MasterStorageResource {
 
     @RequireAuthentication
     @GET
-    @Path("{owner}/{name}")
-    public Response getBundleInfoByOwnerAndName(@PathParam("owner") String owner,
+    @Path("{ownerKey}/{name}")
+    public Response getBundleInfoByOwnerAndName(@PathParam("ownerKey") String ownerKey,
                                                 @PathParam("name") String name,
                                                 @Context SecurityContext securityContext) {
-        JacsBundle jacsBundle = storageLookupService.findDataBundleByOwnerAndName(owner, name);
+        JacsBundle jacsBundle = storageLookupService.findDataBundleByOwnerKeyAndName(ownerKey, name);
         if (jacsBundle == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
-        } else if (SecurityUtils.getUserPrincipal(securityContext).getName().equals(jacsBundle.getOwner()) || securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
+        } else if (SecurityUtils.getUserPrincipal(securityContext).getSubjectKey().equals(jacsBundle.getOwnerKey()) || securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
             return Response
                     .ok(DataStorageInfo.fromBundle(jacsBundle))
                     .build();

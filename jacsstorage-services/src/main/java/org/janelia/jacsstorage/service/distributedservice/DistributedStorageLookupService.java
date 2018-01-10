@@ -37,8 +37,8 @@ public class DistributedStorageLookupService implements StorageLookupService {
     }
 
     @Override
-    public JacsBundle findDataBundleByOwnerAndName(String owner, String name) {
-        JacsBundle bundle = bundleDao.findByOwnerAndName(owner, name);
+    public JacsBundle findDataBundleByOwnerKeyAndName(String ownerKey, String name) {
+        JacsBundle bundle = bundleDao.findByOwnerKeyAndName(ownerKey, name);
         if (bundle != null) {
             updateStorageVolume(bundle);
         }

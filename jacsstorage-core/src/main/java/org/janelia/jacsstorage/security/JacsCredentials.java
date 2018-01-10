@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.security.Principal;
 
 public class JacsCredentials implements Principal {
-    public static final String UNAUTHENTICATED = "Unauthenticated";
+    private static final String UNAUTHENTICATED = "Unauthenticated";
 
     private String authSubject;
     private String subjectProxy;
@@ -60,4 +60,7 @@ public class JacsCredentials implements Principal {
         }
     }
 
+    public String getSubjectKey() {
+        return JacsSubjectHelper.getTypeFromSubjectKey(getName()) + ":" + JacsSubjectHelper.getNameFromSubjectKey(getName());
+    }
 }

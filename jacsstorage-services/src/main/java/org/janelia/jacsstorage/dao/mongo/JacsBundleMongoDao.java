@@ -38,7 +38,7 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
         super(mongoDatabase, idGenerator);
         IndexOptions indexOptions = new IndexOptions();
         indexOptions.unique(true);
-        mongoCollection.createIndex(Indexes.ascending("owner", "name"), indexOptions);
+        mongoCollection.createIndex(Indexes.ascending("ownerKey", "name"), indexOptions);
     }
 
     @Override
@@ -50,12 +50,12 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
     }
 
     @Override
-    public JacsBundle findByOwnerAndName(String owner, String name) {
-        Preconditions.checkArgument(StringUtils.isNotBlank(owner));
+    public JacsBundle findByOwnerKeyAndName(String ownerKey, String name) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(ownerKey));
         Preconditions.checkArgument(StringUtils.isNotBlank(name));
 
         ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
-        filtersBuilder.add(eq("owner", owner));
+        filtersBuilder.add(eq("ownerKey", ownerKey));
         filtersBuilder.add(eq("name", name));
 
         Iterator<JacsBundle> resultsItr = findIterable(and(filtersBuilder.build()),
@@ -90,8 +90,8 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
         if (pattern.getId() != null) {
             filtersBuilder.add(eq("_id", pattern.getId()));
         }
-        if (StringUtils.isNotBlank(pattern.getOwner())) {
-            filtersBuilder.add(eq("owner", pattern.getOwner()));
+        if (StringUtils.isNotBlank(pattern.getOwnerKey())) {
+            filtersBuilder.add(eq("ownerKey", pattern.getOwnerKey()));
         }
         if (StringUtils.isNotBlank(pattern.getName())) {
             filtersBuilder.add(eq("name", pattern.getName()));

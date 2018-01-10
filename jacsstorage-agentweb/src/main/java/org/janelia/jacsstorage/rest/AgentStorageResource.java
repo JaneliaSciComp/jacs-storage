@@ -16,6 +16,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.security.JacsSubjectHelper;
 import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
@@ -126,7 +127,7 @@ public class AgentStorageResource {
         };
         return Response
                 .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)
-                .header("content-disposition","attachment; filename = " + dataBundle.getOwner() + "-" + dataBundle.getName())
+                .header("content-disposition","attachment; filename = " + JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()) + "-" + dataBundle.getName())
                 .build();
     }
 
@@ -153,7 +154,7 @@ public class AgentStorageResource {
         List<DataNodeInfo> dataBundleCotent = listDataEntries(dataBundle, entryName, depth);
         return Response
                 .ok(dataBundleCotent, MediaType.APPLICATION_JSON)
-                .header("content-disposition","attachment; filename = " + dataBundle.getOwner() + "-" + dataBundle.getName())
+                .header("content-disposition","attachment; filename = " + JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()) + "-" + dataBundle.getName())
                 .build();
     }
 

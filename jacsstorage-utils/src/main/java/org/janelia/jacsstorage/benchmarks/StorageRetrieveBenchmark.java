@@ -5,6 +5,7 @@ import com.beust.jcommander.ParameterException;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.jacsstorage.utils.AuthClientImplHelper;
 import org.janelia.jacsstorage.utils.StorageClientImplHelper;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -26,7 +27,8 @@ public class StorageRetrieveBenchmark {
     @Benchmark
     @BenchmarkMode(Mode.All)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void listStorage(BenchmarkTrialParams trialParams, RetrieveBenchmarkInvocationParams invocationParams) throws Exception {
+    public void listStorage(BenchmarkTrialParams trialParams, RetrieveBenchmarkInvocationParams invocationParams) {
+        System.out.println("!!!!!!!!!!! TOKEN " + trialParams.authToken);
         PageResult<DataStorageInfo> storageRecords = trialParams.storageClientHelper.listStorageRecords(trialParams.serverURL, invocationParams.storageBundleId, invocationParams.pageRequest, trialParams.authToken);
     }
 
@@ -41,10 +43,9 @@ public class StorageRetrieveBenchmark {
             jc.usage();
             System.exit(1);
         }
-        StorageClientImplHelper storageClientImplHelper = new StorageClientImplHelper();
-        String authToken = storageClientImplHelper.authenticate(benchmarksCmdLineParams.username, benchmarksCmdLineParams.password);
-        String dataOwner = benchmarksCmdLineParams.username;
-        long nStorageRecords = storageClientImplHelper.countStorageRecords(benchmarksCmdLineParams.serverURL, benchmarksCmdLineParams.bundleId, authToken);
+        String authToken = new AuthClientImplHelper(benchmarksCmdLineParams.authURL).authenticate(benchmarksCmdLineParams.username, benchmarksCmdLineParams.password);
+        String dataOwnerKey = benchmarksCmdLineParams.getUserKey();
+        long nStorageRecords = new StorageClientImplHelper().countStorageRecords(benchmarksCmdLineParams.serverURL, benchmarksCmdLineParams.bundleId, authToken);
         String benchmarks;
         if (StringUtils.isNotBlank(benchmarksCmdLineParams.benchmarksRegex)) {
             benchmarks =  StorageRetrieveBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
@@ -61,7 +62,7 @@ public class StorageRetrieveBenchmark {
                 .detectJvmArgs()
                 .param("serverURL", benchmarksCmdLineParams.serverURL)
                 .param("useHttp", benchmarksCmdLineParams.useHttp.toString())
-                .param("owner", dataOwner)
+                .param("ownerKey", dataOwnerKey)
                 .param("dataLocation", benchmarksCmdLineParams.localPath)
                 .param("authToken", authToken)
                 .param("nStorageRecords", String.valueOf(nStorageRecords))

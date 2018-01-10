@@ -13,7 +13,7 @@ import java.util.Map;
 public class DataStorageInfo {
     private Number id;
     private String name;
-    private String owner;
+    private String ownerKey;
     private String path;
     private String permissions;
     private String storageRootPrefixDir;
@@ -30,7 +30,7 @@ public class DataStorageInfo {
         DataStorageInfo dsi = new DataStorageInfo()
                 .setId(dataBundle.getId())
                 .setName(dataBundle.getName())
-                .setOwner(dataBundle.getOwner())
+                .setOwnerKey(dataBundle.getOwnerKey())
                 .setPath(dataBundle.getPath())
                 .setStorageFormat(dataBundle.getStorageFormat())
                 .setPermissions(dataBundle.getPermissions())
@@ -71,12 +71,12 @@ public class DataStorageInfo {
         return this;
     }
 
-    public String getOwner() {
-        return owner;
+    public String getOwnerKey() {
+        return ownerKey;
     }
 
-    public DataStorageInfo setOwner(String owner) {
-        this.owner = owner;
+    public DataStorageInfo setOwnerKey(String ownerKey) {
+        this.ownerKey = ownerKey;
         return this;
     }
 
@@ -194,7 +194,7 @@ public class DataStorageInfo {
     public JacsBundle asDataBundle() {
         JacsBundle dataBundle = new JacsBundle();
         dataBundle.setName(this.name);
-        dataBundle.setOwner(this.owner);
+        dataBundle.setOwnerKey(this.ownerKey);
         dataBundle.setStorageFormat(this.storageFormat);
         dataBundle.setPermissions(this.permissions);
         dataBundle.setUsedSpaceInBytes(this.requestedSpaceInBytes);

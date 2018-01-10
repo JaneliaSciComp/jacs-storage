@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.service.DataTransferService;
+import org.janelia.jacsstorage.utils.AuthClientImplHelper;
 import org.janelia.jacsstorage.utils.StorageClientImplHelper;
 
 import javax.enterprise.inject.se.SeContainer;
@@ -21,13 +22,19 @@ public class StorageClientApp {
 
     private static class CommandMain {
         @Parameter(names = "-server", description = "Storage (master) server URL")
-        private String serverURL = "http://localhost:8080/jacsstorage/master_api";
+        private String serverURL = "http://localhost:8080/jacsstorage/master_api/v1";
+        @Parameter(names = "-authServer", description = "Authentication server URL")
+        private String authURL = "https://jacs-dev.int.janelia.org//SCSW/AuthenticationService/v1";
         @Parameter(names = "-useHttp", description = "Use Http to persist/retrieve data")
         private Boolean useHttp = false;
         @Parameter(names = "-username", description = "User name")
-        protected String username;
+        String username;
         @Parameter(names = "-password", description = "User password authentication")
-        protected String password;
+        String password;
+
+        String getUserKey() {
+            return "user:" + username;
+        }
     }
 
     private static abstract class AbstractCommand {
@@ -98,26 +105,27 @@ public class StorageClientApp {
             );
         }
         StorageClientImplHelper storageClientHelper = new StorageClientImplHelper();
+        AuthClientImplHelper authClientImplHelper = new AuthClientImplHelper(cm.authURL);
         DataStorageInfo storageInfo;
-        String dataOwner = cm.username;
+        String dataOwnerKey = cm.getUserKey();
         switch (jc.getParsedCommand()) {
             case "get":
                 storageInfo = new DataStorageInfo()
                         .setConnectionURL(cm.serverURL)
-                        .setOwner(dataOwner)
+                        .setOwnerKey(dataOwnerKey)
                         .setName(cmdGet.name);
-                storageClient.retrieveData(cmdGet.localPath, storageInfo, storageClientHelper.authenticate(cm.username, cm.password));
+                storageClient.retrieveData(cmdGet.localPath, storageInfo, authClientImplHelper.authenticate(cm.username, cm.password));
                 return;
             case "put":
                 storageInfo = new DataStorageInfo()
                         .setConnectionURL(cm.serverURL)
                         .setStorageFormat(cmdPut.dataFormat)
-                        .setOwner(dataOwner)
+                        .setOwnerKey(dataOwnerKey)
                         .setName(cmdPut.name);
-                storageClient.persistData(cmdPut.localPath, storageInfo, storageClientHelper.authenticate(cm.username, cm.password));
+                storageClient.persistData(cmdPut.localPath, storageInfo, authClientImplHelper.authenticate(cm.username, cm.password));
                 return;
             case "createNewDir":
-                storageClientHelper.createNewDirectory(cm.serverURL, cmdCreateNewContent.bundleId, cmdCreateNewContent.newPath, storageClientHelper.authenticate(cm.username, cm.password));
+                storageClientHelper.createNewDirectory(cm.serverURL, cmdCreateNewContent.bundleId, cmdCreateNewContent.newPath, authClientImplHelper.authenticate(cm.username, cm.password));
                 return;
             case "addNewFile":
                 String localFileName = cmdCreateNewContent.localPath;
@@ -131,7 +139,7 @@ public class StorageClientApp {
                 if (Files.isDirectory(localPath)) {
                     usage("LocalPath - " + localFileName + " must be a file for adding a new file", jc);
                 }
-                storageClientHelper.createNewFile(cm.serverURL, cmdCreateNewContent.bundleId, cmdCreateNewContent.newPath, new FileInputStream(localPath.toFile()), storageClientHelper.authenticate(cm.username, cm.password));
+                storageClientHelper.createNewFile(cm.serverURL, cmdCreateNewContent.bundleId, cmdCreateNewContent.newPath, new FileInputStream(localPath.toFile()), authClientImplHelper.authenticate(cm.username, cm.password));
                 return;
             case "ping":
                 storageClient.ping(cmdPing.connectionInfo);

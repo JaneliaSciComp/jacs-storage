@@ -39,7 +39,7 @@ public class PersistBenchmarkInvocationParams {
         dataStorageInfo = new DataStorageInfo()
                 .setConnectionURL(params.serverURL)
                 .setStorageFormat(JacsStorageFormat.valueOf(params.dataFormat))
-                .setOwner(params.owner)
+                .setOwnerKey(params.ownerKey)
                 .setName(RandomStringUtils.randomAlphanumeric(10) + "-" + System.nanoTime())
                 ;
     }

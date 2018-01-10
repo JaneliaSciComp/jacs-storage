@@ -17,6 +17,7 @@ public class RetrieveBenchmarkInvocationParams {
     public void setUp(RetrieveBenchmarkTrialParams params) {
         storageBundleId = params.dataBundleId;
         PageRequestBuilder pageRequestBuilder = new PageRequestBuilder().pageSize(1);
+        System.out.println("!!!!!!!!!!! N RECORDS " + params.nStorageRecords);
         if (params.nStorageRecords > 0) {
             pageRequestBuilder.firstPageOffset(RandomUtils.nextLong(0, params.nStorageRecords));
         }

@@ -52,32 +52,32 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
 
     @Test
     public void saveTestEntity() {
-        JacsBundle te = persistEntity(testDao, createTestEntity("user", "d1", null, "/tmp", 100L, 216, ImmutableMap.of("f1", 1, "f2", "v2")));
+        JacsBundle te = persistEntity(testDao, createTestEntity("user:user", "d1", null, "/tmp", 100L, 216, ImmutableMap.of("f1", 1, "f2", "v2")));
         JacsBundle retrievedTe = testDao.findById(te.getId());
         assertThat(retrievedTe.getName(), equalTo(te.getName()));
         assertNotSame(te, retrievedTe);
     }
 
     @Test
-    public void findByNameAndOwner() {
-        String testUser = "user";
+    public void findByNameAndOwnerKey() {
+        String testUser = "user:user";
         String testName = "test";
         JacsBundle te = persistEntity(testDao, createTestEntity(testUser, testName, null, "/tmp", 100L, 128, ImmutableMap.of("f1", 1, "f2", "v2")));
-        JacsBundle retrievedTe = testDao.findByOwnerAndName(testUser, testName);
+        JacsBundle retrievedTe = testDao.findByOwnerKeyAndName(testUser, testName);
         assertThat(retrievedTe.getName(), equalTo(te.getName()));
         assertNotSame(te, retrievedTe);
     }
 
     @Test
     public void findMatchingDataBundles() {
-        String testUser = "user";
+        String testUser = "user:user";
         String testName = "test";
         JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume("testLocation", 1000,"testVol",  "mountPoint", 100L));
         persistEntity(testDao, createTestEntity(testUser, testName, storageVolume.getId(), "/tmp", 100L, 0, ImmutableMap.of("f1", 1, "f2", "v2")));
         ImmutableMap<JacsBundle, Integer> testData = ImmutableMap.of(
                 new JacsBundleBuilder().build(), 1,
                 new JacsBundleBuilder().storageVolumeId(storageVolume.getId()).build(), 1,
-                new JacsBundleBuilder().owner("anotherUser").build(), 0
+                new JacsBundleBuilder().ownerKey("user:anotherUser").build(), 0
         );
         testData.forEach((filter, expectedResult) -> {
             assertThat(testDao.findMatchingDataBundles(
@@ -90,7 +90,7 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
     @Test
     public void findMatchingDataBundlesUsingAggregationOps() {
         String testHost = "testHost";
-        String testUser = "user";
+        String testUser = "user:user";
         String testName = "test";
         JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume(testHost, 1000,"vol", "mountPoint", 100L));
         persistEntity(testDao, createTestEntity(testUser, testName, storageVolume.getId(), "/tmp", 100L, 512, ImmutableMap.of("f1", 1, "f2", "v2")));
@@ -108,7 +108,7 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
     @Test
     public void countMatchingDataBundlesUsingAggregationOps() {
         String testHost = "testHost";
-        String testUser = "user";
+        String testUser = "user:user";
         String testName = "test";
         JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume(testHost, 1000,"vol", "mountPoint", 100L));
         persistEntity(testDao, createTestEntity(testUser, testName, storageVolume.getId(), "/tmp", 100L, 512, ImmutableMap.of("f1", 1, "f2", "v2")));
@@ -122,9 +122,8 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
 
     @Test
     public void updateChecksum() {
-        String testUser = "user";
-        String testName = "test";
-        JacsBundle te = persistEntity(testDao, createTestEntity("user", "d1", null, "/tmp", 100L, 0, ImmutableMap.of("f1", 1, "f2", "v2")));
+        String testUser = "user:user";
+        JacsBundle te = persistEntity(testDao, createTestEntity(testUser, "d1", null, "/tmp", 100L, 0, ImmutableMap.of("f1", 1, "f2", "v2")));
         te.setChecksum(createChecksum(256));
         testDao.update(te, ImmutableMap.of("checksum", new SetFieldValueHandler<>(te.getChecksum())));
         JacsBundle retrievedTe = testDao.findById(te.getId());
@@ -146,9 +145,9 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
         return v;
     }
 
-    private JacsBundle createTestEntity(String owner, String name, Number storageVolumeId, String path, Long size, int checksumLength, Map<String, Object> metadata) {
+    private JacsBundle createTestEntity(String ownerKey, String name, Number storageVolumeId, String path, Long size, int checksumLength, Map<String, Object> metadata) {
         JacsBundle d = new JacsBundle();
-        d.setOwner(owner);
+        d.setOwnerKey(ownerKey);
         d.setName(name);
         d.setPath(path);
         d.setStorageVolumeId(storageVolumeId);

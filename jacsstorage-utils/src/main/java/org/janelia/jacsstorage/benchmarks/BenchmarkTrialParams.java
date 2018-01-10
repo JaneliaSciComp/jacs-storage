@@ -17,7 +17,7 @@ public class BenchmarkTrialParams {
     @Param({"false"})
     Boolean useHttp;
     @Param({""})
-    String owner;
+    String ownerKey;
     @Param({""})
     String dataLocation;
     @Param({""})
@@ -33,7 +33,7 @@ public class BenchmarkTrialParams {
     public void setUp(BenchmarkParams params) {
         serverURL = params.getParam("serverURL");
         useHttp = Boolean.valueOf(params.getParam("useHttp"));
-        owner = params.getParam("owner");
+        ownerKey = params.getParam("ownerKey");
         dataLocation = params.getParam("dataLocation");
         dataFormat = params.getParam("dataFormat");
         authToken = params.getParam("authToken");

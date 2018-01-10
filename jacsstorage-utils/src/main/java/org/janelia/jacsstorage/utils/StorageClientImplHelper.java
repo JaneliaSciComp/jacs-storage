@@ -1,7 +1,5 @@
 package org.janelia.jacsstorage.utils;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.collect.ImmutableMap;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
@@ -26,13 +24,11 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 public class StorageClientImplHelper {
     private static final Logger LOG = LoggerFactory.getLogger(StorageClientImplHelper.class);
-    private static final String AUTH_URL = "http://api.int.janelia.org:8030";
 
     public Optional<DataStorageInfo> allocateStorage(String connectionURL, DataStorageInfo storageRequest, String authToken) {
         String storageEndpoint = "/storage";
@@ -71,13 +67,14 @@ public class StorageClientImplHelper {
             if (bundleId != null) {
                 target = target.queryParam("id", bundleId);
             }
-            Response response = target.request(MediaType.APPLICATION_JSON_TYPE, MediaType.TEXT_HTML_TYPE, MediaType.TEXT_PLAIN_TYPE)
+            Response response = target.request()
                     .header("Authorization", "Bearer " + authToken)
                     .get()
                     ;
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
-                return response.readEntity(Long.class);
+                String value = response.readEntity(String.class);
+                return Long.parseLong(value);
             } else {
                 LOG.warn("Retrieve storage info request returned with status {}", responseStatus);
                 return -1;
@@ -131,7 +128,7 @@ public class StorageClientImplHelper {
         if (storageRequest.hasId()) {
             storageEndpoint = String.format("/storage/%s", storageRequest.getId());
         } else {
-            storageEndpoint = String.format("/storage/%s/%s", storageRequest.getOwner(), storageRequest.getName());
+            storageEndpoint = String.format("/storage/%s/%s", storageRequest.getOwnerKey(), storageRequest.getName());
         }
         LOG.info("Retrieve storage info from {} using {} as {}", connectionURL, storageEndpoint, authToken);
 
@@ -300,28 +297,6 @@ public class StorageClientImplHelper {
             } else {
                 return new StorageMessageResponse(StorageMessageResponse.ERROR, "Response status: " + responseStatus);
             }
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
-        }
-    }
-
-    public String authenticate(String userName, String password) {
-        Client httpClient = null;
-        try {
-            httpClient = createHttpClient();
-            WebTarget target = httpClient.target(AUTH_URL).path("/authenticate");
-            TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String, String>>(){};
-            Map<String, String> tokenResponse = target.request(MediaType.APPLICATION_JSON_TYPE)
-                    .post(Entity.json(ImmutableMap.of(
-                            "username", userName,
-                            "password", password
-                    )), new GenericType<>(typeRef.getType()))
-                    ;
-            return tokenResponse.get("token");
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {

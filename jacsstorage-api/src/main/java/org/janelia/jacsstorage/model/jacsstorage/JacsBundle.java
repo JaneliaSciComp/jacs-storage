@@ -20,7 +20,7 @@ import java.util.Optional;
 public class JacsBundle extends AbstractEntity {
 
     private String name;
-    private String owner;
+    private String ownerKey;
     private String path;
     private String permissions;
     private JacsStorageFormat storageFormat;
@@ -43,12 +43,12 @@ public class JacsBundle extends AbstractEntity {
         this.name = name;
     }
 
-    public String getOwner() {
-        return owner;
+    public String getOwnerKey() {
+        return ownerKey;
     }
 
-    public void setOwner(String owner) {
-        this.owner = owner;
+    public void setOwnerKey(String ownerKey) {
+        this.ownerKey = ownerKey;
     }
 
     public String getPath() {

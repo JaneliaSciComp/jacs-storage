@@ -9,6 +9,7 @@ import org.janelia.jacsstorage.model.support.IncFieldValueHandler;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
+import org.janelia.jacsstorage.security.JacsSubjectHelper;
 import org.janelia.jacsstorage.utils.PathUtils;
 
 import java.nio.file.Path;
@@ -33,7 +34,7 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
 
     private JacsBundle createStorage(JacsCredentials credentials, JacsStorageVolume storageVolume, JacsBundle dataBundle) {
         try {
-            dataBundle.setOwner(credentials.getName());
+            dataBundle.setOwnerKey(credentials.getSubjectKey());
             dataBundle.setStorageVolumeId(storageVolume.getId());
             dataBundle.setStorageVolume(storageVolume);
             dataBundle.setCreatedBy(credentials.getAuthSubject());
@@ -78,7 +79,7 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
     }
 
     protected void checkStorageAccess(JacsCredentials credentials, JacsBundle dataBundle) {
-        if (!credentials.getName().equals(dataBundle.getOwner())) {
+        if (!credentials.getSubjectKey().equals(dataBundle.getOwnerKey())) {
             throw new SecurityException("Access not allowed to " + dataBundle.getName() + " for " + credentials.getAuthSubject() + " as " + credentials.getName());
         }
     }

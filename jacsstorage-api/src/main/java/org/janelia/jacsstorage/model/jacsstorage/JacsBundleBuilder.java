@@ -27,8 +27,8 @@ public class JacsBundleBuilder {
         return this;
     }
 
-    public JacsBundleBuilder owner(String v) {
-        jacsBundle.setOwner(v);
+    public JacsBundleBuilder ownerKey(String v) {
+        jacsBundle.setOwnerKey(v);
         return this;
     }
 

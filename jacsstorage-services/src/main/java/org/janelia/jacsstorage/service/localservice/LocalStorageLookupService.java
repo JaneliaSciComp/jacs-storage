@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.service.localservice;
 
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
@@ -8,10 +7,7 @@ import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.service.StorageEventLogger;
 import org.janelia.jacsstorage.service.StorageLookupService;
-import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.jacsstorage.service.distributedservice.StorageAgentConnection;
 
 import javax.inject.Inject;
 
@@ -38,8 +34,8 @@ public class LocalStorageLookupService implements StorageLookupService {
     }
 
     @Override
-    public JacsBundle findDataBundleByOwnerAndName(String owner, String name) {
-        JacsBundle bundle = bundleDao.findByOwnerAndName(owner, name);
+    public JacsBundle findDataBundleByOwnerKeyAndName(String owner, String name) {
+        JacsBundle bundle = bundleDao.findByOwnerKeyAndName(owner, name);
         if (bundle != null) {
             updateStorageVolume(bundle);
         }

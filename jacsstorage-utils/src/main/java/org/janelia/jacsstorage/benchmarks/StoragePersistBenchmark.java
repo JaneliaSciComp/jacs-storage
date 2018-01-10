@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.benchmarks;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.utils.AuthClientImplHelper;
 import org.janelia.jacsstorage.utils.StorageClientImplHelper;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -38,8 +39,8 @@ public class StoragePersistBenchmark {
             jc.usage();
             System.exit(1);
         }
-        String authToken = new StorageClientImplHelper().authenticate(benchmarksCmdLineParams.username, benchmarksCmdLineParams.password);
-        String dataOwner = benchmarksCmdLineParams.username;
+        String authToken = new AuthClientImplHelper(benchmarksCmdLineParams.authURL).authenticate(benchmarksCmdLineParams.username, benchmarksCmdLineParams.password);
+        String dataOwnerKey = benchmarksCmdLineParams.getUserKey();
         String benchmarks;
         if (StringUtils.isNotBlank(benchmarksCmdLineParams.benchmarksRegex)) {
             benchmarks =  StoragePersistBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
@@ -56,7 +57,7 @@ public class StoragePersistBenchmark {
                 .detectJvmArgs()
                 .param("serverURL", benchmarksCmdLineParams.serverURL)
                 .param("useHttp", benchmarksCmdLineParams.useHttp.toString())
-                .param("owner", dataOwner)
+                .param("ownerKey", dataOwnerKey)
                 .param("dataLocation", benchmarksCmdLineParams.localPath)
                 .param("dataFormat", benchmarksCmdLineParams.dataFormat.name())
                 .param("authToken", authToken)
