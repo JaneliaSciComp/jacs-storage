@@ -51,11 +51,13 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
                     storageVolume.getName()
             );
         }
-        if (currentVolumeInfo.getStorageRootDir() == null) {
+        if (currentVolumeInfo.getStorageRootDir() == null ||
+                (StringUtils.isNotBlank(storageVolume.getStorageRootDir()) && !storageVolume.getStorageRootDir().equals(currentVolumeInfo.getStorageRootDir()))) {
             currentVolumeInfo.setStorageRootDir(storageVolume.getStorageRootDir());
             updatedVolumeFieldsBuilder.put("storageRootDir", new SetFieldValueHandler<>(currentVolumeInfo.getStorageRootDir()));
         }
-        if (currentVolumeInfo.getStoragePathPrefix() == null) {
+        if (currentVolumeInfo.getStoragePathPrefix() == null ||
+                (StringUtils.isNotBlank(storageVolume.getStoragePathPrefix()) && !storageVolume.getStoragePathPrefix().equals(currentVolumeInfo.getStoragePathPrefix()))) {
             currentVolumeInfo.setStoragePathPrefix(storageVolume.getStoragePathPrefix());
             updatedVolumeFieldsBuilder.put("storagePathPrefix", new SetFieldValueHandler<>(currentVolumeInfo.getStoragePathPrefix()));
         }
