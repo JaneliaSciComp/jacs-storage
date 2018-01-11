@@ -8,12 +8,12 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${logsRootDir}/jacsstorage-master.log</file>
+        <file>${jacs.runtime.env.logsRootDir}/jacsstorage-master.log</file>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <Pattern>%d{yyyy-MM-dd_HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <FileNamePattern>${logsRootDir}/jacsstorage-master.%i.log.zip</FileNamePattern>
+            <FileNamePattern>${jacs.runtime.env.logsRootDir}/jacsstorage-master.%i.log.zip</FileNamePattern>
             <MinIndex>1</MinIndex>
             <MaxIndex>10</MaxIndex>
         </rollingPolicy>

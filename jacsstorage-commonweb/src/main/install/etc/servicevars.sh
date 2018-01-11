@@ -1,5 +1,5 @@
-JACSSTORAGE_CONFIG="${installDir}/etc/config.properties"
-JACSSTORAGE_LOG_CONFIG="${installDir}/etc/logback.xml"
+JACSSTORAGE_CONFIG="${jacs.runtime.env.installDir}/etc/config.properties"
+JACSSTORAGE_LOG_CONFIG="${jacs.runtime.env.installDir}/etc/logback.xml"
 
 DEBUG_OPTS=""
 JAVA_OPTS="${DEBUG_OPTS} -Xmx2G -Xms512M -Dlogback.configurationFile=${JACSSTORAGE_LOG_CONFIG}"
