@@ -72,6 +72,7 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
         StorageAgentConnection registeredConnection = registeredAgentConnections.putIfAbsent(agentInfo.getAgentHttpURL(), agentConnection);
         if (registeredConnection == null) {
             agentInfo.setAgentToken(String.valueOf(AGENT_TOKEN_GENERATOR.nextInt()));
+            agentInfo.setConnectionStatus(StorageAgentConnection.CONNECTED_STATUS_VALUE);
             agentConnectionBreaker.initialize(agentInfo, new AgentConnectionTester(),
                     Optional.of(storageAgentInfo -> {
                         LOG.trace("Agent {} is up and running", storageAgentInfo.getAgentHttpURL());

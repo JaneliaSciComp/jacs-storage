@@ -33,6 +33,6 @@ public class StorageAgentConnection {
     }
 
     public boolean isConnected() {
-        return "CONNECTED".equals(agentInfo.getConnectionStatus());
+        return CONNECTED_STATUS_VALUE.equals(agentInfo.getConnectionStatus());
     }
 }
