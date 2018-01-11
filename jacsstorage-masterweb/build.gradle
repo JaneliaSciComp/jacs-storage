@@ -1,6 +1,16 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:4.4.0'
+    }
+}
+
 apply plugin: 'application'
 apply plugin: 'distribution'
-
+apply plugin: 'nebula.rpm'
+ 
 mainClassName = 'org.janelia.jacsstorage.app.JacsMasterStorageApp'
 
 project(":jacsstorage-masterweb") {
@@ -24,6 +34,9 @@ project(":jacsstorage-masterweb") {
                 }
 	    }
 	}
+    }
+
+    task packageRpm(type: Rpm, dependsOn: distTar) {
     }
 }
 
