@@ -1,8 +1,11 @@
 package org.janelia.jacsstorage.datarequest;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.util.Date;
 
 public class DataNodeInfo {
+    private Number storageId;
     private String rootLocation;
     private String rootPrefix;
     private String nodeRelativePath; // node path relative to the root
@@ -11,6 +14,14 @@ public class DataNodeInfo {
     private boolean collectionFlag; // true if the node identifies a directory
     private Date creationTime;
     private Date lastModified;
+
+    public Number getStorageId() {
+        return storageId;
+    }
+
+    public void setStorageId(Number storageId) {
+        this.storageId = storageId;
+    }
 
     public String getRootLocation() {
         return rootLocation;
@@ -74,5 +85,19 @@ public class DataNodeInfo {
 
     public void setLastModified(Date lastModified) {
         this.lastModified = lastModified;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("rootLocation", rootLocation)
+                .append("rootPrefix", rootPrefix)
+                .append("nodeRelativePath", nodeRelativePath)
+                .append("size", size)
+                .append("mimeType", mimeType)
+                .append("collectionFlag", collectionFlag)
+                .append("creationTime", creationTime)
+                .append("lastModified", lastModified)
+                .toString();
     }
 }

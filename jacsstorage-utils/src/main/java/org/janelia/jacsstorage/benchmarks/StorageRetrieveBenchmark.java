@@ -2,7 +2,9 @@ package org.janelia.jacsstorage.benchmarks;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
+import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.utils.AuthClientImplHelper;
@@ -19,17 +21,39 @@ import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 public class StorageRetrieveBenchmark {
 
     @Benchmark
-    @BenchmarkMode(Mode.All)
+    @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void listStorage(BenchmarkTrialParams trialParams, RetrieveBenchmarkInvocationParams invocationParams) {
-        System.out.println("!!!!!!!!!!! TOKEN " + trialParams.authToken);
+    public void listStorage(RetrieveBenchmarkTrialParams trialParams, ListContentBenchmarkInvocationParams invocationParams) {
         PageResult<DataStorageInfo> storageRecords = trialParams.storageClientHelper.listStorageRecords(trialParams.serverURL, invocationParams.storageBundleId, invocationParams.pageRequest, trialParams.authToken);
+        for (DataStorageInfo storageInfo : storageRecords.getResultList()) {
+            trialParams.storageClientHelper.listStorageContent(storageInfo.getConnectionURL(), storageInfo.getId(), trialParams.authToken);
+        }
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void streamStorageContent(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams) {
+        for (DataNodeInfo contentInfo : invocationParams.storageContent) {
+            trialParams.storageClientHelper.streamDataEntryFromStorage(contentInfo.getRootLocation(), contentInfo.getStorageId(), contentInfo.getNodeRelativePath(), trialParams.authToken)
+                .map(is -> {
+                    try {
+                        byte[] content = ByteStreams.toByteArray(is);
+                        System.out.println("!!!!! READ " + content.length + " bytes");
+                        return content;
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+        }
     }
 
     public static void main(String[] args) throws RunnerException {

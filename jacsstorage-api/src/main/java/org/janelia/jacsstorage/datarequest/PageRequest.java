@@ -1,5 +1,7 @@
 package org.janelia.jacsstorage.datarequest;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.util.List;
 
 public class PageRequest {
@@ -49,5 +51,15 @@ public class PageRequest {
             offset += pageNumber * pageSize;
         }
         return offset;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("firstPageOffset", firstPageOffset)
+                .append("pageNumber", pageNumber)
+                .append("pageSize", pageSize)
+                .append("sortCriteria", sortCriteria)
+                .build();
     }
 }

@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.utils;
 
 import org.glassfish.jersey.jackson.JacksonFeature;
+import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
@@ -24,6 +25,7 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -94,7 +96,7 @@ public class StorageClientImplHelper {
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
-            if (bundleId != null) {
+            if (bundleId != null && !"0".equals(bundleId.toString())) {
                 target = target.queryParam("id", bundleId);
             }
             if (request.getPageNumber() > 0) {
@@ -156,6 +158,34 @@ public class StorageClientImplHelper {
         }
     }
 
+    public List<DataNodeInfo> listStorageContent(String connectionURL, Number bundleId, String authToken) {
+        String storageContentyEndpoint = String.format("/agent_storage/%s", bundleId);
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(connectionURL)
+                    .path(storageContentyEndpoint)
+                    .path("list");
+            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .header("Authorization", "Bearer " + authToken)
+                    .get()
+                    ;
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return response.readEntity(new GenericType<List<DataNodeInfo>>() {});
+            } else {
+                LOG.warn("Retrieve storage info request returned with status {}", responseStatus);
+                return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
     public Optional<DataStorageInfo> streamDataToStore(String connectionURL, DataStorageInfo storageInfo, InputStream dataStream, String authToken) {
         String dataStreamEndpoint = String.format("/agent_storage/%s", storageInfo.getId());
         Client httpClient = null;
@@ -188,6 +218,35 @@ public class StorageClientImplHelper {
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
+            Response response = target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE)
+                    .header("Authorization", "Bearer " + authToken)
+                    .get()
+                    ;
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return Optional.of(response.readEntity(InputStream.class));
+            } else {
+                LOG.warn("Stream data returned with status {}", responseStatus);
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    public Optional<InputStream> streamDataEntryFromStorage(String connectionURL, Number storageId, String entryPath, String authToken) {
+        String dataStreamEndpoint = String.format("/agent_storage/%s", storageId);
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(connectionURL)
+                    .path(dataStreamEndpoint)
+                    .path("entry_content")
+                    .path(entryPath);
             Response response = target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE)
                     .header("Authorization", "Bearer " + authToken)
                     .get()

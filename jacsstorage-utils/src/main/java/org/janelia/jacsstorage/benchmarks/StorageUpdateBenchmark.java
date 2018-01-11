@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class StorageUpdateBenchmark {
 
     @Benchmark
-    @BenchmarkMode(Mode.All)
+    @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void createDir(BenchmarkTrialParams trialParams, UpdateBenchmarkInvocationParams invocationParams) throws Exception {
         trialParams.storageClientHelper.createNewDirectory(
@@ -36,7 +36,7 @@ public class StorageUpdateBenchmark {
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.All)
+    @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void createNewFile(BenchmarkTrialParams trialParams, UpdateBenchmarkInvocationParams invocationParams) throws Exception {
         trialParams.storageClientHelper.createNewFile(

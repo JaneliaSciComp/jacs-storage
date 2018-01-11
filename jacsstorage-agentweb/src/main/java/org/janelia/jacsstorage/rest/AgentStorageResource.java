@@ -162,7 +162,10 @@ public class AgentStorageResource {
         List<DataNodeInfo> dataBundleContent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depth);
         if (CollectionUtils.isNotEmpty(dataBundleContent) && dataBundle.getVirtualRoot() != null) {
             String virtualStoragePath = dataBundle.getVirtualRoot();
-            dataBundleContent.forEach(dn -> dn.setRootPrefix(virtualStoragePath));
+            dataBundleContent.forEach(dn -> {
+                dn.setStorageId(dataBundle.getId());
+                dn.setRootPrefix(virtualStoragePath);
+            });
         }
         return dataBundleContent;
     }

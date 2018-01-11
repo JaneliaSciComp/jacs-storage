@@ -9,7 +9,7 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
 @State(Scope.Thread)
-public class RetrieveBenchmarkInvocationParams {
+public class ListContentBenchmarkInvocationParams {
     Number storageBundleId;
     PageRequest pageRequest;
 
@@ -17,9 +17,8 @@ public class RetrieveBenchmarkInvocationParams {
     public void setUp(RetrieveBenchmarkTrialParams params) {
         storageBundleId = params.dataBundleId;
         PageRequestBuilder pageRequestBuilder = new PageRequestBuilder().pageSize(1);
-        System.out.println("!!!!!!!!!!! N RECORDS " + params.nStorageRecords);
         if (params.nStorageRecords > 0) {
-            pageRequestBuilder.firstPageOffset(RandomUtils.nextLong(0, params.nStorageRecords));
+            pageRequestBuilder.pageNumber(RandomUtils.nextLong(0, params.nStorageRecords));
         }
         pageRequest = pageRequestBuilder.build();
     }
