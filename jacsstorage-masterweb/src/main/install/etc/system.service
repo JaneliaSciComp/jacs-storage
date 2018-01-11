@@ -1,0 +1,12 @@
+[Unit]
+Description=Jacs Storage Master Service
+After=network.target
+
+[Service]
+Type=simple
+User=jacs
+ExecStart=${installDir}/bin/run-service.sh
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
