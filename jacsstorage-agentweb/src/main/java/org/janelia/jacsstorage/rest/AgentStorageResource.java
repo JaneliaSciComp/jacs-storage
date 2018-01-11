@@ -170,7 +170,7 @@ public class AgentStorageResource {
         return dataBundleContent;
     }
 
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("{dataBundleId}/entry_content/{dataEntryPath:.*}")
     @ApiOperation(value = "Retrieve the content of the specified data bundle entry.")
