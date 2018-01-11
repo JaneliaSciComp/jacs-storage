@@ -63,3 +63,20 @@ subprojects {
 task wrapper(type: Wrapper) {
     gradleVersion = "4.4.1"
 }
+
+def filteringProperties(otherProperties) {
+        def tmpProject = new org.apache.tools.ant.Project()
+        tmpProject.initProperties()
+        // convert the build config to ant properties to be used with the ant ExpandProperties
+        project.ext.properties.each { k,v ->
+                if (k.startsWith("jacs.runtime.env.")) {
+                        tmpProject.setProperty("${k}", "${v}")
+                }
+        }
+        otherProperties.each { k,v ->
+                if (k.startsWith("jacs.runtime.env.")) {
+                        tmpProject.setProperty("${k}", "${v}")
+                }
+        }
+        tmpProject
+}

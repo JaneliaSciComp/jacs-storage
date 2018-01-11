@@ -1,6 +1,16 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:4.4.0'
+    }
+}
+
 apply plugin: 'application'
 apply plugin: 'distribution'
-
+apply plugin: 'nebula.rpm'
+ 
 mainClassName = 'org.janelia.jacsstorage.app.JacsAgentStorageApp'
 
 project(":jacsstorage-agentweb") {
@@ -30,6 +40,43 @@ project(":jacsstorage-agentweb") {
                 }
 	    }
 	}
+    }
+
+    task packageRpm(type: Rpm, dependsOn: distTar) {
+        release = "1"
+        arch = I386
+        os = LINUX
+
+        def rpmInstallDir = "/opt/servers/jacsstorage/${project.name}-${version}"
+        def installEnv = ["jacs.runtime.env.installDir": rpmInstallDir]
+
+        into "${rpmInstallDir}"
+
+        from(new File(project(':jacsstorage-commonweb').projectDir, 'src/main/install/etc')) {
+            into "etc"
+            filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))	
+        }
+
+        from ("${buildDir}/scripts") {
+            into "bin"
+            filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
+	}
+
+        from ("src/main/install/bin") {
+            into "bin"
+            filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))	
+	}
+
+        from ("src/main/install/etc") {
+            into "etc"
+            filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))	
+	}
+
+        from ("${buildDir}/libs") {
+            into "libs"
+	}
+
+        link("/etc/systemd/system/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
     }
 }
 
