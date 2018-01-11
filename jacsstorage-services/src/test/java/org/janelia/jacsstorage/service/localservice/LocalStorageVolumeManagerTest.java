@@ -188,7 +188,7 @@ public class LocalStorageVolumeManagerTest {
                 .put("availableSpaceInBytes", new SetFieldValueHandler<>(testVolume.getAvailableSpaceInBytes()))
                 .put("storageServiceURL", new SetFieldValueHandler<>(testVolume.getStorageServiceURL()))
                 .put("storageServiceTCPPortNo", new SetFieldValueHandler<>(testVolume.getStorageServiceTCPPortNo()))
-                .put("volumeTags", new SetFieldValueHandler<>(testVolume.getStorageTags()))
+                .put("storageTags", new SetFieldValueHandler<>(testVolume.getStorageTags()))
                 .build()
         );
         Mockito.verifyNoMoreInteractions(storageVolumeDao);
@@ -257,7 +257,7 @@ public class LocalStorageVolumeManagerTest {
         Mockito.verify(storageVolumeDao).update(newlyCreatedTestVolume, ImmutableMap.of(
                 "storageRootDir", new SetFieldValueHandler<>(testVolume.getStorageRootDir()),
                 "storagePathPrefix", new SetFieldValueHandler<>(testVolume.getStoragePathPrefix()),
-                "volumeTags", new SetFieldValueHandler<>(testVolume.getStorageTags())
+                "storageTags", new SetFieldValueHandler<>(testVolume.getStorageTags())
         ));
         Mockito.verifyNoMoreInteractions(storageVolumeDao);
     }

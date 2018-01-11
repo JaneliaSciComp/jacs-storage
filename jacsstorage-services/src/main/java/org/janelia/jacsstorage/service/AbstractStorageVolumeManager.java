@@ -91,7 +91,7 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
         }
         if (!currentVolumeInfo.hasTags() && storageVolume.hasTags()) {
             currentVolumeInfo.setStorageTags(storageVolume.getStorageTags());
-            updatedVolumeFieldsBuilder.put("volumeTags", new SetFieldValueHandler<>(currentVolumeInfo.getStorageTags()));
+            updatedVolumeFieldsBuilder.put("storageTags", new SetFieldValueHandler<>(currentVolumeInfo.getStorageTags()));
         }
         Map<String, EntityFieldValueHandler<?>> updatedVolumeFields = updatedVolumeFieldsBuilder.build();
         if (!updatedVolumeFields.isEmpty()) {

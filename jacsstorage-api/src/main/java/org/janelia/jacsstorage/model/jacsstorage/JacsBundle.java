@@ -185,7 +185,7 @@ public class JacsBundle extends AbstractEntity {
         this.storageTags = storageTags;
     }
 
-    public void addVolumeTag(String tag) {
+    public void addStorageTag(String tag) {
         if (storageTags == null) {
             storageTags = new ArrayList<>();
         }

@@ -112,7 +112,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             filtersBuilder.add(Filters.in("storageServiceURL", storageQuery.getStorageAgents()));
         }
         if (CollectionUtils.isNotEmpty(storageQuery.getStorageTags())) {
-            filtersBuilder.add(Filters.all("volumeTags", storageQuery.getStorageTags()));
+            filtersBuilder.add(Filters.all("storageTags", storageQuery.getStorageTags()));
         }
         if (storageQuery.hasMinAvailableSpaceInBytes()) {
             filtersBuilder.add(Filters.gte("availableSpaceInBytes", storageQuery.getMinAvailableSpaceInBytes()));

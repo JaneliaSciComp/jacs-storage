@@ -46,9 +46,7 @@ public class StorageRetrieveBenchmark {
             trialParams.storageClientHelper.streamDataEntryFromStorage(contentInfo.getRootLocation(), contentInfo.getStorageId(), contentInfo.getNodeRelativePath(), trialParams.authToken)
                 .map(is -> {
                     try {
-                        byte[] content = ByteStreams.toByteArray(is);
-                        System.out.println("!!!!! READ " + content.length + " bytes");
-                        return content;
+                        return ByteStreams.toByteArray(is);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
