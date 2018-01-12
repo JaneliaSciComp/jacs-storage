@@ -62,7 +62,7 @@ project(":jacsstorage-agentweb") {
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
 	}
 
-        from ("src/main/install/bin") {
+        from ("src/main/install/scripts") {
             into "bin"
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))	
 	}
