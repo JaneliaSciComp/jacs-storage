@@ -5,7 +5,7 @@ After=jacsstorage-masterweb
 [Service]
 Type=simple
 User=jacs
-ExecStart=${jacs.runtime.env.installDir}/bin/run-service.sh
+ExecStart=/bin/sh ${jacs.runtime.env.installDir}/bin/run-service.sh
 Restart=on-abort
 
 [Install]
