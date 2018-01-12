@@ -63,7 +63,7 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     public StorageAgentInfo registerAgent(StorageAgentInfo agentInfo) {
         LOG.info("Register {}", agentInfo);
         CircuitBreaker<StorageAgentInfo> agentConnectionBreaker = new CircuitBreakerImpl<>(
-                Optional.empty(),
+                Optional.of(CircuitBreaker.BreakerState.CLOSED),
                 scheduler,
                 periodInSeconds,
                 initialDelayInSeconds,
@@ -71,8 +71,8 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
         StorageAgentConnection agentConnection = new StorageAgentConnection(agentInfo, agentConnectionBreaker);
         StorageAgentConnection registeredConnection = registeredAgentConnections.putIfAbsent(agentInfo.getAgentHttpURL(), agentConnection);
         if (registeredConnection == null) {
+            agentConnection.updateConnectionStatus();
             agentInfo.setAgentToken(String.valueOf(AGENT_TOKEN_GENERATOR.nextInt()));
-            agentInfo.setConnectionStatus(StorageAgentConnection.CONNECTED_STATUS_VALUE);
             agentConnectionBreaker.initialize(agentInfo, new AgentConnectionTester(),
                     Optional.of(storageAgentInfo -> {
                         LOG.trace("Agent {} is up and running", storageAgentInfo.getAgentHttpURL());
