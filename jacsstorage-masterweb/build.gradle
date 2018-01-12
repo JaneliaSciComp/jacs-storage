@@ -36,7 +36,7 @@ project(":jacsstorage-masterweb") {
         }
     }
 
-    task packageRpm(type: Rpm, dependsOn: distTar) {
+    task packageRpm(type: Rpm, dependsOn: installDist) {
         release = "1"
         arch = I386
         os = LINUX
@@ -51,9 +51,17 @@ project(":jacsstorage-masterweb") {
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
-        from ("${buildDir}/scripts") {
+        from ("${destinationDir}/scripts") {
             into "bin"
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
+        }
+
+        from ("${destinationDir}/lib") {
+            into "lib"
+        }
+
+        from ("${destinationDir}/swagger-webapp") {
+            into "swagger-webapp"
         }
 
         from ("src/main/install/scripts") {
@@ -67,11 +75,7 @@ project(":jacsstorage-masterweb") {
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
-        from ("${buildDir}/libs") {
-            into "libs"
-        }
-
-        link("/etc/systemd/system/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
+        link("/etc/systemd/user/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
     }
 }
 
