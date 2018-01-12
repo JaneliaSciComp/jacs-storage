@@ -1,6 +1,6 @@
 [Unit]
 Description=Jacs Storage Agent Service
-After=jacsstorage-masterweb
+After=network.target jacsstorage-masterweb.target
 
 [Service]
 Type=simple
