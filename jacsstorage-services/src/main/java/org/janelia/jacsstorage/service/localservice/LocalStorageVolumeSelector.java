@@ -23,12 +23,13 @@ public class LocalStorageVolumeSelector implements StorageVolumeSelector {
     public JacsStorageVolume selectStorageVolume(JacsBundle storageRequest) {
         StorageQuery storageQuery = new StorageQuery()
                 .addStorageHost(getStorageHost())
-                .setStorageTags(storageRequest.getStorageTags());
+                .setLocalToAnyHost(true);
         storageRequest.getStorageVolume()
                 .ifPresent(sv -> {
                     storageQuery.setId(sv.getId());
                     storageQuery.setStorageName(sv.getName());
                     storageQuery.setStoragePathPrefix(sv.getStoragePathPrefix());
+                    storageQuery.setStorageTags(sv.getStorageTags());
                 });
         if (storageRequest.hasUsedSpaceSet()) {
             storageQuery.setMinAvailableSpaceInBytes(storageRequest.getUsedSpaceInBytes());

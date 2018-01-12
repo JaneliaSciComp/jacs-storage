@@ -31,7 +31,6 @@ public class JacsBundle extends AbstractEntity {
     private Date modified = new Date();
     private Map<String, Object> metadata = new LinkedHashMap<>();
     private Number storageVolumeId;
-    private List<String> storageTags; // storage tags - identify certain features of the physical storage
     @JsonIgnore
     private JacsStorageVolume storageVolume;
 
@@ -175,27 +174,6 @@ public class JacsBundle extends AbstractEntity {
 
     public void setStorageVolumeId(Number storageVolumeId) {
         this.storageVolumeId = storageVolumeId;
-    }
-
-    public List<String> getStorageTags() {
-        return storageTags;
-    }
-
-    public void setStorageTags(List<String> storageTags) {
-        this.storageTags = storageTags;
-    }
-
-    public void addStorageTag(String tag) {
-        if (storageTags == null) {
-            storageTags = new ArrayList<>();
-        }
-        if (StringUtils.isNotBlank(tag)) {
-            storageTags.add(tag);
-        }
-    }
-
-    public boolean hasTags() {
-        return storageTags != null && !storageTags.isEmpty();
     }
 
     @JsonIgnore

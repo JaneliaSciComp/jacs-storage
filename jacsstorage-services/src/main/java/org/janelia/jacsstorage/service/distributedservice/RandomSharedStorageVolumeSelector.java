@@ -11,27 +11,22 @@ import org.janelia.jacsstorage.service.StorageVolumeSelector;
 import java.util.List;
 import java.util.Random;
 
-public class RandomStorageVolumeSelector implements StorageVolumeSelector {
+public class RandomSharedStorageVolumeSelector implements StorageVolumeSelector {
     private static final Random RANDOM_SELECTOR = new Random(System.currentTimeMillis());
 
     private final JacsStorageVolumeDao storageVolumeDao;
-    private final List<String> availableHosts;
     private final List<String> availableServicesURLs;
 
-    public RandomStorageVolumeSelector(JacsStorageVolumeDao storageVolumeDao, List<String> availableHosts, List<String> availableServicesURLs) {
+    public RandomSharedStorageVolumeSelector(JacsStorageVolumeDao storageVolumeDao, List<String> availableServicesURLs) {
         this.storageVolumeDao = storageVolumeDao;
-        this.availableHosts = availableHosts;
         this.availableServicesURLs = availableServicesURLs;
     }
 
     @Override
     public JacsStorageVolume selectStorageVolume(JacsBundle storageRequest) {
         StorageQuery storageQuery = new StorageQuery()
-                .setStorageHosts(availableHosts)
-                .setLocalToAnyHost(true)
-                .setShared(false)
-                .setStorageAgents(availableServicesURLs)
-                .setStorageTags(storageRequest.getStorageTags());
+                .setShared(true)
+                .setStorageAgents(availableServicesURLs);
         storageRequest.getStorageVolume()
                 .ifPresent(sv -> {
                     storageQuery.setId(sv.getId());

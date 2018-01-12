@@ -59,8 +59,10 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
     public Optional<JacsStorageVolume> selectStorageVolume(JacsBundle dataBundle) {
         List<StorageAgentInfo> availableAgents = agentManager.getCurrentRegisteredAgents(ac -> ac.isConnected());
         StorageVolumeSelector[] volumeSelectors = new StorageVolumeSelector[] {
-                new RandomStorageVolumeSelector(storageVolumeDao,
+                new RandomLocalStorageVolumeSelector(storageVolumeDao,
                         availableAgents.stream().map(ai -> ai.getStorageHost()).collect(Collectors.toList()),
+                        availableAgents.stream().map(ai -> ai.getAgentHttpURL()).collect(Collectors.toList())),
+                new RandomSharedStorageVolumeSelector(storageVolumeDao,
                         availableAgents.stream().map(ai -> ai.getAgentHttpURL()).collect(Collectors.toList())),
                 new OverflowStorageVolumeSelector(storageVolumeDao)
         };

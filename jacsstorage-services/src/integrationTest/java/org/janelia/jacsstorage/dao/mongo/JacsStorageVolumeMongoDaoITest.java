@@ -126,10 +126,12 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
         );
         Map<StorageQuery, String[]> queriesWithExpectedResults =
                 ImmutableMap.of(
-                        new StorageQuery().setShared(true).setLocalToAnyHost(true), // local doesn't matter if shared is true
+                        new StorageQuery().setShared(true), // local doesn't matter if shared is true
                         new String[]{"sv1", "sv2", "sv3"},
                         new StorageQuery().setLocalToAnyHost(true),
-                        new String[]{"v1", "v2", "v3"}
+                        new String[]{"v1", "v2", "v3"},
+                        new StorageQuery().addStorageHost("h1").addStorageHost("h3"),
+                        new String[]{"v1", "v3"}
                 );
         queriesWithExpectedResults.forEach((q, volumeNames) -> {
             long count = testDao.countMatchingVolumes(q);

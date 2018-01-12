@@ -20,8 +20,7 @@ public class OverflowStorageVolumeSelector implements StorageVolumeSelector {
     public JacsStorageVolume selectStorageVolume(JacsBundle storageRequest) {
         StorageQuery storageQuery = new StorageQuery()
                 .setShared(true)
-                .setStorageName(JacsStorageVolume.OVERFLOW_VOLUME)
-                .setStorageTags(storageRequest.getStorageTags());
+                .setStorageName(JacsStorageVolume.OVERFLOW_VOLUME);
         PageResult<JacsStorageVolume> storageVolumeResults = storageVolumeDao.findMatchingVolumes(storageQuery, new PageRequest());
         if (storageVolumeResults.getResultList().isEmpty()) {
             return null;

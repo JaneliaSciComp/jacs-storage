@@ -91,16 +91,18 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         if (storageQuery.getId() != null) {
             filtersBuilder.add(Filters.eq("_id", storageQuery.getId()));
         }
-        if (CollectionUtils.isNotEmpty(storageQuery.getStorageHosts())) {
-            filtersBuilder.add(Filters.in("storageHost", storageQuery.getStorageHosts()));
+        if (storageQuery.isLocalToAnyHost() || CollectionUtils.isNotEmpty(storageQuery.getStorageHosts())) {
+            if (CollectionUtils.isNotEmpty(storageQuery.getStorageHosts())) {
+                filtersBuilder.add(Filters.in("storageHost", storageQuery.getStorageHosts()));
+            } else {
+                filtersBuilder.add(Filters.exists("storageHost", true)); // the storageHost must be set
+                filtersBuilder.add(Filters.ne("storageHost", null));
+            }
         } else if (storageQuery.isShared()) {
             filtersBuilder.add(Filters.or(
                     Filters.exists("storageHost", false), // the storage host should not be set
                     Filters.eq("storageHost", null)
             )); // the storageHost must not be set
-        } else if (storageQuery.isLocalToAnyHost()) {
-            filtersBuilder.add(Filters.exists("storageHost", true)); // the storageHost must be set
-            filtersBuilder.add(Filters.ne("storageHost", null));
         }
         if (StringUtils.isNotBlank(storageQuery.getStorageName())) {
             filtersBuilder.add(Filters.eq("name", storageQuery.getStorageName()));
