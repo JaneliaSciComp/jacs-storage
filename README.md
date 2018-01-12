@@ -67,6 +67,27 @@ When using the environment variable to reference the configuration use the full 
 
 `./gradlew installDist`
 
+To generate an RPM package create a gradle.properties:
+
+```
+cat > local/gradle.properties <<EOF
+jacs.runtime.env.apiKey=JacsStorageAuthorizedAPI.Dev
+jacs.runtime.env.jwtSecret=SYhZwP9ZbSpjIbvRkn6GfBUACWzPb-53zbD9Ps3jVswg85WvJp4DlLrlMdhkaNlP8Zq0V63r5er_w7qlGeGxSD8CH1nsDgRhC0umwGeLDvEj4TbCicJSc3Klz2el-3iv-jiMp69h27YBmrUYf_fwOagi1x9To-hpQ-1x78G7bd8dRVO0wDOeAILNgvhy22hxvoX_PrRZkXbn_7aLeNziw-48vL0idYkxxJIEqnLqnOyEy_TCEvo4w_n14vseDn7ZzulNR97nNL9ZFnD7GXXr5ZQqeVIO-HoNbKSP3f1YCACqT2QC-89FdefaKlR-SFp_EBSfvEiQN8E0WrUObXfHKg
+jacs.runtime.env.agentHttpPort=9881
+jacs.runtime.env.agentTcpPort=11000
+jacs.runtime.env.masterHttpPort=9880
+jacs.runtime.env.logsRootDir=/data/jacsstorage/prod-logs
+EOF
+```
+
+`./gradlew --gradle-user-home=local packageRpm`
+
+Then on centos use yum to install the generated packages
+
+`sudo yum install jacsstorage-masterweb/build/distributions/jacsstorage-masterweb-1.0.0-1.i386.rpm`
+`sudo yum install jacsstorage-agentweb/build/distributions/jacsstorage-agentweb-1.0.0-1.i386.rpm`
+
+
 Note that 'installDist' target will not run any unit tests or integration tests.
 
 ### Run the application
@@ -83,3 +104,11 @@ The default settings could be overwritten with your own settings in a java prope
 and then use JACSSTORAGE_CONFIG environment variable to reference the settings file, e.g.
 
 `JACSSTORAGE_CONFIG=/usr/local/etc/myjacsstorage-config.properties jacsstorage-web/build/install/jacsstorage-web/bin/jacsstorage-web`
+
+If the master and the agent are installed as system services:
+
+`
+sudo systemctl daemon-reload
+sudo systemctl start jacsstorage-masterweb
+sudo systemctl start jacsstorage-agentweb
+`
