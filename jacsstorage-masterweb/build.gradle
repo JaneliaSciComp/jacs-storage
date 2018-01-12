@@ -23,17 +23,17 @@ project(":jacsstorage-masterweb") {
 
     distributions {
         main {
-	    contents {
+            contents {
                 into('swagger-webapp') {
                     from(new File(project(':jacsstorage-commonweb').projectDir, 'src/main/swagger-webapp')) {
-		        include '**'
-		    }
+                        include '**'
+                    }
                     from(new File(projectDir, 'src/main/swagger-webapp')) {
-		        include 'index.html'
-		    }
+                        include 'index.html'
+                    }
                 }
-	    }
-	}
+            }
+        }
     }
 
     task packageRpm(type: Rpm, dependsOn: distTar) {
@@ -48,27 +48,28 @@ project(":jacsstorage-masterweb") {
 
         from(new File(project(':jacsstorage-commonweb').projectDir, 'src/main/install/etc')) {
             into "etc"
-            filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))	
+            filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
         from ("${buildDir}/scripts") {
             into "bin"
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
-	}
+        }
 
         from ("src/main/install/scripts") {
             into "bin"
-            filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))	
-	}
+            filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
+            fileMode = 0550
+        }
 
         from ("src/main/install/etc") {
             into "etc"
-            filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))	
-	}
+            filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
+        }
 
         from ("${buildDir}/libs") {
             into "libs"
-	}
+        }
 
         link("/etc/systemd/system/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
     }
