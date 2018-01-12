@@ -57,23 +57,23 @@ project(":jacsstorage-agentweb") {
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
-        from ("${buildDir}/install/${distribution.name}/scripts") {
+        from ("${buildDir}/install/${project.name}/bin") {
             into "bin"
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
-        from ("${buildDir}/install/${distribution.name}/lib") {
+        from ("${buildDir}/install/${project.name}/lib") {
             into "lib"
         }
 
-        from ("${buildDir}/install/${distribution.name}/swagger-webapp") {
+        from ("${buildDir}/install/${project.name}/swagger-webapp") {
             into "swagger-webapp"
         }
 
         from ("src/main/install/scripts") {
             into "bin"
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
-            fileMode = 0550
+            fileMode = 0755
         }
 
         from ("src/main/install/etc") {
@@ -81,7 +81,7 @@ project(":jacsstorage-agentweb") {
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
-        link("/etc/systemd/user/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
+        link("/etc/systemd/system/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
     }
 }
 
