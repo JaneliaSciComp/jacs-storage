@@ -26,13 +26,13 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
     }
 
     @Override
-    public Optional<JacsBundle> allocateStorage(JacsCredentials credentials, JacsBundle dataBundle) {
+    public Optional<JacsBundle> allocateStorage(JacsCredentials credentials, String dataBundlePathPrefix, JacsBundle dataBundle) {
         return selectStorageVolume(dataBundle)
-                .map((JacsStorageVolume storageVolume) -> createStorage(credentials, storageVolume, dataBundle))
+                .map((JacsStorageVolume storageVolume) -> createStorage(credentials, storageVolume, dataBundlePathPrefix, dataBundle))
                 ;
     }
 
-    private JacsBundle createStorage(JacsCredentials credentials, JacsStorageVolume storageVolume, JacsBundle dataBundle) {
+    private JacsBundle createStorage(JacsCredentials credentials, JacsStorageVolume storageVolume, String dataBundlePathPrefix, JacsBundle dataBundle) {
         try {
             dataBundle.setOwnerKey(credentials.getSubjectKey());
             dataBundle.setStorageVolumeId(storageVolume.getId());
@@ -40,7 +40,7 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
             dataBundle.setCreatedBy(credentials.getAuthSubject());
             bundleDao.save(dataBundle);
             List<String> dataSubpath = PathUtils.getTreePathComponentsForId(dataBundle.getId());
-            Path dataPath = Paths.get("", dataSubpath.toArray(new String[dataSubpath.size()]));
+            Path dataPath = Paths.get(StringUtils.defaultIfBlank(dataBundlePathPrefix, ""), dataSubpath.toArray(new String[dataSubpath.size()]));
             dataBundle.setPath(dataPath.toString());
             bundleDao.update(dataBundle, ImmutableMap.of("path", new SetFieldValueHandler<>(dataBundle.getPath())));
             return dataBundle;

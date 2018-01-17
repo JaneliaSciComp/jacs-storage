@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.service.distributedservice;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
@@ -55,6 +56,7 @@ public class DistributedStorageAllocatorServiceTest {
         final int testPort;
         final String testAgentURL;
         final String testAgentMountPoint;
+        final String testBundlePrefix;
         final JacsBundle testBundle;
         final JacsStorageVolume testVolume;
 
@@ -65,6 +67,7 @@ public class DistributedStorageAllocatorServiceTest {
                                 int testPort,
                                 String testAgentURL,
                                 String testAgentMountPoint,
+                                String testBundlePrefix,
                                 JacsBundle testBundle,
                                 JacsStorageVolume testVolume) {
             this.testBundleId = testBundleId;
@@ -74,6 +77,7 @@ public class DistributedStorageAllocatorServiceTest {
             this.testPort = testPort;
             this.testAgentURL = testAgentURL;
             this.testAgentMountPoint = testAgentMountPoint;
+            this.testBundlePrefix = testBundlePrefix;
             this.testBundle = testBundle;
             this.testVolume = testVolume;
         }
@@ -89,6 +93,7 @@ public class DistributedStorageAllocatorServiceTest {
                         100,
                         "http://agentURL",
                         "/storage",
+                        null,
                         new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .storageHost("testHost")
@@ -104,6 +109,7 @@ public class DistributedStorageAllocatorServiceTest {
                         100,
                         "http://agentURL",
                         "/overflowStorage",
+                        "bundlePrefix",
                         new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .name(JacsStorageVolume.OVERFLOW_VOLUME)
@@ -117,6 +123,7 @@ public class DistributedStorageAllocatorServiceTest {
                         100,
                         "http://agentURL",
                         "/storage",
+                        "",
                         new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .storageHost("testHost")
@@ -128,7 +135,7 @@ public class DistributedStorageAllocatorServiceTest {
         for (TestAllocateData td : testData) {
             prepareMockServices(td);
             JacsCredentials jacsCredentials = new JacsCredentials();
-            Optional<JacsBundle> bundleResult = testStorageAllocatorService.allocateStorage(jacsCredentials, td.testBundle);
+            Optional<JacsBundle> bundleResult = testStorageAllocatorService.allocateStorage(jacsCredentials, td.testBundlePrefix, td.testBundle);
             verifyTestBundle(bundleResult, td);
         }
     }
@@ -172,8 +179,8 @@ public class DistributedStorageAllocatorServiceTest {
             });
             Mockito.verify(bundleDao).save(dataBundle);
             assertThat(dataBundle.getId(), equalTo(testData.testBundleId));
-            assertThat(dataBundle.getPath(), equalTo(testData.testBundleId.toString()));
-            assertThat(dataBundle.getRealStoragePath(), equalTo(Paths.get(testData.testVolume.getStorageRootDir(), testData.testBundleId.toString())));
+            assertThat(dataBundle.getPath(), equalTo((StringUtils.isBlank(testData.testBundlePrefix) ? "" : testData.testBundlePrefix + "/") + testData.testBundleId.toString()));
+            assertThat(dataBundle.getRealStoragePath(), equalTo(Paths.get(testData.testVolume.getStorageRootDir(), StringUtils.defaultIfBlank(testData.testBundlePrefix, ""), testData.testBundleId.toString())));
             Mockito.verify(bundleDao).update(dataBundle, ImmutableMap.of(
                     "path", new SetFieldValueHandler<>(dataBundle.getPath())
             ));

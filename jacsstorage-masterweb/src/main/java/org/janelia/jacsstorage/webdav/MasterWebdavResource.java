@@ -101,6 +101,7 @@ public class MasterWebdavResource {
     @Path("storage/{storageName}{format:(/format/[^/]+?)?}")
     public Response createDataStorage(@PathParam("storageName") String storageName,
                                       @PathParam("format") String format,
+                                      @HeaderParam("pathPrefix") String pathPrefix,
                                       @HeaderParam("storageTags") String storageTags,
                                       @Context SecurityContext securityContext) {
         JacsStorageFormat storageFormat;
@@ -114,7 +115,7 @@ public class MasterWebdavResource {
                 .storageFormat(storageFormat)
                 .storageTags(storageTags)
                 .build();
-        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(SecurityUtils.getUserPrincipal(securityContext), dataBundle);
+        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(SecurityUtils.getUserPrincipal(securityContext), pathPrefix, dataBundle);
         return dataBundleInfo
                 .map(bi -> Response
                         .created(

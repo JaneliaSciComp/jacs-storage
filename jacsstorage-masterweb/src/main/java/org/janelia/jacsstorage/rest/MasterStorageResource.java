@@ -173,7 +173,7 @@ public class MasterStorageResource {
     @POST
     public Response createBundleInfo(DataStorageInfo dataStorageInfo, @Context SecurityContext securityContext) {
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
-        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(SecurityUtils.getUserPrincipal(securityContext), dataBundle);
+        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(SecurityUtils.getUserPrincipal(securityContext), dataStorageInfo.getDataStoragePath(), dataBundle);
         return dataBundleInfo
                 .map(bi -> Response
                         .created(resourceURI.getBaseUriBuilder().path(dataBundle.getId().toString()).build())
