@@ -15,6 +15,9 @@ public class Prop {
     @JacksonXmlProperty(localName = "D:getlastmodified")
     Date lastmodified;
 
+    @JacksonXmlProperty(localName = "D:displayname")
+    String displayname;
+
     @JacksonXmlProperty(localName = "D:getetag")
     String etag;
 
@@ -46,6 +49,14 @@ public class Prop {
 
     public void setLastmodified(Date lastmodified) {
         this.lastmodified = lastmodified;
+    }
+
+    public String getDisplayname() {
+        return displayname;
+    }
+
+    public void setDisplayname(String displayname) {
+        this.displayname = displayname;
     }
 
     public String getEtag() {

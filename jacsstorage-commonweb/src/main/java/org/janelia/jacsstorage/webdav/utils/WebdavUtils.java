@@ -37,8 +37,8 @@ public class WebdavUtils {
         ms.getResponse().addAll(storageVolumes.stream()
                 .map(storageVolume -> {
                     Prop prop = new Prop();
-                    prop.setEtag(storageVolume.getName());
-
+                    prop.setDisplayname(storageVolume.getName());
+                    prop.setEtag(storageVolume.getStoragePathPrefix());
                     prop.setCreationDate(storageVolume.getCreated());
                     prop.setLastmodified(storageVolume.getModified());
                     prop.setResourceType("collection");
@@ -62,6 +62,7 @@ public class WebdavUtils {
         ms.getResponse().addAll(nodeInfoList.stream()
                 .map(nodeInfo -> {
                     Prop prop = new Prop();
+                    prop.setEtag(nodeInfo.getNodeRelativePath());
                     prop.setContentType(nodeInfo.getMimeType());
                     prop.setContentLength(String.valueOf(nodeInfo.getSize()));
                     prop.setCreationDate(nodeInfo.getCreationTime());
