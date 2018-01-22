@@ -4,10 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
+import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DataStorageInfo {
@@ -19,6 +21,7 @@ public class DataStorageInfo {
     private String storageRootPrefixDir;
     private String storageRootRealDir;
     private String storageHost;
+    private List<String> storageTags;
     private int tcpPortNo;
     private String connectionURL;
     private JacsStorageFormat storageFormat;
@@ -41,6 +44,7 @@ public class DataStorageInfo {
         dataBundle.getStorageVolume()
                 .ifPresent(sv -> {
                     dsi.setStorageHost(sv.getStorageHost());
+                    dsi.setStorageTags(sv.getStorageTags());
                     dsi.setStorageRootRealDir(sv.getStorageRootDir());
                     dsi.setStorageRootPrefixDir(sv.getStoragePathPrefix());
                     dsi.setTcpPortNo(sv.getStorageServiceTCPPortNo());
@@ -92,8 +96,8 @@ public class DataStorageInfo {
     @JsonIgnore
     public String getDataStoragePath() {
         return StringUtils.isNotBlank(storageRootRealDir)
-                ? Paths.get(storageRootRealDir, path).toString()
-                : Paths.get(path).toString();
+                ? Paths.get(storageRootRealDir, StringUtils.defaultIfBlank(path, "")).toString()
+                : (StringUtils.isBlank(path) ? "" : Paths.get(path).toString());
     }
 
     public String getPermissions() {
@@ -129,6 +133,15 @@ public class DataStorageInfo {
 
     public DataStorageInfo setStorageHost(String storageHost) {
         this.storageHost = storageHost;
+        return this;
+    }
+
+    public List<String> getStorageTags() {
+        return storageTags;
+    }
+
+    public DataStorageInfo setStorageTags(List<String> storageTags) {
+        this.storageTags = storageTags;
         return this;
     }
 
@@ -192,15 +205,17 @@ public class DataStorageInfo {
     }
 
     public JacsBundle asDataBundle() {
-        JacsBundle dataBundle = new JacsBundle();
-        dataBundle.setName(this.name);
-        dataBundle.setOwnerKey(this.ownerKey);
-        dataBundle.setStorageFormat(this.storageFormat);
-        dataBundle.setPermissions(this.permissions);
-        dataBundle.setUsedSpaceInBytes(this.requestedSpaceInBytes);
-        dataBundle.setChecksum(this.checksum);
-        dataBundle.addMetadataFields(this.metadata);
-        return dataBundle;
+        return new JacsBundleBuilder()
+                .name(this.name)
+                .ownerKey(this.ownerKey)
+                .storageFormat(this.storageFormat)
+                .permissions(this.permissions)
+                .usedSpaceInBytes(this.requestedSpaceInBytes)
+                .checksum(this.checksum)
+                .metadata(this.metadata)
+                .storageHost(this.storageHost)
+                .storageTagsAsList(this.storageTags)
+                .build();
     }
 
     @Override

@@ -165,7 +165,9 @@ public class JacsBundle extends AbstractEntity {
     }
 
     public void addMetadataFields(Map<String, Object> metadataFields) {
-        this.metadata.putAll(metadataFields);
+        if (metadataFields != null) {
+            this.metadata.putAll(metadataFields);
+        }
     }
 
     public Number getStorageVolumeId() {

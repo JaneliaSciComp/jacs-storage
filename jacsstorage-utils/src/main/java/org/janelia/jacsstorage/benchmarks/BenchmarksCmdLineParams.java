@@ -3,6 +3,9 @@ package org.janelia.jacsstorage.benchmarks;
 import com.beust.jcommander.Parameter;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
+import java.util.ArrayList;
+import java.util.List;
+
 class BenchmarksCmdLineParams {
     @Parameter(names = "-warmup", description = "Warmup iterations")
     int warmupIterations = 5;
@@ -18,6 +21,12 @@ class BenchmarksCmdLineParams {
     Boolean useHttp = false;
     @Parameter(names = "-dataFormat", description = "Data bundle format")
     JacsStorageFormat dataFormat = JacsStorageFormat.DATA_DIRECTORY;
+    @Parameter(names = "-storageHost", description = "Storage tags")
+    String storageHost;
+    @Parameter(names = "-storageTags", description = "Storage tags")
+    List<String> storageTags = new ArrayList<>();
+    @Parameter(names = "-storageContext", description = "Storage path context")
+    String storageContext;
     @Parameter(names = "-localPath", description = "Local path")
     String localPath = "";
     // authentication params
@@ -37,5 +46,9 @@ class BenchmarksCmdLineParams {
 
     String getUserKey() {
         return "user:" + username;
+    }
+
+    String getStorageTagsAsString() {
+        return storageTags.stream().reduce((t1, t2) -> t1 + "," + t2).orElse("");
     }
 }

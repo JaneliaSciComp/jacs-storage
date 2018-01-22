@@ -32,7 +32,7 @@ public class StorageRetrieveBenchmark {
     @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void listStorage(RetrieveBenchmarkTrialParams trialParams, ListContentBenchmarkInvocationParams invocationParams) {
-        PageResult<DataStorageInfo> storageRecords = trialParams.storageClientHelper.listStorageRecords(trialParams.serverURL, invocationParams.storageBundleId, invocationParams.pageRequest, trialParams.authToken);
+        PageResult<DataStorageInfo> storageRecords = trialParams.storageClientHelper.listStorageRecords(trialParams.serverURL, trialParams.storageHost, trialParams.getStorageTags(), invocationParams.storageBundleId, invocationParams.pageRequest, trialParams.authToken);
         for (DataStorageInfo storageInfo : storageRecords.getResultList()) {
             trialParams.storageClientHelper.listStorageContent(storageInfo.getConnectionURL(), storageInfo.getId(), trialParams.authToken);
         }
@@ -85,6 +85,8 @@ public class StorageRetrieveBenchmark {
                 .param("serverURL", benchmarksCmdLineParams.serverURL)
                 .param("useHttp", benchmarksCmdLineParams.useHttp.toString())
                 .param("ownerKey", dataOwnerKey)
+                .param("storageHost", benchmarksCmdLineParams.storageHost)
+                .param("storageTags", benchmarksCmdLineParams.getStorageTagsAsString())
                 .param("dataLocation", benchmarksCmdLineParams.localPath)
                 .param("authToken", authToken)
                 .param("nStorageRecords", String.valueOf(nStorageRecords))

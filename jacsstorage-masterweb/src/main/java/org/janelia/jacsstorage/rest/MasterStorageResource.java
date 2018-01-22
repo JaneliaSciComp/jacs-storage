@@ -31,6 +31,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -87,6 +88,7 @@ public class MasterStorageResource {
     public Response listBundleInfo(@QueryParam("id") Long dataBundleId,
                                    @QueryParam("ownerKey") String ownerKey,
                                    @QueryParam("storageHost") String storageHost,
+                                   @QueryParam("storageTags") String storageTags,
                                    @QueryParam("volumeName") String volumeName,
                                    @QueryParam("page") Long pageNumber,
                                    @QueryParam("length") Integer pageLength,
@@ -103,6 +105,7 @@ public class MasterStorageResource {
                 .dataBundleId(dataBundleId)
                 .ownerKey(dataOwnerKey)
                 .storageHost(storageHost)
+                .storageTags(storageTags)
                 .volumeName(volumeName)
                 .build();
         PageRequest pageRequest = new PageRequestBuilder()
@@ -173,7 +176,9 @@ public class MasterStorageResource {
     @POST
     public Response createBundleInfo(DataStorageInfo dataStorageInfo, @Context SecurityContext securityContext) {
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
-        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(SecurityUtils.getUserPrincipal(securityContext), dataStorageInfo.getDataStoragePath(), dataBundle);
+        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(SecurityUtils.getUserPrincipal(securityContext),
+                dataStorageInfo.getStorageRootPrefixDir(),
+                dataBundle);
         return dataBundleInfo
                 .map(bi -> Response
                         .created(resourceURI.getBaseUriBuilder().path(dataBundle.getId().toString()).build())

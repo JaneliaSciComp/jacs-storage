@@ -1,9 +1,11 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -51,12 +53,19 @@ public class JacsBundleBuilder {
 
     public JacsBundleBuilder storageTags(String tags) {
         if (StringUtils.isNotBlank(tags)) {
-            return storageTags(Arrays.asList(tags.split(",")));
+            return addStorageTags(Arrays.asList(tags.split(",")));
         }
         return this;
     }
 
-    private JacsBundleBuilder storageTags(List<String> tags) {
+    public JacsBundleBuilder storageTagsAsList(List<String> tags) {
+        if (CollectionUtils.isNotEmpty(tags)) {
+            addStorageTags(tags);
+        }
+        return this;
+    }
+
+    private JacsBundleBuilder addStorageTags(List<String> tags) {
         updateBundleStorageVolume(sv -> {
             tags.stream()
                     .filter(StringUtils::isNotBlank)
@@ -92,6 +101,16 @@ public class JacsBundleBuilder {
 
     public JacsBundleBuilder storageVolumeId(Number v) {
         jacsBundle.setStorageVolumeId(v);
+        return this;
+    }
+
+    public JacsBundleBuilder permissions(String v) {
+        jacsBundle.setPermissions(v);
+        return this;
+    }
+
+    public JacsBundleBuilder metadata(Map<String, Object> metadata) {
+        jacsBundle.addMetadataFields(metadata);
         return this;
     }
 

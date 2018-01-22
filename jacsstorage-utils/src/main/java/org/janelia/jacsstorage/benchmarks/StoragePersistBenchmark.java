@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.benchmarks;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
+import com.google.common.base.Joiner;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.utils.AuthClientImplHelper;
 import org.janelia.jacsstorage.utils.StorageClientImplHelper;
@@ -60,6 +61,9 @@ public class StoragePersistBenchmark {
                 .param("ownerKey", dataOwnerKey)
                 .param("dataLocation", benchmarksCmdLineParams.localPath)
                 .param("dataFormat", benchmarksCmdLineParams.dataFormat.name())
+                .param("storageHost", benchmarksCmdLineParams.storageHost)
+                .param("storageTags", benchmarksCmdLineParams.getStorageTagsAsString())
+                .param("storageContext", benchmarksCmdLineParams.storageContext)
                 .param("authToken", authToken)
                 .build();
 

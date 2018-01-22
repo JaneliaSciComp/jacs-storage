@@ -1,5 +1,7 @@
 package org.janelia.jacsstorage.utils;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
@@ -90,7 +92,7 @@ public class StorageClientImplHelper {
         }
     }
 
-    public PageResult<DataStorageInfo> listStorageRecords(String connectionURL, Number bundleId, PageRequest request, String authToken) {
+    public PageResult<DataStorageInfo> listStorageRecords(String connectionURL, String storageHost, List<String> storageTags, Number bundleId, PageRequest request, String authToken) {
         String storageEndpoint = "/storage";
         Client httpClient = null;
         try {
@@ -98,6 +100,12 @@ public class StorageClientImplHelper {
             WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
             if (bundleId != null && !"0".equals(bundleId.toString())) {
                 target = target.queryParam("id", bundleId);
+            }
+            if (StringUtils.isNotBlank(storageHost)) {
+                target = target.queryParam("storageHost", storageHost);
+            }
+            if (CollectionUtils.isNotEmpty(storageTags)) {
+                target = target.queryParam("storageTags", storageHost);
             }
             if (request.getPageNumber() > 0) {
                 target = target.queryParam("page", request.getPageNumber());

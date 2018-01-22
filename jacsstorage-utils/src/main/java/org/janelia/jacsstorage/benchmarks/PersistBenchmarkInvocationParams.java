@@ -40,6 +40,8 @@ public class PersistBenchmarkInvocationParams {
                 .setConnectionURL(params.serverURL)
                 .setStorageFormat(JacsStorageFormat.valueOf(params.dataFormat))
                 .setOwnerKey(params.ownerKey)
+                .setStorageRootPrefixDir(params.storageContext)
+                .setStorageTags(params.getStorageTags())
                 .setName(RandomStringUtils.randomAlphanumeric(10) + "-" + System.nanoTime())
                 ;
     }

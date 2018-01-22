@@ -7,6 +7,7 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.conversions.Bson;
 import org.janelia.jacsstorage.dao.IdGenerator;
@@ -133,6 +134,9 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
             }
             if (StringUtils.isNotBlank(sv.getName())) {
                 bundleAggregationOpsBuilder.add(Aggregates.match(eq("referencedVolumes.name", sv.getName())));
+            }
+            if (CollectionUtils.isNotEmpty(sv.getStorageTags())) {
+                bundleAggregationOpsBuilder.add(Aggregates.match(Filters.all("storageTags", sv.getStorageTags())));
             }
             if (StringUtils.isNotBlank(sv.getStoragePathPrefix())) {
                 bundleAggregationOpsBuilder.add(Aggregates.match(eq("referencedVolumes.storagePathPrefix", sv.getStoragePathPrefix())));

@@ -28,7 +28,7 @@ public class StreamContentBenchmarkInvocationParams {
             pageRequestBuilder.pageNumber(RandomUtils.nextLong(0, params.nStorageRecords));
         }
         pageRequest = pageRequestBuilder.build();
-        PageResult<DataStorageInfo> storageRecords = params.storageClientHelper.listStorageRecords(params.serverURL, storageBundleId, pageRequest, params.authToken);
+        PageResult<DataStorageInfo> storageRecords = params.storageClientHelper.listStorageRecords(params.serverURL, params.storageHost, params.getStorageTags(), storageBundleId, pageRequest, params.authToken);
         storageContent = storageRecords.getResultList().stream()
                 .flatMap(storageInfo -> params.storageClientHelper.listStorageContent(storageInfo.getConnectionURL(),
                         storageInfo.getId(),
