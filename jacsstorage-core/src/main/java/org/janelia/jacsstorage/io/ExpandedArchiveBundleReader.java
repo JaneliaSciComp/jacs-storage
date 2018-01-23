@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.io;
 
+import com.google.common.io.ByteStreams;
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -11,6 +12,8 @@ import org.msgpack.core.Preconditions;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.nio.channels.Channels;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -127,7 +130,7 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
             tarOutputStream.finish();
             return archiver.nBytes;
         } else {
-            return Files.copy(entryPath, outputStream);
+            return ByteStreams.copy(new RandomAccessFile(entryPath.toFile(), "r").getChannel(), Channels.newChannel(outputStream));
         }
     }
 

@@ -61,7 +61,7 @@ public abstract class AbstractCacheableEntityByIdDao<T extends BaseEntity> imple
         try {
             return ENTITY_ID_CACHE.get(id, new Callable<T>() {
                 @Override
-                public T call() throws Exception {
+                public T call() {
                     return getDelegator().findById(id);
                 }
             });
