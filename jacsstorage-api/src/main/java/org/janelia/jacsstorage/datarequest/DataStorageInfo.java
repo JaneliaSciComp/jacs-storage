@@ -8,16 +8,19 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class DataStorageInfo {
     private Number id;
     private String name;
     private String ownerKey;
     private String path;
-    private String permissions;
+    private Set<String> readersKeys = new HashSet<>();
+    private Set<String> writersKeys = new HashSet<>();
     private String storageRootPrefixDir;
     private String storageRootRealDir;
     private String storageHost;
@@ -36,7 +39,8 @@ public class DataStorageInfo {
                 .setOwnerKey(dataBundle.getOwnerKey())
                 .setPath(dataBundle.getPath())
                 .setStorageFormat(dataBundle.getStorageFormat())
-                .setPermissions(dataBundle.getPermissions())
+                .setReadersKeys(dataBundle.getReadersKeys())
+                .setWritersKeys(dataBundle.getWritersKeys())
                 .setRequestedSpaceInBytes(dataBundle.getUsedSpaceInBytes())
                 .setChecksum(dataBundle.getChecksum())
                 .addMetadata(dataBundle.getMetadata())
@@ -100,12 +104,21 @@ public class DataStorageInfo {
                 : (StringUtils.isBlank(path) ? "" : Paths.get(path).toString());
     }
 
-    public String getPermissions() {
-        return permissions;
+    public Set<String> getReadersKeys() {
+        return readersKeys;
     }
 
-    public DataStorageInfo setPermissions(String permissions) {
-        this.permissions = permissions;
+    public DataStorageInfo setReadersKeys(Set<String> readersKeys) {
+        this.readersKeys = readersKeys;
+        return this;
+    }
+
+    public Set<String> getWritersKeys() {
+        return writersKeys;
+    }
+
+    public DataStorageInfo setWritersKeys(Set<String> writersKeys) {
+        this.writersKeys = writersKeys;
         return this;
     }
 
@@ -209,7 +222,8 @@ public class DataStorageInfo {
                 .name(this.name)
                 .ownerKey(this.ownerKey)
                 .storageFormat(this.storageFormat)
-                .permissions(this.permissions)
+                .readersKeys(this.readersKeys)
+                .writersKeys(this.writersKeys)
                 .usedSpaceInBytes(this.requestedSpaceInBytes)
                 .checksum(this.checksum)
                 .metadata(this.metadata)

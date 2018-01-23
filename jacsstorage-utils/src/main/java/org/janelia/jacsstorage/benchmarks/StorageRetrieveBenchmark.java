@@ -3,6 +3,8 @@ package org.janelia.jacsstorage.benchmarks;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.google.common.io.ByteStreams;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
@@ -13,6 +15,7 @@ import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.Runner;
@@ -41,17 +44,18 @@ public class StorageRetrieveBenchmark {
     @Benchmark
     @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void streamStorageContent(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams) {
-        for (DataNodeInfo contentInfo : invocationParams.storageContent) {
-            trialParams.storageClientHelper.streamDataEntryFromStorage(contentInfo.getRootLocation(), contentInfo.getStorageId(), contentInfo.getNodeRelativePath(), trialParams.authToken)
+    public void streamStorageContent(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
+        DataNodeInfo contentInfo = invocationParams.storageContent.get(RandomUtils.nextInt(0, CollectionUtils.size(invocationParams.storageContent)));
+        byte[] storageBytes = trialParams.storageClientHelper.streamDataEntryFromStorage(contentInfo.getRootLocation(), contentInfo.getStorageId(), contentInfo.getNodeRelativePath(), trialParams.authToken)
                 .map(is -> {
                     try {
                         return ByteStreams.toByteArray(is);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
-                });
-        }
+                })
+                .orElse(null);
+        blackhole.consume(storageBytes);
     }
 
     public static void main(String[] args) throws RunnerException {
@@ -66,6 +70,7 @@ public class StorageRetrieveBenchmark {
             System.exit(1);
         }
         String authToken = new AuthClientImplHelper(benchmarksCmdLineParams.authURL).authenticate(benchmarksCmdLineParams.username, benchmarksCmdLineParams.password);
+        System.out.println("AuthToken: " + authToken);
         String dataOwnerKey = benchmarksCmdLineParams.getUserKey();
         long nStorageRecords = new StorageClientImplHelper().countStorageRecords(benchmarksCmdLineParams.serverURL, benchmarksCmdLineParams.bundleId, authToken);
         String benchmarks;
@@ -85,9 +90,10 @@ public class StorageRetrieveBenchmark {
                 .param("serverURL", benchmarksCmdLineParams.serverURL)
                 .param("useHttp", benchmarksCmdLineParams.useHttp.toString())
                 .param("ownerKey", dataOwnerKey)
-                .param("storageHost", benchmarksCmdLineParams.storageHost)
+                .param("storageHost", StringUtils.defaultIfBlank(benchmarksCmdLineParams.storageHost, ""))
                 .param("storageTags", benchmarksCmdLineParams.getStorageTagsAsString())
                 .param("dataLocation", benchmarksCmdLineParams.localPath)
+                .param("dataBundleId", benchmarksCmdLineParams.bundleId.toString())
                 .param("authToken", authToken)
                 .param("nStorageRecords", String.valueOf(nStorageRecords))
                 ;

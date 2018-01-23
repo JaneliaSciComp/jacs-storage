@@ -10,11 +10,14 @@ import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @PersistenceInfo(storeName ="jacsBundle", label="JacsBundle")
 public class JacsBundle extends AbstractEntity {
@@ -22,7 +25,8 @@ public class JacsBundle extends AbstractEntity {
     private String name;
     private String ownerKey;
     private String path;
-    private String permissions;
+    private Set<String> readersKeys = new HashSet<>();
+    private Set<String> writersKeys = new HashSet<>();
     private JacsStorageFormat storageFormat;
     private Long usedSpaceInBytes;
     private String checksum;
@@ -80,12 +84,36 @@ public class JacsBundle extends AbstractEntity {
         this.path = path;
     }
 
-    public String getPermissions() {
-        return permissions;
+    public Set<String> getReadersKeys() {
+        return readersKeys;
     }
 
-    public void setPermissions(String permissions) {
-        this.permissions = permissions;
+    public void setReadersKeys(Set<String> readersKeys) {
+        this.readersKeys = readersKeys;
+    }
+
+    public void addReadersKeys(Collection<String> readersKeys) {
+        this.readersKeys.addAll(readersKeys);
+    }
+
+    public boolean hasReadPermissions(String readerKey) {
+        return StringUtils.isNotBlank(readerKey) && (readerKey.equals(ownerKey) || readersKeys.contains(readerKey));
+    }
+
+    public Set<String> getWritersKeys() {
+        return writersKeys;
+    }
+
+    public void setWritersKeys(Set<String> writersKeys) {
+        this.writersKeys = writersKeys;
+    }
+
+    public void addWritersKeys(Collection<String> writersKeys) {
+        this.writersKeys.addAll(writersKeys);
+    }
+
+    public boolean hasWritePermissions(String writerKey) {
+        return StringUtils.isNotBlank(writerKey) && (writerKey.equals(ownerKey) || writersKeys.contains(writerKey));
     }
 
     public JacsStorageFormat getStorageFormat() {

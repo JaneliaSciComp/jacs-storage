@@ -51,9 +51,18 @@ public class BenchmarkTrialParams {
         if (StringUtils.isNotBlank(dataBundleIdParam)) {
             dataBundleId = Long.valueOf(dataBundleIdParam);
         }
-        storageContext = params.getParam("storageContext");
-        storageHost = params.getParam("storageHost");
-        storageTags = params.getParam("storageTags");
+        String storageContextParam = params.getParam("storageContext");
+        if (StringUtils.isNotBlank(storageContextParam)) {
+            storageContext = storageContextParam;
+        }
+        String storageHostParam = params.getParam("storageHost");
+        if (StringUtils.isNotBlank(storageHostParam)) {
+            storageHost = storageHostParam;
+        }
+        String storageTagsParam = params.getParam("storageTags");
+        if (StringUtils.isNotBlank(storageTagsParam)) {
+            storageTags = storageTagsParam;
+        }
         updatedDataPath = params.getParam("updatedDataPath");
         storageClientHelper = new StorageClientImplHelper();
     }

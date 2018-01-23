@@ -4,6 +4,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -104,8 +105,14 @@ public class JacsBundleBuilder {
         return this;
     }
 
-    public JacsBundleBuilder permissions(String v) {
-        jacsBundle.setPermissions(v);
+
+    public JacsBundleBuilder readersKeys(Collection<String> vs) {
+        jacsBundle.addReadersKeys(vs);
+        return this;
+    }
+
+    public JacsBundleBuilder writersKeys(Collection<String> vs) {
+        jacsBundle.addWritersKeys(vs);
         return this;
     }
 

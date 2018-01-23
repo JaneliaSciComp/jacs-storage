@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 @State(Scope.Thread)
 public class StreamContentBenchmarkInvocationParams {
     Number storageBundleId;
-    PageRequest pageRequest;
     List<DataNodeInfo> storageContent;
 
     @Setup(Level.Invocation)
@@ -27,15 +26,17 @@ public class StreamContentBenchmarkInvocationParams {
         if (params.nStorageRecords > 0) {
             pageRequestBuilder.pageNumber(RandomUtils.nextLong(0, params.nStorageRecords));
         }
-        pageRequest = pageRequestBuilder.build();
-        PageResult<DataStorageInfo> storageRecords = params.storageClientHelper.listStorageRecords(params.serverURL, params.storageHost, params.getStorageTags(), storageBundleId, pageRequest, params.authToken);
-        storageContent = storageRecords.getResultList().stream()
-                .flatMap(storageInfo -> params.storageClientHelper.listStorageContent(storageInfo.getConnectionURL(),
-                        storageInfo.getId(),
-                        params.authToken)
-                        .stream()
-                        .peek(contentInfo -> contentInfo.setRootLocation(storageInfo.getConnectionURL())))
-                .filter(contentInfo -> !contentInfo.isCollectionFlag())
-                .collect(Collectors.toList());
+        if (storageBundleId == null || storageBundleId.toString().equals("0") || storageContent == null) {
+            PageRequest pageRequest = pageRequestBuilder.build();
+            PageResult<DataStorageInfo> storageRecords = params.storageClientHelper.listStorageRecords(params.serverURL, params.storageHost, params.getStorageTags(), storageBundleId, pageRequest, params.authToken);
+            storageContent = storageRecords.getResultList().stream()
+                    .flatMap(storageInfo -> params.storageClientHelper.listStorageContent(storageInfo.getConnectionURL(),
+                            storageInfo.getId(),
+                            params.authToken)
+                            .stream()
+                            .peek(contentInfo -> contentInfo.setRootLocation(storageInfo.getConnectionURL())))
+                    .filter(contentInfo -> !contentInfo.isCollectionFlag())
+                    .collect(Collectors.toList());
+        }
     }
 }

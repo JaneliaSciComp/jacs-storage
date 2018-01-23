@@ -40,7 +40,7 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
         if (existingBundle == null) {
             return false;
         }
-        checkStorageAccess(credentials, existingBundle);
+        checkStorageDeletePermission(credentials, existingBundle);
         return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
                 .flatMap(sv -> agentManager.findRegisteredAgent(sv.getStorageServiceURL()))
                 .map(storageAgentInfo -> {

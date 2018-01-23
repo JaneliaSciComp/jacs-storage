@@ -22,11 +22,11 @@ class BenchmarksCmdLineParams {
     @Parameter(names = "-dataFormat", description = "Data bundle format")
     JacsStorageFormat dataFormat = JacsStorageFormat.DATA_DIRECTORY;
     @Parameter(names = "-storageHost", description = "Storage tags")
-    String storageHost;
+    String storageHost = "";
     @Parameter(names = "-storageTags", description = "Storage tags")
     List<String> storageTags = new ArrayList<>();
     @Parameter(names = "-storageContext", description = "Storage path context")
-    String storageContext;
+    String storageContext = "";
     @Parameter(names = "-localPath", description = "Local path")
     String localPath = "";
     // authentication params
@@ -38,7 +38,7 @@ class BenchmarksCmdLineParams {
     String password;
     // storage update params
     @Parameter(names = "-bundleId", description = "bundle id")
-    Long bundleId;
+    Long bundleId = 0L;
     @Parameter(names = "-updatedPath", description = "updated bundle path")
     String updatedPath = "";
     @Parameter(names = "-benchmarksRegex", description = "benchmarks to be run regex")

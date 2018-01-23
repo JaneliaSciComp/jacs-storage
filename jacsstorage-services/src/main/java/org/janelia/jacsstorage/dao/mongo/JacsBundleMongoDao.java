@@ -26,9 +26,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
-
 /**
  * Mongo based implementation of JacsBundleDao.
  */
@@ -56,10 +53,10 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
         Preconditions.checkArgument(StringUtils.isNotBlank(name));
 
         ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
-        filtersBuilder.add(eq("ownerKey", ownerKey));
-        filtersBuilder.add(eq("name", name));
+        filtersBuilder.add(Filters.eq("ownerKey", ownerKey));
+        filtersBuilder.add(Filters.eq("name", name));
 
-        Iterator<JacsBundle> resultsItr = findIterable(and(filtersBuilder.build()),
+        Iterator<JacsBundle> resultsItr = findIterable(Filters.and(filtersBuilder.build()),
                 null,
                 0,
                 0,
@@ -89,22 +86,25 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
     private Bson getBsonFilter(JacsBundle pattern) {
         ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
         if (pattern.getId() != null) {
-            filtersBuilder.add(eq("_id", pattern.getId()));
+            filtersBuilder.add(Filters.eq("_id", pattern.getId()));
         }
         if (StringUtils.isNotBlank(pattern.getOwnerKey())) {
-            filtersBuilder.add(eq("ownerKey", pattern.getOwnerKey()));
+            filtersBuilder.add(Filters.or(
+                    Filters.eq("ownerKey", pattern.getOwnerKey()),
+                    Filters.all("readersKeys", pattern.getOwnerKey())
+            ));
         }
         if (StringUtils.isNotBlank(pattern.getName())) {
-            filtersBuilder.add(eq("name", pattern.getName()));
+            filtersBuilder.add(Filters.eq("name", pattern.getName()));
         }
         Number storageNumberId = pattern.getStorageVolumeId();
         if (storageNumberId != null) {
-            filtersBuilder.add(eq("storageVolumeId", storageNumberId));
+            filtersBuilder.add(Filters.eq("storageVolumeId", storageNumberId));
         }
         Bson bsonFilter = null;
         List<Bson> filters = filtersBuilder.build();
 
-        if (!filters.isEmpty()) bsonFilter = and(filters);
+        if (!filters.isEmpty()) bsonFilter = Filters.and(filters);
 
         return bsonFilter;
     }
@@ -133,13 +133,13 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
                 }
             }
             if (StringUtils.isNotBlank(sv.getName())) {
-                bundleAggregationOpsBuilder.add(Aggregates.match(eq("referencedVolumes.name", sv.getName())));
+                bundleAggregationOpsBuilder.add(Aggregates.match(Filters.eq("referencedVolumes.name", sv.getName())));
             }
             if (CollectionUtils.isNotEmpty(sv.getStorageTags())) {
                 bundleAggregationOpsBuilder.add(Aggregates.match(Filters.all("storageTags", sv.getStorageTags())));
             }
             if (StringUtils.isNotBlank(sv.getStoragePathPrefix())) {
-                bundleAggregationOpsBuilder.add(Aggregates.match(eq("referencedVolumes.storagePathPrefix", sv.getStoragePathPrefix())));
+                bundleAggregationOpsBuilder.add(Aggregates.match(Filters.eq("referencedVolumes.storagePathPrefix", sv.getStoragePathPrefix())));
             }
         });
         return bundleAggregationOpsBuilder.build();

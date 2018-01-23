@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
@@ -96,7 +97,7 @@ public class MasterStorageResource {
         String dataOwnerKey;
         if (securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
             // if it's an admin use the owner param if set or allow it not to be set
-            dataOwnerKey = ownerKey;
+            dataOwnerKey = StringUtils.defaultIfBlank(ownerKey, SecurityUtils.getUserPrincipal(securityContext).getSubjectKey());
         } else {
             // otherwise use the subject from the security context
             dataOwnerKey = SecurityUtils.getUserPrincipal(securityContext).getSubjectKey();
@@ -135,7 +136,7 @@ public class MasterStorageResource {
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
-        } else if (SecurityUtils.getUserPrincipal(securityContext).getSubjectKey().equals(jacsBundle.getOwnerKey()) || securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
+        } else if (jacsBundle.hasReadPermissions(SecurityUtils.getUserPrincipal(securityContext).getSubjectKey())) {
             return Response
                     .ok(DataStorageInfo.fromBundle(jacsBundle))
                     .build();
@@ -157,7 +158,7 @@ public class MasterStorageResource {
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
-        } else if (SecurityUtils.getUserPrincipal(securityContext).getSubjectKey().equals(jacsBundle.getOwnerKey()) || securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
+        } else if (jacsBundle.hasReadPermissions(SecurityUtils.getUserPrincipal(securityContext).getSubjectKey())) {
             return Response
                     .ok(DataStorageInfo.fromBundle(jacsBundle))
                     .build();

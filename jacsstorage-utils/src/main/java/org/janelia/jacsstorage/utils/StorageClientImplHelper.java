@@ -113,6 +113,7 @@ public class StorageClientImplHelper {
             if (request.getPageSize() > 0) {
                 target = target.queryParam("length", request.getPageSize());
             }
+            LOG.debug("List {}", target);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .header("Authorization", "Bearer " + authToken)
                     .get()
