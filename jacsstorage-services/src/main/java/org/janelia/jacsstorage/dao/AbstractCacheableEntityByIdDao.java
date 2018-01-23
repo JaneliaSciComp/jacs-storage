@@ -19,44 +19,40 @@ import java.util.concurrent.ExecutionException;
  *
  * @param <T> entity type
  */
-public class CacheableEntityByIdDao<T extends BaseEntity> implements ReadWriteDao<T> {
+public abstract class AbstractCacheableEntityByIdDao<T extends BaseEntity> implements ReadWriteDao<T> {
 
     private final Cache<Number, T> ENTITY_ID_CACHE = CacheBuilder.newBuilder()
             .maximumSize(100)
             .build(new CacheLoader<Number, T>() {
                 @Override
                 public T load(Number key) throws Exception {
-                    return dao.findById(key);
+                    return getDelegator().findById(key);
                 }
             });
 
-    private final ReadWriteDao<T> dao;
-
-    public CacheableEntityByIdDao(ReadWriteDao<T> dao) {
-        this.dao = dao;
-    }
+    protected abstract ReadWriteDao<T> getDelegator();
 
     @Override
     public void save(T entity) {
-        dao.save(entity);
+        getDelegator().save(entity);
         invalidateCache(entity);
     }
 
     @Override
     public void saveAll(List<T> entities) {
-        dao.saveAll(entities);
+        getDelegator().saveAll(entities);
         entities.forEach(e -> invalidateCache(e));
     }
 
     @Override
     public void update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
-        dao.update(entity, fieldsToUpdate);
+        getDelegator().update(entity, fieldsToUpdate);
         invalidateCache(entity);
     }
 
     @Override
     public void delete(T entity) {
-        dao.delete(entity);
+        getDelegator().delete(entity);
         invalidateCache(entity);
     }
 
@@ -66,7 +62,7 @@ public class CacheableEntityByIdDao<T extends BaseEntity> implements ReadWriteDa
             return ENTITY_ID_CACHE.get(id, new Callable<T>() {
                 @Override
                 public T call() throws Exception {
-                    return dao.findById(id);
+                    return getDelegator().findById(id);
                 }
             });
         } catch (ExecutionException e) {
@@ -76,17 +72,17 @@ public class CacheableEntityByIdDao<T extends BaseEntity> implements ReadWriteDa
 
     @Override
     public List<T> findByIds(Collection<Number> ids) {
-        return dao.findByIds(ids);
+        return getDelegator().findByIds(ids);
     }
 
     @Override
     public PageResult<T> findAll(PageRequest pageRequest) {
-        return dao.findAll(pageRequest);
+        return getDelegator().findAll(pageRequest);
     }
 
     @Override
     public long countAll() {
-        return dao.countAll();
+        return getDelegator().countAll();
     }
 
     private void invalidateCache(T entity) {

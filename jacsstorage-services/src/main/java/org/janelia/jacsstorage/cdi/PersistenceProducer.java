@@ -7,11 +7,12 @@ import com.mongodb.client.MongoDatabase;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
-import org.janelia.jacsstorage.dao.CacheableEntityByIdDao;
+import org.janelia.jacsstorage.dao.AbstractCacheableEntityByIdDao;
+import org.janelia.jacsstorage.dao.CacheableJacsBundleDao;
+import org.janelia.jacsstorage.dao.CacheableJacsStorageVolumeDao;
+import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
-import org.janelia.jacsstorage.dao.ReadOnlyDao;
 import org.janelia.jacsstorage.dao.mongo.utils.RegistryHelper;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
@@ -54,7 +55,14 @@ public class PersistenceProducer {
     @ApplicationScoped
     @Produces
     @Cacheable
-    public ReadOnlyDao<JacsStorageVolume> createCacheableJacsStorageVolumeReadDao(JacsStorageVolumeDao storageVolumeDao) {
-        return new CacheableEntityByIdDao<>(storageVolumeDao);
+    public JacsStorageVolumeDao createCacheableJacsStorageVolumeDao(JacsStorageVolumeDao storageVolumeDao) {
+        return new CacheableJacsStorageVolumeDao(storageVolumeDao);
+    }
+
+    @ApplicationScoped
+    @Produces
+    @Cacheable
+    public JacsBundleDao createCacheableJacsBundleDao(JacsBundleDao bundleDao) {
+        return new CacheableJacsBundleDao(bundleDao);
     }
 }
