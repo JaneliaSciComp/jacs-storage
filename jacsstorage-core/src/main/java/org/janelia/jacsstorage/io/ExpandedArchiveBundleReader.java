@@ -130,7 +130,7 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
             tarOutputStream.finish();
             return archiver.nBytes;
         } else {
-            return ByteStreams.copy(new RandomAccessFile(entryPath.toFile(), "r").getChannel(), Channels.newChannel(outputStream));
+            return Files.copy(entryPath, outputStream);
         }
     }
 

@@ -1,6 +1,10 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.collect.ImmutableMap;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
@@ -39,6 +43,7 @@ import java.util.stream.Collectors;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("storage")
+@Api(value = "Master storage API.")
 public class MasterStorageResource {
 
     @Inject @RemoteInstance
@@ -51,6 +56,10 @@ public class MasterStorageResource {
     @Produces(MediaType.TEXT_PLAIN)
     @GET
     @Path("status")
+    @ApiOperation(value = "Retrieve master status.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "If the server is up and running")
+    })
     public String getStatus() {
         return "OK";
     }
@@ -59,15 +68,22 @@ public class MasterStorageResource {
     @RequireAuthentication
     @GET
     @Path("size")
+    @ApiOperation(value = "Count storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The number of storage entries that match the given filters"),
+            @ApiResponse(code = 401, message = "If user is not authenticated"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
     public Response countBundleInfo(@QueryParam("id") Long dataBundleId,
                                     @QueryParam("ownerKey") String ownerKey,
                                     @QueryParam("storageHost") String storageHost,
+                                    @QueryParam("storageTags") String storageTags,
                                     @QueryParam("volumeName") String volumeName,
                                     @Context SecurityContext securityContext) {
         String dataOwnerKey;
         if (securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
             // if it's an admin use the owner param if set or allow it not to be set
-            dataOwnerKey = ownerKey;
+            dataOwnerKey = StringUtils.defaultIfBlank(ownerKey, SecurityUtils.getUserPrincipal(securityContext).getSubjectKey());
         } else {
             // otherwise use the subject from the security context
             dataOwnerKey = SecurityUtils.getUserPrincipal(securityContext).getSubjectKey();
@@ -76,6 +92,7 @@ public class MasterStorageResource {
                 .dataBundleId(dataBundleId)
                 .ownerKey(dataOwnerKey)
                 .storageHost(storageHost)
+                .storageTags(storageTags)
                 .volumeName(volumeName)
                 .build();
         long nMatchingBundles = storageLookupService.countMatchingDataBundles(dataBundle);
@@ -86,6 +103,12 @@ public class MasterStorageResource {
 
     @RequireAuthentication
     @GET
+    @ApiOperation(value = "List storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The list of storage entries that match the given filters"),
+            @ApiResponse(code = 401, message = "If user is not authenticated"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
     public Response listBundleInfo(@QueryParam("id") Long dataBundleId,
                                    @QueryParam("ownerKey") String ownerKey,
                                    @QueryParam("storageHost") String storageHost,
@@ -130,6 +153,13 @@ public class MasterStorageResource {
     @RequireAuthentication
     @GET
     @Path("{id}")
+    @ApiOperation(value = "Retrieve storage entry by ID.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The storage entry with the given ID"),
+            @ApiResponse(code = 401, message = "If user is not authenticated"),
+            @ApiResponse(code = 404, message = "If entry ID is invalid"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
     public Response getBundleInfo(@PathParam("id") Long id, @Context SecurityContext securityContext) {
         JacsBundle jacsBundle = storageLookupService.getDataBundleById(id);
         if (jacsBundle == null) {
@@ -150,6 +180,13 @@ public class MasterStorageResource {
     @RequireAuthentication
     @GET
     @Path("{ownerKey}/{name}")
+    @ApiOperation(value = "Retrieve storage entry by owner and name.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The storage entry with the given name owned by the provided subject"),
+            @ApiResponse(code = 401, message = "If user is not authenticated"),
+            @ApiResponse(code = 404, message = "If entry ID is invalid"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
     public Response getBundleInfoByOwnerAndName(@PathParam("ownerKey") String ownerKey,
                                                 @PathParam("name") String name,
                                                 @Context SecurityContext securityContext) {
@@ -175,6 +212,13 @@ public class MasterStorageResource {
     @RequireAuthentication
     @Consumes("application/json")
     @POST
+    @ApiOperation(value = "Create new storage entry.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 201, message = "The new storage entry."),
+            @ApiResponse(code = 401, message = "If user is not authenticated"),
+            @ApiResponse(code = 404, message = "Volume on which to store the data was not found or no agent is available."),
+            @ApiResponse(code = 500, message = "Data write error")
+    })
     public Response createBundleInfo(DataStorageInfo dataStorageInfo, @Context SecurityContext securityContext) {
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
         Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(SecurityUtils.getUserPrincipal(securityContext),
