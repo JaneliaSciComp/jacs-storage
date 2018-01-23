@@ -5,8 +5,13 @@ import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoDatabase;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
+import org.janelia.jacsstorage.dao.CacheableEntityByIdDao;
+import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
+import org.janelia.jacsstorage.dao.ReadOnlyDao;
 import org.janelia.jacsstorage.dao.mongo.utils.RegistryHelper;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
@@ -46,4 +51,10 @@ public class PersistenceProducer {
         return mongoClient.getDatabase(mongoDatabase);
     }
 
+    @ApplicationScoped
+    @Produces
+    @Cacheable
+    public ReadOnlyDao<JacsStorageVolume> createCacheableJacsStorageVolumeReadDao(JacsStorageVolumeDao storageVolumeDao) {
+        return new CacheableEntityByIdDao<>(storageVolumeDao);
+    }
 }

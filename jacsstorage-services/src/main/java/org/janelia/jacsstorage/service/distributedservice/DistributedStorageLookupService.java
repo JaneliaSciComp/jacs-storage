@@ -1,8 +1,11 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
+import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
+import org.janelia.jacsstorage.dao.CacheableEntityByIdDao;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
+import org.janelia.jacsstorage.dao.ReadOnlyDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -14,12 +17,12 @@ import javax.inject.Inject;
 @RemoteInstance
 public class DistributedStorageLookupService implements StorageLookupService {
 
-    private final JacsStorageVolumeDao storageVolumeDao;
+    private final ReadOnlyDao<JacsStorageVolume> storageVolumeDao;
     private final JacsBundleDao bundleDao;
     private final DistributedStorageHelper storageHelper;
 
     @Inject
-    public DistributedStorageLookupService(JacsStorageVolumeDao storageVolumeDao,
+    public DistributedStorageLookupService(@Cacheable ReadOnlyDao<JacsStorageVolume> storageVolumeDao,
                                            JacsBundleDao bundleDao,
                                            StorageAgentManager agentManager) {
         this.storageVolumeDao = storageVolumeDao;
