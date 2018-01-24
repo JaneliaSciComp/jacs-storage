@@ -72,6 +72,7 @@ class SocketChannelStorageAgentRequest implements StorageAgentRequest {
         try {
             if (socketChannel != null) {
                 socketChannel.close();
+                socketChannel = null;
             }
         } catch (IOException e) {
             LOG.warn("Error closing channel from {}", getRemoteAddress(), e);
