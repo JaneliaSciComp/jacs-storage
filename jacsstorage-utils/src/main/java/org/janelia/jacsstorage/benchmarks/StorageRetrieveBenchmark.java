@@ -24,6 +24,8 @@ import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.util.NullOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,6 +34,8 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 public class StorageRetrieveBenchmark {
+
+    private static final Logger LOG = LoggerFactory.getLogger(StorageRetrieveBenchmark.class);
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
@@ -113,7 +117,8 @@ public class StorageRetrieveBenchmark {
             blackhole.consume(nbytes);
         } else {
             try {
-                invocationParams.socketStorageClient.retrieveData("/dev/null/tmp", invocationParams.storageInfoMap.get(contentInfo.getStorageId()), trialParams.authToken);
+                LOG.debug("Retrieve data from the socket");
+                invocationParams.socketStorageClient.retrieveData("/Users/goinac/work/jfrc/jacs-storage/tt", invocationParams.storageInfoMap.get(contentInfo.getStorageId()), trialParams.authToken);
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }
