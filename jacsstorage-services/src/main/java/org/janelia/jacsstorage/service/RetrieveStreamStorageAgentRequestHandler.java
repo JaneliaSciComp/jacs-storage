@@ -70,7 +70,10 @@ class RetrieveStreamStorageAgentRequestHandler extends AbstractSocketChannelStor
                     }
                     socketChannelStorageAgentRequest.channelOutputBuffer.flip();
                 }
-                socketChannelStorageAgentRequest.writeOutputBuffer();
+                if (socketChannelStorageAgentRequest.writeOutputBuffer() == -1) {
+                    // error writing to the channel so simply close the channel
+                    socketChannelStorageAgentRequest.close();
+                }
                 return;
             case READ_DATA_ERROR:
                 if (socketChannelStorageAgentRequest.channelOutputBuffer == null) {

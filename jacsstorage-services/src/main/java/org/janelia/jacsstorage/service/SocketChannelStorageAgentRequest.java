@@ -152,26 +152,30 @@ class SocketChannelStorageAgentRequest implements StorageAgentRequest {
         }
     }
 
-    void writeResponse(StorageMessageResponse response) {
+    int writeResponse(StorageMessageResponse response) {
         try {
             TransferState<StorageMessageResponse> responseTransfer = new TransferState<>();
             byte[] responseBytes = responseTransfer.writeMessageType(response, new StorageMessageResponseCodec());
-            writeBuffer(ByteBuffer.wrap(responseBytes));
+            return writeBuffer(ByteBuffer.wrap(responseBytes));
         } catch (Exception e) {
             LOG.warn("Error sending error response to {}", getRemoteAddress(), e);
+            return -1;
         }
     }
 
-    void writeOutputBuffer() {
+    int writeOutputBuffer() {
         try {
-            writeBuffer(channelOutputBuffer);
+            return writeBuffer(channelOutputBuffer);
         } catch (IOException e) {
             LOG.warn("Error sending data to {}", getRemoteAddress(), e);
+            return -1;
         }
     }
 
-    private void writeBuffer(ByteBuffer buffer) throws IOException {
-        while (buffer.hasRemaining()) socketChannel.write(buffer);
+    private int writeBuffer(ByteBuffer buffer) throws IOException {
+        int nBytes = 0;
+        while (buffer.hasRemaining()) nBytes += socketChannel.write(buffer);
+        return nBytes;
     }
 
     String getRemoteAddress() {
