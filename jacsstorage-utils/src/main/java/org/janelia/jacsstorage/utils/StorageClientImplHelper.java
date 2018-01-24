@@ -141,7 +141,7 @@ public class StorageClientImplHelper {
         } else {
             storageEndpoint = String.format("/storage/%s/%s", storageRequest.getOwnerKey(), storageRequest.getName());
         }
-        LOG.info("Retrieve storage info from {} using {} as {}", connectionURL, storageEndpoint, authToken);
+        LOG.debug("Retrieve storage info from {} using {} as {}", connectionURL, storageEndpoint, authToken);
 
         Client httpClient = null;
         try {
@@ -175,6 +175,7 @@ public class StorageClientImplHelper {
             WebTarget target = httpClient.target(connectionURL)
                     .path(storageContentyEndpoint)
                     .path("list");
+            LOG.debug("List content {} as {}", target, authToken);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .header("Authorization", "Bearer " + authToken)
                     .get()
@@ -201,6 +202,7 @@ public class StorageClientImplHelper {
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
+            LOG.debug("Stream data to {} as {}", target, authToken);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .header("Authorization", "Bearer " + authToken)
                     .post(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE))
@@ -227,6 +229,7 @@ public class StorageClientImplHelper {
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
+            LOG.debug("Stream data from {} as {}", target, authToken);
             Response response = target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE)
                     .header("Authorization", "Bearer " + authToken)
                     .get()
@@ -256,6 +259,7 @@ public class StorageClientImplHelper {
                     .path(dataStreamEndpoint)
                     .path("entry_content")
                     .path(entryPath);
+            LOG.debug("Stream data entry from {} as {}", target, authToken);
             Response response = target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE)
                     .header("Authorization", "Bearer " + authToken)
                     .get()
@@ -277,12 +281,12 @@ public class StorageClientImplHelper {
     }
 
     public Optional<String> createNewDirectory(String connectionURL, Number dataBundleId, String newDirPath, String authToken) {
-        LOG.info("Create new directory {}:{}:{}", connectionURL, dataBundleId, newDirPath);
+        LOG.debug("Create new directory {}:{}:{}", connectionURL, dataBundleId, newDirPath);
         DataStorageInfo storageRequest = new DataStorageInfo().setId(dataBundleId);
         return retrieveStorageInfo(connectionURL, storageRequest, authToken)
             .flatMap((DataStorageInfo storageInfo) -> {
                 String agentStorageServiceURL = storageInfo.getConnectionURL();
-                LOG.info("Invoke agent {} to create new directory {}/{}", agentStorageServiceURL, dataBundleId, newDirPath);
+                LOG.debug("Invoke agent {} to create new directory {}/{}", agentStorageServiceURL, dataBundleId, newDirPath);
                 return addNewStorageFolder(agentStorageServiceURL, storageInfo.getId(), newDirPath, authToken);
             });
     }
@@ -314,12 +318,12 @@ public class StorageClientImplHelper {
     }
 
     public Optional<String> createNewFile(String connectionURL, Number dataBundleId, String newDirPath, InputStream contentStream, String authToken) {
-        LOG.info("Create new file {}:{}:{} ({})", connectionURL, dataBundleId, newDirPath, authToken);
+        LOG.debug("Create new file {}:{}:{} ({})", connectionURL, dataBundleId, newDirPath, authToken);
         DataStorageInfo storageRequest = new DataStorageInfo().setId(dataBundleId);
         return retrieveStorageInfo(connectionURL, storageRequest, authToken)
                 .flatMap((DataStorageInfo storageInfo) -> {
                     String agentStorageServiceURL = storageInfo.getConnectionURL();
-                    LOG.info("Invoke agent {} to create new file {}/{}", agentStorageServiceURL, dataBundleId, newDirPath);
+                    LOG.debug("Invoke agent {} to create new file {}/{}", agentStorageServiceURL, dataBundleId, newDirPath);
                     return addNewStorageContent(agentStorageServiceURL, storageInfo.getId(), newDirPath, contentStream, authToken);
                 });
     }

@@ -23,18 +23,33 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
+import org.openjdk.jmh.util.NullOutputStream;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.nio.channels.Channels;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 public class StorageRetrieveBenchmark {
 
     @Benchmark
-    @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
+    @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void listStorage(RetrieveBenchmarkTrialParams trialParams, ListContentBenchmarkInvocationParams invocationParams) {
+    public void listStorageAvg(RetrieveBenchmarkTrialParams trialParams, ListContentBenchmarkInvocationParams invocationParams) {
+        listStorageImpl(trialParams, invocationParams);
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.Throughput})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void listStorageThrpt(RetrieveBenchmarkTrialParams trialParams, ListContentBenchmarkInvocationParams invocationParams) {
+        listStorageImpl(trialParams, invocationParams);
+    }
+
+    private void listStorageImpl(RetrieveBenchmarkTrialParams trialParams, ListContentBenchmarkInvocationParams invocationParams) {
         PageResult<DataStorageInfo> storageRecords = trialParams.storageClientHelper.listStorageRecords(trialParams.serverURL, trialParams.storageHost, trialParams.getStorageTags(), invocationParams.storageBundleId, invocationParams.pageRequest, trialParams.authToken);
         for (DataStorageInfo storageInfo : storageRecords.getResultList()) {
             trialParams.storageClientHelper.listStorageContent(storageInfo.getConnectionURL(), storageInfo.getId(), trialParams.authToken);
@@ -42,20 +57,32 @@ public class StorageRetrieveBenchmark {
     }
 
     @Benchmark
-    @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
+    @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void streamStorageContent(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
+    public void streamStorageContentAvg(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
+        streamStorageContentImpl(trialParams, invocationParams, blackhole);
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.Throughput})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void streamStorageContentThrpt(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
+        streamStorageContentImpl(trialParams, invocationParams, blackhole);
+    }
+
+    private void streamStorageContentImpl(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
         DataNodeInfo contentInfo = invocationParams.storageContent.get(RandomUtils.nextInt(0, CollectionUtils.size(invocationParams.storageContent)));
-        byte[] storageBytes = trialParams.storageClientHelper.streamDataEntryFromStorage(contentInfo.getRootLocation(), contentInfo.getStorageId(), contentInfo.getNodeRelativePath(), trialParams.authToken)
+        OutputStream targetStream = new NullOutputStream();
+        long nbytes = trialParams.storageClientHelper.streamDataEntryFromStorage(contentInfo.getRootLocation(), contentInfo.getStorageId(), contentInfo.getNodeRelativePath(), trialParams.authToken)
                 .map(is -> {
                     try {
-                        return ByteStreams.toByteArray(is);
+                        return ByteStreams.copy(is, targetStream);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
                 })
-                .orElse(null);
-        blackhole.consume(storageBytes);
+                .orElse(0L);
+        blackhole.consume(nbytes);
     }
 
     public static void main(String[] args) throws RunnerException {
