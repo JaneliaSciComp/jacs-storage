@@ -1,18 +1,26 @@
 package org.janelia.jacsstorage.benchmarks;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.utils.PathUtils;
 import org.janelia.jacsstorage.utils.StorageClientImplHelper;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.BenchmarkParams;
+import org.openjdk.jmh.util.FileUtils;
+
+import java.io.IOException;
+import java.nio.file.Paths;
 
 @State(Scope.Benchmark)
 public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
     @Param({"0"})
     long nStorageRecords;
+    @Param({"/tmp/jacsstorage-benchmarks"})
+    String tempBenchmarkData;
 
     @Setup(Level.Trial)
     public void setUp(BenchmarkParams params) {
@@ -21,5 +29,10 @@ public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
         if (StringUtils.isNotBlank(nStorageRecordsParam)) {
             nStorageRecords = Long.valueOf(nStorageRecordsParam);
         }
+    }
+
+    @TearDown(Level.Trial)
+    public void tearDown() throws IOException {
+        PathUtils.deletePath(Paths.get(tempBenchmarkData));
     }
 }

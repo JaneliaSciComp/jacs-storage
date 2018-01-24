@@ -70,6 +70,7 @@ class SocketChannelStorageAgentRequest implements StorageAgentRequest {
     @Override
     public void close() {
         try {
+            transferState.closeDataTransferChannel();
             if (socketChannel != null) {
                 socketChannel.close();
                 socketChannel = null;

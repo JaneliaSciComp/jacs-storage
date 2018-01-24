@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
@@ -118,7 +119,7 @@ public class StorageRetrieveBenchmark {
         } else {
             try {
                 LOG.debug("Retrieve data from the socket");
-                invocationParams.socketStorageClient.retrieveData("/Users/goinac/work/jfrc/jacs-storage/tt", invocationParams.storageInfoMap.get(contentInfo.getStorageId()), trialParams.authToken);
+                invocationParams.socketStorageClient.retrieveData(Paths.get(trialParams.tempBenchmarkData, String.valueOf(RandomUtils.nextLong(0, Integer.MAX_VALUE))).toString(), invocationParams.storageInfoMap.get(contentInfo.getStorageId()), trialParams.authToken);
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }

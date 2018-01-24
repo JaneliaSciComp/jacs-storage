@@ -72,8 +72,6 @@ class RetrieveStreamStorageAgentRequestHandler extends AbstractSocketChannelStor
                 }
                 if (socketChannelStorageAgentRequest.writeOutputBuffer() == -1) {
                     // error writing to the channel so simply close the channel
-                    LOG.warn("Error writing the output buffer - very likely the client closed the connection");
-                    socketChannelStorageAgentRequest.transferState.closeDataTransferChannel();
                     socketChannelStorageAgentRequest.close();
                 }
                 return;
