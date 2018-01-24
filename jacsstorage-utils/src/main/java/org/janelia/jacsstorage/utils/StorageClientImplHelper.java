@@ -223,8 +223,8 @@ public class StorageClientImplHelper {
         }
     }
 
-    public Optional<InputStream> streamDataFromStore(String connectionURL, DataStorageInfo storageInfo, String authToken) {
-        String dataStreamEndpoint = String.format("/agent_storage/%s", storageInfo.getId());
+    public Optional<InputStream> streamDataFromStore(String connectionURL, Number storageId, String authToken) {
+        String dataStreamEndpoint = String.format("/agent_storage/%s", storageId);
         Client httpClient = null;
         try {
             httpClient = createHttpClient();

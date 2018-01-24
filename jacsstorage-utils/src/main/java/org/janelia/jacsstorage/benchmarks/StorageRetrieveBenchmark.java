@@ -26,10 +26,8 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.util.NullOutputStream;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
-import java.nio.channels.Channels;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
@@ -59,6 +57,35 @@ public class StorageRetrieveBenchmark {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void streamStorageContentEntryAvg(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
+        streamStorageContentEntryImpl(trialParams, invocationParams, blackhole);
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.Throughput})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void streamStorageContentEntryThrpt(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
+        streamStorageContentEntryImpl(trialParams, invocationParams, blackhole);
+    }
+
+    private void streamStorageContentEntryImpl(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
+        DataNodeInfo contentInfo = invocationParams.storageContent.get(RandomUtils.nextInt(0, CollectionUtils.size(invocationParams.storageContent)));
+        OutputStream targetStream = new NullOutputStream();
+        long nbytes = trialParams.storageClientHelper.streamDataEntryFromStorage(contentInfo.getRootLocation(), contentInfo.getStorageId(), contentInfo.getNodeRelativePath(), trialParams.authToken)
+                .map(is -> {
+                    try {
+                        return ByteStreams.copy(is, targetStream);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                })
+                .orElse(0L);
+        blackhole.consume(nbytes);
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void streamStorageContentAvg(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
         streamStorageContentImpl(trialParams, invocationParams, blackhole);
     }
@@ -72,17 +99,25 @@ public class StorageRetrieveBenchmark {
 
     private void streamStorageContentImpl(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
         DataNodeInfo contentInfo = invocationParams.storageContent.get(RandomUtils.nextInt(0, CollectionUtils.size(invocationParams.storageContent)));
-        OutputStream targetStream = new NullOutputStream();
-        long nbytes = trialParams.storageClientHelper.streamDataEntryFromStorage(contentInfo.getRootLocation(), contentInfo.getStorageId(), contentInfo.getNodeRelativePath(), trialParams.authToken)
-                .map(is -> {
-                    try {
-                        return ByteStreams.copy(is, targetStream);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                })
-                .orElse(0L);
-        blackhole.consume(nbytes);
+        if (trialParams.useHttp) {
+            OutputStream targetStream = new NullOutputStream();
+            long nbytes = trialParams.storageClientHelper.streamDataFromStore(contentInfo.getRootLocation(), contentInfo.getStorageId(), trialParams.authToken)
+                    .map(is -> {
+                        try {
+                            return ByteStreams.copy(is, targetStream);
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    })
+                    .orElse(0L);
+            blackhole.consume(nbytes);
+        } else {
+            try {
+                invocationParams.socketStorageClient.retrieveData("/dev/null/tmp", invocationParams.storageInfoMap.get(contentInfo.getStorageId()), trialParams.authToken);
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }
     }
 
     public static void main(String[] args) throws RunnerException {

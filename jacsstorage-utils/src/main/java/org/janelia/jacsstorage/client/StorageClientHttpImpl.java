@@ -96,7 +96,7 @@ public class StorageClientHttpImpl implements StorageClient {
                 .flatMap((DataStorageInfo persistedStorageInfo) -> {
                     LOG.info("Data storage info: {}", persistedStorageInfo);
                     String agentStorageServiceURL = persistedStorageInfo.getConnectionURL();
-                    return clientImplHelper.streamDataFromStore(agentStorageServiceURL, persistedStorageInfo, authToken);
+                    return clientImplHelper.streamDataFromStore(agentStorageServiceURL, persistedStorageInfo.getId(), authToken);
                 })
                 .flatMap((InputStream dataStream) -> {
                     try {
