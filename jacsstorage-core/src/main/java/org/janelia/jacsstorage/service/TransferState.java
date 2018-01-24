@@ -123,7 +123,17 @@ public class TransferState<T> {
     }
 
     public void closeDataTransferChannel() {
-        dataTransferPipe = null;
+        if (dataTransferPipe != null) {
+            try {
+                dataTransferPipe.source().close();
+            } catch (IOException e) {
+            }
+            try {
+                dataTransferPipe.sink().close();
+            } catch (IOException e) {
+            }
+            dataTransferPipe = null;
+        }
     }
 
     public Optional<WritableByteChannel> getDataWriteChannel() {
