@@ -109,7 +109,7 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                 String currentEntryName = normalizeEntryName(sourceEntry.getName());
                 if (currentEntryName.equals(normalizedEntryName)) {
                     if (sourceEntry.isDirectory()) {
-                        tarOutputStream = new TarArchiveOutputStream(new BufferedOutputStream(outputStream), TarConstants.DEFAULT_RCDSIZE);
+                        tarOutputStream = new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE);
                     } else {
                         return ByteStreams.copy(ByteStreams.limit(inputStream, sourceEntry.getSize()), outputStream);
                     }
@@ -137,6 +137,7 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                 throw new IllegalArgumentException("No entry " + normalizedEntryName + " found under " + source);
             else {
                 tarOutputStream.finish();
+                tarOutputStream.flush();
                 return nbytes;
             }
         } finally {

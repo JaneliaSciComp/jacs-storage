@@ -20,7 +20,7 @@ dependencies {
         CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
 
         // database drivers
-        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:3.5.0"
+        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:3.6.1"
 
         // apache commons
         COMMONS_LANG_VERSION = "3.7"
@@ -67,10 +67,10 @@ dependencies {
         JACKSON_JAXRS_XML_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-xml-provider:${JACKSON_VERSION}"
 
         // auth
-        JWT_LIB = "com.nimbusds:nimbus-jose-jwt:5.1"
+        JWT_LIB = "com.nimbusds:nimbus-jose-jwt:5.4"
 
         // data
-        MESSAGEPACK_LIB = "org.msgpack:msgpack-core:0.8.13"
+        MESSAGEPACK_LIB = "org.msgpack:msgpack-core:0.8.14"
 
         // testing
         JUNIT_VERSION = "4.12"

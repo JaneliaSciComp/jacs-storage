@@ -82,6 +82,7 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
         ArchiveFileVisitor archiver = new ArchiveFileVisitor(archiverRootDir, outputStream);
         Files.walkFileTree(sourcePath, archiver);
         outputStream.finish();
+        outputStream.flush();
         return archiver.nBytes;
     }
 
