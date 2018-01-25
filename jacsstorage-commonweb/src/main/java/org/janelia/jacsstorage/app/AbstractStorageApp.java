@@ -49,6 +49,8 @@ public abstract class AbstractStorageApp {
         protected String deployment = "jacsstorage";
         @Parameter(names = "-context-path", description = "Base context path", required = false)
         protected String baseContextPath = "/jacsstorage";
+        @Parameter(names = "-nworkers", description = "Number of worker threads", required = false)
+        private int nWorkers = 100;
         @Parameter(names = "-h", description = "Display help", arity = 0, required = false)
         protected boolean displayUsage = false;
         @DynamicParameter(names = "-D", description = "Dynamic application parameters that could override application properties")
@@ -119,6 +121,7 @@ public abstract class AbstractStorageApp {
         server = Undertow
                     .builder()
                     .addHttpListener(appArgs.portNumber, appArgs.host)
+                    .setWorkerThreads(appArgs.nWorkers)
                     .setHandler(storageHandler)
                     .build();
     }
