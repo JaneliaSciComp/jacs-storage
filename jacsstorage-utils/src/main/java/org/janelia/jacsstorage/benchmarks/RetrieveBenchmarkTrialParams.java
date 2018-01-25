@@ -13,14 +13,17 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.util.FileUtils;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @State(Scope.Benchmark)
 public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
+
+    private static final String DEFAULT_BENCHMARK_TEMP_LOCATION = "/tmp/jacsstorage-benchmarks";
+
     @Param({"0"})
     long nStorageRecords;
-    @Param({"/tmp/jacsstorage-benchmarks"})
-    String tempBenchmarkData;
 
     @Setup(Level.Trial)
     public void setUp(BenchmarkParams params) {
@@ -29,10 +32,16 @@ public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
         if (StringUtils.isNotBlank(nStorageRecordsParam)) {
             nStorageRecords = Long.valueOf(nStorageRecordsParam);
         }
+        if (useHttp && StringUtils.isBlank(dataLocation)) {
+            dataLocation = DEFAULT_BENCHMARK_TEMP_LOCATION;
+        }
     }
 
     @TearDown(Level.Trial)
     public void tearDown() throws IOException {
-        PathUtils.deletePath(Paths.get(tempBenchmarkData));
+        Path tempBenchmarkDataPath = Paths.get(dataLocation);
+        if (Files.exists(tempBenchmarkDataPath)) {
+            PathUtils.deletePath(tempBenchmarkDataPath);
+        }
     }
 }

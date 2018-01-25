@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -109,7 +111,13 @@ public class StorageRetrieveBenchmark {
             long nbytes = trialParams.storageClientHelper.streamDataFromStore(contentInfo.getRootLocation(), contentInfo.getStorageId(), trialParams.authToken)
                     .map(is -> {
                         try {
-                            return ByteStreams.copy(is, targetStream);
+                            if (StringUtils.isBlank(trialParams.dataLocation)) {
+                                return ByteStreams.copy(is, targetStream);
+                            } else {
+                                Path dataLocation = getTempDataLocation(trialParams);
+                                Files.createDirectories(dataLocation.getParent());
+                                return Files.copy(is, dataLocation);
+                            }
                         } catch (IOException e) {
                             throw new UncheckedIOException(e);
                         }
@@ -119,11 +127,15 @@ public class StorageRetrieveBenchmark {
         } else {
             try {
                 LOG.debug("Retrieve data from the socket");
-                invocationParams.socketStorageClient.retrieveData(Paths.get(trialParams.tempBenchmarkData, String.valueOf(RandomUtils.nextLong(0, Integer.MAX_VALUE))).toString(), invocationParams.storageInfoMap.get(contentInfo.getStorageId()), trialParams.authToken);
+                invocationParams.socketStorageClient.retrieveData(getTempDataLocation(trialParams).toString(), invocationParams.storageInfoMap.get(contentInfo.getStorageId()), trialParams.authToken);
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }
         }
+    }
+
+    private Path getTempDataLocation(RetrieveBenchmarkTrialParams trialParams) {
+        return Paths.get(trialParams.dataLocation, String.valueOf(RandomUtils.nextLong(0, Integer.MAX_VALUE)));
     }
 
     public static void main(String[] args) throws RunnerException {
@@ -143,9 +155,9 @@ public class StorageRetrieveBenchmark {
         long nStorageRecords = new StorageClientImplHelper().countStorageRecords(benchmarksCmdLineParams.serverURL, benchmarksCmdLineParams.bundleId, authToken);
         String benchmarks;
         if (StringUtils.isNotBlank(benchmarksCmdLineParams.benchmarksRegex)) {
-            benchmarks =  StorageRetrieveBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
+            benchmarks = StorageRetrieveBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
         } else {
-            benchmarks =  StorageRetrieveBenchmark.class.getSimpleName();
+            benchmarks = StorageRetrieveBenchmark.class.getSimpleName();
         }
         ChainedOptionsBuilder optBuilder = new OptionsBuilder()
                 .include(benchmarks)
@@ -163,8 +175,7 @@ public class StorageRetrieveBenchmark {
                 .param("dataLocation", benchmarksCmdLineParams.localPath)
                 .param("dataBundleId", benchmarksCmdLineParams.bundleId.toString())
                 .param("authToken", authToken)
-                .param("nStorageRecords", String.valueOf(nStorageRecords))
-                ;
+                .param("nStorageRecords", String.valueOf(nStorageRecords));
         if (benchmarksCmdLineParams.bundleId != null) {
             optBuilder = optBuilder.param("dataBundleId", benchmarksCmdLineParams.bundleId.toString());
         }
@@ -175,8 +186,8 @@ public class StorageRetrieveBenchmark {
         for (RunResult runResult : runResults) {
             Result result = runResult.getAggregatedResult().getPrimaryResult();
             System.out.println("Score: " + result.getScore() + " " +
-                result.getScoreUnit() + " over " +
-                result.getStatistics());
+                    result.getScoreUnit() + " over " +
+                    result.getStatistics());
         }
     }
 }
