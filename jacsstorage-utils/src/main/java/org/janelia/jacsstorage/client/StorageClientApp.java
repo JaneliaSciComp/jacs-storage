@@ -39,9 +39,15 @@ public class StorageClientApp {
 
     private static abstract class AbstractCommand {
         @Parameter(names = "-localPath", description = "Local path")
-        protected String localPath;
+        String localPath;
         @Parameter(names = "-name", description = "Data bundle name")
-        protected String name;
+        String name;
+        @Parameter(names = "-bundleId", description = "bundle id")
+        Long bundleId = 0L;
+
+        Long getBundleId() {
+            return bundleId != null && bundleId != 0L ? bundleId : null;
+        }
     }
 
     @Parameters(commandDescription = "Send data to the storage server")
@@ -56,8 +62,6 @@ public class StorageClientApp {
 
     @Parameters(commandDescription = "Create new storage storage content - file or directory")
     private static class CommandCreateNewStorageContent extends AbstractCommand {
-        @Parameter(names = "-bundleId", description = "bundle id", required = true)
-        private Long bundleId;
         @Parameter(names = "-newPath", description = "directory path relative to the data bundle", required = true)
         private String newPath;
     }
@@ -111,6 +115,7 @@ public class StorageClientApp {
         switch (jc.getParsedCommand()) {
             case "get":
                 storageInfo = new DataStorageInfo()
+                        .setId(cmdGet.getBundleId())
                         .setConnectionURL(cm.serverURL)
                         .setOwnerKey(dataOwnerKey)
                         .setName(cmdGet.name);
