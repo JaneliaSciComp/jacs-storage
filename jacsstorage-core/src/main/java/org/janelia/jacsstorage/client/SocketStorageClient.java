@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -201,8 +200,6 @@ public class SocketStorageClient implements StorageClient {
         selector = Selector.open();
         channel = SocketChannel.open();
         channel.configureBlocking(false);
-        channel.setOption(StandardSocketOptions.SO_RCVBUF, 1000000);
-        channel.setOption(StandardSocketOptions.SO_RCVBUF, 1000000);
         channel.register(selector, SelectionKey.OP_CONNECT);
         channel.connect(new InetSocketAddress(serverAddress, serverPort));
         sendMessageHeader(headerBuffer, channelIOOp);

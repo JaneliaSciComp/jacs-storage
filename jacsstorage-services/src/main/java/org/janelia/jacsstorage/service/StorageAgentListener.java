@@ -11,7 +11,6 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.StandardSocketOptions;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -46,8 +45,6 @@ public class StorageAgentListener {
 
         ServerSocketChannel agentSocketChannel = ServerSocketChannel.open();
         agentSocketChannel.configureBlocking(false);
-        agentSocketChannel.setOption(StandardSocketOptions.SO_SNDBUF, 1000000);
-        agentSocketChannel.setOption(StandardSocketOptions.SO_RCVBUF, 1000000);
 
         InetSocketAddress agentAddr = new InetSocketAddress(bindingIP, portNo);
         ServerSocket serverSocket = agentSocketChannel.socket();
