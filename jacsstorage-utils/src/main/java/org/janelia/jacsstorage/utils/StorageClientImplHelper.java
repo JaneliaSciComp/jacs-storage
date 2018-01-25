@@ -71,6 +71,7 @@ public class StorageClientImplHelper {
             if (bundleId != null) {
                 target = target.queryParam("id", bundleId);
             }
+            LOG.debug("Count {} as {}", target, authToken);
             Response response = target.request()
                     .header("Authorization", "Bearer " + authToken)
                     .get()
@@ -113,7 +114,7 @@ public class StorageClientImplHelper {
             if (request.getPageSize() > 0) {
                 target = target.queryParam("length", request.getPageSize());
             }
-            LOG.debug("List {}", target);
+            LOG.debug("List {} as {}", target, authToken);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .header("Authorization", "Bearer " + authToken)
                     .get()
