@@ -174,6 +174,7 @@ public class StorageRetrieveBenchmark {
                 .param("storageTags", benchmarksCmdLineParams.getStorageTagsAsString())
                 .param("dataLocation", benchmarksCmdLineParams.localPath)
                 .param("dataBundleId", benchmarksCmdLineParams.bundleId.toString())
+                .param("storageEntry", benchmarksCmdLineParams.entryName)
                 .param("authToken", authToken)
                 .param("nStorageRecords", String.valueOf(nStorageRecords));
         if (benchmarksCmdLineParams.bundleId != null) {

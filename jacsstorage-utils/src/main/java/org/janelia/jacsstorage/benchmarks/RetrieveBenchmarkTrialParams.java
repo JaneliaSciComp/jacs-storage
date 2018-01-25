@@ -24,6 +24,9 @@ public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
 
     @Param({"0"})
     long nStorageRecords;
+    @Param({""})
+    String storageEntry;
+
 
     @Setup(Level.Trial)
     public void setUp(BenchmarkParams params) {

@@ -29,6 +29,8 @@ class BenchmarksCmdLineParams {
     String storageContext = "";
     @Parameter(names = "-localPath", description = "Local path")
     String localPath = "";
+    @Parameter(names = "-entryName", description = "Entry name")
+    String entryName = "";
     // authentication params
     @Parameter(names = "-authServer", description = "Authentication server URL")
     String authURL = "https://jacs-dev.int.janelia.org//SCSW/AuthenticationService/v1";
