@@ -42,9 +42,11 @@ public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
 
     @TearDown(Level.Trial)
     public void tearDown() throws IOException {
-        Path tempBenchmarkDataPath = Paths.get(dataLocation);
-        if (Files.exists(tempBenchmarkDataPath)) {
-            PathUtils.deletePath(tempBenchmarkDataPath);
+        if (StringUtils.isNotBlank(dataLocation)) {
+            Path tempBenchmarkDataPath = Paths.get(dataLocation);
+            if (Files.exists(tempBenchmarkDataPath)) {
+                PathUtils.deletePath(tempBenchmarkDataPath);
+            }
         }
     }
 }
