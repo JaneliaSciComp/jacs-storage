@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.benchmarks;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.client.SocketStorageClient;
 import org.janelia.jacsstorage.client.StorageClient;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
@@ -24,7 +23,6 @@ import java.util.stream.Collectors;
 
 @State(Scope.Thread)
 public class StreamContentBenchmarkInvocationParams {
-    StorageClient socketStorageClient;
     Number storageBundleId;
     List<DataNodeInfo> storageContent;
     Map<Number, DataStorageInfo> storageInfoMap;
@@ -52,13 +50,6 @@ public class StreamContentBenchmarkInvocationParams {
                     .filter(contentInfo -> !contentInfo.isCollectionFlag())
                     .filter(contentInfo -> StringUtils.isBlank(params.storageEntry) || contentInfo.getNodeRelativePath().equals(params.storageEntry))
                     .collect(Collectors.toList());
-        }
-        if (!params.useHttp) {
-            SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
-            SeContainer container = containerInit.initialize();
-            socketStorageClient = new SocketStorageClient(
-                    container.select(DataTransferService.class).get()
-            );
         }
     }
 }

@@ -25,7 +25,6 @@ public class DataStorageInfo {
     private String storageRootRealDir;
     private String storageHost;
     private List<String> storageTags;
-    private int tcpPortNo;
     private String connectionURL;
     private JacsStorageFormat storageFormat;
     private Long requestedSpaceInBytes;
@@ -51,7 +50,6 @@ public class DataStorageInfo {
                     dsi.setStorageTags(sv.getStorageTags());
                     dsi.setStorageRootRealDir(sv.getStorageRootDir());
                     dsi.setStorageRootPrefixDir(sv.getStoragePathPrefix());
-                    dsi.setTcpPortNo(sv.getStorageServiceTCPPortNo());
                     dsi.setConnectionURL(sv.getStorageServiceURL());
                 });
         return dsi;
@@ -158,15 +156,6 @@ public class DataStorageInfo {
         return this;
     }
 
-    public int getTcpPortNo() {
-        return tcpPortNo;
-    }
-
-    public DataStorageInfo setTcpPortNo(int tcpPortNo) {
-        this.tcpPortNo = tcpPortNo;
-        return this;
-    }
-
     public String getConnectionURL() {
         return connectionURL;
     }
@@ -239,7 +228,6 @@ public class DataStorageInfo {
                 .append("name", name)
                 .append("path", path)
                 .append("storageHost", storageHost)
-                .append("tcpPortNo", tcpPortNo)
                 .append("connectionURL", connectionURL)
                 .append("storageFormat", storageFormat)
                 .toString();

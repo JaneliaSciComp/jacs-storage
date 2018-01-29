@@ -78,15 +78,14 @@ public class StorageAgentManagerImplTest {
     public void registerAgentForTheFirstTime() {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
-        int testAgentPort = 100;
 
-        registerAgent(testAgentHost, testAgentPort, testAgentURL);
+        registerAgent(testAgentHost, testAgentURL);
 
         Mockito.verify(scheduler).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
     }
 
-    private StorageAgentInfo registerAgent(String agentHost, int agentPort, String agentURL) {
-        StorageAgentInfo agentInfo = new StorageAgentInfo(agentHost, agentURL, agentPort);
+    private StorageAgentInfo registerAgent(String agentHost, String agentURL) {
+        StorageAgentInfo agentInfo = new StorageAgentInfo(agentHost, agentURL);
         return testStorageAgentManager.registerAgent(agentInfo);
     }
 
@@ -94,10 +93,9 @@ public class StorageAgentManagerImplTest {
     public void reRegisterAgent() {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
-        int testAgentPort = 100;
 
-        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentPort, testAgentURL);
-        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentPort, testAgentURL);
+        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL);
+        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL);
 
         assertNotNull(firstRegistration);
         assertNotNull(secondRegistration);
@@ -110,13 +108,12 @@ public class StorageAgentManagerImplTest {
     public void reRegisterAgentAfterDeregistration() {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
-        int testAgentPort = 100;
 
-        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentPort, testAgentURL);
+        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL);
         assertNotNull(firstRegistration);
         assertNotNull(testStorageAgentManager.deregisterAgent(testAgentURL, firstRegistration.getAgentToken()));
 
-        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentPort, testAgentURL);
+        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL);
         assertNotNull(secondRegistration);
 
         Mockito.verify(scheduler, Mockito.times(2)).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
@@ -230,10 +227,8 @@ public class StorageAgentManagerImplTest {
     private StorageAgentInfo prepareTestAgentInfo(int index) {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
-        int testAgentPort = 100;
         StorageAgentInfo agentInfo = new StorageAgentInfo(testAgentHost + "_" + index,
-                testAgentURL + "_" + index,
-                testAgentPort);
+                testAgentURL + "_" + index);
         return agentInfo;
     }
 }

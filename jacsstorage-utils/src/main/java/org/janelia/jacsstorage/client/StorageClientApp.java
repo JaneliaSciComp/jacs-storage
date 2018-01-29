@@ -25,8 +25,6 @@ public class StorageClientApp {
         private String serverURL = "http://localhost:8080/jacsstorage/master_api/v1";
         @Parameter(names = "-authServer", description = "Authentication server URL")
         private String authURL = "https://jacs-dev.int.janelia.org//SCSW/AuthenticationService/v1";
-        @Parameter(names = "-useHttp", description = "Use Http to persist/retrieve data")
-        private Boolean useHttp = false;
         @Parameter(names = "-username", description = "User name")
         String username;
         @Parameter(names = "-password", description = "User password authentication")
@@ -98,16 +96,9 @@ public class StorageClientApp {
 
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
         SeContainer container = containerInit.initialize();
-        StorageClient storageClient;
-        if (cm.useHttp) {
-            storageClient = new StorageClientHttpImpl(
-                    container.select(DataTransferService.class).get()
-            );
-        } else {
-            storageClient = new StorageClientImpl(new SocketStorageClient(
-                    container.select(DataTransferService.class).get())
-            );
-        }
+        StorageClient storageClient = new StorageClientHttpImpl(
+                container.select(DataTransferService.class).get()
+        );
         StorageClientImplHelper storageClientHelper = new StorageClientImplHelper();
         AuthClientImplHelper authClientImplHelper = new AuthClientImplHelper(cm.authURL);
         DataStorageInfo storageInfo;

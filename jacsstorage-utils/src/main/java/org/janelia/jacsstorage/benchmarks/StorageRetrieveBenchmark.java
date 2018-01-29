@@ -106,32 +106,23 @@ public class StorageRetrieveBenchmark {
 
     private void streamStorageContentImpl(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
         DataNodeInfo contentInfo = invocationParams.storageContent.get(RandomUtils.nextInt(0, CollectionUtils.size(invocationParams.storageContent)));
-        if (trialParams.useHttp) {
-            OutputStream targetStream = new NullOutputStream();
-            long nbytes = trialParams.storageClientHelper.streamDataFromStore(contentInfo.getRootLocation(), contentInfo.getStorageId(), trialParams.authToken)
-                    .map(is -> {
-                        try {
-                            if (StringUtils.isBlank(trialParams.dataLocation)) {
-                                return ByteStreams.copy(is, targetStream);
-                            } else {
-                                Path dataLocation = getTempDataLocation(trialParams);
-                                Files.createDirectories(dataLocation.getParent());
-                                return Files.copy(is, dataLocation);
-                            }
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
+        OutputStream targetStream = new NullOutputStream();
+        long nbytes = trialParams.storageClientHelper.streamDataFromStore(contentInfo.getRootLocation(), contentInfo.getStorageId(), trialParams.authToken)
+                .map(is -> {
+                    try {
+                        if (StringUtils.isBlank(trialParams.dataLocation)) {
+                            return ByteStreams.copy(is, targetStream);
+                        } else {
+                            Path dataLocation = getTempDataLocation(trialParams);
+                            Files.createDirectories(dataLocation.getParent());
+                            return Files.copy(is, dataLocation);
                         }
-                    })
-                    .orElse(0L);
-            blackhole.consume(nbytes);
-        } else {
-            try {
-                LOG.debug("Retrieve data from the socket");
-                invocationParams.socketStorageClient.retrieveData(getTempDataLocation(trialParams).toString(), invocationParams.storageInfoMap.get(contentInfo.getStorageId()), trialParams.authToken);
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-        }
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                })
+                .orElse(0L);
+        blackhole.consume(nbytes);
     }
 
     private Path getTempDataLocation(RetrieveBenchmarkTrialParams trialParams) {
@@ -168,7 +159,6 @@ public class StorageRetrieveBenchmark {
                 .shouldFailOnError(true)
                 .detectJvmArgs()
                 .param("serverURL", benchmarksCmdLineParams.serverURL)
-                .param("useHttp", benchmarksCmdLineParams.useHttp.toString())
                 .param("ownerKey", dataOwnerKey)
                 .param("storageHost", StringUtils.defaultIfBlank(benchmarksCmdLineParams.storageHost, ""))
                 .param("storageTags", benchmarksCmdLineParams.getStorageTagsAsString())

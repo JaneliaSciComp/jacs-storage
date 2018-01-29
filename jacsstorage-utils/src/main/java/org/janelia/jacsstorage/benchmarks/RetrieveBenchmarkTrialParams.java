@@ -20,8 +20,6 @@ import java.nio.file.Paths;
 @State(Scope.Benchmark)
 public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
 
-    private static final String DEFAULT_BENCHMARK_TEMP_LOCATION = "/tmp/jacsstorage-benchmarks";
-
     @Param({"0"})
     long nStorageRecords;
     @Param({""})
@@ -34,9 +32,6 @@ public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
         String nStorageRecordsParam = params.getParam("nStorageRecords");
         if (StringUtils.isNotBlank(nStorageRecordsParam)) {
             nStorageRecords = Long.valueOf(nStorageRecordsParam);
-        }
-        if (useHttp && StringUtils.isBlank(dataLocation)) {
-            dataLocation = DEFAULT_BENCHMARK_TEMP_LOCATION;
         }
     }
 

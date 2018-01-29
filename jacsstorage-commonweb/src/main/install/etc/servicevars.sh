@@ -7,7 +7,6 @@ JAVA_OPTS="${DEBUG_OPTS} -Xmx2G -Xms512M -Dlogback.configurationFile=${JACSSTORA
 
 AGENT_HOST=`hostname -s`
 AGENT_HTTP_PORT=${jacs.runtime.env.agentHttpPort}
-AGENT_TCP_PORT=${jacs.runtime.env.agentTcpPort}
 
 MASTER_IP=jade1
 MASTER_PORT=${jacs.runtime.env.masterHttpPort}

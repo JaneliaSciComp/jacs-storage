@@ -8,17 +8,14 @@ public class StorageAgentInfo {
 
     private final String storageHost;
     private final String agentHttpURL;
-    private final int tcpPortNo;
     private String connectionStatus;
     private String agentToken;
 
     @JsonCreator
     public StorageAgentInfo(@JsonProperty("storageHost") String storageHost,
-                            @JsonProperty("agentHttpURL") String agentHttpURL,
-                            @JsonProperty("tcpPortNo") int tcpPortNo) {
+                            @JsonProperty("agentHttpURL") String agentHttpURL) {
         this.storageHost = storageHost;
         this.agentHttpURL = agentHttpURL;
-        this.tcpPortNo = tcpPortNo;
     }
 
     public String getStorageHost() {
@@ -27,10 +24,6 @@ public class StorageAgentInfo {
 
     public String getAgentHttpURL() {
         return agentHttpURL;
-    }
-
-    public int getTcpPortNo() {
-        return tcpPortNo;
     }
 
     public String getConnectionStatus() {
@@ -54,7 +47,6 @@ public class StorageAgentInfo {
         return new ToStringBuilder(this)
                 .append("storageHost", storageHost)
                 .append("agentHttpURL", agentHttpURL)
-                .append("tcpPortNo", tcpPortNo)
                 .append("agentToken", agentToken)
                 .append("connectionStatus", connectionStatus)
                 .toString();

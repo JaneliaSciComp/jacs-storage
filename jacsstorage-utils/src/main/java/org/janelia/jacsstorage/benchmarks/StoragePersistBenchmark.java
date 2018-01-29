@@ -57,7 +57,6 @@ public class StoragePersistBenchmark {
                 .shouldFailOnError(true)
                 .detectJvmArgs()
                 .param("serverURL", benchmarksCmdLineParams.serverURL)
-                .param("useHttp", benchmarksCmdLineParams.useHttp.toString())
                 .param("ownerKey", dataOwnerKey)
                 .param("dataLocation", benchmarksCmdLineParams.localPath)
                 .param("dataFormat", benchmarksCmdLineParams.dataFormat.name())

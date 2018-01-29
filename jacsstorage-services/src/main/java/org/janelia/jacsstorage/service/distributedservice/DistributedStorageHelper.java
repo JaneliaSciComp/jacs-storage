@@ -16,7 +16,6 @@ class DistributedStorageHelper {
                     .ifPresent(ai -> {
                         storageVolume.setStorageHost(ai.getStorageHost());
                         storageVolume.setStorageServiceURL(ai.getAgentHttpURL());
-                        storageVolume.setStorageServiceTCPPortNo(ai.getTcpPortNo());
                     });
         }
     }

@@ -19,7 +19,6 @@ public class JacsStorageVolume extends AbstractEntity {
     private String storageRootDir; // storage real root directory path
     private List<String> storageTags; // storage tags - identify certain features of the physical storage
     private String storageServiceURL;
-    private int storageServiceTCPPortNo;
     private Long availableSpaceInBytes;
     private boolean shared;
     private Date created = new Date();
@@ -84,14 +83,6 @@ public class JacsStorageVolume extends AbstractEntity {
 
     public void setStorageServiceURL(String storageServiceURL) {
         this.storageServiceURL = storageServiceURL;
-    }
-
-    public int getStorageServiceTCPPortNo() {
-        return storageServiceTCPPortNo;
-    }
-
-    public void setStorageServiceTCPPortNo(int storageServiceTCPPortNo) {
-        this.storageServiceTCPPortNo = storageServiceTCPPortNo;
     }
 
     public Long getAvailableSpaceInBytes() {

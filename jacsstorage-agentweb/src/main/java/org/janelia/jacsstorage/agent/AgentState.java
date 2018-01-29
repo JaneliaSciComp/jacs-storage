@@ -50,7 +50,6 @@ public class AgentState {
     private Integer tripThreshold;
     private CircuitBreaker<AgentState> agentConnectionBreaker;
     private String agentHttpURL;
-    private int agentTcpPortNo;
     private List<JacsStorageVolume> agentManagedVolumes;
     private String masterHttpURL;
     private String registeredToken;
@@ -67,9 +66,8 @@ public class AgentState {
         return agentHttpURL;
     }
 
-    public void updateAgentInfo(String agentHttpURL, int agentTcpPortNo) {
+    public void updateAgentInfo(String agentHttpURL) {
         this.agentHttpURL = agentHttpURL;
-        this.agentTcpPortNo = agentTcpPortNo;
         getUpdateLocalVolumesAction().accept(this);
     }
 
@@ -121,10 +119,7 @@ public class AgentState {
 
     public StorageAgentInfo getLocalAgentInfo() {
         String localStorageHost = getStorageHost();
-        StorageAgentInfo localAgentInfo = new StorageAgentInfo(
-                localStorageHost,
-                agentHttpURL,
-                agentTcpPortNo);
+        StorageAgentInfo localAgentInfo = new StorageAgentInfo(localStorageHost, agentHttpURL);
         if (this.isRegistered()) {
             localAgentInfo.setConnectionStatus("CONNECTED");
         } else {
@@ -151,7 +146,6 @@ public class AgentState {
                 .filter(filter)
                 .map(storageVolume -> {
                     storageVolume.setStorageServiceURL(agentHttpURL);
-                    storageVolume.setStorageServiceTCPPortNo(agentTcpPortNo);
                     return storageVolumeManager.updateVolumeInfo(storageVolume);
                 })
                 .collect(Collectors.toList());
@@ -160,7 +154,6 @@ public class AgentState {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("agentTcpPortNo", agentTcpPortNo)
                 .append("agentHttpURL", agentHttpURL)
                 .append("masterHttpURL", masterHttpURL)
                 .append("registeredToken", registeredToken)

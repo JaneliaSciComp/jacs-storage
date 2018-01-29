@@ -8,8 +8,6 @@ JAVA_OPTS="${JAVA_OPTS}" JACSSTORAGE_CONFIG="${JACSSTORAGE_CONFIG}" \
 bin/jacsstorage-agentweb \
      -b 0.0.0.0 \
      -p ${AGENT_HTTP_PORT} \
-     -tcpBind 0.0.0.0 \
-     -tcpPort ${AGENT_TCP_PORT} \
      -masterURL ${MASTER_URL} \
      -DStorageAgent.InitialPingDelayInSeconds=0 \
      $*

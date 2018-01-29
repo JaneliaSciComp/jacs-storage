@@ -161,7 +161,6 @@ public class LocalStorageVolumeManagerTest {
                 .storageRootDir("/root/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
-                .tcpPortNo(100)
                 .build();
         JacsStorageVolume newlyCreatedTestVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
@@ -187,7 +186,6 @@ public class LocalStorageVolumeManagerTest {
                 .put("storagePathPrefix", new SetFieldValueHandler<>(testVolume.getStoragePathPrefix()))
                 .put("availableSpaceInBytes", new SetFieldValueHandler<>(testVolume.getAvailableSpaceInBytes()))
                 .put("storageServiceURL", new SetFieldValueHandler<>(testVolume.getStorageServiceURL()))
-                .put("storageServiceTCPPortNo", new SetFieldValueHandler<>(testVolume.getStorageServiceTCPPortNo()))
                 .put("storageTags", new SetFieldValueHandler<>(testVolume.getStorageTags()))
                 .build()
         );
@@ -204,7 +202,6 @@ public class LocalStorageVolumeManagerTest {
                 .storagePathPrefix("/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
-                .tcpPortNo(100)
                 .build();
         ApplicationConfig applicationConfig = mock(ApplicationConfig.class);
 
@@ -231,7 +228,6 @@ public class LocalStorageVolumeManagerTest {
                 .storageRootDir("/root/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
-                .tcpPortNo(100)
                 .build();
         testVolume.setShared(true);
         JacsStorageVolume newlyCreatedTestVolume = new JacsStorageVolumeBuilder()
@@ -272,7 +268,6 @@ public class LocalStorageVolumeManagerTest {
                 .storagePathPrefix("/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
-                .tcpPortNo(100)
                 .build();
         testVolume.setShared(true);
         ApplicationConfig applicationConfig = mock(ApplicationConfig.class);

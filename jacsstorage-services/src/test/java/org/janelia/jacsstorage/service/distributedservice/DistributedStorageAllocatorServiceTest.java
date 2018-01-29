@@ -7,12 +7,12 @@ import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
-import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.junit.Before;
@@ -27,7 +27,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -53,7 +52,6 @@ public class DistributedStorageAllocatorServiceTest {
         final Long testVolumeId;
         final String testVolumentName;
         final String testHost;
-        final int testPort;
         final String testAgentURL;
         final String testAgentMountPoint;
         final String testBundlePrefix;
@@ -64,7 +62,6 @@ public class DistributedStorageAllocatorServiceTest {
                                 Long testVolumeId,
                                 String testVolumentName,
                                 String testHost,
-                                int testPort,
                                 String testAgentURL,
                                 String testAgentMountPoint,
                                 String testBundlePrefix,
@@ -74,7 +71,6 @@ public class DistributedStorageAllocatorServiceTest {
             this.testVolumeId = testVolumeId;
             this.testVolumentName = testVolumentName;
             this.testHost = testHost;
-            this.testPort = testPort;
             this.testAgentURL = testAgentURL;
             this.testAgentMountPoint = testAgentMountPoint;
             this.testBundlePrefix = testBundlePrefix;
@@ -90,7 +86,6 @@ public class DistributedStorageAllocatorServiceTest {
                         20L,
                         "testVolumeName",
                         "testHost",
-                        100,
                         "http://agentURL",
                         "/storage",
                         null,
@@ -99,14 +94,12 @@ public class DistributedStorageAllocatorServiceTest {
                                 .storageHost("testHost")
                                 .storageRootDir("/storage")
                                 .storageServiceURL("http://agentURL")
-                                .tcpPortNo(100)
                                 .build()
                 ),
                 new TestAllocateData(10L,
                         20L,
                         "testVolumeName",
                         "testHost",
-                        100,
                         "http://agentURL",
                         "/overflowStorage",
                         "bundlePrefix",
@@ -120,7 +113,6 @@ public class DistributedStorageAllocatorServiceTest {
                         20L,
                         "testVolumeName",
                         "testHost",
-                        100,
                         "http://agentURL",
                         "/storage",
                         "",
@@ -145,8 +137,7 @@ public class DistributedStorageAllocatorServiceTest {
         Mockito.reset(storageAgentManager, storageVolumeDao, bundleDao);
         StorageAgentInfo testAgentInfo = new StorageAgentInfo(
                 testData.testHost,
-                testData.testAgentURL,
-                testData.testPort);
+                testData.testAgentURL);
         testAgentInfo.setConnectionStatus("CONNECTED");
         when(storageAgentManager.findRandomRegisteredAgent(any(Predicate.class)))
                 .thenReturn(Optional.of(testAgentInfo));

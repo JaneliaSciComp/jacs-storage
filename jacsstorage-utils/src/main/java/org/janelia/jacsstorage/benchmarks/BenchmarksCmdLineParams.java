@@ -17,8 +17,6 @@ class BenchmarksCmdLineParams {
     int nThreads = 5;
     @Parameter(names = "-server", description = "Master storage server URL")
     String serverURL = "http://jdcu1:8880/jacsstorage/master_api/v1";
-    @Parameter(names = "-useHttp", description = "Use Http to persist/retrieve data")
-    Boolean useHttp = false;
     @Parameter(names = "-dataFormat", description = "Data bundle format")
     JacsStorageFormat dataFormat = JacsStorageFormat.DATA_DIRECTORY;
     @Parameter(names = "-storageHost", description = "Storage tags")

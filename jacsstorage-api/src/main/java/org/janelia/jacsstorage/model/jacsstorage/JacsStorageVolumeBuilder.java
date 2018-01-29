@@ -20,11 +20,6 @@ public class JacsStorageVolumeBuilder {
         return this;
     }
 
-    public JacsStorageVolumeBuilder tcpPortNo(int v) {
-        jacsStorageVolume.setStorageServiceTCPPortNo(v);
-        return this;
-    }
-
     public JacsStorageVolumeBuilder name(String v) {
         jacsStorageVolume.setName(v);
         return this;

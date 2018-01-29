@@ -3,26 +3,16 @@ package org.janelia.jacsstorage.service;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
-import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
-import org.janelia.jacsstorage.config.ApplicationConfig;
-import org.janelia.jacsstorage.config.ApplicationConfigValueResolver;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
-import org.janelia.jacsstorage.utils.NetUtils;
 
 import javax.inject.Inject;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public abstract class AbstractStorageVolumeManager implements StorageVolumeManager {
 
@@ -73,21 +63,14 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
                 currentVolumeInfo.setStorageServiceURL(storageVolume.getStorageServiceURL());
                 updatedVolumeFieldsBuilder.put("storageServiceURL", new SetFieldValueHandler<>(currentVolumeInfo.getStorageServiceURL()));
             }
-            if (storageVolume.getStorageServiceTCPPortNo() != 0 &&
-                    storageVolume.getStorageServiceTCPPortNo() != currentVolumeInfo.getStorageServiceTCPPortNo()) {
-                currentVolumeInfo.setStorageServiceTCPPortNo(storageVolume.getStorageServiceTCPPortNo());
-                updatedVolumeFieldsBuilder.put("storageServiceTCPPortNo", new SetFieldValueHandler<>(currentVolumeInfo.getStorageServiceTCPPortNo()));
-            }
         } else if (!currentVolumeInfo.isShared()) {
             // if somehow the current volume is not shared make it shared
             currentVolumeInfo.setShared(true);
             currentVolumeInfo.setStorageServiceURL(null);
             currentVolumeInfo.setStorageHost(null);
-            currentVolumeInfo.setStorageServiceTCPPortNo(0);
             updatedVolumeFieldsBuilder.put("shared", new SetFieldValueHandler<>(currentVolumeInfo.isShared()));
             updatedVolumeFieldsBuilder.put("storageServiceURL", new SetFieldValueHandler<>(currentVolumeInfo.getStorageServiceURL()));
             updatedVolumeFieldsBuilder.put("storageHost", new SetFieldValueHandler<>(currentVolumeInfo.getStorageHost()));
-            updatedVolumeFieldsBuilder.put("storageServiceTCPPortNo", new SetFieldValueHandler<>(currentVolumeInfo.getStorageServiceTCPPortNo()));
         }
         if (!currentVolumeInfo.hasTags() && storageVolume.hasTags()) {
             currentVolumeInfo.setStorageTags(storageVolume.getStorageTags());

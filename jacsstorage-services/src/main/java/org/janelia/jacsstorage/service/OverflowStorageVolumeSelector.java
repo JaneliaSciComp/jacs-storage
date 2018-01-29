@@ -7,8 +7,6 @@ import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 
-import java.util.Random;
-
 public class OverflowStorageVolumeSelector implements StorageVolumeSelector {
     private final JacsStorageVolumeDao storageVolumeDao;
 

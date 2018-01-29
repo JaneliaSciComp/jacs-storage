@@ -18,8 +18,6 @@ public class BenchmarkTrialParams {
     StorageClientImplHelper storageClientHelper;
     @Param({""})
     String serverURL;
-    @Param({"false"})
-    Boolean useHttp;
     @Param({""})
     String ownerKey;
     @Param({""})
@@ -42,7 +40,6 @@ public class BenchmarkTrialParams {
     @Setup(Level.Trial)
     public void setUp(BenchmarkParams params) {
         serverURL = params.getParam("serverURL");
-        useHttp = Boolean.valueOf(params.getParam("useHttp"));
         ownerKey = params.getParam("ownerKey");
         dataLocation = params.getParam("dataLocation");
         dataFormat = params.getParam("dataFormat");

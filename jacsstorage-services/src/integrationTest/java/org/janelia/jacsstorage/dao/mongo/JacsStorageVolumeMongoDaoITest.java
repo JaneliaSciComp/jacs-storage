@@ -148,7 +148,6 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
         v.setStorageRootDir(storageRootDir);
         if (StringUtils.isNotBlank(host)) {
             v.setStorageServiceURL("http://" + host);
-            v.setStorageServiceTCPPortNo(port);
         } else {
             v.setShared(true);
         }

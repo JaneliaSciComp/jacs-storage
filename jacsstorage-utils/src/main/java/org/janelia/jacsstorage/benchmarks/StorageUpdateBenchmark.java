@@ -76,7 +76,6 @@ public class StorageUpdateBenchmark {
                 .shouldFailOnError(true)
                 .detectJvmArgs()
                 .param("serverURL", benchmarksCmdLineParams.serverURL)
-                .param("useHttp", benchmarksCmdLineParams.useHttp.toString())
                 .param("ownerKey", dataOwnerKey)
                 .param("dataLocation", benchmarksCmdLineParams.localPath)
                 .param("dataBundleId", benchmarksCmdLineParams.bundleId.toString())
