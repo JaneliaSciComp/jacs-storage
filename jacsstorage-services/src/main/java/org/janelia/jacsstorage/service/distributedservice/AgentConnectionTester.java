@@ -1,9 +1,9 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
-import org.janelia.jacsstorage.resilience.CircuitTester;
+import org.janelia.jacsstorage.resilience.ConnectionTester;
 
-public class AgentConnectionTester implements CircuitTester<StorageAgentInfo> {
+public class AgentConnectionTester implements ConnectionTester<StorageAgentInfo> {
 
     @Override
     public boolean testConnection(StorageAgentInfo agentInfo) {

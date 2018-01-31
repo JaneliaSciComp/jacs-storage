@@ -7,7 +7,6 @@ import com.mongodb.client.MongoDatabase;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
-import org.janelia.jacsstorage.dao.AbstractCacheableEntityByIdDao;
 import org.janelia.jacsstorage.dao.CacheableJacsBundleDao;
 import org.janelia.jacsstorage.dao.CacheableJacsStorageVolumeDao;
 import org.janelia.jacsstorage.dao.JacsBundleDao;

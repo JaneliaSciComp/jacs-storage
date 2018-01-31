@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableList;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
-import org.janelia.jacsstorage.resilience.CircuitBreaker;
-import org.janelia.jacsstorage.resilience.impl.CircuitBreakerImpl;
+import org.janelia.jacsstorage.resilience.ConnectionChecker;
+import org.janelia.jacsstorage.resilience.PeriodicConnectionChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,26 +55,26 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     @Override
     public StorageAgentInfo registerAgent(StorageAgentInfo agentInfo) {
         LOG.info("Register {}", agentInfo);
-        CircuitBreaker<StorageAgentInfo> agentConnectionBreaker = new CircuitBreakerImpl<>(
-                Optional.of(CircuitBreaker.BreakerState.CLOSED),
+        ConnectionChecker<StorageAgentInfo> agentConnectionChecker = new PeriodicConnectionChecker<>(
+                ConnectionChecker.ConnectionState.CLOSED,
                 scheduler,
                 periodInSeconds,
                 initialDelayInSeconds,
                 tripThreshold);
-        StorageAgentConnection agentConnection = new StorageAgentConnection(agentInfo, agentConnectionBreaker);
+        StorageAgentConnection agentConnection = new StorageAgentConnection(agentInfo, agentConnectionChecker);
         StorageAgentConnection registeredConnection = registeredAgentConnections.putIfAbsent(agentInfo.getAgentHttpURL(), agentConnection);
         if (registeredConnection == null) {
             agentConnection.updateConnectionStatus();
             agentInfo.setAgentToken(String.valueOf(AGENT_TOKEN_GENERATOR.nextInt()));
-            agentConnectionBreaker.initialize(agentInfo, new AgentConnectionTester(),
-                    Optional.of(storageAgentInfo -> {
+            agentConnectionChecker.initialize(agentInfo, new AgentConnectionTester(),
+                    storageAgentInfo -> {
                         LOG.trace("Agent {} is up and running", storageAgentInfo.getAgentHttpURL());
                         agentConnection.updateConnectionStatus();
-                    }),
-                    Optional.of(storageAgentInfo -> {
+                    },
+                    storageAgentInfo -> {
                         LOG.error("Connection lost to {}", storageAgentInfo);
                         agentConnection.updateConnectionStatus();
-                    }));
+                    });
             return agentInfo;
         } else {
             return registeredConnection.getAgentInfo();

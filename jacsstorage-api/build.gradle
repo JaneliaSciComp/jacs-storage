@@ -1,6 +1,7 @@
 project(":jacsstorage-api") {
     dependencies {
-        api JACKSON_ANNOTATIONS_LIB,
+        api COMMONS_LANG_LIB,
+            JACKSON_ANNOTATIONS_LIB,
             JACKSON_DATATYPE_JODA_LIB
 
         implementation JACKSON_CORE_LIB,

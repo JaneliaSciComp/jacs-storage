@@ -19,7 +19,6 @@ subprojects {
                 options.compilerArgs = [
                     '-Xlint:deprecation'
                 ]
-                classpath = files()
             }
         }
 
@@ -28,7 +27,6 @@ subprojects {
                 options.compilerArgs = [
                     '-Xlint:deprecation'
                 ]
-                classpath = files()
             }
         }
 

@@ -1,28 +1,11 @@
 project(":jacsstorage-services") {
     dependencies {
-        implementation(project(":jacsstorage-core")) {
-        }
+        api project(":jacsstorage-core")
 
-        implementation(JAX_RS_CLIENT_LIB) {
-        }
-
-        implementation(JERSEY_MEDIA_JSON_LIB) {
-        }
-
-        implementation(REFLECTIONS_LIB) {
-            exclude group: "com.google.code.findbugs"
-        }
-
-        implementation(MONGODB_DRIVER_LIB) {
-            exclude group: 'org.mongodb', module: 'bson'
-            exclude group: 'org.mongodb', module: 'mongodb-driver-core'
-        }
-
-        implementation(MONGODB_DRIVER_CORE_LIB) {
-            exclude group: 'org.mongodb', module: 'bson'
-        }
-
-        implementation MONGODB_BSON_LIB
+        implementation JERSEY_MEDIA_JSON_LIB,
+                       JAX_RS_CLIENT_LIB,
+                       MONGODB_DRIVER_LIB,
+                       REFLECTIONS_LIB
     }
 }
 

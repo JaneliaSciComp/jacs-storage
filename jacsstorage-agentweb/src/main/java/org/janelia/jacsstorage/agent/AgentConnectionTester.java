@@ -2,11 +2,11 @@ package org.janelia.jacsstorage.agent;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
-import org.janelia.jacsstorage.resilience.CircuitTester;
+import org.janelia.jacsstorage.resilience.ConnectionTester;
 
 import java.util.function.Consumer;
 
-public class AgentConnectionTester implements CircuitTester<AgentState> {
+public class AgentConnectionTester implements ConnectionTester<AgentState> {
 
     private final Consumer<AgentState> action;
 

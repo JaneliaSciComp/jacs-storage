@@ -4,7 +4,6 @@ project(":jacsstorage-core") {
             CDI_API_LIB
 
         implementation COMMONS_COMPRESS_LIB,
-                       JAVA_ACTIVATION,
                        JWT_LIB,
                        MESSAGEPACK_LIB
     }

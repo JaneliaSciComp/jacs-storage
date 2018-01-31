@@ -8,13 +8,10 @@ buildscript {
 }
 
 plugins {
-    id 'java-library'
-    id 'org.gradle.java.experimental-jigsaw' version '0.1.1'
+    id 'application'
+    id 'distribution'
+    id 'nebula.rpm' version '4.4.0'
 }
-
-apply plugin: 'application'
-apply plugin: 'distribution'
-apply plugin: 'nebula.rpm'
 
 mainClassName = 'org.janelia.jacsstorage.app.JacsAgentStorageApp'
 

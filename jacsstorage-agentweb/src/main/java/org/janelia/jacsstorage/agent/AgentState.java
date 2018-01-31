@@ -9,9 +9,9 @@ import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
-import org.janelia.jacsstorage.resilience.CircuitBreaker;
-import org.janelia.jacsstorage.resilience.CircuitBreakerImpl;
-import org.janelia.jacsstorage.resilience.CircuitTester;
+import org.janelia.jacsstorage.resilience.ConnectionChecker;
+import org.janelia.jacsstorage.resilience.PeriodicConnectionChecker;
+import org.janelia.jacsstorage.resilience.ConnectionTester;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.utils.NetUtils;
 import org.slf4j.Logger;
@@ -21,7 +21,6 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -44,7 +43,7 @@ public class AgentState {
     private Integer initialDelayInSeconds;
     @Inject @PropertyValue(name= "StorageAgent.FailureCountTripThreshold")
     private Integer tripThreshold;
-    private CircuitBreaker<AgentState> agentConnectionBreaker;
+    private ConnectionChecker<AgentState> agentConnectionChecker;
     private String agentHttpURL;
     private List<JacsStorageVolume> agentManagedVolumes;
     private String masterHttpURL;
@@ -71,22 +70,22 @@ public class AgentState {
         LOG.info("Register agent on {} with {}", this, masterHttpURL);
         Preconditions.checkArgument(StringUtils.isNotBlank(masterHttpURL));
         this.masterHttpURL = masterHttpURL;
-        agentConnectionBreaker = new CircuitBreakerImpl<>(
-                Optional.empty(), // initial state is undefined
+        agentConnectionChecker = new PeriodicConnectionChecker<>(
+                null, // initial state is undefined
                 scheduler,
                 periodInSeconds,
                 initialDelayInSeconds,
                 tripThreshold);
 
-        CircuitTester<AgentState> circuitTester = new AgentConnectionTester(getUpdateLocalVolumesAction());
+        ConnectionTester<AgentState> connectionTester = new AgentConnectionTester(getUpdateLocalVolumesAction());
 
-        agentConnectionBreaker.initialize(this, circuitTester,
-                Optional.of(agentState -> {
+        agentConnectionChecker.initialize(this, connectionTester,
+                agentState -> {
                     LOG.trace("Agent {} registered with {}", agentState, masterHttpURL);
-                }),
-                Optional.of(agentState -> {
+                },
+                agentState -> {
                     LOG.error("Agent {} got disconnected from {}", agentState, masterHttpURL);
-                }));
+                });
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
@@ -103,7 +102,7 @@ public class AgentState {
     }
 
     public synchronized void disconnect() {
-        agentConnectionBreaker.dispose();
+        agentConnectionChecker.dispose();
         if (registeredToken != null) {
             AgentConnectionHelper.deregisterAgent(masterHttpURL, agentHttpURL, registeredToken);
         } else {

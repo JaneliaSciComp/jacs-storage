@@ -1,7 +1,7 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
-import org.janelia.jacsstorage.resilience.CircuitBreaker;
+import org.janelia.jacsstorage.resilience.ConnectionChecker;
 
 public class StorageAgentConnection {
 
@@ -9,9 +9,9 @@ public class StorageAgentConnection {
     static final String DISCONNECTED_STATUS_VALUE = "DISCONNECTED";
 
     private final StorageAgentInfo agentInfo;
-    private final CircuitBreaker<StorageAgentInfo> agentConnectionBreaker;
+    private final ConnectionChecker<StorageAgentInfo> agentConnectionBreaker;
 
-    public StorageAgentConnection(StorageAgentInfo agentInfo, CircuitBreaker<StorageAgentInfo> agentConnectionBreaker) {
+    public StorageAgentConnection(StorageAgentInfo agentInfo, ConnectionChecker<StorageAgentInfo> agentConnectionBreaker) {
         this.agentInfo = agentInfo;
         this.agentConnectionBreaker = agentConnectionBreaker;
     }
@@ -20,12 +20,12 @@ public class StorageAgentConnection {
         return agentInfo;
     }
 
-    public CircuitBreaker<StorageAgentInfo> getAgentConnectionBreaker() {
+    public ConnectionChecker<StorageAgentInfo> getAgentConnectionBreaker() {
         return agentConnectionBreaker;
     }
 
     public void updateConnectionStatus() {
-        if (agentConnectionBreaker.getState() == CircuitBreaker.BreakerState.CLOSED) {
+        if (agentConnectionBreaker.getState() == ConnectionChecker.ConnectionState.CLOSED) {
             agentInfo.setConnectionStatus(CONNECTED_STATUS_VALUE);
         } else {
             agentInfo.setConnectionStatus(DISCONNECTED_STATUS_VALUE);
