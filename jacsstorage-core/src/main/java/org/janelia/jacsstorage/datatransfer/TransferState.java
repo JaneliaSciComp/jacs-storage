@@ -1,6 +1,6 @@
 package org.janelia.jacsstorage.datatransfer;
 
-import org.janelia.jacsstorage.utils.BufferUtils;
+import org.janelia.jacsstorage.coreutils.BufferUtils;
 
 import javax.enterprise.inject.Vetoed;
 import java.io.IOException;

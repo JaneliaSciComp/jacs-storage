@@ -13,7 +13,7 @@ import org.janelia.jacsstorage.resilience.ConnectionChecker;
 import org.janelia.jacsstorage.resilience.PeriodicConnectionChecker;
 import org.janelia.jacsstorage.resilience.ConnectionTester;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.jacsstorage.utils.NetUtils;
+import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -8,7 +8,7 @@ import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.StorageVolumeSelector;
-import org.janelia.jacsstorage.utils.NetUtils;
+import org.janelia.jacsstorage.coreutils.NetUtils;
 
 public class LocalStorageVolumeSelector implements StorageVolumeSelector {
     private final JacsStorageVolumeDao storageVolumeDao;

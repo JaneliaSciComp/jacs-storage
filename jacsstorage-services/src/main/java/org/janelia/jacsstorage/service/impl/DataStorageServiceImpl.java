@@ -7,7 +7,7 @@ import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.service.DataStorageService;
-import org.janelia.jacsstorage.utils.PathUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 
 import javax.inject.Inject;
 import java.io.BufferedInputStream;

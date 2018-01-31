@@ -9,7 +9,7 @@ import org.janelia.jacsstorage.datatransfer.DataTransferService;
 import org.janelia.jacsstorage.datatransfer.State;
 import org.janelia.jacsstorage.datatransfer.StorageMessageHeader;
 import org.janelia.jacsstorage.datatransfer.TransferState;
-import org.janelia.jacsstorage.utils.PathUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

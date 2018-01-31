@@ -1,8 +1,7 @@
 package org.janelia.jacsstorage.benchmarks;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.utils.PathUtils;
-import org.janelia.jacsstorage.utils.StorageClientImplHelper;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
@@ -10,7 +9,6 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.BenchmarkParams;
-import org.openjdk.jmh.util.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;

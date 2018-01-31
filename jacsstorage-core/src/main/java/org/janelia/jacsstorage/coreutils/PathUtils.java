@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.utils;
+package org.janelia.jacsstorage.coreutils;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;

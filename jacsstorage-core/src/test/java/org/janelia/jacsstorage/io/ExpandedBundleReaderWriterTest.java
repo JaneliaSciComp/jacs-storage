@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.compress.utils.IOUtils;
 import org.hamcrest.Matchers;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.utils.PathUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.utils;
+package org.janelia.jacsstorage.serviceutils;
 
 import org.glassfish.jersey.jackson.JacksonFeature;
 

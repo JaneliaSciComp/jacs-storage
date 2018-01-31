@@ -12,8 +12,8 @@ import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.AbstractStorageAllocatorService;
 import org.janelia.jacsstorage.service.OverflowStorageVolumeSelector;
 import org.janelia.jacsstorage.service.StorageVolumeSelector;
-import org.janelia.jacsstorage.utils.NetUtils;
-import org.janelia.jacsstorage.utils.PathUtils;
+import org.janelia.jacsstorage.coreutils.NetUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

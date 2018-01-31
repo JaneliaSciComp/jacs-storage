@@ -1,7 +1,7 @@
 package org.janelia.jacsstorage.agent;
 
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
-import org.janelia.jacsstorage.utils.HttpUtils;
+import org.janelia.jacsstorage.serviceutils.HttpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

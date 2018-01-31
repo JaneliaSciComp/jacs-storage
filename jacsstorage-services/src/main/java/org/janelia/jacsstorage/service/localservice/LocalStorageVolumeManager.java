@@ -12,7 +12,7 @@ import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.AbstractStorageVolumeManager;
-import org.janelia.jacsstorage.utils.NetUtils;
+import org.janelia.jacsstorage.coreutils.NetUtils;
 
 import javax.inject.Inject;
 import java.nio.file.FileStore;

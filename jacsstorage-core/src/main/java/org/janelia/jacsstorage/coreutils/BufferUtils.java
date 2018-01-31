@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.utils;
+package org.janelia.jacsstorage.coreutils;
 
 import java.nio.ByteBuffer;
 
