@@ -14,6 +14,24 @@ subprojects {
             mavenCentral()
         }
 
+        compileJava {
+            doFirst {
+                options.compilerArgs = [
+                    '-Xlint:deprecation'
+                ]
+                classpath = files()
+            }
+        }
+
+        compileTestJava {
+            doFirst {
+                options.compilerArgs = [
+                    '-Xlint:deprecation'
+                ]
+                classpath = files()
+            }
+        }
+
         configurations {
             provided
             implementation.extendsFrom(provided)
@@ -61,7 +79,7 @@ subprojects {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = "4.4.1"
+    gradleVersion = "4.5"
 }
 
 def filteringProperties(otherProperties) {

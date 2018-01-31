@@ -19,7 +19,10 @@ dependencies {
         CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
 
         // database drivers
-        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:3.6.1"
+        MONGODB_VERSION = "3.6.1"
+        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver:${MONGODB_VERSION}"
+        MONGODB_DRIVER_CORE_LIB = "org.mongodb:mongodb-driver-core:${MONGODB_VERSION}"
+        MONGODB_BSON_LIB = "org.mongodb:bson:${MONGODB_VERSION}"
 
         // apache commons
         COMMONS_LANG_VERSION = "3.7"
@@ -28,6 +31,9 @@ dependencies {
         COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:${COMMONS_COLLECTIONS_VERSION}"
         COMMONS_COMPRESS_LIB_VERSION = "1.15"
         COMMONS_COMPRESS_LIB = "org.apache.commons:commons-compress:${COMMONS_COMPRESS_LIB_VERSION}"
+
+        // Java Activation
+        JAVA_ACTIVATION = "com.sun.activation:javax.activation:1.2.0"
 
         // JAX-RS API
         JAX_RS_API_LIB = "javax.ws.rs:javax.ws.rs-api:2.1"
@@ -73,10 +79,17 @@ dependencies {
 
         // testing
         JUNIT_VERSION = "4.12"
-	HAMCREST_VERSION = "1.3"
-	MOCKITO_VERSION = "2.8.9"
-	POWERMOCKITO_VERSION = "1.7.3"
-	ASSERTJ_VERSION = "3.6.1"
+        HAMCREST_VERSION = "2.0.0.0"
+        MOCKITO_VERSION = "2.8.9"
+        POWERMOCKITO_VERSION = "1.7.3"
+        ASSERTJ_VERSION = "3.6.1"
+
+        JUNIT_LIB = "junit:junit:${JUNIT_VERSION}"
+        HAMCREST_LIB = "org.hamcrest:java-hamcrest:${HAMCREST_VERSION}"
+        MOCKITO_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
+        ASSERTJ_LIB = "org.assertj:assertj-core:${ASSERTJ_VERSION}"
+        POWERMOCK_JUNIT4_LIB = "org.powermock:powermock-module-junit4:${POWERMOCKITO_VERSION}"
+        POWERMOCKITO_LIB = "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
 
         // benchmarks
         BENCHMARK_CORE_LIB = "org.openjdk.jmh:jmh-core:1.19"
@@ -85,25 +98,62 @@ dependencies {
     }
 
     // Included in the implementation of ALL projects
-    implementation SLF4J_LIB,
-                   LOGBACK_CORE_LIB,
-                   LOGBACK_CLASSIC_LIB,
-                   COMMONS_LANG_LIB,
-                   COMMONS_COLLECTIONS_LIB,
-                   GUAVA_LIB
+    implementation(SLF4J_LIB) {
+        exclude group: "org.hamcrest"
+    }
 
-    testImplementation  "junit:junit:${JUNIT_VERSION}",
-                        "org.hamcrest:hamcrest-all:${HAMCREST_VERSION}",
-                        "org.mockito:mockito-core:${MOCKITO_VERSION}",
-                        "org.assertj:assertj-core:${ASSERTJ_VERSION}",
-                        "org.powermock:powermock-module-junit4:${POWERMOCKITO_VERSION}",
-                        "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
-                
-    testRuntimeOnly  "junit:junit:${JUNIT_VERSION}",
-                     "org.hamcrest:hamcrest-all:${HAMCREST_VERSION}",
-                     "org.mockito:mockito-core:${MOCKITO_VERSION}",
-                     "org.assertj:assertj-core:${ASSERTJ_VERSION}",
-                     "org.powermock:powermock-module-junit4:${POWERMOCKITO_VERSION}",
-                     "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
+    implementation(COMMONS_LANG_LIB) {
+        exclude group: "org.hamcrest"
+    }
 
+    implementation(LOGBACK_CORE_LIB) {
+        exclude group: "org.hamcrest"
+    }
+
+    implementation(LOGBACK_CLASSIC_LIB) {
+        exclude group: "org.hamcrest"
+    }
+
+    implementation(COMMONS_COLLECTIONS_LIB) {
+        exclude group: "org.hamcrest"
+    }
+
+    implementation(GUAVA_LIB) {
+        exclude group: "org.hamcrest"
+        exclude group: "com.google.code.findbugs"
+    }
+
+    testImplementation("${ASSERTJ_LIB}") {
+        exclude group: "org.hamcrest"
+    }
+
+    testImplementation  "${HAMCREST_LIB}"
+
+    testImplementation("${JUNIT_LIB}") {
+        exclude group: "org.hamcrest"
+    }
+
+    testImplementation("${MOCKITO_LIB}") {
+        exclude group: "org.hamcrest"
+    }
+
+    testImplementation("${POWERMOCKITO_LIB}") {
+        exclude group: "org.hamcrest"
+        exclude group: "org.powermock"
+    }
+
+    testImplementation("${POWERMOCK_JUNIT4_LIB}") {
+        exclude group: "org.hamcrest"
+    }
+
+
+//    testRuntimeOnly("${JUNIT_LIB}") {
+//        exclude group: "org.hamcrest"
+//    }
+//
+//    testRuntimeOnly "${HAMCREST_LIB}",
+//                    "${MOCKITO_LIB}",
+//                    "${ASSERTJ_LIB}",
+//                    "${POWERMOCK_JUNIT4_LIB}",
+//                    "${POWERMOCKITO_LIB}"
 }

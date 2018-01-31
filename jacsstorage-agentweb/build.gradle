@@ -7,10 +7,15 @@ buildscript {
     }
 }
 
+plugins {
+    id 'java-library'
+    id 'org.gradle.java.experimental-jigsaw' version '0.1.1'
+}
+
 apply plugin: 'application'
 apply plugin: 'distribution'
 apply plugin: 'nebula.rpm'
- 
+
 mainClassName = 'org.janelia.jacsstorage.app.JacsAgentStorageApp'
 
 project(":jacsstorage-agentweb") {
@@ -83,7 +88,7 @@ project(":jacsstorage-agentweb") {
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
-        link("/etc/systemd/system/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
+        link("/etc/systemd/system/${project.name}.datatransfer", "${rpmInstallDir}/etc/${project.name}.datatransfer")
     }
 }
 

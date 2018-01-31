@@ -77,7 +77,7 @@ project(":jacsstorage-masterweb") {
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
-        link("/etc/systemd/system/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
+        link("/etc/systemd/system/${project.name}.datatransfer", "${rpmInstallDir}/etc/${project.name}.datatransfer")
     }
 }
 

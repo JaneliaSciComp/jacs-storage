@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.datatransfer;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 

@@ -7,7 +7,7 @@ import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
-import org.janelia.jacsstorage.service.StorageMessageResponse;
+import org.janelia.jacsstorage.datatransfer.StorageMessageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

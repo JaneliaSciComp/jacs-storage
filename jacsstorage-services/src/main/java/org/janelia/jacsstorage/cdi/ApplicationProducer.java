@@ -12,8 +12,8 @@ import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.TimebasedIdGenerator;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
-import org.janelia.jacsstorage.service.DataTransferService;
-import org.janelia.jacsstorage.service.DataTransferServiceImpl;
+import org.janelia.jacsstorage.datatransfer.DataTransferService;
+import org.janelia.jacsstorage.datatransfer.impl.DataTransferServiceImpl;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;

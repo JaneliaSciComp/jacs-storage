@@ -7,7 +7,7 @@ import com.beust.jcommander.Parameters;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.janelia.jacsstorage.service.DataTransferService;
+import org.janelia.jacsstorage.datatransfer.DataTransferService;
 import org.janelia.jacsstorage.utils.AuthClientImplHelper;
 import org.janelia.jacsstorage.utils.StorageClientImplHelper;
 

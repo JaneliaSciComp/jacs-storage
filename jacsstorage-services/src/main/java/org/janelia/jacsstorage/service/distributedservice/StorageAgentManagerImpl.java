@@ -5,7 +5,7 @@ import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.CircuitBreaker;
-import org.janelia.jacsstorage.resilience.CircuitBreakerImpl;
+import org.janelia.jacsstorage.resilience.impl.CircuitBreakerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

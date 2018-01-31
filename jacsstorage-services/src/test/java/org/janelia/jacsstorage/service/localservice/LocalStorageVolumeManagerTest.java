@@ -13,6 +13,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.janelia.jacsstorage.service.localservice.LocalStorageVolumeManager;
 import org.janelia.jacsstorage.utils.NetUtils;
 import org.junit.Before;
 import org.junit.Test;

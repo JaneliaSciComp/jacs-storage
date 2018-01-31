@@ -2,7 +2,7 @@ package org.janelia.jacsstorage.benchmarks;
 
 import org.janelia.jacsstorage.client.StorageClient;
 import org.janelia.jacsstorage.client.StorageClientHttpImpl;
-import org.janelia.jacsstorage.service.DataTransferService;
+import org.janelia.jacsstorage.datatransfer.DataTransferService;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;

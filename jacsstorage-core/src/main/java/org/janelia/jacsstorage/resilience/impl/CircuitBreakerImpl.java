@@ -1,5 +1,7 @@
-package org.janelia.jacsstorage.resilience;
+package org.janelia.jacsstorage.resilience.impl;
 
+import org.janelia.jacsstorage.resilience.CircuitBreaker;
+import org.janelia.jacsstorage.resilience.CircuitTester;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

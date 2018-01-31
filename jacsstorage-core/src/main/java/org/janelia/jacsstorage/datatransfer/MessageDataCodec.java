@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.datatransfer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

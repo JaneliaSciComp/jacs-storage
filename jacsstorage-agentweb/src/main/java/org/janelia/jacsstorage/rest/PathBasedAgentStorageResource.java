@@ -25,8 +25,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 @RequestScoped
 @RequireAuthentication

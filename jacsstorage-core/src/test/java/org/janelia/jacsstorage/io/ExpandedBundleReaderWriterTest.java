@@ -27,8 +27,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.isIn;
+import static org.hamcrest.collection.IsIn.in;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -230,7 +230,7 @@ public class ExpandedBundleReaderWriterTest {
                 .map(ni -> ni.getNodeRelativePath())
                 .collect(Collectors.toList());
         testData.forEach(td -> {
-            assertThat(td, isIn(tarEntryNames));
+            assertThat(td, is(in(tarEntryNames)));
         });
     }
 

@@ -28,7 +28,7 @@ public class MapOfEnumCodec<E extends Enum<E>, M extends Map<E, Object>> impleme
     public M decode(BsonReader reader, DecoderContext decoderContext) {
         Document document = DOCUMENT_CODEC.decode(reader, decoderContext);
         try {
-            M map = mapTypeClass.newInstance();
+            M map = mapTypeClass.getDeclaredConstructor().newInstance();
             document.entrySet().forEach(e -> map.put(Enum.valueOf(enumTypeClass, e.getKey()), e.getValue()));
             return map;
         } catch (Exception e) {

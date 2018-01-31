@@ -2,6 +2,8 @@ package org.janelia.jacsstorage.service.distributedservice;
 
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
+import org.janelia.jacsstorage.service.distributedservice.AgentConnectionTester;
+import org.janelia.jacsstorage.service.distributedservice.StorageAgentManagerImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

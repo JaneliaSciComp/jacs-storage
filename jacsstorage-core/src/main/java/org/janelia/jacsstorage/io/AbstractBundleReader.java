@@ -5,7 +5,6 @@ import com.google.common.hash.HashingOutputStream;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 
 import javax.activation.MimetypesFileTypeMap;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;

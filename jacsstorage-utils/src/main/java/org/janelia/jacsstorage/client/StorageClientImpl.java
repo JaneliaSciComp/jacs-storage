@@ -1,7 +1,7 @@
 package org.janelia.jacsstorage.client;
 
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
-import org.janelia.jacsstorage.service.StorageMessageResponse;
+import org.janelia.jacsstorage.datatransfer.StorageMessageResponse;
 import org.janelia.jacsstorage.utils.StorageClientImplHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

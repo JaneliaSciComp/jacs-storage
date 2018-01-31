@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.datatransfer;
 
 public enum State {
     IDLE,

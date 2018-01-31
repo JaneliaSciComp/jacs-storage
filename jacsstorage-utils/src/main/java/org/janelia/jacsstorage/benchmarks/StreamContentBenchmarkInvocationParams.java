@@ -8,7 +8,7 @@ import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageRequestBuilder;
 import org.janelia.jacsstorage.datarequest.PageResult;
-import org.janelia.jacsstorage.service.DataTransferService;
+import org.janelia.jacsstorage.datatransfer.DataTransferService;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;

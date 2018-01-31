@@ -21,7 +21,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     private static final Logger LOG = LoggerFactory.getLogger(JacsAgentStorageApp.class);
 
     private static class AgentArgs extends AbstractStorageApp.AppArgs {
-        @Parameter(names = "-masterURL", description = "URL of the master service to which to connect", required = false)
+        @Parameter(names = "-masterURL", description = "URL of the master datatransfer to which to connect", required = false)
         private String masterHttpUrl;
     }
 

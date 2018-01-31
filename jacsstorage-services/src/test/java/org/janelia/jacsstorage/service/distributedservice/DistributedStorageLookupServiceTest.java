@@ -5,6 +5,8 @@ import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
+import org.janelia.jacsstorage.service.distributedservice.DistributedStorageLookupService;
+import org.janelia.jacsstorage.service.distributedservice.StorageAgentManager;
 import org.junit.Before;
 import org.junit.Test;
 

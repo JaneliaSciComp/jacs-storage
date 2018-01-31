@@ -1,6 +1,13 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.datatransfer.impl;
 
 import com.google.common.collect.ImmutableList;
+import org.hamcrest.collection.IsIn;
+import org.hamcrest.core.Is;
+import org.janelia.jacsstorage.datatransfer.DataTransferService;
+import org.janelia.jacsstorage.datatransfer.State;
+import org.janelia.jacsstorage.datatransfer.StorageMessageHeader;
+import org.janelia.jacsstorage.datatransfer.StorageMessageHeaderCodec;
+import org.janelia.jacsstorage.datatransfer.TransferState;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
@@ -26,7 +33,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.concurrent.Executors;
 
-import static org.hamcrest.collection.IsIn.isIn;
+import static org.hamcrest.collection.IsIn.in;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -89,7 +97,7 @@ public class DataTransferServiceImplTest {
             try {
                 storageService.endDataTransfer(transferState);
 
-                assertThat(transferState.getState(), isIn(EnumSet.of(State.WRITE_DATA, State.WRITE_DATA_COMPLETE, State.WRITE_DATA_ERROR)));
+                assertThat(transferState.getState(), Is.is(IsIn.in(EnumSet.of(State.WRITE_DATA, State.WRITE_DATA_COMPLETE, State.WRITE_DATA_ERROR))));
 
                 while (transferState.getState() != State.WRITE_DATA_COMPLETE && transferState.getState() != State.WRITE_DATA_ERROR) {
                     Thread.sleep(1); // wait until the data transfer is completed
@@ -118,7 +126,7 @@ public class DataTransferServiceImplTest {
             buffer.clear();
         }
         assertArrayEquals(expectedResult, result.toByteArray());
-        assertThat(transferState.getState(), isIn(EnumSet.of(State.READ_DATA, State.READ_DATA_COMPLETE, State.READ_DATA_ERROR)));
+        assertThat(transferState.getState(), is(in(EnumSet.of(State.READ_DATA, State.READ_DATA_COMPLETE, State.READ_DATA_ERROR))));
     }
 
     private TransferState<StorageMessageHeader> createMessageHeaderTransferState(DataTransferService.Operation op, JacsStorageFormat format, String dataFile) throws IOException {

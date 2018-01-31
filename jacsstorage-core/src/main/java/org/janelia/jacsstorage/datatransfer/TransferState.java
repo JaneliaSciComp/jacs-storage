@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.datatransfer;
 
 import org.janelia.jacsstorage.utils.BufferUtils;
 

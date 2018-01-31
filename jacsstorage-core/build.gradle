@@ -1,10 +1,11 @@
 project(":jacsstorage-core") {
     dependencies {
         api project(":jacsstorage-api"),
-            CDI_API_LIB,
-            JWT_LIB
+            CDI_API_LIB
 
         implementation COMMONS_COMPRESS_LIB,
+                       JAVA_ACTIVATION,
+                       JWT_LIB,
                        MESSAGEPACK_LIB
     }
 }

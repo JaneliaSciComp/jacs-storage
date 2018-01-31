@@ -1,10 +1,14 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.datatransfer.impl;
 
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsDataLocation;
+import org.janelia.jacsstorage.datatransfer.DataTransferService;
+import org.janelia.jacsstorage.datatransfer.State;
+import org.janelia.jacsstorage.datatransfer.StorageMessageHeader;
+import org.janelia.jacsstorage.datatransfer.TransferState;
 import org.janelia.jacsstorage.utils.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

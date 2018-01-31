@@ -1,12 +1,10 @@
 package org.janelia.jacsstorage.service;
 
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
 
