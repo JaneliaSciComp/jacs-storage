@@ -39,4 +39,8 @@ public class JacsStorageEventBuilder extends AbstractEntity {
         return this;
     }
 
+    public JacsStorageEventBuilder eventStatus(String v) {
+        jacsStorageEvent.setEventStatus(v);
+        return this;
+    }
 }

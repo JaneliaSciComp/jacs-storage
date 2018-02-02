@@ -21,12 +21,13 @@ public class DaoStorageEventLoggerImpl implements StorageEventLogger {
     }
 
     @Override
-    public JacsStorageEvent logStorageEvent(String name, String description, Object data) {
+    public JacsStorageEvent logStorageEvent(String name, String description, Object data, String status) {
         JacsStorageEvent jacsStorageEvent = new JacsStorageEventBuilder()
                 .eventName(name)
                 .eventDescription(description)
                 .eventHost(getLocalIP())
                 .eventData(data)
+                .eventStatus(status)
                 .build();
         storageEventDao.save(jacsStorageEvent);
         return jacsStorageEvent;

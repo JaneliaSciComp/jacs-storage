@@ -56,7 +56,7 @@ public class JWTAuthFilter implements ContainerRequestFilter {
             requestContext.setSecurityContext(securityContext);
         } catch (Exception e) {
             requestContext.abortWith(
-                    Response.status(Response.Status.FORBIDDEN)
+                    Response.status(Response.Status.UNAUTHORIZED)
                             .entity(new ErrorResponse(e.getMessage()))
                             .build()
             );

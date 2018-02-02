@@ -12,6 +12,7 @@ import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
 import java.lang.reflect.Method;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 @Logged
 @Interceptor
@@ -27,6 +28,18 @@ public class LoggerInterceptor {
 
     @AroundInvoke
     public Object logStorageEvent(InvocationContext invocationContext) throws Exception {
+        Exception invocationException = null;
+        try {
+            return invocationContext.proceed();
+        } catch (Exception e) {
+            invocationException = e;
+            throw e;
+        } finally {
+            logEvent(invocationContext, invocationException);
+        }
+    }
+
+    private void logEvent(InvocationContext invocationContext, Throwable invocationException) {
         try {
             String eventName = null;
             String eventDescription = null;
@@ -62,11 +75,11 @@ public class LoggerInterceptor {
             storageEventLogger.logStorageEvent(
                     eventName,
                     eventDescription,
-                    eventDataBuilder.build()
+                    eventDataBuilder.build(),
+                    invocationException == null ? "SUCCESS" : "FAILURE: " + invocationException.getMessage()
             );
         } catch (Exception e) {
             LOG.warn("Error while trying to log storage event", e);
         }
-        return invocationContext.proceed();
     }
 }
