@@ -76,7 +76,7 @@ subprojects {
 
 }
 
-task wrapper(type: Wrapper) {
+task updateWrapper(type: Wrapper) {
     gradleVersion = "4.5"
 }
 
