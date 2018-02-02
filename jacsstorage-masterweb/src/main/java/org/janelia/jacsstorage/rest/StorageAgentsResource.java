@@ -47,7 +47,7 @@ public class StorageAgentsResource {
             @ApiResponse(code = 404, message = "Agent URL is invalid")
     })
     public Response findRegisteredAgent(@PathParam("agentURL") String agentLocationInfo) {
-        LOG.info("Find registered agent for {}", agentLocationInfo);
+        LOG.debug("Find registered agent for {}", agentLocationInfo);
         return agentManager.findRegisteredAgent(agentLocationInfo)
                 .map(agentInfo -> Response.ok(agentInfo).build())
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
@@ -59,7 +59,7 @@ public class StorageAgentsResource {
             @ApiResponse(code = 200, message = "Return registered agents info")
     })
     public Response getCurrentRegisteredAgents(@QueryParam("connStatus") String connectionStatus) {
-        LOG.info("Get available agents with connectionStatus - {}", StringUtils.defaultIfBlank(connectionStatus, "<ANY>"));
+        LOG.debug("Get available agents with connectionStatus - {}", StringUtils.defaultIfBlank(connectionStatus, "<ANY>"));
         return Response
                 .ok(agentManager.getCurrentRegisteredAgents(ac -> StringUtils.isBlank(connectionStatus) || StringUtils.equals(connectionStatus, ac.getAgentInfo().getConnectionStatus())))
                 .build();
@@ -95,7 +95,7 @@ public class StorageAgentsResource {
                     .noContent()
                     .build();
         } else {
-            LOG.info("No connected agent found for {} with {}", agentURL, agentToken);
+            LOG.warn("No connected agent found for {} with {}", agentURL, agentToken);
             return Response.status(Response.Status.NOT_FOUND).build();
         }
     }

@@ -4,8 +4,8 @@ dependencies {
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
         // logging
-        SLF4J_VERSION = "1.7.21"
-        LOGBACK_VERSION = "1.1.7"
+        SLF4J_VERSION = "1.7.25"
+        LOGBACK_VERSION = "1.2.3"
         SLF4J_LIB = "org.slf4j:slf4j-api:${SLF4J_VERSION}"
         LOGBACK_CORE_LIB = "ch.qos.logback:logback-core:${LOGBACK_VERSION}"
         LOGBACK_CLASSIC_LIB = "ch.qos.logback:logback-classic:${LOGBACK_VERSION}"
@@ -96,6 +96,7 @@ dependencies {
     implementation COMMONS_COLLECTIONS_LIB,
                    COMMONS_LANG_LIB,
                    GUAVA_LIB,
+                   LOGBACK_CLASSIC_LIB,
                    LOGBACK_CORE_LIB,
                    SLF4J_LIB
 
