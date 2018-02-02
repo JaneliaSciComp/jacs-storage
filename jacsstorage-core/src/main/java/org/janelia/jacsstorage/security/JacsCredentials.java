@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.security;
 
 import com.nimbusds.jwt.JWTClaimsSet;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.security.Principal;
 
@@ -62,5 +63,15 @@ public class JacsCredentials implements Principal {
 
     public String getSubjectKey() {
         return JacsSubjectHelper.getTypeFromSubjectKey(getName()) + ":" + JacsSubjectHelper.getNameFromSubjectKey(getName());
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("authSubject", authSubject)
+                .append("subjectProxy", subjectProxy)
+                .append("authToken", authToken)
+                .append("claims", claims)
+                .toString();
     }
 }

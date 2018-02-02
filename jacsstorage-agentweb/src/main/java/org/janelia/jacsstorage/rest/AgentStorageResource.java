@@ -22,6 +22,7 @@ import org.janelia.jacsstorage.service.LogStorageEvent;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.janelia.jacsstorage.service.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,7 @@ import java.io.InputStream;
 import java.util.Base64;
 import java.util.List;
 
+@Timed
 @RequestScoped
 @RequireAuthentication
 @Produces(MediaType.APPLICATION_JSON)

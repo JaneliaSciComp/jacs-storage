@@ -6,6 +6,8 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -24,6 +26,7 @@ import javax.ws.rs.core.UriInfo;
 @Path("connection")
 @Api(value = "Agent connectivity API")
 public class AgentConnectionResource {
+    private static final Logger LOG = LoggerFactory.getLogger(AgentConnectionResource.class);
 
     @Inject
     private AgentState agentState;
@@ -47,6 +50,7 @@ public class AgentConnectionResource {
             @ApiResponse(code = 404, message = "Master URL is invalid")
     })
     public Response connect(String connectURL) {
+        LOG.info("Connect agent to {}", connectURL);
         agentState.connectTo(connectURL);
         StorageAgentInfo localAgentInfo = agentState.getLocalAgentInfo();
         return Response

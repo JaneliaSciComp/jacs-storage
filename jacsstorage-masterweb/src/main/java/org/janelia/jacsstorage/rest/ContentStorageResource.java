@@ -16,6 +16,7 @@ import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.janelia.jacsstorage.service.Timed;
 import org.janelia.jacsstorage.serviceutils.HttpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.InputStream;
 
+@Timed
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("storage_content")
@@ -57,6 +59,7 @@ public class ContentStorageResource {
             @ApiResponse(code = 200, message = "Success"),
             @ApiResponse(code = 404, message = "Specified file path not found") })
     public Response getContentStream(@PathParam("filePath") String fullFileNameParam, @Context SecurityContext securityContext) {
+        LOG.info("Stream content of {}", fullFileNameParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 fullFileNameParam,
@@ -67,6 +70,7 @@ public class ContentStorageResource {
     }
 
     private Response retrieveFileFromBundle(JacsBundle dataBundle, String dataEntryPath, JacsCredentials jacsCredentials) {
+        LOG.info("Retrieve file {} from storage {}", dataEntryPath, dataBundle);
         return dataBundle.getStorageVolume()
                 .map(storageVolume -> {
                     StreamingOutput stream = streamFromURL(
@@ -85,6 +89,7 @@ public class ContentStorageResource {
     }
 
     private Response retrieveFileFromVolume(JacsStorageVolume storageVolume, String dataEntryPath, JacsCredentials jacsCredentials) {
+        LOG.info("Retrieve file {} from volume {}", dataEntryPath, storageVolume);
         String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
         StreamingOutput stream = streamFromURL(
                             storageServiceURL + "agent_storage/path/storage_volume/" + storageVolume.getId() + "/" + dataEntryPath,

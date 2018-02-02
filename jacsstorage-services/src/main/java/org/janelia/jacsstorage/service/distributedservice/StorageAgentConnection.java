@@ -9,23 +9,23 @@ public class StorageAgentConnection {
     static final String DISCONNECTED_STATUS_VALUE = "DISCONNECTED";
 
     private final StorageAgentInfo agentInfo;
-    private final ConnectionChecker<StorageAgentInfo> agentConnectionBreaker;
+    private final ConnectionChecker<StorageAgentInfo> agentConnectionChecker;
 
-    public StorageAgentConnection(StorageAgentInfo agentInfo, ConnectionChecker<StorageAgentInfo> agentConnectionBreaker) {
+    public StorageAgentConnection(StorageAgentInfo agentInfo, ConnectionChecker<StorageAgentInfo> agentConnectionChecker) {
         this.agentInfo = agentInfo;
-        this.agentConnectionBreaker = agentConnectionBreaker;
+        this.agentConnectionChecker = agentConnectionChecker;
     }
 
     public StorageAgentInfo getAgentInfo() {
         return agentInfo;
     }
 
-    public ConnectionChecker<StorageAgentInfo> getAgentConnectionBreaker() {
-        return agentConnectionBreaker;
+    public ConnectionChecker<StorageAgentInfo> getAgentConnectionChecker() {
+        return agentConnectionChecker;
     }
 
     public void updateConnectionStatus() {
-        if (agentConnectionBreaker.getState() == ConnectionChecker.ConnectionState.CLOSED) {
+        if (agentConnectionChecker.getState() == ConnectionChecker.ConnectionState.CLOSED) {
             agentInfo.setConnectionStatus(CONNECTED_STATUS_VALUE);
         } else {
             agentInfo.setConnectionStatus(DISCONNECTED_STATUS_VALUE);

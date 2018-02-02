@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.app;
 
 import com.google.common.collect.ImmutableSet;
 import org.janelia.jacsstorage.rest.ContentStorageResource;
+import org.janelia.jacsstorage.rest.MasterStatusResource;
 import org.janelia.jacsstorage.rest.StorageAgentsResource;
 import org.janelia.jacsstorage.rest.MasterStorageResource;
 import org.janelia.jacsstorage.webdav.MasterWebdavResource;
@@ -14,6 +15,7 @@ public class JAXMasterStorageApp extends AbstractJAXApp {
         return ImmutableSet.of(
                 ContentStorageResource.class,
                 MasterStorageResource.class,
+                MasterStatusResource.class,
                 StorageAgentsResource.class,
                 MasterWebdavResource.class);
     }

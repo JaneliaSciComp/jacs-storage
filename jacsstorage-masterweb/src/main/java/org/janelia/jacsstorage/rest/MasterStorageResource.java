@@ -19,6 +19,9 @@ import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.LogStorageEvent;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
+import org.janelia.jacsstorage.service.Timed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -39,11 +42,13 @@ import javax.ws.rs.core.UriInfo;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Timed
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("storage")
 @Api(value = "Master storage API.")
 public class MasterStorageResource {
+    private static final Logger LOG = LoggerFactory.getLogger(MasterStorageResource.class);
 
     @Inject @RemoteInstance
     private StorageAllocatorService storageAllocatorService;
@@ -51,17 +56,6 @@ public class MasterStorageResource {
     private StorageLookupService storageLookupService;
     @Context
     private UriInfo resourceURI;
-
-    @Produces(MediaType.TEXT_PLAIN)
-    @GET
-    @Path("status")
-    @ApiOperation(value = "Retrieve master status.")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "If the server is up and running")
-    })
-    public String getStatus() {
-        return "OK";
-    }
 
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML})
     @RequireAuthentication
@@ -94,6 +88,7 @@ public class MasterStorageResource {
                 .storageTags(storageTags)
                 .volumeName(volumeName)
                 .build();
+        LOG.info("Count storage records filtered with: {}", dataBundle);
         long nMatchingBundles = storageLookupService.countMatchingDataBundles(dataBundle);
         return Response
                 .ok(nMatchingBundles)
@@ -131,10 +126,12 @@ public class MasterStorageResource {
                 .storageTags(storageTags)
                 .volumeName(volumeName)
                 .build();
+        LOG.info("Count storage records filtered with: {}", dataBundle);
         PageRequest pageRequest = new PageRequestBuilder()
                 .pageNumber(pageNumber)
                 .pageSize(pageLength)
                 .build();
+        LOG.info("List storage records filtered with: {} / {}", dataBundle, pageRequest);
         PageResult<JacsBundle> dataBundleResults = storageLookupService.findMatchingDataBundles(dataBundle, pageRequest);
         PageResult<DataStorageInfo> results = new PageResult<>();
         results.setPageOffset(dataBundleResults.getPageOffset());
@@ -160,8 +157,10 @@ public class MasterStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response getBundleInfo(@PathParam("id") Long id, @Context SecurityContext securityContext) {
+        LOG.info("Retrieve storage info for {}", id);
         JacsBundle jacsBundle = storageLookupService.getDataBundleById(id);
         if (jacsBundle == null) {
+            LOG.warn("No storage found for {}", id);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
@@ -170,6 +169,7 @@ public class MasterStorageResource {
                     .ok(DataStorageInfo.fromBundle(jacsBundle))
                     .build();
         } else {
+            LOG.warn("Subject {} has no permissions to access storage {}", securityContext.getUserPrincipal(), jacsBundle);
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .build();
@@ -189,8 +189,10 @@ public class MasterStorageResource {
     public Response getBundleInfoByOwnerAndName(@PathParam("ownerKey") String ownerKey,
                                                 @PathParam("name") String name,
                                                 @Context SecurityContext securityContext) {
+        LOG.info("Retrieve storage info by owner and name for {} - {}", ownerKey, name);
         JacsBundle jacsBundle = storageLookupService.findDataBundleByOwnerKeyAndName(ownerKey, name);
         if (jacsBundle == null) {
+            LOG.warn("No storage found for {} - {}", ownerKey, name);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
@@ -199,6 +201,7 @@ public class MasterStorageResource {
                     .ok(DataStorageInfo.fromBundle(jacsBundle))
                     .build();
         } else {
+            LOG.warn("Subject {} has no permissions to access storage {}", securityContext.getUserPrincipal(), jacsBundle);
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .build();
@@ -206,7 +209,8 @@ public class MasterStorageResource {
     }
 
     @LogStorageEvent(
-            eventName = "ALLOCATE_STORAGE_METADATA"
+            eventName = "ALLOCATE_STORAGE_METADATA",
+            argList = {0, 1}
     )
     @RequireAuthentication
     @Consumes("application/json")
@@ -219,6 +223,7 @@ public class MasterStorageResource {
             @ApiResponse(code = 500, message = "Data write error")
     })
     public Response createBundleInfo(DataStorageInfo dataStorageInfo, @Context SecurityContext securityContext) {
+        LOG.info("Create storage: {} with credentials {}", dataStorageInfo, securityContext.getUserPrincipal());
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
         Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(SecurityUtils.getUserPrincipal(securityContext),
                 dataStorageInfo.getStorageRootPrefixDir(),
@@ -235,13 +240,15 @@ public class MasterStorageResource {
     }
 
     @LogStorageEvent(
-            eventName = "UPDATE_STORAGE_METADATA"
+            eventName = "UPDATE_STORAGE_METADATA",
+            argList = {0, 1, 2}
     )
     @RequireAuthentication
     @Consumes("application/json")
     @PUT
     @Path("{id}")
     public Response updateBundleInfo(@PathParam("id") Long id, DataStorageInfo dataStorageInfo, @Context SecurityContext securityContext) {
+        LOG.info("Update storage: {} - {}", id, dataStorageInfo);
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
         dataBundle.setId(id);
         JacsBundle updatedDataBundleInfo = storageAllocatorService.updateStorage(SecurityUtils.getUserPrincipal(securityContext), dataBundle);
@@ -263,6 +270,7 @@ public class MasterStorageResource {
     @DELETE
     @Path("{id}")
     public Response deleteBundleInfo(@PathParam("id") Long id, @Context SecurityContext securityContext) {
+        LOG.info("Delete storage: {}", id);
         JacsBundle dataBundle = new JacsBundle();
         dataBundle.setId(id);
         if (storageAllocatorService.deleteStorage(SecurityUtils.getUserPrincipal(securityContext), dataBundle)) {

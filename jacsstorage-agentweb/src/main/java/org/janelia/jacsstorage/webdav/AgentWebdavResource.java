@@ -18,6 +18,7 @@ import org.janelia.jacsstorage.service.LogStorageEvent;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.janelia.jacsstorage.service.Timed;
 import org.janelia.jacsstorage.webdav.httpverbs.MKCOL;
 import org.janelia.jacsstorage.webdav.httpverbs.PROPFIND;
 import org.janelia.jacsstorage.webdav.propfind.Multistatus;
@@ -44,6 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
+@Timed
 @RequireAuthentication
 @Path(Constants.AGENTSTORAGE_URI_PATH)
 public class AgentWebdavResource {
@@ -62,10 +64,6 @@ public class AgentWebdavResource {
     @Context
     private UriInfo resourceURI;
 
-    @LogStorageEvent(
-            eventName = "DATASTORAGE_PROPFIND",
-            argList = {0, 1, 2, 3}
-    )
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
     @PROPFIND
@@ -75,6 +73,7 @@ public class AgentWebdavResource {
                                                    @HeaderParam("Depth") String depth,
                                                    Propfind propfindRequest,
                                                    @Context SecurityContext securityContext) {
+        LOG.info("PROPFIND data storage by ID: {}, Entry: {}, Depth: {} for {}", dataBundleId, entry, depth, securityContext.getUserPrincipal());
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         String entryName = StringUtils.isNotBlank(entry)
@@ -98,10 +97,6 @@ public class AgentWebdavResource {
                 .build();
     }
 
-    @LogStorageEvent(
-            eventName = "DATASTORAGE_PROPFIND",
-            argList = {0, 1, 2, 3}
-    )
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
     @PROPFIND
@@ -110,6 +105,7 @@ public class AgentWebdavResource {
                                               @HeaderParam("Depth") String depth,
                                               Propfind propfindRequest,
                                               @Context SecurityContext securityContext) {
+        LOG.info("PROPFIND data storage by path: {}, Depth: {} for {}", dataStoragePath, depth, securityContext.getUserPrincipal());
         String fullDataStoragePath = StringUtils.prependIfMissing(dataStoragePath, "/");
         List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(fullDataStoragePath));
         if (localVolumes.isEmpty()) {
@@ -223,6 +219,7 @@ public class AgentWebdavResource {
     public Response createDataStorageDir(@PathParam("dataBundleId") Long dataBundleId,
                                          @PathParam("dataDirPath") String dataDirPath,
                                          @Context SecurityContext securityContext) {
+        LOG.info("MKCOL {} : {}", dataBundleId, dataDirPath);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         long dirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getRealStoragePath(), dataDirPath, dataBundle.getStorageFormat());

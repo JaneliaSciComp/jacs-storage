@@ -12,6 +12,9 @@ import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageContentReader;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.janelia.jacsstorage.service.Timed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -26,12 +29,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
+@Timed
 @RequestScoped
 @RequireAuthentication
 @Produces(MediaType.APPLICATION_JSON)
 @Path(Constants.AGENTSTORAGE_URI_PATH)
 @Api(value = "Agent storage API based on file's path. This API requires an authenticated subject.")
 public class PathBasedAgentStorageResource {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PathBasedAgentStorageResource.class);
 
     @Inject
     private StorageContentReader storageContentReader;
@@ -55,6 +61,7 @@ public class PathBasedAgentStorageResource {
     })
     public Response checkPath(@PathParam("filePath") String fullDataPathNameParam,
                               @Context SecurityContext securityContext) {
+        LOG.info("Check path {}", fullDataPathNameParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 fullDataPathNameParam,
@@ -81,6 +88,7 @@ public class PathBasedAgentStorageResource {
     })
     public Response retrieveData(@PathParam("dataPath") String fullDataPathNameParam,
                                  @Context SecurityContext securityContext) {
+        LOG.info("Retrieve data from {}", fullDataPathNameParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 fullDataPathNameParam,
@@ -104,6 +112,7 @@ public class PathBasedAgentStorageResource {
     })
     public Response retrieveDataFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                   @PathParam("storageRelativePath") String storageRelativeFilePath) {
+        LOG.info("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
             return Response

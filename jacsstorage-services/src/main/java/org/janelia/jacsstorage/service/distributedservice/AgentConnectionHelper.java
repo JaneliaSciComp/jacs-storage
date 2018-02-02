@@ -51,7 +51,8 @@ class AgentConnectionHelper {
                     ;
             Response response = targetRequestBuilder.delete();
             if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
-                LOG.warn("Agent delete storage returned {}", response.getStatus());
+                LOG.warn("Agent {} delete storage returned {} while trying to delete {} by {}",
+                        agentUrl, response.getStatus(), dataBundleId, subject);
             } else {
                 return true;
             }

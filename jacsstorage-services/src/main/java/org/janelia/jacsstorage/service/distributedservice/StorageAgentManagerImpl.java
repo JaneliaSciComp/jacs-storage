@@ -54,7 +54,6 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
 
     @Override
     public StorageAgentInfo registerAgent(StorageAgentInfo agentInfo) {
-        LOG.info("Register {}", agentInfo);
         ConnectionChecker<StorageAgentInfo> agentConnectionChecker = new PeriodicConnectionChecker<>(
                 ConnectionChecker.ConnectionState.CLOSED,
                 scheduler,
@@ -83,15 +82,13 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
 
     @Override
     public StorageAgentInfo deregisterAgent(String agentHttpURL, String agentToken) {
-        LOG.info("Deregister agent {}", agentHttpURL);
         StorageAgentConnection agentConnection = registeredAgentConnections.get(agentHttpURL);
         if (agentConnection == null) {
             return null;
         } else {
             if (agentConnection.getAgentInfo().getAgentToken().equals(agentToken)) {
-                LOG.info("Deregistering agent {} with {}", agentHttpURL, agentToken);
                 registeredAgentConnections.remove(agentHttpURL);
-                agentConnection.getAgentConnectionBreaker().dispose();
+                agentConnection.getAgentConnectionChecker().dispose();
                 return agentConnection.getAgentInfo();
             } else {
                 throw new IllegalArgumentException("Invalid agent token - deregistration is not allowed with an invalid token");

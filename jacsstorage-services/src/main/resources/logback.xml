@@ -22,6 +22,7 @@
         </triggeringPolicy>
     </appender>
 
+    <logger name="com.mongodb" level="error" />
     <logger name="io.undertow" level="error" />
     <logger name="org.jboss" level="error" />
     <logger name="org.glassfish" level="error" />
