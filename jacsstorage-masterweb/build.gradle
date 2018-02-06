@@ -47,7 +47,7 @@ project(":jacsstorage-masterweb") {
         def installEnv = ["jacs.runtime.env.installDir": rpmInstallDir]
 
         preUninstall "systemctl stop ${project.name}"
- 
+
         into "${rpmInstallDir}"
 
         from(new File(project(':jacsstorage-commonweb').projectDir, 'src/main/install/etc')) {
@@ -79,7 +79,7 @@ project(":jacsstorage-masterweb") {
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
-        link("/etc/systemd/system/${project.name}.datatransfer", "${rpmInstallDir}/etc/${project.name}.datatransfer")
+        link("/etc/systemd/user/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
     }
 }
 
