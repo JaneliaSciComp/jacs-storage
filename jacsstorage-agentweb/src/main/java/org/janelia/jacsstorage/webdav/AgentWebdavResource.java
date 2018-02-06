@@ -109,6 +109,7 @@ public class AgentWebdavResource {
         String fullDataStoragePath = StringUtils.prependIfMissing(dataStoragePath, "/");
         List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(fullDataStoragePath));
         if (localVolumes.isEmpty()) {
+            LOG.warn("No storage volume found for {}", dataStoragePath);
             Multistatus statusResponse = new Multistatus();
             Propstat propstat = new Propstat();
             propstat.setStatus("HTTP/1.1 404 Not Found");
@@ -123,6 +124,7 @@ public class AgentWebdavResource {
                     .entity(statusResponse)
                     .build();
         } else if (localVolumes.size() > 1) {
+            LOG.warn("Too many storage volumes found for {}", dataStoragePath);
             Multistatus statusResponse = new Multistatus();
             Propstat propstat = new Propstat();
             propstat.setStatus("HTTP/1.1 409 Conflict");

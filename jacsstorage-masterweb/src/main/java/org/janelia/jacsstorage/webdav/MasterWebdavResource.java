@@ -21,6 +21,8 @@ import org.janelia.jacsstorage.webdav.httpverbs.MKCOL;
 import org.janelia.jacsstorage.webdav.httpverbs.PROPFIND;
 import org.janelia.jacsstorage.webdav.propfind.Multistatus;
 import org.janelia.jacsstorage.webdav.propfind.Propfind;
+import org.janelia.jacsstorage.webdav.propfind.PropfindResponse;
+import org.janelia.jacsstorage.webdav.propfind.Propstat;
 import org.janelia.jacsstorage.webdav.utils.WebdavUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,8 +68,18 @@ public class MasterWebdavResource {
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
         if (CollectionUtils.isEmpty(managedVolumes)) {
             LOG.warn("No storage found for prefix {}", storagePrefix);
-            return Response.status(404)
-                    .entity(new ErrorResponse("No storage found for " + storagePrefix))
+            Multistatus statusResponse = new Multistatus();
+            Propstat propstat = new Propstat();
+            propstat.setStatus("HTTP/1.1 404 Not Found");
+
+            PropfindResponse propfindResponse = new PropfindResponse();
+            propfindResponse.setResponseDescription("No managed volume found for prefix " + storagePrefix);
+            propfindResponse.setPropstat(propstat);
+            statusResponse.getResponse().add(propfindResponse);
+
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(statusResponse)
                     .build();
         }
         Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes, (storageVolume) ->{
@@ -92,8 +104,18 @@ public class MasterWebdavResource {
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
         if (CollectionUtils.isEmpty(managedVolumes)) {
             LOG.warn("No storage found for path {}", dataStoragePath);
-            return Response.status(404)
-                    .entity(new ErrorResponse("No storage found for " + dataStoragePath))
+            Multistatus statusResponse = new Multistatus();
+            Propstat propstat = new Propstat();
+            propstat.setStatus("HTTP/1.1 404 Not Found");
+
+            PropfindResponse propfindResponse = new PropfindResponse();
+            propfindResponse.setResponseDescription("No managed volume found for " + fullDataStoragePath);
+            propfindResponse.setPropstat(propstat);
+            statusResponse.getResponse().add(propfindResponse);
+
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(statusResponse)
                     .build();
         }
         Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes, (storageVolume) ->{
