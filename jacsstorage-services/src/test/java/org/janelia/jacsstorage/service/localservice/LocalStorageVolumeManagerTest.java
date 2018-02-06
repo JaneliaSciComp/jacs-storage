@@ -98,7 +98,7 @@ public class LocalStorageVolumeManagerTest {
                         new ApplicationConfigProvider()
                                 .fromMap(ImmutableMap.<String, String>builder()
                                         .put("StorageVolume.v1.RootDir", "/data/jadestorage")
-                                        .put("StorageVolume.v1.PathPrefix", "${storageHost}/jadestorage/${otherKey}/storage")
+                                        .put("StorageVolume.v1.PathPrefix", "${StorageAgent.StorageHost}/jadestorage/${otherKey}/storage")
                                         .put("StorageVolume.v1.Shared", "false")
                                         .put("StorageVolume.v1.Tags", "local")
                                         .put("StorageVolume.v2.RootDir", "/data/jadestorage")

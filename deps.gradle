@@ -84,7 +84,7 @@ dependencies {
         MOCKITO_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
         ASSERTJ_LIB = "org.assertj:assertj-core:${ASSERTJ_VERSION}"
         POWERMOCK_JUNIT4_LIB = "org.powermock:powermock-module-junit4:${POWERMOCKITO_VERSION}"
-        POWERMOCKITO_LIB = "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
+        POWERMOCK_API_MOCKITO_LIB = "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
 
         // benchmarks
         BENCHMARK_CORE_LIB = "org.openjdk.jmh:jmh-core:1.19"
@@ -104,7 +104,7 @@ dependencies {
                        HAMCREST_LIB,
                        JUNIT_LIB,
                        MOCKITO_LIB,
-                       POWERMOCKITO_LIB,
+                       POWERMOCK_API_MOCKITO_LIB,
                        POWERMOCK_JUNIT4_LIB
 
 
@@ -112,7 +112,6 @@ dependencies {
                     HAMCREST_LIB,
                     JUNIT_LIB,
                     MOCKITO_LIB,
-                    POWERMOCKITO_LIB,
+                    POWERMOCK_API_MOCKITO_LIB,
                     POWERMOCK_JUNIT4_LIB
-
 }

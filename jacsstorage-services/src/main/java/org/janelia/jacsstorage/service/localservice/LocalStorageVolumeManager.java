@@ -8,11 +8,11 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.config.ApplicationConfigValueResolver;
+import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.AbstractStorageVolumeManager;
-import org.janelia.jacsstorage.coreutils.NetUtils;
 
 import javax.inject.Inject;
 import java.nio.file.FileStore;
@@ -37,7 +37,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
                                      @PropertyValue(name = "StorageAgent.StorageVolumes") List<String> managedVolumes) {
         super(storageVolumeDao);
         this.applicationConfig = applicationConfig;
-        this.storageHost = storageHost;
+        this.storageHost = StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());;
         this.managedVolumes = managedVolumes;
     }
 
@@ -61,7 +61,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         }
         storageVolume.setName(volumeName);
         storageVolume.setShared(shared);
-        storageVolume.setStorageHost(shared ? null : getStorageHost());
+        storageVolume.setStorageHost(shared ? null : storageHost);
         storageVolume.setStorageRootDir(applicationConfig.getStringPropertyValue("StorageVolume." + volumeName + ".RootDir"));
         storageVolume.setStoragePathPrefix(getStoragePathPrefix(volumeName));
         storageVolume.setStorageTags(getStorageVolumeTags(volumeName));
@@ -71,7 +71,11 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
 
     private String getStoragePathPrefix(String volumeName) {
         String storagePathPrefix = applicationConfig.getStringPropertyValue("StorageVolume." + volumeName + ".PathPrefix");
-        String resolvedStoragePathPrefix = configValueResolver.resolve(storagePathPrefix, ImmutableMap.<String, String>builder().putAll(applicationConfig.asMap()).put("storageHost", getStorageHost()).build());
+        String resolvedStoragePathPrefix = configValueResolver.resolve(
+                storagePathPrefix,
+                ImmutableMap.<String, String>builder()
+                        .put("storageHost", storageHost)
+                        .build());
         return StringUtils.prependIfMissing(resolvedStoragePathPrefix, "/");
     }
 
@@ -98,10 +102,6 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
-    }
-
-    private String getStorageHost() {
-        return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
     }
 
 }

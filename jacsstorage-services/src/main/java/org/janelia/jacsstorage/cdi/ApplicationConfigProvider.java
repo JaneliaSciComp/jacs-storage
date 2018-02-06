@@ -12,6 +12,7 @@ import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class ApplicationConfigProvider {
 
@@ -27,7 +28,7 @@ public class ApplicationConfigProvider {
 
     public ApplicationConfigProvider fromDefaultResources() {
         return fromProperties(System.getProperties())
-                .fromMap(System.getenv())
+                .fromMap(System.getenv().entrySet().stream().collect(Collectors.toMap(entry -> "env." + entry.getKey(), Map.Entry::getValue)))
                 .fromResource(DEFAULT_APPLICATION_CONFIG_RESOURCES);
     }
 

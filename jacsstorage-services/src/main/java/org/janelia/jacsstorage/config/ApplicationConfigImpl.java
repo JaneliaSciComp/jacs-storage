@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.config;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -14,14 +15,19 @@ import java.util.Properties;
 public class ApplicationConfigImpl implements ApplicationConfig {
     private final Properties configProperties = new Properties();
 
+    private final ApplicationConfigValueResolver configValueResolver = new ApplicationConfigValueResolver();
+
     @Override
     public String getStringPropertyValue(String name) {
-        return configProperties.getProperty(name);
+        String value = configProperties.getProperty(name);
+        String resolvedValue = configValueResolver.resolve(value, Maps.fromProperties(configProperties));
+        return resolvedValue;
     }
 
     @Override
     public String getStringPropertyValue(String name, String defaultValue) {
-        return configProperties.getProperty(name, defaultValue);
+        String value = getStringPropertyValue(name);
+        return (value == null) ? defaultValue : value;
     }
 
     @Override
@@ -89,7 +95,7 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     public Map<String, String> asMap() {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
         configProperties.stringPropertyNames().forEach(k -> {
-            String v = configProperties.getProperty(k);
+            String v = getStringPropertyValue(k);
             if (k != null && v != null) builder.put(k, v);
         });
         return builder.build();
