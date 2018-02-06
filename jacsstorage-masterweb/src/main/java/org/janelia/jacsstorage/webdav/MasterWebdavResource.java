@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.webdav;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
@@ -9,6 +10,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.rest.Constants;
+import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.LogStorageEvent;
@@ -62,6 +64,12 @@ public class MasterWebdavResource {
         LOG.info("Find storage by prefix {} for {}", storagePrefix, securityContext.getUserPrincipal());
         StorageQuery storageQuery = new StorageQuery().setStoragePathPrefix(storagePrefix);
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
+        if (CollectionUtils.isEmpty(managedVolumes)) {
+            LOG.warn("No storage found for prefix {}", storagePrefix);
+            return Response.status(404)
+                    .entity(new ErrorResponse("No storage found for " + storagePrefix))
+                    .build();
+        }
         Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes, (storageVolume) ->{
             String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
             return storageServiceURL + Constants.AGENTSTORAGE_URI_PATH;
@@ -82,6 +90,12 @@ public class MasterWebdavResource {
         String fullDataStoragePath = StringUtils.prependIfMissing(dataStoragePath, "/");
         StorageQuery storageQuery = new StorageQuery().setDataStoragePath(fullDataStoragePath);
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
+        if (CollectionUtils.isEmpty(managedVolumes)) {
+            LOG.warn("No storage found for path {}", dataStoragePath);
+            return Response.status(404)
+                    .entity(new ErrorResponse("No storage found for " + dataStoragePath))
+                    .build();
+        }
         Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes, (storageVolume) ->{
             String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
             return storageServiceURL + Constants.AGENTSTORAGE_URI_PATH;
