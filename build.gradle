@@ -14,22 +14,6 @@ subprojects {
             mavenCentral()
         }
 
-        compileJava {
-            doFirst {
-                options.compilerArgs = [
-                    '-Xlint:deprecation'
-                ]
-            }
-        }
-
-        compileTestJava {
-            doFirst {
-                options.compilerArgs = [
-                    '-Xlint:deprecation'
-                ]
-            }
-        }
-
         configurations {
             provided
             implementation.extendsFrom(provided)
@@ -49,6 +33,22 @@ subprojects {
                     srcDir file('src/integrationTest/resources')
                 }
              }
+        }
+
+        compileJava {
+            doFirst {
+                options.compilerArgs = [
+                    '-Xlint:deprecation'
+                ]
+            }
+        }
+
+        compileTestJava {
+            doFirst {
+                options.compilerArgs = [
+                    '-Xlint:deprecation'
+                ]
+            }
         }
 
         idea {
