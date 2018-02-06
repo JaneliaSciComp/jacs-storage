@@ -46,8 +46,6 @@ project(":jacsstorage-masterweb") {
         def rpmInstallDir = "/opt/servers/jacsstorage/${project.name}-${version}"
         def installEnv = ["jacs.runtime.env.installDir": rpmInstallDir]
 
-        preUninstall "systemctl stop ${project.name}"
-
         into "${rpmInstallDir}"
 
         from(new File(project(':jacsstorage-commonweb').projectDir, 'src/main/install/etc')) {
