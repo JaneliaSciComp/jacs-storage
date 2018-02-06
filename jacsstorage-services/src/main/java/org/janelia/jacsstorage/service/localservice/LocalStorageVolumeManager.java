@@ -44,10 +44,19 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     public List<JacsStorageVolume> getManagedVolumes(StorageQuery storageQuery) {
         return Stream.concat(managedVolumes.stream(), Stream.of(JacsStorageVolume.OVERFLOW_VOLUME))
                 .map(this::getVolumeInfo)
-                .filter(sv -> StringUtils.isBlank(storageQuery.getDataStoragePath()) || storageQuery.getDataStoragePath().startsWith(sv.getStoragePathPrefix()))
-                .filter(sv -> StringUtils.isBlank(storageQuery.getStoragePathPrefix()) || storageQuery.getStoragePathPrefix().equals(sv.getStoragePathPrefix()))
-                .filter(sv -> StringUtils.isBlank(storageQuery.getStorageName()) || storageQuery.getStorageName().equals(sv.getName()))
-                .filter(sv -> CollectionUtils.isEmpty(storageQuery.getStorageTags()) || sv.getStorageTags().containsAll(storageQuery.getStorageTags()))
+                .filter(sv -> StringUtils.isBlank(storageQuery.getDataStoragePath()) ||
+                        storageQuery.getDataStoragePath().startsWith(sv.getStoragePathPrefix()) ||
+                        storageQuery.getDataStoragePath().startsWith(sv.getStorageRootDir())
+                )
+                .filter(sv -> StringUtils.isBlank(storageQuery.getStoragePathPrefix()) ||
+                        storageQuery.getStoragePathPrefix().equals(sv.getStoragePathPrefix())
+                )
+                .filter(sv -> StringUtils.isBlank(storageQuery.getStorageName()) ||
+                        storageQuery.getStorageName().equals(sv.getName())
+                )
+                .filter(sv -> CollectionUtils.isEmpty(storageQuery.getStorageTags()) ||
+                        sv.getStorageTags().containsAll(storageQuery.getStorageTags())
+                )
                 .collect(Collectors.toList());
     }
 

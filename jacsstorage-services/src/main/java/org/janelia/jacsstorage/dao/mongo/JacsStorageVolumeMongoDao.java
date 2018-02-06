@@ -68,7 +68,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
     public PageResult<JacsStorageVolume> findMatchingVolumes(StorageQuery storageQuery, PageRequest pageRequest) {
         List<JacsStorageVolume> results = new ArrayList<>();
         List<Bson> storageFilters = createMatchingFilter(storageQuery);
-        Iterable<JacsStorageVolume> resultsItr = findIterable(
+        Iterable<JacsStorageVolume> storageVolumesItr = findIterable(
                 CollectionUtils.isNotEmpty(storageFilters)
                         ? Filters.and(storageFilters)
                         : null,
@@ -77,10 +77,10 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
                 pageRequest.getPageSize(),
                 getEntityType());
         if (StringUtils.isBlank(storageQuery.getDataStoragePath())) {
-            resultsItr.forEach(results::add);
+            storageVolumesItr.forEach(results::add);
         } else {
-            StreamSupport.stream(resultsItr.spliterator(), false)
-                    .filter(r -> StringUtils.startsWith(storageQuery.getDataStoragePath(), r.getStoragePathPrefix()))
+            StreamSupport.stream(storageVolumesItr.spliterator(), false)
+                    .filter(sv -> StringUtils.startsWith(storageQuery.getDataStoragePath(), sv.getStoragePathPrefix()) || StringUtils.startsWith(storageQuery.getDataStoragePath(), sv.getStorageRootDir()))
                     .forEach(results::add);
         }
         return new PageResult<>(pageRequest, results);
