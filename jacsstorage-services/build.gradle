@@ -2,8 +2,8 @@ project(":jacsstorage-services") {
     dependencies {
         api project(":jacsstorage-core")
 
-        implementation JERSEY_MEDIA_JSON_LIB,
-                       JAX_RS_CLIENT_LIB,
+        implementation JAX_RS_JERSEY_CLIENT_LIB,
+                       JAX_RS_JERSEY_MEDIA_JSON_LIB,
                        MONGODB_DRIVER_LIB,
                        REFLECTIONS_LIB
     }

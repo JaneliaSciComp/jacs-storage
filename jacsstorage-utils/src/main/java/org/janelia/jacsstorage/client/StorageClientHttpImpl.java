@@ -64,7 +64,7 @@ public class StorageClientHttpImpl implements StorageClient {
                     try {
                         // initiate the localservice data read operation
                         TransferState<StorageMessageHeader> localDataTransfer = new TransferState<StorageMessageHeader>().setMessageType(new StorageMessageHeader(
-                                allocatedStorage.getId(),
+                                allocatedStorage.getNumericId(),
                                 authToken,
                                 DataTransferService.Operation.RETRIEVE_DATA,
                                 localDataFormat,
@@ -96,7 +96,7 @@ public class StorageClientHttpImpl implements StorageClient {
                 .flatMap((DataStorageInfo persistedStorageInfo) -> {
                     LOG.info("Data storage info: {}", persistedStorageInfo);
                     String agentStorageServiceURL = persistedStorageInfo.getConnectionURL();
-                    return clientImplHelper.streamDataFromStore(agentStorageServiceURL, persistedStorageInfo.getId(), authToken);
+                    return clientImplHelper.streamDataFromStore(agentStorageServiceURL, persistedStorageInfo.getNumericId(), authToken);
                 })
                 .flatMap((InputStream dataStream) -> {
                     try {

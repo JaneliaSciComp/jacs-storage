@@ -2,9 +2,15 @@ package org.janelia.jacsstorage.rest;
 
 import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+import io.swagger.annotations.AuthorizationScope;
+import io.swagger.annotations.OAuth2Definition;
+import io.swagger.annotations.SecurityDefinition;
+import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
@@ -46,6 +52,13 @@ import java.util.stream.Collectors;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("storage")
+@SwaggerDefinition(
+        securityDefinition = @SecurityDefinition(
+                apiKeyAuthDefinitions = {
+                        @ApiKeyAuthDefinition(key = "jwtBearerToken", name = "Authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
+                }
+        )
+)
 @Api(value = "Master storage API.")
 public class MasterStorageResource {
     private static final Logger LOG = LoggerFactory.getLogger(MasterStorageResource.class);
@@ -61,7 +74,12 @@ public class MasterStorageResource {
     @RequireAuthentication
     @GET
     @Path("size")
-    @ApiOperation(value = "Count storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}.")
+    @ApiOperation(
+            value = "Count storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}.",
+            authorizations = {
+                @Authorization("jwtBearerToken")
+            }
+    )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The number of storage entries that match the given filters"),
             @ApiResponse(code = 401, message = "If user is not authenticated"),
@@ -97,7 +115,12 @@ public class MasterStorageResource {
 
     @RequireAuthentication
     @GET
-    @ApiOperation(value = "List storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}.")
+    @ApiOperation(
+            value = "List storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}.",
+            authorizations = {
+                    @Authorization("jwtBearerToken")
+            }
+    )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The list of storage entries that match the given filters"),
             @ApiResponse(code = 401, message = "If user is not authenticated"),
@@ -149,7 +172,12 @@ public class MasterStorageResource {
     @RequireAuthentication
     @GET
     @Path("{id}")
-    @ApiOperation(value = "Retrieve storage entry by ID.")
+    @ApiOperation(
+            value = "Retrieve storage entry by ID.",
+            authorizations = {
+                    @Authorization("jwtBearerToken")
+            }
+    )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The storage entry with the given ID"),
             @ApiResponse(code = 401, message = "If user is not authenticated"),
@@ -179,7 +207,12 @@ public class MasterStorageResource {
     @RequireAuthentication
     @GET
     @Path("{ownerKey}/{name}")
-    @ApiOperation(value = "Retrieve storage entry by owner and name.")
+    @ApiOperation(
+            value = "Retrieve storage entry by owner and name.",
+            authorizations = {
+                @Authorization("jwtBearerToken")
+            }
+    )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The storage entry with the given name owned by the provided subject"),
             @ApiResponse(code = 401, message = "If user is not authenticated"),
@@ -215,7 +248,12 @@ public class MasterStorageResource {
     @RequireAuthentication
     @Consumes("application/json")
     @POST
-    @ApiOperation(value = "Create new storage entry.")
+    @ApiOperation(
+            value = "Create new storage entry.",
+            authorizations = {
+                    @Authorization("jwtBearerToken")
+            }
+    )
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "The new storage entry."),
             @ApiResponse(code = 401, message = "If user is not authenticated"),
@@ -253,6 +291,7 @@ public class MasterStorageResource {
         dataBundle.setId(id);
         JacsBundle updatedDataBundleInfo = storageAllocatorService.updateStorage(SecurityUtils.getUserPrincipal(securityContext), dataBundle);
         if (updatedDataBundleInfo == null) {
+            LOG.warn("Invalid storage ID: {} for updating {}", id, dataStorageInfo);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();
@@ -274,10 +313,12 @@ public class MasterStorageResource {
         JacsBundle dataBundle = new JacsBundle();
         dataBundle.setId(id);
         if (storageAllocatorService.deleteStorage(SecurityUtils.getUserPrincipal(securityContext), dataBundle)) {
+            LOG.info("Deleted storage: {}", id);
             return Response
                     .status(Response.Status.NO_CONTENT)
                     .build();
         } else {
+            LOG.info("Storage {} was not deleted", id);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .build();

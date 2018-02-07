@@ -106,7 +106,7 @@ public class StorageClientApp {
         switch (jc.getParsedCommand()) {
             case "get":
                 storageInfo = new DataStorageInfo()
-                        .setId(cmdGet.getBundleId())
+                        .setNumericId(cmdGet.getBundleId())
                         .setConnectionURL(cm.serverURL)
                         .setOwnerKey(dataOwnerKey)
                         .setName(cmdGet.name);

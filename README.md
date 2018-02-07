@@ -1,13 +1,25 @@
-`# Setting up the development environment
+## Development 
 
-To build the application you can either install gradle 4.x locally on your machine using the appropriate package manager for your OS
-(brew or macports for OSX, yum for Centos based Linux distros, apt-get for Debian based Linux distros) or use gradle scripts packaged
-with the project.
+### Environment
 
-Because the build is configured to run the integration tests as part of the full build you also need to have access to a Mongo
-database server. The default configuration expects the database server to be running on the development machine but it doesn't have to.
+The local development requires a local MongoDB instance so that it can run the integration tests 
+or it requires a java properties file that overrides the MongoDB connection settings and then 
+set up JACSSTORAGE_CONFIG_TEST environment variable to point to the config file, e.g.
 
-## Setup MongoDB
+```
+mkdir local
+cat <<EOF > local/myConfig.properties
+MongoDB.ConnectionURL=mongodb://dev-mongodb:27017
+MongoDB.Database=${user.name}_jacsstorage_test
+EOF
+export JACSSTORAGE_CONFIG_TEST=$PWD/local/myConfig.properties
+```
+
+As a note if you only want to compile and create the distribution then you don't need the
+MongoDB setup because the integration tests run only as part of the build task, installDist 
+only compiles and creates the zip and tar distributions.
+
+#### Setup local MongoDB instance
 
 To install MongoDB on MacOS:
 
@@ -23,58 +35,44 @@ On Centos based Linux distributions (Centos, Scientific Linux) you can use:
 On Debian based Linux distributions (Debian, Ubuntu) you can use:
 `sudo apt-get install mongodb-org`
 
-Once MongoDB is installed on your machine you really don't have to do anything else because the tests will create the needed databases and
-the collections as long as the user has prvileges to do so.
+Once MongoDB is installed on your machine you really don't have to do anything else because the tests or the application
+will create the needed databases and the collections as long as the configured mongo user has prvileges to do so.
 
-## Building and running the application
+### Build the application
 
-### Building the application
+To full build the application, which includes running all unit tests and integration tests, and create the distribution simply run:
+```
+./gradlew clean build installDist
+```
+To only compile the application and create the distribution run (this will not run any tests and therefore it will 
+not require any Mongo database setup):
+```
+./gradlew clean installDist
+```
+To run only the integration tests:
+```
+./gradlew integrationTest
+```
 
-If you already have gradle installed on your system you can simply run:
-
-`gradle build`
-or you can always run:
-`./gradlew build`
-
-### Running only the integration tests
-
-`./gradlew integrationTest`
-
-If you want to use a different test database than the one running locally on your development machine you can create a configuration file
-in which you override the database connection settings and then use JACSSTORAGE_CONFIG_TEST environment variable to point to it, eg.,
-`JACSSTORAGE_CONFIG_TEST=/my/prefered/location/for/dev/my-config-test.properties ./gradlew integrationTest`
-
-Keep in mind that since the integrationTests are configured to run as part of the build check stage you also need to have the environment variable
-set you you run the build:
-`JACSSTORAGE_CONFIG_TEST=/my/prefered/location/for/dev/my-config-test.properties ./gradlew build`
-
-For example my-config-test.properties could look as below if you want to use the dev mongo database. I recommend to prefix the database name with your
-user name so that your tests will not clash with other users' tests in case the build runs simultaneously.
-`
-MongoDB.ConnectionURL=mongodb://dev-mongodb:27017
-MongoDB.Database=myusername_jacs_test
-`
-
-and to build the application you simply run:
-
-`JACSSTORAGE_CONFIG_TEST=$PWD/my-config-test.properties ./gradlew clean build installDist`
+If you want to use a different test database than the one running locally on your development machine you can create a configuration file,
+as explained above, in which you override the database connection settings and then use JACSSTORAGE_CONFIG_TEST environment variable to point to it, eg.,
+```
+JACSSTORAGE_CONFIG_TEST=/my/prefered/location/for/dev/my-config-test.properties ./gradlew clean build installDist
+```
 
 Note:
 
 When using the environment variable to reference the configuration use the full path in order to guarantee that the right properties are being used.
 
-### Package the application
-
-`./gradlew installDist`
+### Package and install the application
 
 To generate an RPM package create a gradle.properties:
 
 ```
 cat > local/gradle.properties <<EOF
 jacs.runtime.env.apiKey=JacsStorageAuthorizedAPI.Dev
-jacs.runtime.env.jwtSecret=SYhZwP9ZbSpjIbvRkn6GfBUACWzPb-53zbD9Ps3jVswg85WvJp4DlLrlMdhkaNlP8Zq0V63r5er_w7qlGeGxSD8CH1nsDgRhC0umwGeLDvEj4TbCicJSc3Klz2el-3iv-jiMp69h27YBmrUYf_fwOagi1x9To-hpQ-1x78G7bd8dRVO0wDOeAILNgvhy22hxvoX_PrRZkXbn_7aLeNziw-48vL0idYkxxJIEqnLqnOyEy_TCEvo4w_n14vseDn7ZzulNR97nNL9ZFnD7GXXr5ZQqeVIO-HoNbKSP3f1YCACqT2QC-89FdefaKlR-SFp_EBSfvEiQN8E0WrUObXfHKg
+jacs.runtime.env.jwtSecret=<put the secret key here>
 jacs.runtime.env.agentHttpPort=9881
-jacs.runtime.env.agentTcpPort=11000
 jacs.runtime.env.masterHttpPort=9880
 jacs.runtime.env.logsRootDir=/data/jacsstorage/prod-logs
 EOF
@@ -88,7 +86,8 @@ Then on centos use yum to install the generated packages
 `sudo yum install jacsstorage-agentweb/build/distributions/jacsstorage-agentweb-1.0.0-1.i386.rpm`
 
 
-Note that 'installDist' target will not run any unit tests or integration tests.
+Note that 'ospackage' task just like 'installDist' will not run any unit tests or integration tests so you don't need 
+access to any MongoDB instance.
 
 ### Run the application
 
@@ -100,8 +99,8 @@ If you want to debug the application you can start the application with the debu
 
 `JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005" jacsstorage-web/build/install/jacsstorage-web/bin/jacsstorage-web`
 
-The default settings could be overwritten with your own settings in a java properties file that contains only the updated properties
-and then use JACSSTORAGE_CONFIG environment variable to reference the settings file, e.g.
+The default production settings could be overwritten with your own settings in a java properties file similar to the test settings
+the only difference is the name of the environment variable - for production settings use JACSSTORAGE_CONFIG environment variable.
 
 `JACSSTORAGE_CONFIG=/usr/local/etc/myjacsstorage-config.properties jacsstorage-web/build/install/jacsstorage-web/bin/jacsstorage-web`
 
@@ -112,3 +111,28 @@ sudo systemctl daemon-reload
 sudo systemctl start jacsstorage-masterweb
 sudo systemctl start jacsstorage-agentweb
 `
+
+## User guide
+
+### Putting data onto the storage servers
+
+The copy of the data onto the storage server(s) it's a two step process:
+1. Ask the master (see [documentation](http://localhost:8880/docs/#/Master_storage_API./createBundleInfo)) on which server I can copy the data.
+```
+curl -i -X POST 'http://localhost:8880/jacsstorage/master_api/v1/storage' \
+-H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs' \
+-H 'accept: application/json' \
+-H 'Content-Type: application/json' \
+-d "{ \"name\": \"d1\", \"ownerKey\": \"user:goinac\", \"storageTags\": [ \"d1\" ], \"storageFormat\": \"DATA_DIRECTORY\", \"metadata\": { \"additionalProp1\": {}, \"additionalProp2\": {}, \"additionalProp3\": {} }}"
+```
+2. Use the connectionURL and the ID returned in the JSON result in the first step to send to <connectionURL value>/agent_storage/<ID value> (see [documentation](http://localhost:8881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./persistStream)) the data files.
+```
+curl -X POST "http://0.0.0.0:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/file/f1" \
+-H "accept: application/json" \
+-H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs" \
+-H "Content-Type: application/octet-stream" \
+-d "this is the content"
+```
+
+If you want to send more than one file at a time, you need to bundle the files in a TAR archive and send the entire tar. On the
+storage server the tar will be unbundled and added to the selected storage.

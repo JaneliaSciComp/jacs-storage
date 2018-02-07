@@ -11,9 +11,9 @@ project(":jacsstorage-utils") {
                        CDI_API_LIB,
                        CDI_SE_CORE_LIB,
                        CMDLINE_ARG_LIB,
-                       JAX_RS_CLIENT_LIB,
-                       JERSEY_INJECT_LIB,
-                       JERSEY_MEDIA_JSON_LIB
+                       JAX_RS_JERSEY_CLIENT_LIB,
+                       JAX_RS_JERSEY_INJECT_LIB,
+                       JAX_RS_JERSEY_MEDIA_JSON_LIB
     }
 
     task createStorageClientApp(type: CreateStartScripts) {

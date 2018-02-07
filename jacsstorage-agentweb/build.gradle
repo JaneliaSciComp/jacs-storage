@@ -19,13 +19,13 @@ project(":jacsstorage-agentweb") {
     dependencies {
         implementation project(":jacsstorage-commonweb"),
                        CDI_SE_CORE_LIB,
-                       JAX_RS_CLIENT_LIB,
-                       JERSEY_CDI_SERVLET_LIB,
-                       JERSEY_INJECT_LIB,
-                       JERSEY_MEDIA_JSON_LIB
+                       JAX_RS_JERSEY_CLIENT_LIB,
+                       JAX_RS_JERSEY_CDI_SERVLET_LIB,
+                       JAX_RS_JERSEY_INJECT_LIB,
+                       JAX_RS_JERSEY_MEDIA_JSON_LIB
 
-        testImplementation JERSEY_TEST_LIB,
-                           JERSEY_TEST_PROVIDER_LIB
+        testImplementation JAX_RS_JERSEY_TEST_LIB,
+                           JAX_RS_JERSEY_TEST_PROVIDER_LIB
 
     }
 

@@ -47,7 +47,7 @@ public class StorageAgentsResource {
             @ApiResponse(code = 404, message = "Agent URL is invalid")
     })
     public Response findRegisteredAgent(@PathParam("agentURL") String agentLocationInfo) {
-        LOG.debug("Find registered agent for {}", agentLocationInfo);
+        LOG.trace("Find registered agent for {}", agentLocationInfo);
         return agentManager.findRegisteredAgent(agentLocationInfo)
                 .map(agentInfo -> Response.ok(agentInfo).build())
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());

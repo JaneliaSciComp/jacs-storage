@@ -283,12 +283,12 @@ public class StorageClientImplHelper {
 
     public Optional<String> createNewDirectory(String connectionURL, Number dataBundleId, String newDirPath, String authToken) {
         LOG.debug("Create new directory {}:{}:{}", connectionURL, dataBundleId, newDirPath);
-        DataStorageInfo storageRequest = new DataStorageInfo().setId(dataBundleId);
+        DataStorageInfo storageRequest = new DataStorageInfo().setNumericId(dataBundleId);
         return retrieveStorageInfo(connectionURL, storageRequest, authToken)
             .flatMap((DataStorageInfo storageInfo) -> {
                 String agentStorageServiceURL = storageInfo.getConnectionURL();
                 LOG.debug("Invoke agent {} to create new directory {}/{}", agentStorageServiceURL, dataBundleId, newDirPath);
-                return addNewStorageFolder(agentStorageServiceURL, storageInfo.getId(), newDirPath, authToken);
+                return addNewStorageFolder(agentStorageServiceURL, storageInfo.getNumericId(), newDirPath, authToken);
             });
     }
 
@@ -320,12 +320,12 @@ public class StorageClientImplHelper {
 
     public Optional<String> createNewFile(String connectionURL, Number dataBundleId, String newDirPath, InputStream contentStream, String authToken) {
         LOG.debug("Create new file {}:{}:{} ({})", connectionURL, dataBundleId, newDirPath, authToken);
-        DataStorageInfo storageRequest = new DataStorageInfo().setId(dataBundleId);
+        DataStorageInfo storageRequest = new DataStorageInfo().setNumericId(dataBundleId);
         return retrieveStorageInfo(connectionURL, storageRequest, authToken)
                 .flatMap((DataStorageInfo storageInfo) -> {
                     String agentStorageServiceURL = storageInfo.getConnectionURL();
                     LOG.debug("Invoke agent {} to create new file {}/{}", agentStorageServiceURL, dataBundleId, newDirPath);
-                    return addNewStorageContent(agentStorageServiceURL, storageInfo.getId(), newDirPath, contentStream, authToken);
+                    return addNewStorageContent(agentStorageServiceURL, storageInfo.getNumericId(), newDirPath, contentStream, authToken);
                 });
     }
 

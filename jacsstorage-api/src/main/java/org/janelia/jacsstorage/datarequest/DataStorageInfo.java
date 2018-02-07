@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class DataStorageInfo {
-    private Number id;
+    private String id;
     private String name;
     private String ownerKey;
     private String path;
@@ -33,7 +33,7 @@ public class DataStorageInfo {
 
     public static DataStorageInfo fromBundle(JacsBundle dataBundle) {
         DataStorageInfo dsi = new DataStorageInfo()
-                .setId(dataBundle.getId())
+                .setNumericId(dataBundle.getId())
                 .setName(dataBundle.getName())
                 .setOwnerKey(dataBundle.getOwnerKey())
                 .setPath(dataBundle.getPath())
@@ -55,17 +55,27 @@ public class DataStorageInfo {
         return dsi;
     }
 
-    public Number getId() {
+    public String getId() {
         return id;
     }
 
-    public DataStorageInfo setId(Number id) {
+    public DataStorageInfo setId(String id) {
         this.id = id;
         return this;
     }
 
+    @JsonIgnore
+    public Number getNumericId() {
+        return hasId() ? Long.valueOf(id) : null;
+    }
+
+    public DataStorageInfo setNumericId(Number id) {
+        this.id = id != null ? id.toString() : null;
+        return this;
+    }
+
     public boolean hasId() {
-        return id != null && id.longValue() != 0L;
+        return StringUtils.isNotBlank(id) && !"0".equals(id);
     }
 
     public String getName() {
