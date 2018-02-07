@@ -114,7 +114,7 @@ sudo systemctl start jacsstorage-agentweb
 
 ## User guide
 
-### Putting data onto the storage servers
+### Put data onto the storage servers
 
 The copy of the data onto the storage server(s) it's a two step process:
 1. Ask the master (see [documentation](http://localhost:8880/docs/#/Master_storage_API./createBundleInfo)) on which server I can copy the data.
@@ -136,3 +136,45 @@ curl -X POST "http://0.0.0.0:8881/jacsstorage/agent_api/v1/agent_storage/2501203
 
 If you want to send more than one file at a time, you need to bundle the files in a TAR archive and send the entire tar. On the
 storage server the tar will be unbundled and added to the selected storage.
+
+### Retrieve storage info
+
+If the storage ID is known you can find information about the storage, i.e., where it resides, path info using 
+[getBundleInfo](http://localhost:8880/docs/#/Master_storage_API./getBundleInfo)
+
+```
+curl -X GET "http://localhost:8880/jacsstorage/master_api/v1/storage/2501203311319875608" \
+-H "accept: application/json" \
+-H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs"
+```
+
+### Retrieve storage content
+The content retrieval is also a two step process:
+1. Retrieve storage info or search storage entries to find out where the content is stored
+2. Use the returned contentURL in combination with the ID and the entry name to retrieve the actual content 
+(see [documentation](http://localhost:8881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./getEntryContent))
+```
+curl -X GET "http://0.0.0.0:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/entry_content/f1" \
+-H "accept: application/octet-stream" \
+-H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs"
+```
+
+### Search storage entries
+
+Storage entries can be searched by owner, volume name, tags - see [documentation](http://localhost:8880/docs/#/Master_storage_API./listBundleInfo)
+If you are not an admin you can only search your own entries.
+
+```
+curl -X GET "http://localhost:8880/jacsstorage/master_api/v1/storage" \
+-H "accept: application/json" \
+-H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs"
+```
+
+### List files that are part of a storage bundle.
+
+If the storage bundle ID and the its server location is known, then the API call is (see [documentation](http://localhost:8881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./listContent)):
+```
+curl -X GET "http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/list" \
+-H "accept: application/json" \
+-H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs"
+```
