@@ -46,11 +46,13 @@ public class StorageResourceHelper {
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(fullDataPathName));
         JacsStorageVolume selectedVolume = null;
         if (storageVolumes.isEmpty()) {
+            LOG.warn("No volume found to match {}", fullDataPathName);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No managed volume found for " + fullDataPathName))
                     .build();
         } else if (storageVolumes.size() > 1 && conflictResponseHandler != null) {
+            LOG.warn("Too many volumes found that match {}", fullDataPathName);
             Response conflictResponse = conflictResponseHandler.get();
             if (conflictResponse != null) {
                 return conflictResponse;
@@ -58,8 +60,14 @@ public class StorageResourceHelper {
         }
         selectedVolume = storageVolumes.get(0);
         // check if the first path component after the storage prefix is a bundle ID
-        java.nio.file.Path storagePathPrefix = Paths.get(selectedVolume.getStoragePathPrefix());
-        java.nio.file.Path storageRelativeFileDataPath = storagePathPrefix.relativize(Paths.get(fullDataPathName));
+        java.nio.file.Path storageRelativeFileDataPath = selectedVolume.getStorageRelativePath(fullDataPathName);
+        if (storageRelativeFileDataPath == null) {
+            LOG.warn("Path {} is not a relative path to {} ", fullDataPathName, selectedVolume);
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No relative path found for " + fullDataPathName))
+                    .build();
+        }
         int fileDataPathComponents = storageRelativeFileDataPath.getNameCount();
         JacsBundle dataBundle = null;
         try {

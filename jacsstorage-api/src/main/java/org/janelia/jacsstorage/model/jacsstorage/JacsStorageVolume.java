@@ -1,10 +1,13 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.AbstractEntity;
 import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -119,6 +122,35 @@ public class JacsStorageVolume extends AbstractEntity {
 
     public void setModified(Date modified) {
         this.modified = modified;
+    }
+
+    @JsonIgnore
+    public Path getStorageRelativePath(String dataPath) {
+        Path relativePath = null;
+        if (storageRootDir.length() > storagePathPrefix.length()) {
+            relativePath = relativizeToStorageDir(dataPath, storageRootDir);
+            if (relativePath != null) {
+                return relativePath;
+            } else {
+                return relativizeToStorageDir(dataPath, storagePathPrefix);
+            }
+        } else {
+            relativePath = relativizeToStorageDir(dataPath, storagePathPrefix);
+            if (relativePath != null) {
+                return relativePath;
+            } else {
+                return relativizeToStorageDir(dataPath, storageRootDir);
+            }
+        }
+    }
+
+    private Path relativizeToStorageDir(String dataDirName, String storageDirName) {
+        if (dataDirName.startsWith(storageDirName)) {
+            Path storagePath = Paths.get(storageDirName);
+            return storagePath.relativize(Paths.get(dataDirName));
+        } else {
+            return null;
+        }
     }
 
     @Override

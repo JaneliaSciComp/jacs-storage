@@ -106,8 +106,8 @@ public class AgentWebdavResource {
                                               Propfind propfindRequest,
                                               @Context SecurityContext securityContext) {
         LOG.info("PROPFIND data storage by path: {}, Depth: {} for {}", dataStoragePath, depth, securityContext.getUserPrincipal());
-        String fullDataStoragePath = StringUtils.prependIfMissing(dataStoragePath, "/");
-        List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(fullDataStoragePath));
+        String fullDataStoragePathName = StringUtils.prependIfMissing(dataStoragePath, "/");
+        List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(fullDataStoragePathName));
         if (localVolumes.isEmpty()) {
             LOG.warn("No storage volume found for {}", dataStoragePath);
             Multistatus statusResponse = new Multistatus();
@@ -115,7 +115,7 @@ public class AgentWebdavResource {
             propstat.setStatus("HTTP/1.1 404 Not Found");
 
             PropfindResponse propfindResponse = new PropfindResponse();
-            propfindResponse.setResponseDescription("No managed volume found for " + fullDataStoragePath);
+            propfindResponse.setResponseDescription("No managed volume found for " + fullDataStoragePathName);
             propfindResponse.setPropstat(propstat);
             statusResponse.getResponse().add(propfindResponse);
 
@@ -130,7 +130,7 @@ public class AgentWebdavResource {
             propstat.setStatus("HTTP/1.1 409 Conflict");
 
             PropfindResponse propfindResponse = new PropfindResponse();
-            propfindResponse.setResponseDescription("More than one volume found for " + fullDataStoragePath);
+            propfindResponse.setResponseDescription("More than one volume found for " + fullDataStoragePathName);
             propfindResponse.setPropstat(propstat);
             statusResponse.getResponse().add(propfindResponse);
 
@@ -141,8 +141,7 @@ public class AgentWebdavResource {
         }
         JacsStorageVolume storageVolume = localVolumes.get(0);
         int depthValue = WebdavUtils.getDepth(depth);
-        java.nio.file.Path storagePathPrefix = Paths.get(storageVolume.getStoragePathPrefix());
-        java.nio.file.Path storageRelativeFileDataPath = storagePathPrefix.relativize(Paths.get(fullDataStoragePath));
+        java.nio.file.Path storageRelativeFileDataPath = storageVolume.getStorageRelativePath(fullDataStoragePathName);
         int fileDataPathComponents = storageRelativeFileDataPath.getNameCount();
         JacsBundle dataBundle = null;
         try {
@@ -160,9 +159,10 @@ public class AgentWebdavResource {
             } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(storageRelativeFileDataPath))) {
                 return listStorageEntriesForPath(Paths.get(storageVolume.getStoragePathPrefix()).resolve(storageRelativeFileDataPath), depthValue);
             } else {
+                LOG.warn("No path found for {} relative to {}", fullDataStoragePathName, storageVolume);
                 return Response
                         .status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("No path found for " + fullDataStoragePath))
+                        .entity(new ErrorResponse("No path found for " + fullDataStoragePathName))
                         .build();
             }
         } else {
