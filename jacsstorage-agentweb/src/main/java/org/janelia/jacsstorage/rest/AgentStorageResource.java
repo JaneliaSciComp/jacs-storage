@@ -146,7 +146,7 @@ public class AgentStorageResource {
 
     @Produces(MediaType.APPLICATION_JSON)
     @GET
-    @Path("{dataBundleId}/list{entry:(/entry/[^/]+?)?}")
+    @Path("{dataBundleId}/list")
     @ApiOperation(value = "List the data bundle content.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully read the data bundle content."),
@@ -154,14 +154,14 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response listContent(@PathParam("dataBundleId") Long dataBundleId,
-                                @PathParam("entry") String entry,
+                                @QueryParam("entry") String entry,
                                 @QueryParam("depth") Integer depthParam,
                                 @Context SecurityContext securityContext) {
         LOG.info("List bundle content {} with a depthParameter {}", dataBundleId, depthParam);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         String entryName = StringUtils.isNotBlank(entry)
-                ? entry.substring("/entry/".length())
+                ? entry.trim()
                 : null;
         int depth = depthParam != null && depthParam >= 0 && depthParam < MAX_ALLOWED_DEPTH ? depthParam : MAX_ALLOWED_DEPTH;
         List<DataNodeInfo> dataBundleCotent = listDataEntries(dataBundle, entryName, depth);
@@ -176,7 +176,7 @@ public class AgentStorageResource {
         if (CollectionUtils.isNotEmpty(dataBundleContent) && dataBundle.getVirtualRoot() != null) {
             String virtualStoragePath = dataBundle.getVirtualRoot();
             dataBundleContent.forEach(dn -> {
-                dn.setStorageId(dataBundle.getId());
+                dn.setNumericStorageId(dataBundle.getId());
                 dn.setRootPrefix(virtualStoragePath);
             });
         }

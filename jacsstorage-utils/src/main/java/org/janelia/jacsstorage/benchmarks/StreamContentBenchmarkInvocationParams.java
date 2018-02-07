@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class StreamContentBenchmarkInvocationParams {
     Number storageBundleId;
     List<DataNodeInfo> storageContent;
-    Map<Number, DataStorageInfo> storageInfoMap;
+    Map<String, DataStorageInfo> storageInfoMap;
 
     @Setup(Level.Invocation)
     public void setUp(RetrieveBenchmarkTrialParams params) {
@@ -39,7 +39,7 @@ public class StreamContentBenchmarkInvocationParams {
                             storageInfo.getNumericId(),
                             params.authToken)
                             .stream()
-                            .peek(contentInfo -> {
+                            .peek((DataNodeInfo contentInfo) -> {
                                 storageInfoMap.put(contentInfo.getStorageId(), storageInfo);
                                 contentInfo.setRootLocation(storageInfo.getConnectionURL());
                             }))

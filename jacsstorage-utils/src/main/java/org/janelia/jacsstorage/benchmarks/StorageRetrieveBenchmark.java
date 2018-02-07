@@ -78,7 +78,7 @@ public class StorageRetrieveBenchmark {
     private void streamStorageContentEntryImpl(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
         DataNodeInfo contentInfo = invocationParams.storageContent.get(RandomUtils.nextInt(0, CollectionUtils.size(invocationParams.storageContent)));
         OutputStream targetStream = new NullOutputStream();
-        long nbytes = trialParams.storageClientHelper.streamDataEntryFromStorage(contentInfo.getRootLocation(), contentInfo.getStorageId(), contentInfo.getNodeRelativePath(), trialParams.authToken)
+        long nbytes = trialParams.storageClientHelper.streamDataEntryFromStorage(contentInfo.getRootLocation(), contentInfo.getNumericStorageId(), contentInfo.getNodeRelativePath(), trialParams.authToken)
                 .map(is -> {
                     try {
                         return ByteStreams.copy(is, targetStream);
@@ -107,7 +107,7 @@ public class StorageRetrieveBenchmark {
     private void streamStorageContentImpl(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
         DataNodeInfo contentInfo = invocationParams.storageContent.get(RandomUtils.nextInt(0, CollectionUtils.size(invocationParams.storageContent)));
         OutputStream targetStream = new NullOutputStream();
-        long nbytes = trialParams.storageClientHelper.streamDataFromStore(contentInfo.getRootLocation(), contentInfo.getStorageId(), trialParams.authToken)
+        long nbytes = trialParams.storageClientHelper.streamDataFromStore(contentInfo.getRootLocation(), contentInfo.getNumericStorageId(), trialParams.authToken)
                 .map(is -> {
                     try {
                         if (StringUtils.isBlank(trialParams.dataLocation)) {

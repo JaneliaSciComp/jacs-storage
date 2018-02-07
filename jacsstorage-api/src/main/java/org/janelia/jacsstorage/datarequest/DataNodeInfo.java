@@ -1,11 +1,13 @@
 package org.janelia.jacsstorage.datarequest;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.math.BigInteger;
 import java.util.Date;
 
 public class DataNodeInfo {
-    private Number storageId;
+    private String storageId;
     private String rootLocation;
     private String rootPrefix;
     private String nodeRelativePath; // node path relative to the root
@@ -15,12 +17,21 @@ public class DataNodeInfo {
     private Date creationTime;
     private Date lastModified;
 
-    public Number getStorageId() {
+    public String getStorageId() {
         return storageId;
     }
 
-    public void setStorageId(Number storageId) {
+    public void setStorageId(String storageId) {
         this.storageId = storageId;
+    }
+
+    @JsonIgnore
+    public Number getNumericStorageId() {
+        return new BigInteger(storageId);
+    }
+
+    public void setNumericStorageId(Number storageId) {
+        this.storageId = storageId.toString();
     }
 
     public String getRootLocation() {
