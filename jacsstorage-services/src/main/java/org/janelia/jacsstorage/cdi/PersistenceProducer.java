@@ -12,6 +12,8 @@ import org.janelia.jacsstorage.dao.CacheableJacsStorageVolumeDao;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.dao.mongo.utils.RegistryHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
@@ -19,6 +21,7 @@ import javax.inject.Inject;
 
 @ApplicationScoped
 public class PersistenceProducer {
+    private static final Logger LOG = LoggerFactory.getLogger(PersistenceProducer.class);
 
     @PropertyValue(name = "MongoDB.ConnectionURL")
     @Inject
@@ -42,6 +45,7 @@ public class PersistenceProducer {
                         .connectTimeout(connectTimeout)
                         .codecRegistry(codecRegistry);
         MongoClientURI mongoConnectionString = new MongoClientURI(nmongoConnectionURL, optionsBuilder);
+        LOG.info("Creating Mongo client {} using database {}", mongoConnectionString, mongoDatabase);
         MongoClient mongoClient = new MongoClient(mongoConnectionString);
         return mongoClient;
     }
