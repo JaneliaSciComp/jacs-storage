@@ -43,6 +43,8 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
             dataBundle.setPath(dataPath.toString());
             bundleDao.update(dataBundle, ImmutableMap.of("path", new SetFieldValueHandler<>(dataBundle.getPath())));
             return dataBundle;
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

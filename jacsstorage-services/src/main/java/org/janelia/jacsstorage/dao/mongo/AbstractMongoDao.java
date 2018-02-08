@@ -2,6 +2,9 @@ package org.janelia.jacsstorage.dao.mongo;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.mongodb.ErrorCategory;
+import com.mongodb.MongoWriteException;
+import com.mongodb.WriteError;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
@@ -188,7 +191,13 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
     public void save(T entity) {
         if (entity.getId() == null) {
             entity.setId(idGenerator.generateId());
-            mongoCollection.insertOne(entity);
+            try {
+                mongoCollection.insertOne(entity);
+            } catch (MongoWriteException e) {
+                if (e.getError().getCategory() == ErrorCategory.DUPLICATE_KEY) {
+                    throw new IllegalArgumentException(e);
+                }
+            }
         }
     }
 
@@ -202,7 +211,13 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
             }
         });
         if (!toInsert.isEmpty()) {
-            mongoCollection.insertMany(toInsert);
+            try {
+                mongoCollection.insertMany(toInsert);
+            } catch (MongoWriteException e) {
+                if (e.getError().getCategory() == ErrorCategory.DUPLICATE_KEY) {
+                    throw new IllegalArgumentException(e);
+                }
+            }
         }
     }
 
