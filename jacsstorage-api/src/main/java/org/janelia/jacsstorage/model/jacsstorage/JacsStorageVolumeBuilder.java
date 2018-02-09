@@ -44,4 +44,14 @@ public class JacsStorageVolumeBuilder {
         jacsStorageVolume.setStorageServiceURL(v);
         return this;
     }
+
+    public JacsStorageVolumeBuilder availableSpace(Long v) {
+        jacsStorageVolume.setAvailableSpaceInBytes(v);
+        return this;
+    }
+
+    public JacsStorageVolumeBuilder percentageFull(Integer v) {
+        jacsStorageVolume.setPercentageFull(v);
+        return this;
+    }
 }

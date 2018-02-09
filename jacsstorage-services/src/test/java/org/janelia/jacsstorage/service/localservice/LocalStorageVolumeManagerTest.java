@@ -12,6 +12,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
+import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.junit.Before;
@@ -41,10 +42,12 @@ import static org.mockito.Mockito.mock;
 public class LocalStorageVolumeManagerTest {
 
     private JacsStorageVolumeDao storageVolumeDao;
+    private NotificationService capacityNotifier;
 
     @Before
     public void setUp() {
         storageVolumeDao = mock(JacsStorageVolumeDao.class);
+        capacityNotifier = mock(NotificationService.class);
     }
 
     @Test
@@ -128,6 +131,7 @@ public class LocalStorageVolumeManagerTest {
         for (TestData td : testData) {
             StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
                     storageVolumeDao,
+                    capacityNotifier,
                     td.applicationConfig,
                     td.applicationConfig.getStringPropertyValue("StorageAgent.StorageHost"),
                     ImmutableList.of("v1", "v2")
@@ -148,6 +152,7 @@ public class LocalStorageVolumeManagerTest {
             Mockito.when(Files.getFileStore(any(Path.class)))
                     .then((Answer<FileStore>) invocation -> testFileStore);
             Mockito.when(testFileStore.getUsableSpace()).thenReturn(199L);
+            Mockito.when(testFileStore.getTotalSpace()).thenReturn(300L);
         } catch (Exception e) {
             fail(e.toString());
         }
@@ -161,6 +166,7 @@ public class LocalStorageVolumeManagerTest {
                 .storageRootDir("/root/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
+                .percentageFull(20)
                 .build();
         JacsStorageVolume newlyCreatedTestVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
@@ -175,6 +181,7 @@ public class LocalStorageVolumeManagerTest {
                 .then(invocation -> newlyCreatedTestVolume);
         StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
                 storageVolumeDao,
+                capacityNotifier,
                 applicationConfig,
                 testHost,
                 ImmutableList.of("storageVol")
@@ -186,6 +193,7 @@ public class LocalStorageVolumeManagerTest {
                 .put("storagePathPrefix", new SetFieldValueHandler<>(testVolume.getStoragePathPrefix()))
                 .put("availableSpaceInBytes", new SetFieldValueHandler<>(testVolume.getAvailableSpaceInBytes()))
                 .put("storageServiceURL", new SetFieldValueHandler<>(testVolume.getStorageServiceURL()))
+                .put("percentageFull", new SetFieldValueHandler<>(testVolume.getPercentageFull()))
                 .put("storageTags", new SetFieldValueHandler<>(testVolume.getStorageTags()))
                 .build()
         );
@@ -202,7 +210,21 @@ public class LocalStorageVolumeManagerTest {
                 .storagePathPrefix("/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
+                .availableSpace(200L)
+                .percentageFull(70)
                 .build();
+
+        JacsStorageVolume updatedTestVolume = new JacsStorageVolumeBuilder()
+                .storageVolumeId(1L)
+                .storageHost(testHost)
+                .storageRootDir("/root/testDir")
+                .storagePathPrefix("/testDir")
+                .addTag("t1").addTag("t2").addTag("t3")
+                .storageServiceURL("http://storageURL")
+                .availableSpace(100L)
+                .percentageFull(90)
+                .build();
+
         ApplicationConfig applicationConfig = mock(ApplicationConfig.class);
 
         prepareGetAvailableStorageBytes();
@@ -211,12 +233,19 @@ public class LocalStorageVolumeManagerTest {
 
         StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
                 storageVolumeDao,
+                capacityNotifier,
                 applicationConfig,
                 testHost,
                 ImmutableList.of("storageVol")
         );
-        storageVolumeManager.updateVolumeInfo(testVolume);
+        storageVolumeManager.updateVolumeInfo(updatedTestVolume);
         Mockito.verify(storageVolumeDao).findById(testVolume.getId());
+        Mockito.verify(storageVolumeDao).update(testVolume, ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
+                .put("availableSpaceInBytes", new SetFieldValueHandler<>(updatedTestVolume.getAvailableSpaceInBytes()))
+                .put("percentageFull", new SetFieldValueHandler<>(updatedTestVolume.getPercentageFull()))
+                .put("storageTags", new SetFieldValueHandler<>(updatedTestVolume.getStorageTags()))
+                .build()
+        );
         Mockito.verifyNoMoreInteractions(storageVolumeDao);
     }
 
@@ -244,6 +273,7 @@ public class LocalStorageVolumeManagerTest {
                 .then(invocation -> newlyCreatedTestVolume);
         StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
                 storageVolumeDao,
+                capacityNotifier,
                 applicationConfig,
                 testHost,
                 ImmutableList.of("storageVol")
@@ -278,6 +308,7 @@ public class LocalStorageVolumeManagerTest {
 
         StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
                 storageVolumeDao,
+                capacityNotifier,
                 applicationConfig,
                 testHost,
                 ImmutableList.of("storageVol")

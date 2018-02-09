@@ -2,12 +2,16 @@ package org.janelia.jacsstorage.service.impl;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
+import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.file.FileStore;
@@ -17,11 +21,16 @@ import java.util.Map;
 
 public abstract class AbstractStorageVolumeManager implements StorageVolumeManager {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractStorageVolumeManager.class);
+    private static final Integer FILL_UP_THRESHOLD = 85;
+
     protected final JacsStorageVolumeDao storageVolumeDao;
+    private final NotificationService capacityNotifier;
 
     @Inject
-    public AbstractStorageVolumeManager(JacsStorageVolumeDao storageVolumeDao) {
+    public AbstractStorageVolumeManager(JacsStorageVolumeDao storageVolumeDao, NotificationService capacityNotifier) {
         this.storageVolumeDao = storageVolumeDao;
+        this.capacityNotifier = capacityNotifier;
     }
 
     @Override
@@ -55,8 +64,18 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
         if (!storageVolume.isShared()) {
             storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getStorageRootDir()));
             if (!storageVolume.getAvailableSpaceInBytes().equals(currentVolumeInfo.getAvailableSpaceInBytes())) {
+                LOG.debug("Update availableSpace to {} bytes", storageVolume.getAvailableSpaceInBytes());
                 currentVolumeInfo.setAvailableSpaceInBytes(storageVolume.getAvailableSpaceInBytes());
                 updatedVolumeFieldsBuilder.put("availableSpaceInBytes", new SetFieldValueHandler<>(currentVolumeInfo.getAvailableSpaceInBytes()));
+                if (storageVolume.hasPercentageAvailable()) {
+                    currentVolumeInfo.setPercentageFull(storageVolume.getPercentageFull());
+                    updatedVolumeFieldsBuilder.put("percentageFull", new SetFieldValueHandler<>(currentVolumeInfo.getPercentageFull()));
+                    if (currentVolumeInfo.getPercentageFull() > FILL_UP_THRESHOLD) {
+                        LOG.warn("Volume {} is {}% full", currentVolumeInfo, currentVolumeInfo.getPercentageFull());
+                        String capacityNotification = "Volume " + currentVolumeInfo.getName() + " is " + currentVolumeInfo.getPercentageFull() + "% full";
+                        capacityNotifier.sendNotification(capacityNotification, capacityNotification);
+                    }
+                }
             }
             if (StringUtils.isNotBlank(storageVolume.getStorageServiceURL()) &&
                     (StringUtils.isBlank(currentVolumeInfo.getStorageServiceURL()) ||
@@ -73,7 +92,8 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
             updatedVolumeFieldsBuilder.put("storageServiceURL", new SetFieldValueHandler<>(currentVolumeInfo.getStorageServiceURL()));
             updatedVolumeFieldsBuilder.put("storageHost", new SetFieldValueHandler<>(currentVolumeInfo.getStorageHost()));
         }
-        if (!currentVolumeInfo.hasTags() && storageVolume.hasTags()) {
+        if (!currentVolumeInfo.hasTags() && storageVolume.hasTags() ||
+                !ImmutableSet.copyOf(currentVolumeInfo.getStorageTags()).equals(ImmutableSet.copyOf(storageVolume.getStorageTags()))) {
             currentVolumeInfo.setStorageTags(storageVolume.getStorageTags());
             updatedVolumeFieldsBuilder.put("storageTags", new SetFieldValueHandler<>(currentVolumeInfo.getStorageTags()));
         }

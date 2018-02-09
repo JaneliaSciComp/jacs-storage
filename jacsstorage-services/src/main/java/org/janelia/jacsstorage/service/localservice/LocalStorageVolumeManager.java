@@ -12,7 +12,10 @@ import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.impl.AbstractStorageVolumeManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.file.FileStore;
@@ -25,6 +28,8 @@ import java.util.stream.Stream;
 @LocalInstance
 public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
 
+    private static final Logger LOG = LoggerFactory.getLogger(LocalStorageVolumeManager.class);
+
     private final ApplicationConfig applicationConfig;
     private final String storageHost;
     private final List<String> managedVolumes;
@@ -32,10 +37,11 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
 
     @Inject
     public LocalStorageVolumeManager(JacsStorageVolumeDao storageVolumeDao,
+                                     NotificationService capacityNotifier,
                                      @ApplicationProperties ApplicationConfig applicationConfig,
                                      @PropertyValue(name = "StorageAgent.StorageHost") String storageHost,
                                      @PropertyValue(name = "StorageAgent.StorageVolumes") List<String> managedVolumes) {
-        super(storageVolumeDao);
+        super(storageVolumeDao, capacityNotifier);
         this.applicationConfig = applicationConfig;
         this.storageHost = StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());;
         this.managedVolumes = managedVolumes;
@@ -75,6 +81,12 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         storageVolume.setStoragePathPrefix(getStoragePathPrefix(volumeName));
         storageVolume.setStorageTags(getStorageVolumeTags(volumeName));
         storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getStorageRootDir()));
+        long totalSpace = getTotalStorageSpaceInBytes(storageVolume.getStorageRootDir());
+        if (totalSpace != 0) {
+            storageVolume.setPercentageFull((int) (storageVolume.getAvailableSpaceInBytes() * 100 / totalSpace));
+        } else {
+            LOG.warn("Total space calculated is 0");
+        }
         return storageVolume;
     }
 
@@ -96,6 +108,14 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     private long getAvailableStorageSpaceInBytes(String storageDirName) {
         try {
             return getFileStore(storageDirName).getUsableSpace();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private long getTotalStorageSpaceInBytes(String storageDirName) {
+        try {
+            return getFileStore(storageDirName).getTotalSpace();
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

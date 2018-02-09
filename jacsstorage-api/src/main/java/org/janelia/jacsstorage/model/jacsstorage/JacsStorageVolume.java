@@ -23,6 +23,7 @@ public class JacsStorageVolume extends AbstractEntity {
     private List<String> storageTags; // storage tags - identify certain features of the physical storage
     private String storageServiceURL;
     private Long availableSpaceInBytes;
+    private Integer percentageFull;
     private boolean shared;
     private Date created = new Date();
     private Date modified = new Date();
@@ -98,6 +99,18 @@ public class JacsStorageVolume extends AbstractEntity {
 
     public boolean hasAvailableSpaceInBytes() {
         return availableSpaceInBytes != null && availableSpaceInBytes > 0;
+    }
+
+    public Integer getPercentageFull() {
+        return percentageFull;
+    }
+
+    public void setPercentageFull(Integer percentageFull) {
+        this.percentageFull = percentageFull;
+    }
+
+    public boolean hasPercentageAvailable() {
+        return percentageFull != null;
     }
 
     public boolean isShared() {
