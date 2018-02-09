@@ -122,7 +122,7 @@ sudo systemctl start jacsstorage-agentweb
 ### Put data onto the storage servers
 
 The copy of the data onto the storage server(s) it's a two step process:
-1. Ask the master (see [documentation](http://localhost:8880/docs/#/Master_storage_API./createBundleInfo)) on which server I can copy the data.
+1. Ask the master (see [documentation](http://jade1:9880/docs/#/Master_storage_API./createBundleInfo)) on which server I can copy the data.
 ```
 curl -i -X POST 'http://localhost:8880/jacsstorage/master_api/v1/storage' \
 -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs' \
@@ -130,7 +130,7 @@ curl -i -X POST 'http://localhost:8880/jacsstorage/master_api/v1/storage' \
 -H 'Content-Type: application/json' \
 -d "{ \"name\": \"d1\", \"ownerKey\": \"user:goinac\", \"storageTags\": [ \"d1\" ], \"storageFormat\": \"DATA_DIRECTORY\", \"metadata\": { \"additionalProp1\": {}, \"additionalProp2\": {}, \"additionalProp3\": {} }}"
 ```
-2. Use the connectionURL and the ID returned in the JSON result in the first step to send to <connectionURL value>/agent_storage/<ID value> (see [documentation](http://localhost:8881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./persistStream)) the data files.
+2. Use the connectionURL and the ID returned in the JSON result in the first step to send to <connectionURL value>/agent_storage/<ID value> (see [documentation](http://jade1:9881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./persistStream)) the data files.
 ```
 curl -X POST "http://0.0.0.0:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/file/f1" \
 -H "accept: application/json" \
@@ -145,7 +145,7 @@ storage server the tar will be unbundled and added to the selected storage.
 ### Retrieve storage info
 
 If the storage ID is known you can find information about the storage, i.e., where it resides, path info using 
-[getBundleInfo](http://localhost:8880/docs/#/Master_storage_API./getBundleInfo)
+[getBundleInfo](http://jade1:9880/docs/#/Master_storage_API./getBundleInfo)
 
 ```
 curl -X GET "http://localhost:8880/jacsstorage/master_api/v1/storage/2501203311319875608" \
@@ -157,7 +157,7 @@ curl -X GET "http://localhost:8880/jacsstorage/master_api/v1/storage/25012033113
 The content retrieval is also a two step process:
 1. Retrieve storage info or search storage entries to find out where the content is stored
 2. Use the returned contentURL in combination with the ID and the entry name to retrieve the actual content 
-(see [documentation](http://localhost:8881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./getEntryContent))
+(see [documentation](http://jade1:9881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./getEntryContent))
 ```
 curl -X GET "http://0.0.0.0:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/entry_content/f1" \
 -H "accept: application/octet-stream" \
@@ -166,7 +166,7 @@ curl -X GET "http://0.0.0.0:8881/jacsstorage/agent_api/v1/agent_storage/25012033
 
 ### Search storage entries
 
-Storage entries can be searched by owner, volume name, tags - see [documentation](http://localhost:8880/docs/#/Master_storage_API./listBundleInfo)
+Storage entries can be searched by owner, volume name, tags - see [documentation](http://jade1:9880/docs/#/Master_storage_API./listBundleInfo)
 If you are not an admin you can only search your own entries.
 
 ```
@@ -177,7 +177,7 @@ curl -X GET "http://localhost:8880/jacsstorage/master_api/v1/storage" \
 
 ### List files that are part of a storage bundle.
 
-If the storage bundle ID and the its server location is known, then the API call is (see [documentation](http://localhost:8881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./listContent)):
+If the storage bundle ID and the its server location is known, then the API call is (see [documentation](http://jade1:9881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./listContent)):
 ```
 curl -X GET "http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/list" \
 -H "accept: application/json" \

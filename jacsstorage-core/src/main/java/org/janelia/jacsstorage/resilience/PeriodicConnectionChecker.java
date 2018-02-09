@@ -67,10 +67,10 @@ public class PeriodicConnectionChecker<T> implements ConnectionChecker<T> {
                 }
             } catch (Exception e) {
                 LOG.error("Error testing connection", e);
-                state = ConnectionState.OPEN;
-                if (onFailure != null) {
+                if (onFailure != null && state != ConnectionState.OPEN) {
                     onFailure.accept(connState);
                 }
+                state = ConnectionState.OPEN;
             }
         };
         if (initialDelayInSeconds == 0) {

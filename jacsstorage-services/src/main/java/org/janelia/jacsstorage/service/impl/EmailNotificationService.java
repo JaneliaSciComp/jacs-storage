@@ -70,7 +70,7 @@ public class EmailNotificationService implements NotificationService {
             } else {
                 session = Session.getInstance(emailProperties);
             }
-
+            LOG.debug("Send {} to {}", subject, recipients);
             Message emailMessage = new MimeMessage(session);
             emailMessage.setFrom(new InternetAddress(senderEmail));
             emailMessage.setRecipients(Message.RecipientType.TO,
