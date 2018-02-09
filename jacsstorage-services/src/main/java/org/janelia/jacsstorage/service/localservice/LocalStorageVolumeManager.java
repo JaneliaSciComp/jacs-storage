@@ -83,7 +83,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getStorageRootDir()));
         long totalSpace = getTotalStorageSpaceInBytes(storageVolume.getStorageRootDir());
         if (totalSpace != 0) {
-            storageVolume.setPercentageFull((int) (storageVolume.getAvailableSpaceInBytes() * 100 / totalSpace));
+            storageVolume.setPercentageFull((int) ((totalSpace - storageVolume.getAvailableSpaceInBytes()) * 100 / totalSpace));
         } else {
             LOG.warn("Total space calculated is 0");
         }
