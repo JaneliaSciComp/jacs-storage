@@ -84,9 +84,21 @@ public class MasterStorageResource {
             }
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The number of storage entries that match the given filters"),
-            @ApiResponse(code = 401, message = "If user is not authenticated"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(
+                    code = 200,
+                    message = "The number of storage entries that match the given filters",
+                    response = Long.class
+            ),
+            @ApiResponse(
+                    code = 401,
+                    message = "If user is not authenticated",
+                    response = ErrorResponse.class
+            ),
+            @ApiResponse(
+                    code = 500,
+                    message = "Data read error",
+                    response = ErrorResponse.class
+            )
     })
     public Response countBundleInfo(@ApiParam(value = "search by storage id parameter") @QueryParam("id") Long dataBundleId,
                                     @ApiParam(value = "search by storage storage owner parameter") @QueryParam("ownerKey") String ownerKey,
@@ -130,8 +142,16 @@ public class MasterStorageResource {
                     message = "The list of storage entries that match the given filters",
                     response = DataStorageInfo.class
             ),
-            @ApiResponse(code = 401, message = "If user is not authenticated"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(
+                    code = 401,
+                    message = "If user is not authenticated",
+                    response = ErrorResponse.class
+            ),
+            @ApiResponse(
+                    code = 500,
+                    message = "Data read error",
+                    response = ErrorResponse.class
+            )
     })
     public Response listBundleInfo(@QueryParam("id") Long dataBundleId,
                                    @QueryParam("ownerKey") String ownerKey,
@@ -186,9 +206,26 @@ public class MasterStorageResource {
             }
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The storage entry with the given ID"),
-            @ApiResponse(code = 401, message = "If user is not authenticated"),
-            @ApiResponse(code = 404, message = "If entry ID is invalid"),
+            @ApiResponse(
+                    code = 200,
+                    message = "The storage entry with the given ID",
+                    response = DataStorageInfo.class
+            ),
+            @ApiResponse(
+                    code = 401,
+                    message = "If user is not authenticated",
+                    response = ErrorResponse.class
+            ),
+            @ApiResponse(
+                    code = 403,
+                    message = "If user is authenticated but does not have the privileges",
+                    response = ErrorResponse.class
+            ),
+            @ApiResponse(
+                    code = 404,
+                    message = "If entry ID is invalid",
+                    response = ErrorResponse.class
+            ),
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response getBundleInfo(@PathParam("id") Long id, @Context SecurityContext securityContext) {
@@ -221,10 +258,26 @@ public class MasterStorageResource {
             }
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The storage entry with the given name owned by the provided subject"),
-            @ApiResponse(code = 401, message = "If user is not authenticated"),
-            @ApiResponse(code = 404, message = "If entry ID is invalid"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(
+                    code = 200,
+                    message = "The storage entry with the given name owned by the provided subject",
+                    response = DataStorageInfo.class
+            ),
+            @ApiResponse(
+                    code = 401,
+                    message = "If user is not authenticated",
+                    response = ErrorResponse.class
+            ),
+            @ApiResponse(
+                    code = 404,
+                    message = "If entry ID is invalid",
+                    response = ErrorResponse.class
+            ),
+            @ApiResponse(
+                    code = 500,
+                    message = "Data read error",
+                    response = ErrorResponse.class
+            )
     })
     public Response getBundleInfoByOwnerAndName(@PathParam("ownerKey") String ownerKey,
                                                 @PathParam("name") String name,
@@ -262,11 +315,11 @@ public class MasterStorageResource {
             }
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "The new storage entry."),
-            @ApiResponse(code = 401, message = "If user is not authenticated"),
-            @ApiResponse(code = 403, message = "If user is authenticated but does not have enough privileges to perform the operation"),
-            @ApiResponse(code = 404, message = "Volume on which to store the data was not found or no agent is available."),
-            @ApiResponse(code = 500, message = "Data write error")
+            @ApiResponse(code = 201, message = "The new storage entry.", response = DataStorageInfo.class),
+            @ApiResponse(code = 401, message = "If user is not authenticated", response = ErrorResponse.class),
+            @ApiResponse(code = 403, message = "If user is authenticated but does not have enough privileges to perform the operation", response = ErrorResponse.class),
+            @ApiResponse(code = 404, message = "Volume on which to store the data was not found or no agent is available.", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
     })
     public Response createBundleInfo(@ApiParam(value = "information about the storage to be created") DataStorageInfo dataStorageInfo,
                                      @Context SecurityContext securityContext) {
