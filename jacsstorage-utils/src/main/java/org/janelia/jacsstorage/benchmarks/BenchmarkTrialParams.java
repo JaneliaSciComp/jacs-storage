@@ -2,7 +2,7 @@ package org.janelia.jacsstorage.benchmarks;
 
 import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.utils.StorageClientImplHelper;
+import org.janelia.jacsstorage.clientutils.StorageClientImplHelper;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;

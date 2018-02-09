@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.utils;
+package org.janelia.jacsstorage.clientutils;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;

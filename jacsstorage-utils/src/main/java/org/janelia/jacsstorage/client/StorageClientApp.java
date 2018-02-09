@@ -8,8 +8,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.datatransfer.DataTransferService;
-import org.janelia.jacsstorage.utils.AuthClientImplHelper;
-import org.janelia.jacsstorage.utils.StorageClientImplHelper;
+import org.janelia.jacsstorage.clientutils.AuthClientImplHelper;
+import org.janelia.jacsstorage.clientutils.StorageClientImplHelper;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;

@@ -3,7 +3,7 @@ apply plugin: 'application'
 applicationName = 'storageClientApp'
 mainClassName = 'org.janelia.jacsstorage.client.StorageClientApp'
 
-project(":jacsstorage-utils") {
+project(":jacsstorage-clientutils") {
     dependencies {
         implementation project(":jacsstorage-core"),
                        BENCHMARK_CORE_LIB,
@@ -55,4 +55,4 @@ project(":jacsstorage-utils") {
 
 }
 
-ext.moduleName = 'org.janelia.jacsstorage.utils'
+ext.moduleName = 'org.janelia.jacsstorage.clientutils'

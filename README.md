@@ -2,16 +2,20 @@
 
 ### Environment
 
-The local development requires a local MongoDB instance so that it can run the integration tests 
-or it requires a java properties file that overrides the MongoDB connection settings and then 
-set up JACSSTORAGE_CONFIG_TEST environment variable to point to the config file, e.g.
+The development environment requires access to our development MongoDB instance running
+on dev-mongodb in order to run the integration tests. If you are already inside Janelia 
+that is not a problem - since you automatically have access to it, otherwise you may have 
+to be on VPN in order to access it. Another option is to use any other MongoDB instance and 
+write a java properties file that overrides the MongoDB settings. Then set up the environment
+variables - JACSSTORAGE_CONFIG for production and JACSSTORAGE_CONFIG_TEST for build to point
+to it, e.g.
 
 ```
 mkdir local
 cat <<EOF > local/myConfig.properties
-MongoDB.ConnectionURL=mongodb://dev-mongodb:27017
-MongoDB.Database=${user.name}_jacsstorage_test
+MongoDB.ConnectionURL=mongodb://myusername:mypassword@localhost:27017/?authSource=db1
 EOF
+export JACSSTORAGE_CONFIG=$PWD/local/myConfig.properties
 export JACSSTORAGE_CONFIG_TEST=$PWD/local/myConfig.properties
 ```
 
@@ -19,7 +23,7 @@ As a note if you only want to compile and create the distribution then you don't
 MongoDB setup because the integration tests run only as part of the build task, installDist 
 only compiles and creates the zip and tar distributions.
 
-#### Setup local MongoDB instance
+##### Setup local MongoDB instance
 
 To install MongoDB on MacOS:
 
@@ -54,8 +58,9 @@ To run only the integration tests:
 ./gradlew integrationTest
 ```
 
-If you want to use a different test database than the one running locally on your development machine you can create a configuration file,
-as explained above, in which you override the database connection settings and then use JACSSTORAGE_CONFIG_TEST environment variable to point to it, eg.,
+If you want to use a different test database than the development MongoDB instance you can create a configuration file,
+as explained above, in which you override the database connection settings and then use JACSSTORAGE_CONFIG_TEST 
+environment variable to point to it, eg.,
 ```
 JACSSTORAGE_CONFIG_TEST=/my/prefered/location/for/dev/my-config-test.properties ./gradlew clean build installDist
 ```
