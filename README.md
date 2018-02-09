@@ -183,3 +183,15 @@ curl -X GET "http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/250120
 -H "accept: application/json" \
 -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs"
 ```
+
+### Accessing the storage service from your application
+
+##### Java
+
+For Java examples please take a look at the jacsstorage-clients module, packages 'org.janelia.jacsstorage.client'
+and 'org.janelia.jacsstorage.clientutils'. There you will find examples of how to access the storage
+using jersey client library.
+
+##### Python
+
+To access the storage service from python please take a look at the `examples/python` directory.
