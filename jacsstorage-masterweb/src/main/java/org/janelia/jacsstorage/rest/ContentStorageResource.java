@@ -56,8 +56,9 @@ public class ContentStorageResource {
     @Path("storage_path/{filePath:.+}")
     @ApiOperation(value = "Get file content", notes = "")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success"),
-            @ApiResponse(code = 404, message = "Specified file path not found") })
+            @ApiResponse(code = 200, message = "Success", response = StreamingOutput.class),
+            @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
+    })
     public Response getContentStream(@PathParam("filePath") String fullFileNameParam, @Context SecurityContext securityContext) {
         LOG.info("Stream content of {}", fullFileNameParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);

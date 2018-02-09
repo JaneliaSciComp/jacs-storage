@@ -6,7 +6,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
-import org.janelia.jacsstorage.service.Timed;
 import org.janelia.jacsstorage.service.distributedservice.StorageAgentManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,8 +42,8 @@ public class StorageAgentsResource {
     @GET
     @ApiOperation(value = "Find registered agent")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Return the agent info"),
-            @ApiResponse(code = 404, message = "Agent URL is invalid")
+            @ApiResponse(code = 200, message = "Return the agent info", response = StorageAgentInfo.class),
+            @ApiResponse(code = 404, message = "Agent URL is invalid", response = ErrorResponse.class)
     })
     public Response findRegisteredAgent(@PathParam("agentURL") String agentLocationInfo) {
         LOG.trace("Find registered agent for {}", agentLocationInfo);
@@ -56,7 +55,7 @@ public class StorageAgentsResource {
     @GET
     @ApiOperation(value = "List registered agents")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Return registered agents info")
+            @ApiResponse(code = 200, message = "Return registered agents info", response = StorageAgentInfo.class)
     })
     public Response getCurrentRegisteredAgents(@QueryParam("connStatus") String connectionStatus) {
         LOG.debug("Get available agents with connectionStatus - {}", StringUtils.defaultIfBlank(connectionStatus, "<ANY>"));
@@ -69,7 +68,7 @@ public class StorageAgentsResource {
     @POST
     @ApiOperation(value = "Register/re-register agent")
     @ApiResponses(value = {
-            @ApiResponse(code = 202, message = "Return registered agent info")
+            @ApiResponse(code = 202, message = "Return registered agent info", response = StorageAgentInfo.class)
     })
     public Response registerAgent(StorageAgentInfo agentInfo) {
         LOG.info("Register agent - {}", agentInfo);
