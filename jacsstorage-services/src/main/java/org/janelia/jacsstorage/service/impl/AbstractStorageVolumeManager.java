@@ -93,7 +93,8 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
             updatedVolumeFieldsBuilder.put("storageHost", new SetFieldValueHandler<>(currentVolumeInfo.getStorageHost()));
         }
         if (!currentVolumeInfo.hasTags() && storageVolume.hasTags() ||
-                !ImmutableSet.copyOf(currentVolumeInfo.getStorageTags()).equals(ImmutableSet.copyOf(storageVolume.getStorageTags()))) {
+                currentVolumeInfo.hasTags() && !storageVolume.hasTags() ||
+                currentVolumeInfo.hasTags() && storageVolume.hasTags() && !ImmutableSet.copyOf(currentVolumeInfo.getStorageTags()).equals(ImmutableSet.copyOf(storageVolume.getStorageTags()))) {
             currentVolumeInfo.setStorageTags(storageVolume.getStorageTags());
             updatedVolumeFieldsBuilder.put("storageTags", new SetFieldValueHandler<>(currentVolumeInfo.getStorageTags()));
         }

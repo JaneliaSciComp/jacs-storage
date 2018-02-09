@@ -270,6 +270,7 @@ public class AgentStorageResource {
                         .usedSpaceInBytes(newDirEntrySize)
                         .build());
         DataNodeInfo newDataNode = new DataNodeInfo();
+        newDataNode.setNumericStorageId(dataBundleId);
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
         newDataNode.setRootPrefix(dataBundle.getVirtualRoot());
         newDataNode.setNodeRelativePath(dataEntryPath);
@@ -357,6 +358,7 @@ public class AgentStorageResource {
                         .usedSpaceInBytes(newFileEntrySize)
                         .build());
         DataNodeInfo newDataNode = new DataNodeInfo();
+        newDataNode.setNumericStorageId(dataBundleId);
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
         newDataNode.setRootPrefix(dataBundle.getVirtualRoot());
         newDataNode.setNodeRelativePath(dataEntryPath);
