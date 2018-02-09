@@ -6,6 +6,7 @@ import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.ConnectionChecker;
 import org.janelia.jacsstorage.resilience.PeriodicConnectionChecker;
+import org.janelia.jacsstorage.service.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,8 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     private Integer tripThreshold;
     @Inject @PropertyValue(name = "Storage.Overflow.RootDir")
     private String overflowRootDir;
+    @Inject
+    private NotificationService connectivityNotifier;
 
     @Override
     public List<StorageAgentInfo> getCurrentRegisteredAgents(Predicate<StorageAgentConnection> agentConnectionPredicate) {
@@ -73,6 +76,9 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
                     storageAgentInfo -> {
                         LOG.error("Connection lost to {}", storageAgentInfo);
                         agentConnection.updateConnectionStatus();
+                        connectivityNotifier.sendNotification(
+                                "Master lost connection to " + storageAgentInfo.getAgentHttpURL(),
+                                "Master lost connection to " + storageAgentInfo.getAgentHttpURL());
                     });
             return agentInfo;
         } else {

@@ -5,7 +5,7 @@
        xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/beans_1_1.xsd"
        bean-discovery-mode="all">
     <interceptors>
-        <class>org.janelia.jacsstorage.service.LoggerInterceptor</class>
-        <class>org.janelia.jacsstorage.service.TimedInterceptor</class>
+        <class>org.janelia.jacsstorage.service.interceptors.LoggerInterceptor</class>
+        <class>org.janelia.jacsstorage.service.interceptors.TimedInterceptor</class>
     </interceptors>
 </beans>

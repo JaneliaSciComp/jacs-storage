@@ -44,6 +44,9 @@ dependencies {
         JAX_RS_JERSEY_TEST_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-util:${JERSEY_VERSION}"
         JAX_RS_JERSEY_TEST_PROVIDER_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-bundle:${JERSEY_VERSION}"
 
+        // Mail
+	JAVAMAIL_LIB = "com.sun.mail:javax.mail:1.6.0"
+
         // command line args
         CMDLINE_ARG_LIB = "com.beust:jcommander:1.72"
 

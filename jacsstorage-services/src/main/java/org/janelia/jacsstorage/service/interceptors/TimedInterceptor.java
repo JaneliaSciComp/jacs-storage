@@ -1,5 +1,6 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.service.interceptors;
 
+import org.janelia.jacsstorage.service.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

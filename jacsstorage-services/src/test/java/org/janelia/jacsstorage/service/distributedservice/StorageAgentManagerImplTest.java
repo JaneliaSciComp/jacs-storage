@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.service.distributedservice;
 
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
+import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.distributedservice.AgentConnectionTester;
 import org.janelia.jacsstorage.service.distributedservice.StorageAgentManagerImpl;
 import org.junit.Before;
@@ -41,6 +42,8 @@ public class StorageAgentManagerImplTest {
 
     @Mock
     private ScheduledExecutorService scheduler;
+    @Mock
+    private NotificationService connectivityNotifier;
     private Integer periodInSeconds = 30;
     private Integer initialDelayInSeconds = 10;
     private Integer tripThreshold = 1;

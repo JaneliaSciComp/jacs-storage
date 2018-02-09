@@ -1,8 +1,9 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.service.impl;
 
 import org.janelia.jacsstorage.dao.JacsStorageEventDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageEvent;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageEventBuilder;
+import org.janelia.jacsstorage.service.StorageEventLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

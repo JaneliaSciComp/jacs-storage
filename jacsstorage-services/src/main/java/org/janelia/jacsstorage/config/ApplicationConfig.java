@@ -9,6 +9,7 @@ public interface ApplicationConfig {
     String getStringPropertyValue(String name);
     String getStringPropertyValue(String name, String defaultValue);
     Boolean getBooleanPropertyValue(String name);
+    Boolean getBooleanPropertyValue(String name, Boolean defaultValue);
     Integer getIntegerPropertyValue(String name);
     Integer getIntegerPropertyValue(String name, Integer defaultValue);
     Long getLongPropertyValue(String name);

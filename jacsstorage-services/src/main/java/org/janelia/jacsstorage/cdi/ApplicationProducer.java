@@ -49,6 +49,18 @@ public class ApplicationProducer {
 
     @Produces
     @PropertyValue(name = "")
+    public Boolean booleanPropertyValue(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
+        final PropertyValue property = injectionPoint.getAnnotated().getAnnotation(PropertyValue.class);
+        String defaultValue = property.defaultValue();
+        if (StringUtils.isBlank(defaultValue)) {
+            return applicationConfig.getBooleanPropertyValue(property.name());
+        } else {
+            return applicationConfig.getBooleanPropertyValue(property.name(), Boolean.valueOf(defaultValue));
+        }
+    }
+
+    @Produces
+    @PropertyValue(name = "")
     public Integer integerPropertyValue(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
         final PropertyValue property = injectionPoint.getAnnotated().getAnnotation(PropertyValue.class);
         String defaultValue = property.defaultValue();

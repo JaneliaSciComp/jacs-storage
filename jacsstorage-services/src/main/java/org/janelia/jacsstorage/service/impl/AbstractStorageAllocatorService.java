@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.service.impl;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
@@ -10,6 +10,7 @@ import org.janelia.jacsstorage.model.support.IncFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.coreutils.PathUtils;
+import org.janelia.jacsstorage.service.StorageAllocatorService;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

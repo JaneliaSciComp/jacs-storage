@@ -1,8 +1,11 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.service.interceptors;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.service.LogStorageEvent;
+import org.janelia.jacsstorage.service.Logged;
+import org.janelia.jacsstorage.service.StorageEventLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +15,6 @@ import javax.interceptor.Interceptor;
 import javax.interceptor.InvocationContext;
 import java.lang.reflect.Method;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Logged
 @Interceptor

@@ -12,6 +12,7 @@ import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.ConnectionChecker;
 import org.janelia.jacsstorage.resilience.PeriodicConnectionChecker;
 import org.janelia.jacsstorage.resilience.ConnectionTester;
+import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.slf4j.Logger;
@@ -43,6 +44,8 @@ public class AgentState {
     private Integer initialDelayInSeconds;
     @Inject @PropertyValue(name= "StorageAgent.FailureCountTripThreshold")
     private Integer tripThreshold;
+    @Inject
+    private NotificationService connectivityNotifier;
     private ConnectionChecker<AgentState> agentConnectionChecker;
     private String agentHttpURL;
     private List<JacsStorageVolume> agentManagedVolumes;
@@ -85,6 +88,9 @@ public class AgentState {
                 },
                 agentState -> {
                     LOG.error("Agent {} got disconnected from {}", agentState, masterHttpURL);
+                    connectivityNotifier.sendNotification(
+                            "Agent " + agentHttpURL + " lost connection to " + masterHttpURL,
+                            "Agent " + agentHttpURL + " lost connection to " + masterHttpURL);
                 });
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
