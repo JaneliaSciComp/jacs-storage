@@ -58,6 +58,10 @@ public class JacsBundle extends AbstractEntity {
         return path;
     }
 
+    public void setPath(String path) {
+        this.path = path;
+    }
+
     @JsonIgnore
     public Path getRealStoragePath() {
         if (storageVolume == null) {
@@ -78,10 +82,6 @@ public class JacsBundle extends AbstractEntity {
         } else {
             return getId().toString();
         }
-    }
-
-    public void setPath(String path) {
-        this.path = path;
     }
 
     public Set<String> getReadersKeys() {

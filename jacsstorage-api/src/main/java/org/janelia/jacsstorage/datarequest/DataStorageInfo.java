@@ -1,6 +1,8 @@
 package org.janelia.jacsstorage.datarequest;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -14,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@ApiModel(
+        value = "Storage information"
+)
 public class DataStorageInfo {
     private String id;
     private String name;
@@ -55,6 +60,9 @@ public class DataStorageInfo {
         return dsi;
     }
 
+    @ApiModelProperty(
+            value = "storage ID"
+    )
     public String getId() {
         return id;
     }
@@ -78,6 +86,10 @@ public class DataStorageInfo {
         return StringUtils.isNotBlank(id) && !"0".equals(id);
     }
 
+    @ApiModelProperty(
+            value = "storage name",
+            notes = "this value must be unique for a user"
+    )
     public String getName() {
         return name;
     }
@@ -87,6 +99,9 @@ public class DataStorageInfo {
         return this;
     }
 
+    @ApiModelProperty(
+            value = "storage owner key compatible with JACS subject key format - 'user:username'"
+    )
     public String getOwnerKey() {
         return ownerKey;
     }
@@ -96,6 +111,9 @@ public class DataStorageInfo {
         return this;
     }
 
+    @ApiModelProperty(
+            value = "path relative to the storage volume root directory"
+    )
     public String getPath() {
         return path;
     }
@@ -112,6 +130,10 @@ public class DataStorageInfo {
                 : (StringUtils.isBlank(path) ? "" : Paths.get(path).toString());
     }
 
+    @ApiModelProperty(
+            value = "list of subject keys that can read this storage",
+            notes = "If no readers are specified the only ones who can access the storage are the owner and the admin users"
+    )
     public Set<String> getReadersKeys() {
         return readersKeys;
     }
@@ -121,6 +143,10 @@ public class DataStorageInfo {
         return this;
     }
 
+    @ApiModelProperty(
+            value = "list of subject keys that can write to this storage",
+            notes = "If no writers are specified the only ones who can access the storage are the owner and the admin users"
+    )
     public Set<String> getWritersKeys() {
         return writersKeys;
     }
@@ -139,6 +165,9 @@ public class DataStorageInfo {
         return this;
     }
 
+    @ApiModelProperty(
+            value = "real directory path for this storage on the storage server"
+    )
     public String getStorageRootRealDir() {
         return storageRootRealDir;
     }
@@ -148,6 +177,9 @@ public class DataStorageInfo {
         return this;
     }
 
+    @ApiModelProperty(
+            value = "storage host"
+    )
     public String getStorageHost() {
         return storageHost;
     }
@@ -166,6 +198,9 @@ public class DataStorageInfo {
         return this;
     }
 
+    @ApiModelProperty(
+            value = "storage agent URL"
+    )
     public String getConnectionURL() {
         return connectionURL;
     }
@@ -175,6 +210,11 @@ public class DataStorageInfo {
         return this;
     }
 
+    @ApiModelProperty(
+            value = "storage format value",
+            allowableValues = "DATA_DIRECTORY, ARCHIVE_DATA_FILE, SINGLE_DATA_FILE",
+            notes = "specifies how should the data be stored - directory, tar archive or single file (this only supports one file)"
+    )
     public JacsStorageFormat getStorageFormat() {
         return storageFormat;
     }

@@ -3,7 +3,10 @@ package org.janelia.jacsstorage.rest;
 import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
@@ -85,11 +88,11 @@ public class MasterStorageResource {
             @ApiResponse(code = 401, message = "If user is not authenticated"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response countBundleInfo(@QueryParam("id") Long dataBundleId,
-                                    @QueryParam("ownerKey") String ownerKey,
-                                    @QueryParam("storageHost") String storageHost,
-                                    @QueryParam("storageTags") String storageTags,
-                                    @QueryParam("volumeName") String volumeName,
+    public Response countBundleInfo(@ApiParam(value = "search by storage id parameter") @QueryParam("id") Long dataBundleId,
+                                    @ApiParam(value = "search by storage storage owner parameter") @QueryParam("ownerKey") String ownerKey,
+                                    @ApiParam(value = "search by storage storage host parameter") @QueryParam("storageHost") String storageHost,
+                                    @ApiParam(value = "search by storage storage tags parameter") @QueryParam("storageTags") String storageTags,
+                                    @ApiParam(value = "search by storage storage volume parameter") @QueryParam("volumeName") String volumeName,
                                     @Context SecurityContext securityContext) {
         String dataOwnerKey;
         if (securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
@@ -122,7 +125,11 @@ public class MasterStorageResource {
             }
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The list of storage entries that match the given filters"),
+            @ApiResponse(
+                    code = 200,
+                    message = "The list of storage entries that match the given filters",
+                    response = DataStorageInfo.class
+            ),
             @ApiResponse(code = 401, message = "If user is not authenticated"),
             @ApiResponse(code = 500, message = "Data read error")
     })
@@ -257,10 +264,12 @@ public class MasterStorageResource {
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "The new storage entry."),
             @ApiResponse(code = 401, message = "If user is not authenticated"),
+            @ApiResponse(code = 403, message = "If user is authenticated but does not have enough privileges to perform the operation"),
             @ApiResponse(code = 404, message = "Volume on which to store the data was not found or no agent is available."),
             @ApiResponse(code = 500, message = "Data write error")
     })
-    public Response createBundleInfo(DataStorageInfo dataStorageInfo, @Context SecurityContext securityContext) {
+    public Response createBundleInfo(@ApiParam(value = "information about the storage to be created") DataStorageInfo dataStorageInfo,
+                                     @Context SecurityContext securityContext) {
         LOG.info("Create storage: {} with credentials {}", dataStorageInfo, securityContext.getUserPrincipal());
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
         Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(SecurityUtils.getUserPrincipal(securityContext),

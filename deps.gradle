@@ -45,7 +45,7 @@ dependencies {
         JAX_RS_JERSEY_TEST_PROVIDER_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-bundle:${JERSEY_VERSION}"
 
         // Mail
-	JAVAMAIL_LIB = "com.sun.mail:javax.mail:1.6.0"
+        JAVAMAIL_LIB = "com.sun.mail:javax.mail:1.6.0"
 
         // command line args
         CMDLINE_ARG_LIB = "com.beust:jcommander:1.72"
@@ -57,7 +57,9 @@ dependencies {
         UNDERTOW_SERVLET_LIB = "io.undertow:undertow-servlet:${UNDERTOW_VERSION}"
 
         // REST API documentation
-        SWAGGER_LIB = "io.swagger:swagger-jersey2-jaxrs:1.5.16"
+        SWAGGER_VERSION = "1.5.16"
+        SWAGGER_ANNOTATIONS_LIB = "io.swagger:swagger-annotations:${SWAGGER_VERSION}"
+        SWAGGER_JAXRS_LIB = "io.swagger:swagger-jersey2-jaxrs:${SWAGGER_VERSION}"
 
         // JSON
         JACKSON_VERSION = "2.9.4"

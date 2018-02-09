@@ -119,6 +119,34 @@ sudo systemctl start jacsstorage-agentweb
 
 ## User guide
 
+Most storage service invocation required authenticated access. The authentication is verified 
+using a Json Web Token (JWT) passed in with every request in the 'Authorization' header as a
+bearer token.
+
+You can obtain a JWT from the authorization service: 
+
+development environment: 'https://jacs-dev.int.janelia.org/SCSW/AuthenticationService/v1/authenticate'
+
+or
+
+production environment: 'http://api.int.janelia.org:8030/authenticate'
+
+```
+cat > local/auth.sh <<EOF
+#!/bin/sh
+
+AUTH_ENDPOINT="https://jacs-dev.int.janelia.org/SCSW/AuthenticationService/v1/authenticate"
+
+username=$1
+password=$2
+
+curl -X POST "" \
+-H  "accept: application/json" \
+-H  "content-type: application/json" \
+-d "{  \"username\": \"${username}\",  \"password\": \"${password}\"}"
+EOF
+```
+
 ### Put data onto the storage servers
 
 The copy of the data onto the storage server(s) it's a two step process:
@@ -130,6 +158,19 @@ curl -i -X POST 'http://localhost:8880/jacsstorage/master_api/v1/storage' \
 -H 'Content-Type: application/json' \
 -d "{ \"name\": \"d1\", \"ownerKey\": \"user:goinac\", \"storageTags\": [ \"d1\" ], \"storageFormat\": \"DATA_DIRECTORY\", \"metadata\": { \"additionalProp1\": {}, \"additionalProp2\": {}, \"additionalProp3\": {} }}"
 ```
+
+########JSON Fields description:
+
+- name: represents the name of the storage entry and this must be unique within a user context.
+- ownerKey: is the name of the owner formatted like a JACS subject, for example: 'user:username' or 'group:groupname'
+- storageTags: can be used to select the storage device on which to store the data. This is useful if you want some
+data files to be stored on nrs for example so that they could be accessed by processes running on the grid.
+- storageFormat: specifies how the data should be stored on the storage server: as a directory, as a tar archive or it's a single file
+Valid values for the storage format are: 
+    - DATA_DIRECTORY - store data as expanded directory 
+    - ARCHIVE_DATA_FILE - store data in a tar archive
+    - SINGLE_DATA_FILE - the storage is a single file
+
 2. Use the connectionURL and the ID returned in the JSON result in the first step to send to <connectionURL value>/agent_storage/<ID value> (see [documentation](http://jade1:9881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./persistStream)) the data files.
 ```
 curl -X POST "http://0.0.0.0:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/file/f1" \
