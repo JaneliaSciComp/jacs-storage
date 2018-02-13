@@ -119,11 +119,23 @@ sudo systemctl start jacsstorage-agentweb
 
 ## User guide
 
+The storage service persists data in "data bundles". A data bundle is a group of files
+that are all persisted on the same data node under the same GUID based on the locality
+of reference, i.e., data files that often need to be accessed together by some other service
+or application. These could be for example data files associated with a particular sample, 
+or they can be data files that resulted from a certain processing pipeline. It is up to the user 
+of the storage service to group the files that need to be persisted "together". The storage service
+may also associate certain properties with the data bundle that could be used later for searching
+the persisted bundles. The data files that are part of a bundle can also be organized in a
+directory hierarchy and the user can control whether these data files should be persisted 
+in an expanded directory structure or in a TAR archive.
+
 Most storage service invocation required authenticated access. The authentication is verified 
 using a Json Web Token (JWT) passed in with every request in the 'Authorization' header as a
-bearer token.
+bearer token. This is very similar to the SCP command where the user is prompted for username
+and password for each invocation.
 
-You can obtain a JWT from the authorization service: 
+One can obtain a JWT from the authorization service: 
 
 development environment: 'https://jacs-dev.int.janelia.org/SCSW/AuthenticationService/v1/authenticate'
 
@@ -145,18 +157,32 @@ curl -X POST "" \
 -H  "content-type: application/json" \
 -d "{  \"username\": \"${username}\",  \"password\": \"${password}\"}"
 EOF
+
+sh local/auth.sh myusername mypassword
+
+```
+
+The above call will return a JSON blob that looks as below, and the value of the 'token'
+is the one that will need to be passed with all the  invcations that require authentication.
+
+```
+{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTg2MjY5NDAsInVzZXJfbmFtZSI6ImphY3MifQ.Yoku2rQfRn4GzoLYCfFc4Sag0jjrnYI_-A5W1W4I-o4","user_name":"jacs"}
 ```
 
 ### Put data onto the storage servers
 
-The copy of the data onto the storage server(s) it's a two step process:
+This would be the equivalent of the: 
+- `cp from_my_workspace/my_directory_name to_storage_device/my_directory_name`
+
+Copying the data onto the storage server(s) it's a two step process:
+
 1. Ask the master (see [documentation](http://jade1:9880/docs/#/Master_storage_API./createBundleInfo)) on which server I can copy the data.
 ```
 curl -i -X POST 'http://localhost:8880/jacsstorage/master_api/v1/storage' \
 -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs' \
 -H 'accept: application/json' \
 -H 'Content-Type: application/json' \
--d "{ \"name\": \"d1\", \"ownerKey\": \"user:goinac\", \"storageTags\": [ \"d1\" ], \"storageFormat\": \"DATA_DIRECTORY\", \"metadata\": { \"additionalProp1\": {}, \"additionalProp2\": {}, \"additionalProp3\": {} }}"
+-d "{ \"name\": \"my_directory_name\", \"ownerKey\": \"user:goinac\", \"storageTags\": [ \"d1\" ], \"storageFormat\": \"DATA_DIRECTORY\", \"metadata\": { \"additionalProp1\": {}, \"additionalProp2\": {}, \"additionalProp3\": {} }}"
 ```
 
 ########JSON Fields description:

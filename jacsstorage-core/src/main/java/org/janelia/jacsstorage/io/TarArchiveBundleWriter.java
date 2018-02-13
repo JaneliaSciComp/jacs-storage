@@ -29,7 +29,8 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
 
     private static final int PARENT_ENTRY_NOT_DIR_ERRORCODE = -1;
     private static final int PARENT_ENTRY_NOT_FOUND_ERRORCODE = -2;
-    private static final int ENTRY_ALREADY_EXISTS_ERRORCODE = -3;
+    private static final int DIR_ENTRY_ALREADY_EXISTS_ERRORCODE = -3;
+    private static final int FILE_ENTRY_ALREADY_EXISTS_ERRORCODE = -4;
     private static final int UNKNOWN_ERRORCODE = -4;
 
     @Override
@@ -130,7 +131,7 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
                 throw new IllegalArgumentException("Parent entry found for " + entryName + " but it is not a directory");
             } else if (newEntryPos == PARENT_ENTRY_NOT_FOUND_ERRORCODE){
                 throw new IllegalArgumentException("No parent entry found for " + entryName);
-            } else if (newEntryPos == ENTRY_ALREADY_EXISTS_ERRORCODE) {
+            } else if (newEntryPos == DIR_ENTRY_ALREADY_EXISTS_ERRORCODE || newEntryPos == FILE_ENTRY_ALREADY_EXISTS_ERRORCODE) {
                 throw new IllegalArgumentException("Entry " + entryName + " already exists");
             } else {
                 throw new IllegalStateException("Unknown error condition while trying to create new entry " + entryName);
@@ -183,22 +184,23 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
     }
 
     private String normalizeEntryName(String name) {
-        return StringUtils.removeEnd(
-                StringUtils.removeStart(
-                        StringUtils.removeStart(name, "."),
-                        "/"),
-                "/");
+        if (StringUtils.startsWith(name, "/")) {
+            return StringUtils.removeEnd(StringUtils.removeStart(name, "/"), "/");
+        } else {
+            return StringUtils.removeEnd(StringUtils.removeStart(name, "./"), "/");
+        }
     }
 
     private long newEntryPosition(String entryName, String parentEntryName, RandomAccessFile tarAccessFile) throws IOException {
         tarAccessFile.seek(0);
         TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new FileInputStream((tarAccessFile.getFD())));
         int recordSize = tarArchiveInputStream.getRecordSize();
-        long prevEntryStart = 0;
+        long prevEntryStart;
         long prevEntryEnd = 0;
         boolean parentEntryNameFound = StringUtils.isBlank(parentEntryName);
         boolean entryNameFound = false;
         boolean parentEntryIsDir = parentEntryNameFound;
+        boolean entryFoundIsDir = false;
         for (TarArchiveEntry sourceEntry = tarArchiveInputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = tarArchiveInputStream.getNextTarEntry()) {
             String currentEntryName = normalizeEntryName(sourceEntry.getName());
             if (currentEntryName.equals(parentEntryName)) {
@@ -210,6 +212,7 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
                 }
             } else if (currentEntryName.equals(entryName)) {
                 entryNameFound = true;
+                entryFoundIsDir = sourceEntry.isDirectory();
             }
             prevEntryStart = prevEntryEnd;
             long fillingBytes = sourceEntry.getSize() % recordSize;
@@ -224,9 +227,13 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
             return PARENT_ENTRY_NOT_FOUND_ERRORCODE;
         else if (parentEntryNameFound && !parentEntryIsDir)
             return PARENT_ENTRY_NOT_DIR_ERRORCODE;
-        else if (entryNameFound)
-            return ENTRY_ALREADY_EXISTS_ERRORCODE;
-        else
+        else if (entryNameFound) {
+            if (entryFoundIsDir) {
+                return DIR_ENTRY_ALREADY_EXISTS_ERRORCODE;
+            } else {
+                return FILE_ENTRY_ALREADY_EXISTS_ERRORCODE;
+            }
+        } else
             return UNKNOWN_ERRORCODE;
     }
 

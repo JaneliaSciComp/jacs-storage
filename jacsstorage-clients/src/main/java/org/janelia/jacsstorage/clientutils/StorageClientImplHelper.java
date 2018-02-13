@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.clientutils;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -48,8 +49,7 @@ public class StorageClientImplHelper {
             if (responseStatus == Response.Status.CREATED.getStatusCode()) {
                 return Optional.of(response.readEntity(DataStorageInfo.class));
             } else {
-                @SuppressWarnings("unchecked")
-                Map<String, String> errResponse = response.readEntity(Map.class);
+                Map<String, String> errResponse = response.readEntity(new GenericType<>(new TypeReference<Map<String, String>>(){}.getType()));
                 LOG.warn("Allocate storage request {} returned with status {} - {}", target.getUri(), responseStatus, errResponse);
                 return Optional.empty();
             }
@@ -169,12 +169,12 @@ public class StorageClientImplHelper {
     }
 
     public List<DataNodeInfo> listStorageContent(String connectionURL, Number bundleId, String authToken) {
-        String storageContentyEndpoint = String.format("/agent_storage/%s", bundleId);
+        String storageContentEndpoint = String.format("/agent_storage/%s", bundleId);
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL)
-                    .path(storageContentyEndpoint)
+                    .path(storageContentEndpoint)
                     .path("list");
             LOG.debug("List content {} as {}", target, authToken);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
@@ -292,8 +292,8 @@ public class StorageClientImplHelper {
             });
     }
 
-    private Optional<String> addNewStorageFolder(String connectionURL, Number storageId, String newDirPath, String authToken) {
-        String dataStreamEndpoint = String.format("/agent_storage/%s/directory/%s", storageId, newDirPath);
+    private Optional<String> addNewStorageFolder(String connectionURL, Number storageId, String newDirEntryPath, String authToken) {
+        String dataStreamEndpoint = String.format("/agent_storage/%s/directory/%s", storageId, newDirEntryPath);
         Client httpClient = null;
         try {
             httpClient = createHttpClient();
@@ -329,8 +329,8 @@ public class StorageClientImplHelper {
                 });
     }
 
-    private Optional<String> addNewStorageContent(String connectionURL, Number storageId, String newDirPath, InputStream contentStream, String authToken) {
-        String dataStreamEndpoint = String.format("/agent_storage/%s/file/%s", storageId, newDirPath);
+    private Optional<String> addNewStorageContent(String connectionURL, Number storageId, String newFileEntryPath, InputStream contentStream, String authToken) {
+        String dataStreamEndpoint = String.format("/agent_storage/%s/file/%s", storageId, newFileEntryPath);
         Client httpClient = null;
         try {
             httpClient = createHttpClient();

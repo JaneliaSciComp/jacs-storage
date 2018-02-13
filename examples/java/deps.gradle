@@ -1,0 +1,18 @@
+dependencies {
+    project.ext {
+        CMDLINE_ARG_LIB = "com.beust:jcommander:1.72"
+
+        GUAVA_LIB = "com.google.guava:guava:23.0"
+        COMMONS_LANG_VERSION = "3.7"
+        COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:${COMMONS_LANG_VERSION}"
+
+        // JSON
+        JACKSON_VERSION = "2.9.4"
+        JACKSON_CORE_LIB = "com.fasterxml.jackson.core:jackson-core:${JACKSON_VERSION}"
+
+        JERSEY_VERSION = "2.26"
+        JAX_RS_JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
+	JAX_RS_JERSEY_INJECT_LIB = "org.glassfish.jersey.inject:jersey-hk2:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_MEDIA_JSON_LIB = "org.glassfish.jersey.media:jersey-media-json-jackson:${JERSEY_VERSION}"
+    }
+}

@@ -130,74 +130,6 @@ public class MasterStorageResource {
 
     @RequireAuthentication
     @GET
-    @ApiOperation(
-            value = "List storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}.",
-            authorizations = {
-                    @Authorization("jwtBearerToken")
-            }
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    code = 200,
-                    message = "The list of storage entries that match the given filters",
-                    response = DataStorageInfo.class
-            ),
-            @ApiResponse(
-                    code = 401,
-                    message = "If user is not authenticated",
-                    response = ErrorResponse.class
-            ),
-            @ApiResponse(
-                    code = 500,
-                    message = "Data read error",
-                    response = ErrorResponse.class
-            )
-    })
-    public Response listBundleInfo(@QueryParam("id") Long dataBundleId,
-                                   @QueryParam("ownerKey") String ownerKey,
-                                   @QueryParam("storageHost") String storageHost,
-                                   @QueryParam("storageTags") String storageTags,
-                                   @QueryParam("volumeName") String volumeName,
-                                   @QueryParam("page") Long pageNumber,
-                                   @QueryParam("length") Integer pageLength,
-                                   @Context SecurityContext securityContext) {
-        String dataOwnerKey;
-        if (securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
-            // if it's an admin use the owner param if set or allow it not to be set
-            dataOwnerKey = StringUtils.defaultIfBlank(ownerKey, SecurityUtils.getUserPrincipal(securityContext).getSubjectKey());
-        } else {
-            // otherwise use the subject from the security context
-            dataOwnerKey = SecurityUtils.getUserPrincipal(securityContext).getSubjectKey();
-        }
-        JacsBundle dataBundle = new JacsBundleBuilder()
-                .dataBundleId(dataBundleId)
-                .ownerKey(dataOwnerKey)
-                .storageHost(storageHost)
-                .storageTags(storageTags)
-                .volumeName(volumeName)
-                .build();
-        LOG.info("Count storage records filtered with: {}", dataBundle);
-        PageRequest pageRequest = new PageRequestBuilder()
-                .pageNumber(pageNumber)
-                .pageSize(pageLength)
-                .build();
-        LOG.info("List storage records filtered with: {} / {}", dataBundle, pageRequest);
-        PageResult<JacsBundle> dataBundleResults = storageLookupService.findMatchingDataBundles(dataBundle, pageRequest);
-        PageResult<DataStorageInfo> results = new PageResult<>();
-        results.setPageOffset(dataBundleResults.getPageOffset());
-        results.setSortCriteria(dataBundleResults.getSortCriteria());
-        results.setPageOffset(dataBundleResults.getPageOffset());
-        results.setPageSize(dataBundleResults.getResultList().size());
-        results.setResultList(dataBundleResults.getResultList().stream()
-                .map(DataStorageInfo::fromBundle)
-                .collect(Collectors.toList()));
-        return Response
-                .ok(results)
-                .build();
-    }
-
-    @RequireAuthentication
-    @GET
     @Path("{id}")
     @ApiOperation(
             value = "Retrieve storage entry by ID.",
@@ -235,6 +167,7 @@ public class MasterStorageResource {
             LOG.warn("No storage found for {}", id);
             return Response
                     .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No storage found for " + id))
                     .build();
         } else if (jacsBundle.hasReadPermissions(SecurityUtils.getUserPrincipal(securityContext).getSubjectKey())) {
             return Response
@@ -244,8 +177,79 @@ public class MasterStorageResource {
             LOG.warn("Subject {} has no permissions to access storage {}", securityContext.getUserPrincipal(), jacsBundle);
             return Response
                     .status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("No permissions to access " + id))
                     .build();
         }
+    }
+
+    @RequireAuthentication
+    @GET
+    @ApiOperation(
+            value = "List storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}.",
+            authorizations = {
+                    @Authorization("jwtBearerToken")
+            }
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    code = 200,
+                    message = "The list of storage entries that match the given filters",
+                    response = DataStorageInfo.class
+            ),
+            @ApiResponse(
+                    code = 401,
+                    message = "If user is not authenticated",
+                    response = ErrorResponse.class
+            ),
+            @ApiResponse(
+                    code = 500,
+                    message = "Data read error",
+                    response = ErrorResponse.class
+            )
+    })
+    public Response listBundleInfo(@QueryParam("id") Long dataBundleId,
+                                   @QueryParam("name") String dataBundleName,
+                                   @QueryParam("ownerKey") String ownerKey,
+                                   @QueryParam("storageHost") String storageHost,
+                                   @QueryParam("storageTags") String storageTags,
+                                   @QueryParam("volumeName") String volumeName,
+                                   @QueryParam("page") Long pageNumber,
+                                   @QueryParam("length") Integer pageLength,
+                                   @Context SecurityContext securityContext) {
+        String dataOwnerKey;
+        if (securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
+            // if it's an admin use the owner param if set or allow it not to be set
+            dataOwnerKey = StringUtils.defaultIfBlank(ownerKey, SecurityUtils.getUserPrincipal(securityContext).getSubjectKey());
+        } else {
+            // otherwise use the subject from the security context
+            dataOwnerKey = SecurityUtils.getUserPrincipal(securityContext).getSubjectKey();
+        }
+        JacsBundle dataBundle = new JacsBundleBuilder()
+                .dataBundleId(dataBundleId)
+                .name(dataBundleName)
+                .ownerKey(dataOwnerKey)
+                .storageHost(storageHost)
+                .storageTags(storageTags)
+                .volumeName(volumeName)
+                .build();
+        LOG.info("Count storage records filtered with: {}", dataBundle);
+        PageRequest pageRequest = new PageRequestBuilder()
+                .pageNumber(pageNumber)
+                .pageSize(pageLength)
+                .build();
+        LOG.info("List storage records filtered with: {} / {}", dataBundle, pageRequest);
+        PageResult<JacsBundle> dataBundleResults = storageLookupService.findMatchingDataBundles(dataBundle, pageRequest);
+        PageResult<DataStorageInfo> results = new PageResult<>();
+        results.setPageOffset(dataBundleResults.getPageOffset());
+        results.setSortCriteria(dataBundleResults.getSortCriteria());
+        results.setPageOffset(dataBundleResults.getPageOffset());
+        results.setPageSize(dataBundleResults.getResultList().size());
+        results.setResultList(dataBundleResults.getResultList().stream()
+                .map(DataStorageInfo::fromBundle)
+                .collect(Collectors.toList()));
+        return Response
+                .ok(results)
+                .build();
     }
 
     @RequireAuthentication
@@ -288,6 +292,7 @@ public class MasterStorageResource {
             LOG.warn("No storage found for {} - {}", ownerKey, name);
             return Response
                     .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No storage found for " + ownerKey + " with name " + name))
                     .build();
         } else if (jacsBundle.hasReadPermissions(SecurityUtils.getUserPrincipal(securityContext).getSubjectKey())) {
             return Response
@@ -297,6 +302,7 @@ public class MasterStorageResource {
             LOG.warn("Subject {} has no permissions to access storage {}", securityContext.getUserPrincipal(), jacsBundle);
             return Response
                     .status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("No permissions to access " + ownerKey + "/" + name))
                     .build();
         }
     }
@@ -335,7 +341,7 @@ public class MasterStorageResource {
                         .build())
                 .orElse(Response
                         .status(Response.Status.NOT_FOUND)
-                        .entity(ImmutableMap.of("errormessage", "Metadata could not be created. Usually the reason is that no agent is available"))
+                        .entity(new ErrorResponse("Metadata could not be created. Usually the reason is that no agent is available"))
                         .build());
     }
 
@@ -356,6 +362,7 @@ public class MasterStorageResource {
             LOG.warn("Invalid storage ID: {} for updating {}", id, dataStorageInfo);
             return Response
                     .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No storage found for " + id))
                     .build();
         } else {
             return Response

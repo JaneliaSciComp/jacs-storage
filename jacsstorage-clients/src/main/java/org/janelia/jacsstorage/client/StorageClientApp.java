@@ -48,7 +48,7 @@ public class StorageClientApp {
         }
     }
 
-    @Parameters(commandDescription = "Send data to the storage server")
+    @Parameters(commandDescription = "Retrieve data from the storage server")
     private static class CommandGet extends AbstractCommand {
     }
 

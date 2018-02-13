@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
@@ -44,12 +45,15 @@ public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
     @Override
     public long createDirectoryEntry(String dataPath, String entryName) {
         return createNewEntry(dataPath, entryName,
-                (Path entryPath) -> {
+                (Path currentEntryPath) -> {
+                    throw new IllegalArgumentException("Entry " + currentEntryPath + " already exists");
+                },
+                (Path currentEntryPath) -> {
                     try {
-                        Files.createDirectory(entryPath);
-                        return Files.size(entryPath);
+                        Files.createDirectory(currentEntryPath);
+                        return Files.size(currentEntryPath);
                     } catch (IOException e) {
-                        throw new IllegalStateException("Could not create " + entryPath, e);
+                        throw new IllegalStateException("Could not create " + currentEntryPath, e);
                     }
                 });
     }
@@ -57,16 +61,19 @@ public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
     @Override
     public long createFileEntry(String dataPath, String entryName, InputStream contentStream) {
         return createNewEntry(dataPath, entryName,
-                (Path entryPath) -> {
+                (Path currentEntryPath) -> {
+                    throw new IllegalArgumentException("Entry " + currentEntryPath + " already exists");
+                },
+                (Path currentEntryPath) -> {
                     try {
-                        return Files.copy(contentStream, entryPath);
+                        return Files.copy(contentStream, currentEntryPath);
                     } catch (IOException e) {
-                        throw new IllegalStateException("Could not create " + entryPath, e);
+                        throw new IllegalStateException("Could not create " + currentEntryPath, e);
                     }
                 });
     }
 
-    private long createNewEntry(String dataPath, String entryName, Function<Path, Long> entryCreator) {
+    private long createNewEntry(String dataPath, String entryName, Consumer<Path> entryFoundHandler, Function<Path, Long> entryCreator) {
         Preconditions.checkArgument(StringUtils.isNotBlank(entryName));
         Path rootDataPath = getRootPath(dataPath);
         Path entryPath = rootDataPath.resolve(entryName);
@@ -78,9 +85,11 @@ public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
             throw new IllegalArgumentException("Parent entry found for " + entryPath + " but it is not a directory");
         }
         if (Files.exists(entryPath)) {
-            throw new IllegalArgumentException("Entry " + entryPath + " already exists");
+            entryFoundHandler.accept(entryPath);
+            return 0L;
+        } else {
+            return entryCreator.apply(entryPath);
         }
-        return entryCreator.apply(entryPath);
     }
 
     private Path getRootPath(String rootDir) {

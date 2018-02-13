@@ -211,10 +211,10 @@ public class AgentStorageResource {
     @Path("{dataBundleId}/directory/{dataEntryPath:.*}")
     @ApiOperation(value = "Create a new folder in the specified data bundle.")
     @ApiResponses(value = {
-            @ApiResponse(code = 202, message = "The new folder was created successfully. Return the URL of the corresponding entry in the location header attribute."),
-            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
-            @ApiResponse(code = 409, message = "A folder with this name already exists"),
-            @ApiResponse(code = 500, message = "Data write error")
+            @ApiResponse(code = 201, message = "The new folder was created successfully. Return the URL of the corresponding entry in the location header attribute.", response =  DataNodeInfo.class),
+            @ApiResponse(code = 202, message = "The folder already exists. Return the URL of the corresponding entry in the location header attribute.", response = DataNodeInfo.class),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
     })
     public Response postCreateDirectory(@PathParam("dataBundleId") Long dataBundleId,
                                         @PathParam("dataEntryPath") String dataEntryPath,
@@ -231,10 +231,10 @@ public class AgentStorageResource {
     @Path("{dataBundleId}/directory/{dataEntryPath:.*}")
     @ApiOperation(value = "Create a new folder in the specified data bundle.")
     @ApiResponses(value = {
-            @ApiResponse(code = 202, message = "The new folder was created successfully. Return the URL of the corresponding entry in the location header attribute."),
-            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
-            @ApiResponse(code = 409, message = "A folder with this name already exists"),
-            @ApiResponse(code = 500, message = "Data write error")
+            @ApiResponse(code = 201, message = "The new folder was created successfully. Return the URL of the corresponding entry in the location header attribute.", response =  DataNodeInfo.class),
+            @ApiResponse(code = 202, message = "The folder already exists. Return the URL of the corresponding entry in the location header attribute.", response = DataNodeInfo.class),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
     })
     public Response putCreateDirectory(@PathParam("dataBundleId") Long dataBundleId,
                                        @PathParam("dataEntryPath") String dataEntryPath,
@@ -250,8 +250,9 @@ public class AgentStorageResource {
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         if (CollectionUtils.isNotEmpty(existingEntries)) {
+            // if an entry already exists return ACCEPTED(202) instead of CREATED (201)
             return Response
-                    .status(Response.Status.CONFLICT)
+                    .status(Response.Status.ACCEPTED)
                     .location(resourceURI.getBaseUriBuilder()
                             .path(Constants.AGENTSTORAGE_URI_PATH)
                             .path(dataBundleId.toString())
@@ -296,7 +297,7 @@ public class AgentStorageResource {
     @Path("{dataBundleId}/file/{dataEntryPath:.*}")
     @ApiOperation(value = "Create a new content entry in the specified data bundle.")
     @ApiResponses(value = {
-            @ApiResponse(code = 202, message = "The new content was created successfully. Return the URL of the corresponding entry in the location header attribute."),
+            @ApiResponse(code = 201, message = "The new content was created successfully. Return the URL of the corresponding entry in the location header attribute."),
             @ApiResponse(code = 404, message = "Invalid data bundle ID"),
             @ApiResponse(code = 409, message = "A file with this name already exists"),
             @ApiResponse(code = 500, message = "Data write error")
@@ -318,7 +319,7 @@ public class AgentStorageResource {
     @Path("{dataBundleId}/file/{dataEntryPath:.*}")
     @ApiOperation(value = "Create a new content entry in the specified data bundle.")
     @ApiResponses(value = {
-            @ApiResponse(code = 202, message = "The new content was created successfully. Return the URL of the corresponding entry in the location header attribute."),
+            @ApiResponse(code = 201, message = "The new content was created successfully. Return the URL of the corresponding entry in the location header attribute."),
             @ApiResponse(code = 404, message = "Invalid data bundle ID"),
             @ApiResponse(code = 409, message = "A file with this name already exists"),
             @ApiResponse(code = 500, message = "Data write error")
@@ -382,9 +383,8 @@ public class AgentStorageResource {
     @Path("{dataBundleId}")
     @ApiOperation(value = "Delete the entire specified data bundle. Use this operation with caution because at this point there's no backup and data cannot be restored")
     @ApiResponses(value = {
-            @ApiResponse(code = 202, message = "The new content was created successfully. Return the URL of the corresponding entry in the location header attribute."),
+            @ApiResponse(code = 204, message = "The storage was deleted successfully."),
             @ApiResponse(code = 404, message = "Invalid data bundle ID"),
-            @ApiResponse(code = 409, message = "A file with this name already exists"),
             @ApiResponse(code = 500, message = "Data write error")
     })
     public Response deleteStorage(@PathParam("dataBundleId") Long dataBundleId,
