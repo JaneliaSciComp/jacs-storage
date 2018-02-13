@@ -65,8 +65,8 @@ public abstract class AbstractCacheableEntityByIdDao<T extends BaseEntity> imple
                     return getDelegator().findById(id);
                 }
             });
-        } catch (ExecutionException e) {
-            throw new IllegalStateException("Error reading " + id + " from local cache");
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error reading " + id + " from local cache");
         }
     }
 

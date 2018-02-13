@@ -162,102 +162,159 @@ sh local/auth.sh myusername mypassword
 
 ```
 
-The above call will return a JSON blob that looks as below, and the value of the 'token'
-is the one that will need to be passed with all the  invcations that require authentication.
+The above call will return a JSON blob that looks as below. The value of the 'token' attribute
+is the one that will need to be passed with all the  invcations that require authentication as
+a bearer token in the 'Authorization' header - 'Authorization: Bearer <tokenvalue>'.
 
 ```
 {"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTg2MjY5NDAsInVzZXJfbmFtZSI6ImphY3MifQ.Yoku2rQfRn4GzoLYCfFc4Sag0jjrnYI_-A5W1W4I-o4","user_name":"jacs"}
 ```
 
-### Put data onto the storage servers
+### Allocate a storage bundle
 
-This would be the equivalent of the: 
-- `cp from_my_workspace/my_directory_name to_storage_device/my_directory_name`
+The method documentation is available [here](http://jade1:8880/docs/#/Master_storage_API./createBundleInfo)
 
-Copying the data onto the storage server(s) it's a two step process:
+This would be similar to creating a subdirectory in the user's home directory:
+- `md /users/home/myusername/aWorkingSubdirForProject1`
 
-1. Ask the master (see [documentation](http://jade1:9880/docs/#/Master_storage_API./createBundleInfo)) on which server I can copy the data.
+The equivalent storage service curl invocation is:
 ```
 curl -i -X POST 'http://localhost:8880/jacsstorage/master_api/v1/storage' \
 -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs' \
 -H 'accept: application/json' \
 -H 'Content-Type: application/json' \
--d "{ \"name\": \"my_directory_name\", \"ownerKey\": \"user:goinac\", \"storageTags\": [ \"d1\" ], \"storageFormat\": \"DATA_DIRECTORY\", \"metadata\": { \"additionalProp1\": {}, \"additionalProp2\": {}, \"additionalProp3\": {} }}"
+-d "{ \"name\": \"aWorkingSubdirForProject1\", \"storageFormat\": \"DATA_DIRECTORY\"}"
 ```
 
-########JSON Fields description:
-
-- name: represents the name of the storage entry and this must be unique within a user context.
-- ownerKey: is the name of the owner formatted like a JACS subject, for example: 'user:username' or 'group:groupname'
-- storageTags: can be used to select the storage device on which to store the data. This is useful if you want some
-data files to be stored on nrs for example so that they could be accessed by processes running on the grid.
-- storageFormat: specifies how the data should be stored on the storage server: as a directory, as a tar archive or it's a single file
-Valid values for the storage format are: 
-    - DATA_DIRECTORY - store data as expanded directory 
-    - ARCHIVE_DATA_FILE - store data in a tar archive
-    - SINGLE_DATA_FILE - the storage is a single file
-
-2. Use the connectionURL and the ID returned in the JSON result in the first step to send to <connectionURL value>/agent_storage/<ID value> (see [documentation](http://jade1:9881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./persistStream)) the data files.
+The method returns a JSON block that contains information about the new created data bundle:
 ```
-curl -X POST "http://0.0.0.0:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/file/f1" \
+{
+id=2503313663696306217, 
+name=workspace1, 
+ownerKey=user:jacs, 
+path=306/217/2503313663696306217, 
+readersKeys=[], 
+writersKeys=[], 
+storageRootPrefixDir=/localhost/d1, 
+storageRootRealDir=/var/tmp/d1, 
+storageHost=localhost, 
+storageTags=[jade, d1], 
+connectionURL=http://localhost:8881/jacsstorage/agent_api/v1, 
+storageFormat=DATA_DIRECTORY, 
+requestedSpaceInBytes=null, 
+checksum=null, 
+metadata={}}
+```
+
+### Get storage bundle info
+
+The method documentation is available [here](http://jade1:8880/docs/#/Master_storage_API./getBundleInfo)
+
+```
+curl -i 'http://localhost:8880/jacsstorage/master_api/v1/storage/2503313663696306217' \
+-H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs' \
+-H 'accept: application/json'
+```
+The method returns a JSON block identical to the one returned by the allocate operation.
+
+### Search storage bundles
+
+The method documentation is available [here](http://jade1:8880/docs/#/Master_storage_API./listBundleInfo)
+
+```
+curl -i 'http://localhost:8880/jacsstorage/master_api/v1/storage?name=workspace1' \
+-H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs' \
+-H 'accept: application/json'
+```
+
+If the user does not have admin privileges search automatically uses the current user as the owner and
+only searches entries created by the current user.
+
+### Create a directory entry
+
+This command creates a subdirectory in the data bundle's workspace. The corresponding 
+shell commands are change directory to the workspace followed by create subdirectory
+in the current directory, i.e.,
+- `cd /users/home/myusername/aWorkingSubdirForProject1`
+- `md myDir1`
+
+The equivalent storage service curl invocation is and the command must use the base URL returned 
+in the 'connectionURL' field of the allocate result or get storage info result:
+```
+curl -X POST "http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/directory/myDir1" \
+-H "accept: application/json" \
+-H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs" \
+-H "Content-Type: application/octet-stream"
+```
+
+The directory entry can be a path hierarchy but the constraint is that all parent directories must 
+already exist in the storage bundle. For example if the command is:
+```
+curl -X POST "http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/directory/myDir1/myDir1.1//myDir1.1.3" \
+-H "accept: application/json" \
+-H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs" \
+-H "Content-Type: application/octet-stream"
+```
+
+The entries 'myDir1' and 'myDir1/myDir1.1' must already exist in the bundle '2501203311319875608' and they
+must be directory entries.
+ 
+The method returns the a JSON block for the new entry as well as the access URL in the 
+header's 'location' attribute
+ 
+
+### Add a file to the storage bundle  
+
+```
+curl -X POST "http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/file/myDir1/myFile1.1" \
 -H "accept: application/json" \
 -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs" \
 -H "Content-Type: application/octet-stream" \
--d "this is the content"
+-d @"aLocalFile"
 ```
 
-If you want to send more than one file at a time, you need to bundle the files in a TAR archive and send the entire tar. On the
-storage server the tar will be unbundled and added to the selected storage.
+Similar to the 'create directory' call the base URL must be the actual storage URL, returned by allocate or get info 
+methods in the 'connectionURL' field and if the file entry name denotes a hierarchical structure then all
+its parents must exist and be directory entries
 
-### Retrieve storage info
+The method returns the a JSON block for the new entry as well as the access URL in the 
+header's 'location' attribute
 
-If the storage ID is known you can find information about the storage, i.e., where it resides, path info using 
-[getBundleInfo](http://jade1:9880/docs/#/Master_storage_API./getBundleInfo)
+
+### List the content of a storage bundle
+
+The shell equivalent commands would be:
+- `cd /users/home/myusername/aWorkingSubdirForProject1`
+- `ls -l`
+
+The curl command must use the actual storage URL returned in 'connectionURL' field.
 
 ```
-curl -X GET "http://localhost:8880/jacsstorage/master_api/v1/storage/2501203311319875608" \
+curl "http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/list?entry=myDir1" \
 -H "accept: application/json" \
--H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs"
+-H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs" \
 ```
 
-### Retrieve storage content
-The content retrieval is also a two step process:
-1. Retrieve storage info or search storage entries to find out where the content is stored
-2. Use the returned contentURL in combination with the ID and the entry name to retrieve the actual content 
-(see [documentation](http://jade1:9881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./getEntryContent))
-```
-curl -X GET "http://0.0.0.0:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/entry_content/f1" \
--H "accept: application/octet-stream" \
--H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs"
-```
+### Retrieve the content of a specific entry from a data storage bundle
 
-### Search storage entries
-
-Storage entries can be searched by owner, volume name, tags - see [documentation](http://jade1:9880/docs/#/Master_storage_API./listBundleInfo)
-If you are not an admin you can only search your own entries.
+The curl command must use the actual storage URL returned in 'connectionURL' field.
 
 ```
-curl -X GET "http://localhost:8880/jacsstorage/master_api/v1/storage" \
+curl "http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/entry_content/myDir1/myDir1.1" \
 -H "accept: application/json" \
--H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs"
+-H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs" \
 ```
 
-### List files that are part of a storage bundle.
+If the entry name (the path after 'entry_content') denotes a folder the method returns all the sub-entries from
+from specified entry packaged in a tar archive.
 
-If the storage bundle ID and the its server location is known, then the API call is (see [documentation](http://jade1:9881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./listContent)):
-```
-curl -X GET "http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/list" \
--H "accept: application/json" \
--H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs"
-```
+If no entry is specified then the method returns the content of the entire bundle as a tar archive
 
 ### Accessing the storage service from your application
 
 ##### Java
 
-For Java examples please take a look at the jacsstorage-clients module, packages 'org.janelia.jacsstorage.client'
-and 'org.janelia.jacsstorage.clientutils'. There you will find examples of how to access the storage
-using jersey client library.
+For Java examples please take a look at the 'examples/java' directory.
 
 ##### Python
 

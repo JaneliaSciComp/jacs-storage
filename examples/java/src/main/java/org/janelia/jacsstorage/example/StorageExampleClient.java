@@ -68,13 +68,13 @@ class StorageExampleClient {
 
     @Parameters(commandDescription = "Create folder on the storage server")
     private static class CommandMkdir extends AbstractCommand {
-        @Parameter(names = "-entry", description = "Bundle entry name")
+        @Parameter(names = "-entry", description = "Bundle entry name", required = true)
         private String entryName;
     }
 
     @Parameters(commandDescription = "Send data to the storage server")
     private static class CommandPut extends AbstractCommand {
-        @Parameter(names = "-entry", description = "Bundle entry name")
+        @Parameter(names = "-entry", description = "Bundle entry name", required = true)
         private String entryName;
     }
 
@@ -92,6 +92,8 @@ class StorageExampleClient {
 
     @Parameters(commandDescription = "List the entries ")
     private static class CommandList extends AbstractCommand {
+        @Parameter(names = "-entry", description = "Bundle entry name")
+        private String entryName;
     }
 
     public static void main(String[] args) throws Exception {
@@ -121,11 +123,12 @@ class StorageExampleClient {
         if (jc.getParsedCommand() == null) {
             usage("", jc);
         }
-
-        String authToken = StringUtils.defaultIfBlank(
-                cmdMain.authToken,
-                StorageClientUtils.authenticate(cmdMain.authURL, cmdMain.username, cmdMain.password)
-        );
+        String authToken;
+        if (StringUtils.isBlank(cmdMain.authToken)) {
+            authToken = StorageClientUtils.authenticate(cmdMain.authURL, cmdMain.username, cmdMain.password);
+        } else {
+            authToken = cmdMain.authToken;
+        }
         if (StringUtils.isBlank(authToken)) {
             usage("Invalid authentication token", jc);
         }
@@ -164,8 +167,8 @@ class StorageExampleClient {
                     System.out.println("Bundle info response: " + response);
                 } else {
                     Number bundleId = new BigInteger((String) response.get("id"));
-                    response = StorageClientUtils.listBundleContent(storageURL, bundleId, authToken);
-                    System.out.println("List Bundle content response: " + response);
+                    List<Map<String, Object>> contentResponse = StorageClientUtils.listBundleContent(storageURL, bundleId, cmdList.entryName, authToken);
+                    System.out.println("List Bundle content response: " + contentResponse);
                 }
                 break;
             case "mkdir":

@@ -162,7 +162,7 @@ class StorageClientUtils {
         }
     }
 
-    public static Map<String, Object> listBundleContent(String storageURL, Number bundleId, String authToken) {
+    public static List<Map<String, Object>> listBundleContent(String storageURL, Number bundleId, String entryName, String authToken) {
         String storageContentEndpoint = String.format("/agent_storage/%s", bundleId);
         Client httpClient = null;
         try {
@@ -170,12 +170,15 @@ class StorageClientUtils {
             WebTarget target = httpClient.target(storageURL)
                     .path(storageContentEndpoint)
                     .path("list");
+            if (StringUtils.isNotBlank(entryName)) {
+                target = target.queryParam("entry", entryName);
+            }
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .header("Authorization", "Bearer " + authToken)
                     .get()
                     ;
             int responseStatus = response.getStatus();
-            TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>(){};
+            TypeReference<List<Map<String, Object>>> typeRef = new TypeReference<List<Map<String, Object>>>(){};
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return response.readEntity(new GenericType<>(typeRef.getType()));
             } else {
