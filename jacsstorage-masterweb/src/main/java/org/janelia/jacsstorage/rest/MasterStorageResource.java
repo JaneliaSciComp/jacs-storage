@@ -1,17 +1,12 @@
 package org.janelia.jacsstorage.rest;
 
-import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
-import io.swagger.annotations.AuthorizationScope;
-import io.swagger.annotations.OAuth2Definition;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
@@ -270,6 +265,11 @@ public class MasterStorageResource {
             @ApiResponse(
                     code = 401,
                     message = "If user is not authenticated",
+                    response = ErrorResponse.class
+            ),
+            @ApiResponse(
+                    code = 403,
+                    message = "If user is authenticated, but does not have permissions to access the specified bundle",
                     response = ErrorResponse.class
             ),
             @ApiResponse(

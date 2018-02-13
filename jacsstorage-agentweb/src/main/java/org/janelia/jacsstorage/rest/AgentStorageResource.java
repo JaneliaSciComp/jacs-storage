@@ -147,7 +147,10 @@ public class AgentStorageResource {
     @Produces(MediaType.APPLICATION_JSON)
     @GET
     @Path("{dataBundleId}/list")
-    @ApiOperation(value = "List the data bundle content.")
+    @ApiOperation(
+            value = "List the data bundle content.",
+            notes = "Lists tree hierarchy of the storage bundle - if entry is specified it only lists the specified entry sub-tree"
+    )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully read the data bundle content."),
             @ApiResponse(code = 404, message = "Invalid data bundle ID"),
@@ -186,7 +189,11 @@ public class AgentStorageResource {
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("{dataBundleId}/entry_content/{dataEntryPath:.*}")
-    @ApiOperation(value = "Retrieve the content of the specified data bundle entry.")
+    @ApiOperation(
+            value = "Retrieve the content of the specified data bundle entry.",
+            notes = "Retrieve the specified entry's content. If the entry is a directory entry it streams the entire subdirectory tree as a tar archive, " +
+                    "otherwise if it is a file it streams the specified file's content."
+    )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully read the data bundle entry's content."),
             @ApiResponse(code = 404, message = "Invalid data bundle ID"),
