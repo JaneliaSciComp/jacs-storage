@@ -232,6 +232,8 @@ only searches entries created by the current user.
 
 ### Create a directory entry
 
+The method documentation is available [here](http://jade1:8881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./postCreateDirectory)
+
 This command creates a subdirectory in the data bundle's workspace. The corresponding 
 shell commands are change directory to the workspace followed by create subdirectory
 in the current directory, i.e.,
@@ -265,6 +267,8 @@ header's 'location' attribute
 
 ### Add a file to the storage bundle  
 
+The method documentation is available [here](http://jade1:8881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./postCreateFile)
+
 ```
 curl -X POST "http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/file/myDir1/myFile1.1" \
 -H "accept: application/json" \
@@ -283,6 +287,8 @@ header's 'location' attribute
 
 ### List the content of a storage bundle
 
+The method documentation is available [here](http://jade1:8881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./listContent)
+
 The shell equivalent commands would be:
 - `cd /users/home/myusername/aWorkingSubdirForProject1`
 - `ls -l`
@@ -296,6 +302,8 @@ curl "http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319
 ```
 
 ### Retrieve the content of a specific entry from a data storage bundle
+
+The method documentation is available [here](http://jade1:8881/docs/#/Agent_storage_API._This_API_requires_an_authenticated_subject./getEntryContent)
 
 The curl command must use the actual storage URL returned in 'connectionURL' field.
 
