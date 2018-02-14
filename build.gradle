@@ -77,7 +77,7 @@ subprojects {
 }
 
 task updateWrapper(type: Wrapper) {
-    gradleVersion = "4.5"
+    gradleVersion = "4.5.1"
 }
 
 def filteringProperties(otherProperties) {
