@@ -65,10 +65,6 @@ public class PathBasedAgentStorageResource {
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 fullDataPathNameParam,
-                () -> Response
-                        .status(Response.Status.CONFLICT)
-                        .entity(new ErrorResponse("More than one volume found for " + fullDataPathNameParam))
-                        .build(),
                 (dataBundle, dataEntryPath) -> Response
                         .ok()
                         .build(),
@@ -92,10 +88,6 @@ public class PathBasedAgentStorageResource {
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 fullDataPathNameParam,
-                () -> Response
-                        .status(Response.Status.CONFLICT)
-                        .entity(new ErrorResponse("More than one volume found for " + fullDataPathNameParam))
-                        .build(),
                 (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath),
                 (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, dataEntryPath)
         );

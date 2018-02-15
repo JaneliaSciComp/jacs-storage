@@ -39,7 +39,6 @@ public class StorageResourceHelper {
     }
 
     public Response handleResponseForFullDataPathParam(String fullDataPathParam,
-                                                       Supplier<Response> conflictResponseHandler,
                                                        BiFunction<JacsBundle, String, Response> bundleBasedResponseHandler,
                                                        BiFunction<JacsStorageVolume, String, Response> fileBasedResponseHandler) {
         String fullDataPathName = StringUtils.prependIfMissing(fullDataPathParam, "/");
@@ -51,12 +50,8 @@ public class StorageResourceHelper {
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No managed volume found for " + fullDataPathName))
                     .build();
-        } else if (storageVolumes.size() > 1 && conflictResponseHandler != null) {
-            LOG.warn("Too many volumes found that match {}", fullDataPathName);
-            Response conflictResponse = conflictResponseHandler.get();
-            if (conflictResponse != null) {
-                return conflictResponse;
-            }
+        } else if (storageVolumes.size() > 1) {
+            LOG.warn("More than one storage volumes found for {} -> {}", fullDataPathName, storageVolumes);
         }
         selectedVolume = storageVolumes.get(0);
         // check if the first path component after the storage prefix is a bundle ID
