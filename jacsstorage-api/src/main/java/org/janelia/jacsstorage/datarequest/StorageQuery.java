@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.datarequest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -165,5 +166,21 @@ public class StorageQuery {
                 .append(storageTags)
                 .append(minAvailableSpaceInBytes)
                 .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("id", id)
+                .append("shared", shared)
+                .append("localToAnyHost", localToAnyHost)
+                .append("dataStoragePath", dataStoragePath)
+                .append("storageHosts", storageHosts)
+                .append("storageAgents", storageAgents)
+                .append("storageName", storageName)
+                .append("storagePathPrefix", storagePathPrefix)
+                .append("storageTags", storageTags)
+                .append("minAvailableSpaceInBytes", minAvailableSpaceInBytes)
+                .toString();
     }
 }

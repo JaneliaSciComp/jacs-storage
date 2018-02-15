@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,6 +49,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     }
 
     public List<JacsStorageVolume> getManagedVolumes(StorageQuery storageQuery) {
+        LOG.debug("Find managed volumes using {}", storageQuery);
         return Stream.concat(managedVolumes.stream(), Stream.of(JacsStorageVolume.OVERFLOW_VOLUME))
                 .map(this::getVolumeInfo)
                 .filter(sv -> StringUtils.isBlank(storageQuery.getDataStoragePath()) ||
@@ -63,6 +65,14 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
                 .filter(sv -> CollectionUtils.isEmpty(storageQuery.getStorageTags()) ||
                         sv.getStorageTags().containsAll(storageQuery.getStorageTags())
                 )
+                .sorted((v1, v2) -> {
+                    int rootComparisonResult = v1.getStorageRootDir().compareTo(v2.getStorageRootDir());
+                    if (rootComparisonResult == 0) {
+                        return -v1.getStoragePathPrefix().compareTo(v2.getStoragePathPrefix());
+                    } else {
+                        return -rootComparisonResult; // order descending by root dir
+                    }
+                })
                 .collect(Collectors.toList());
     }
 

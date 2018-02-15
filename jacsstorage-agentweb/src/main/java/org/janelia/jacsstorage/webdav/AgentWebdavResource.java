@@ -124,22 +124,9 @@ public class AgentWebdavResource {
                     .entity(statusResponse)
                     .build();
         } else if (localVolumes.size() > 1) {
-            LOG.warn("Too many storage volumes found for {}", dataStoragePath);
-            Multistatus statusResponse = new Multistatus();
-            Propstat propstat = new Propstat();
-            propstat.setStatus("HTTP/1.1 409 Conflict");
-
-            PropfindResponse propfindResponse = new PropfindResponse();
-            propfindResponse.setResponseDescription("More than one volume found for " + fullDataStoragePathName);
-            propfindResponse.setPropstat(propstat);
-            statusResponse.getResponse().add(propfindResponse);
-
-            return Response
-                    .status(Response.Status.CONFLICT)
-                    .entity(statusResponse)
-                    .build();
+            LOG.warn("More than one storage volumes found for {} -> {}", dataStoragePath, localVolumes);
         }
-        JacsStorageVolume storageVolume = localVolumes.get(0);
+        JacsStorageVolume storageVolume = localVolumes.get(0); // even if there are more volumes pick the first one - this assumes that the first one has the longest match
         int depthValue = WebdavUtils.getDepth(depth);
         java.nio.file.Path storageRelativeFileDataPath = storageVolume.getStorageRelativePath(fullDataStoragePathName);
         int fileDataPathComponents = storageRelativeFileDataPath.getNameCount();
