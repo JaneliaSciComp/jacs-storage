@@ -318,6 +318,29 @@ from specified entry packaged in a tar archive.
 
 If no entry is specified then the method returns the content of the entire bundle as a tar archive
 
+
+### Retrieve content from shared storage
+
+The storage service allows users to download content that resides on shared storage such: dm11, nrs or nearline. The
+retrieval can be done by going directly to an agent node and using "storage_content/storage_path" endpoint or using a 
+more reliable mechanism that requires two steps - first get an agent that can serve the content from the master and
+then use the agent's "storage_content/storage_path" endpoint to actually retrieve the content.
+For example to retrieve the data file '/nrs/jacs/jacsData/flylight/pipelineResult/data1.png' one can use the following
+sequence:
+
+```
+curl -i -X PROPFIND http://localhost:8880/jacsstorage/master_api/v1/webdav/data_storage_path/nrs/jacs/jacsData/flylight/pipelineResult/data1.png \
+-H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs" \
+-H "accept: application/xml"
+```
+
+then get the agent url from the response' HREF field and (assuming HREF field is http://localhost:8881/jacsstorage/agent_api/v1/agent_storage) use:
+```
+curl http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/storage_content/storage_path/nrs/jacs/jacsData/flylight/pipelineResult/data1.png \
+-H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs" \
+-H "accept: application/octet-stream"
+```
+ 
 ### Accessing the storage service from your application
 
 ##### Java
