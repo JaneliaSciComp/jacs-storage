@@ -92,7 +92,7 @@ public class ContentStorageResource {
         LOG.info("Retrieve file {} from volume {}", dataEntryPath, storageVolume);
         String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
         StreamingOutput stream = streamFromURL(
-                            storageServiceURL + "agent_storage/path/storage_volume/" + storageVolume.getId() + "/" + dataEntryPath,
+                            storageServiceURL + "agent_storage/storage_volume/" + storageVolume.getId() + "/" + dataEntryPath,
                             jacsCredentials);
         return Response
                 .ok(stream, MediaType.APPLICATION_OCTET_STREAM)
