@@ -110,7 +110,7 @@ public class AgentStorageResource {
         TransferInfo ti = dataStorageService.persistDataStream(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), bundleStream);
         dataBundle.setChecksum(Base64.getEncoder().encodeToString(ti.getChecksum()));
         dataBundle.setUsedSpaceInBytes(ti.getNumBytes());
-        storageAllocatorService.updateStorage(SecurityUtils.getUserPrincipal(securityContext), dataBundle);
+        storageAllocatorService.updateStorage(dataBundle, SecurityUtils.getUserPrincipal(securityContext));
         return Response
                 .ok(DataStorageInfo.fromBundle(dataBundle))
                 .build();
@@ -272,11 +272,11 @@ public class AgentStorageResource {
 
         long newDirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat());
         storageAllocatorService.updateStorage(
-                SecurityUtils.getUserPrincipal(securityContext),
                 new JacsBundleBuilder()
                         .dataBundleId(dataBundleId)
                         .usedSpaceInBytes(newDirEntrySize)
-                        .build());
+                        .build(), SecurityUtils.getUserPrincipal(securityContext)
+        );
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundleId);
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
@@ -360,11 +360,11 @@ public class AgentStorageResource {
         }
         long newFileEntrySize = dataStorageService.createFileEntry(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), contentStream);
         storageAllocatorService.updateStorage(
-                SecurityUtils.getUserPrincipal(securityContext),
                 new JacsBundleBuilder()
                         .dataBundleId(dataBundleId)
                         .usedSpaceInBytes(newFileEntrySize)
-                        .build());
+                        .build(), SecurityUtils.getUserPrincipal(securityContext)
+        );
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundleId);
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());

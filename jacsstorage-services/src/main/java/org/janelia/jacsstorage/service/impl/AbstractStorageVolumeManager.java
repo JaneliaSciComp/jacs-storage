@@ -98,6 +98,18 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
             currentVolumeInfo.setStorageTags(storageVolume.getStorageTags());
             updatedVolumeFieldsBuilder.put("storageTags", new SetFieldValueHandler<>(currentVolumeInfo.getStorageTags()));
         }
+        if (storageVolume.getQuotaFailPercent() != null && !storageVolume.getQuotaFailPercent().equals(currentVolumeInfo.getQuotaFailPercent())) {
+            currentVolumeInfo.setQuotaFailPercent(storageVolume.getQuotaFailPercent());
+            updatedVolumeFieldsBuilder.put("quotaFailPercent", new SetFieldValueHandler<>(currentVolumeInfo.getQuotaFailPercent()));
+        }
+        if (storageVolume.getQuotaWarnPercent() != null && !storageVolume.getQuotaWarnPercent().equals(currentVolumeInfo.getQuotaWarnPercent())) {
+            currentVolumeInfo.setQuotaWarnPercent(storageVolume.getQuotaWarnPercent());
+            updatedVolumeFieldsBuilder.put("quotaWarnPercent", new SetFieldValueHandler<>(currentVolumeInfo.getQuotaWarnPercent()));
+        }
+        if (StringUtils.isNotBlank(storageVolume.getSystemUsageFile()) && !storageVolume.getSystemUsageFile().equals(currentVolumeInfo.getSystemUsageFile())) {
+            currentVolumeInfo.setSystemUsageFile(storageVolume.getSystemUsageFile());
+            updatedVolumeFieldsBuilder.put("systemUsageFile", new SetFieldValueHandler<>(currentVolumeInfo.getSystemUsageFile()));
+        }
         Map<String, EntityFieldValueHandler<?>> updatedVolumeFields = updatedVolumeFieldsBuilder.build();
         if (!updatedVolumeFields.isEmpty()) {
             storageVolumeDao.update(currentVolumeInfo, updatedVolumeFieldsBuilder.build());

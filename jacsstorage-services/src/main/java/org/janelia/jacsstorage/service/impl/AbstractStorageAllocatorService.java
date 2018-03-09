@@ -26,7 +26,7 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
     }
 
     @Override
-    public Optional<JacsBundle> allocateStorage(JacsCredentials credentials, String dataBundlePathPrefix, JacsBundle dataBundle) {
+    public Optional<JacsBundle> allocateStorage(String dataBundlePathPrefix, JacsBundle dataBundle, JacsCredentials credentials) {
         return selectStorageVolume(dataBundle)
                 .map((JacsStorageVolume storageVolume) -> createStorage(credentials, storageVolume, dataBundlePathPrefix, dataBundle))
                 ;
@@ -52,7 +52,7 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
     }
 
     @Override
-    public JacsBundle updateStorage(JacsCredentials credentials, JacsBundle dataBundle) {
+    public JacsBundle updateStorage(JacsBundle dataBundle, JacsCredentials credentials) {
         JacsBundle existingBundle = retrieveExistingStorage(dataBundle);
         checkStorageWriteAccess(credentials, existingBundle);
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedFieldsBuilder = ImmutableMap.builder();

@@ -43,6 +43,18 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     }
 
     @Override
+    public Double getDoublePropertyValue(String name) {
+        String stringValue = getStringPropertyValue(name);
+        return stringValue == null ? null : Double.valueOf(stringValue);
+    }
+
+    @Override
+    public Double getDoublePropertyValue(String name, Double defaultValue) {
+        String stringValue = getStringPropertyValue(name);
+        return stringValue == null ? defaultValue : Double.valueOf(stringValue);
+    }
+
+    @Override
     public Integer getIntegerPropertyValue(String name) {
         String stringValue = getStringPropertyValue(name);
         return stringValue == null ? null : Integer.valueOf(stringValue);

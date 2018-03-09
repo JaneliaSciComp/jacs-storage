@@ -331,9 +331,8 @@ public class MasterStorageResource {
                                      @Context SecurityContext securityContext) {
         LOG.info("Create storage: {} with credentials {}", dataStorageInfo, securityContext.getUserPrincipal());
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
-        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(SecurityUtils.getUserPrincipal(securityContext),
-                dataStorageInfo.getStorageRootPrefixDir(),
-                dataBundle);
+        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(dataStorageInfo.getStorageRootPrefixDir(), dataBundle, SecurityUtils.getUserPrincipal(securityContext)
+        );
         return dataBundleInfo
                 .map(bi -> Response
                         .created(resourceURI.getBaseUriBuilder().path(dataBundle.getId().toString()).build())
@@ -357,7 +356,7 @@ public class MasterStorageResource {
         LOG.info("Update storage: {} - {}", id, dataStorageInfo);
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
         dataBundle.setId(id);
-        JacsBundle updatedDataBundleInfo = storageAllocatorService.updateStorage(SecurityUtils.getUserPrincipal(securityContext), dataBundle);
+        JacsBundle updatedDataBundleInfo = storageAllocatorService.updateStorage(dataBundle, SecurityUtils.getUserPrincipal(securityContext));
         if (updatedDataBundleInfo == null) {
             LOG.warn("Invalid storage ID: {} for updating {}", id, dataStorageInfo);
             return Response

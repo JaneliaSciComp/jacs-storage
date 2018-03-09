@@ -13,6 +13,7 @@ public class StorageQuery {
     private boolean shared;
     private boolean localToAnyHost;
     private String dataStoragePath;
+    private String accessibleOnHost;
     private List<String> storageHosts;
     private List<String> storageAgents;
     private String storageName;
@@ -53,6 +54,15 @@ public class StorageQuery {
 
     public StorageQuery setDataStoragePath(String dataStoragePath) {
         this.dataStoragePath = dataStoragePath;
+        return this;
+    }
+
+    public String getAccessibleOnHost() {
+        return accessibleOnHost;
+    }
+
+    public StorageQuery setAccessibleOnHost(String accessibleOnHost) {
+        this.accessibleOnHost = accessibleOnHost;
         return this;
     }
 

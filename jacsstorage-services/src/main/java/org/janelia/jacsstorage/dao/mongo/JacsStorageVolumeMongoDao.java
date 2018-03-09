@@ -91,7 +91,13 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         if (storageQuery.getId() != null) {
             filtersBuilder.add(Filters.eq("_id", storageQuery.getId()));
         }
-        if (storageQuery.isLocalToAnyHost() || CollectionUtils.isNotEmpty(storageQuery.getStorageHosts())) {
+        if (StringUtils.isNotBlank(storageQuery.getAccessibleOnHost())) {
+            filtersBuilder.add(Filters.or(
+                    Filters.eq("storageHost", storageQuery.getAccessibleOnHost()), // the storage host equals the one set
+                    Filters.exists("storageHost", false), // or the storage host is not set
+                    Filters.eq("storageHost", null)
+            ));
+        } else if (storageQuery.isLocalToAnyHost() || CollectionUtils.isNotEmpty(storageQuery.getStorageHosts())) {
             if (CollectionUtils.isNotEmpty(storageQuery.getStorageHosts())) {
                 filtersBuilder.add(Filters.in("storageHost", storageQuery.getStorageHosts()));
             } else {

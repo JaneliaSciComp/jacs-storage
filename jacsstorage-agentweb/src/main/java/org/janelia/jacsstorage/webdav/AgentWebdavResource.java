@@ -214,11 +214,11 @@ public class AgentWebdavResource {
         long dirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getRealStoragePath(), dataDirPath, dataBundle.getStorageFormat());
         long newBundleSize = dataBundle.size() + dirEntrySize;
         storageAllocatorService.updateStorage(
-                SecurityUtils.getUserPrincipal(securityContext),
                 new JacsBundleBuilder()
                         .dataBundleId(dataBundleId)
                         .usedSpaceInBytes(newBundleSize)
-                        .build());
+                        .build(), SecurityUtils.getUserPrincipal(securityContext)
+        );
         return Response
                 .created(resourceURI.getBaseUriBuilder().path(Constants.AGENTSTORAGE_URI_PATH).path("{dataBundleId}").build(dataBundleId))
                 .build();

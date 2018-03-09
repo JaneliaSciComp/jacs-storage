@@ -150,7 +150,7 @@ public class MasterWebdavResource {
                 .storageFormat(storageFormat)
                 .storageTags(storageTags)
                 .build();
-        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(SecurityUtils.getUserPrincipal(securityContext), pathPrefix, dataBundle);
+        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(pathPrefix, dataBundle, SecurityUtils.getUserPrincipal(securityContext));
         return dataBundleInfo
                 .map(bi -> Response
                         .created(

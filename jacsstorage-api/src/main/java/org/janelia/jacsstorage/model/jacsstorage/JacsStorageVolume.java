@@ -24,6 +24,9 @@ public class JacsStorageVolume extends AbstractEntity {
     private String storageServiceURL;
     private Long availableSpaceInBytes;
     private Integer percentageFull;
+    private Double quotaWarnPercent;
+    private Double quotaFailPercent;
+    private String systemUsageFile;
     private boolean shared;
     private Date created = new Date();
     private Date modified = new Date();
@@ -113,6 +116,30 @@ public class JacsStorageVolume extends AbstractEntity {
         return percentageFull != null;
     }
 
+    public Double getQuotaWarnPercent() {
+        return quotaWarnPercent;
+    }
+
+    public void setQuotaWarnPercent(Double quotaWarnPercent) {
+        this.quotaWarnPercent = quotaWarnPercent;
+    }
+
+    public Double getQuotaFailPercent() {
+        return quotaFailPercent;
+    }
+
+    public void setQuotaFailPercent(Double quotaFailPercent) {
+        this.quotaFailPercent = quotaFailPercent;
+    }
+
+    public String getSystemUsageFile() {
+        return systemUsageFile;
+    }
+
+    public void setSystemUsageFile(String systemUsageFile) {
+        this.systemUsageFile = systemUsageFile;
+    }
+
     public boolean isShared() {
         return shared;
     }
@@ -176,6 +203,7 @@ public class JacsStorageVolume extends AbstractEntity {
                 .append("storageRootDir", storageRootDir)
                 .append("availableSpaceInBytes", availableSpaceInBytes)
                 .append("storageServiceURL", storageServiceURL)
+                .append("systemUsageFile", systemUsageFile)
                 .toString();
     }
 }

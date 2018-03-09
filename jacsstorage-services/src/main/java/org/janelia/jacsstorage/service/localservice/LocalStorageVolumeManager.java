@@ -82,15 +82,23 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         if (JacsStorageVolume.OVERFLOW_VOLUME.equals(volumeName)) {
             shared = true;
         } else {
-            shared = applicationConfig.getBooleanPropertyValue("StorageVolume." + volumeName + ".Shared");
+            shared = applicationConfig.getBooleanPropertyValue(
+                    getVolumeConfigPropertyName(volumeName, "Shared"));
         }
         storageVolume.setName(volumeName);
         storageVolume.setShared(shared);
         storageVolume.setStorageHost(shared ? null : storageHost);
-        storageVolume.setStorageRootDir(applicationConfig.getStringPropertyValue("StorageVolume." + volumeName + ".RootDir"));
+        storageVolume.setStorageRootDir(applicationConfig.getStringPropertyValue(
+                getVolumeConfigPropertyName(volumeName, "RootDir")));
         storageVolume.setStoragePathPrefix(getStoragePathPrefix(volumeName));
         storageVolume.setStorageTags(getStorageVolumeTags(volumeName));
         storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getStorageRootDir()));
+        storageVolume.setQuotaFailPercent(applicationConfig.getDoublePropertyValue(
+                getVolumeConfigPropertyName(volumeName, "QuotaFailPercent")));
+        storageVolume.setQuotaWarnPercent(applicationConfig.getDoublePropertyValue(
+                getVolumeConfigPropertyName(volumeName, "QuotaWarnPercent")));
+        storageVolume.setSystemUsageFile(applicationConfig.getStringPropertyValue(
+                getVolumeConfigPropertyName(volumeName, "SystemUsageFile")));
         long totalSpace = getTotalStorageSpaceInBytes(storageVolume.getStorageRootDir());
         if (totalSpace != 0) {
             storageVolume.setPercentageFull((int) ((totalSpace - storageVolume.getAvailableSpaceInBytes()) * 100 / totalSpace));
@@ -100,8 +108,13 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         return storageVolume;
     }
 
+    private String getVolumeConfigPropertyName(String volumeName, String configProperty) {
+        return "StorageVolume." + volumeName + "." + configProperty;
+    }
+
     private String getStoragePathPrefix(String volumeName) {
-        String storagePathPrefix = applicationConfig.getStringPropertyValue("StorageVolume." + volumeName + ".PathPrefix");
+        String storagePathPrefix = applicationConfig.getStringPropertyValue(
+                getVolumeConfigPropertyName(volumeName, "PathPrefix"));
         String resolvedStoragePathPrefix = configValueResolver.resolve(
                 storagePathPrefix,
                 ImmutableMap.<String, String>builder()
@@ -111,7 +124,8 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     }
 
     private List<String> getStorageVolumeTags(String volumeName) {
-        List<String> tags = applicationConfig.getStringListPropertyValue("StorageVolume." + volumeName + ".Tags");
+        List<String> tags = applicationConfig.getStringListPropertyValue(
+                getVolumeConfigPropertyName(volumeName, "Tags"));
         return tags.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
     }
 

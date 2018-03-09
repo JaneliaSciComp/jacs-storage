@@ -7,8 +7,8 @@ import org.janelia.jacsstorage.security.JacsCredentials;
 import java.util.Optional;
 
 public interface StorageAllocatorService {
-    Optional<JacsBundle> allocateStorage(JacsCredentials credentials, String dataBundlePathPrefix, JacsBundle dataBundle);
-    JacsBundle updateStorage(JacsCredentials credentials, JacsBundle dataBundle);
+    Optional<JacsBundle> allocateStorage(String dataBundlePathPrefix, JacsBundle dataBundle, JacsCredentials credentials);
+    JacsBundle updateStorage(JacsBundle dataBundle, JacsCredentials credentials);
     boolean deleteStorage(JacsCredentials credentials, JacsBundle dataBundle);
     Optional<JacsStorageVolume> selectStorageVolume(JacsBundle dataBundle);
 }

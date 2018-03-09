@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.service;
 
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.jacsstorage.UsageData;
 
 import java.util.List;
 

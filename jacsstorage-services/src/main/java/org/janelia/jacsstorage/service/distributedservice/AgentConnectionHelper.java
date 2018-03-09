@@ -1,14 +1,22 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
+import org.janelia.jacsstorage.model.jacsstorage.UsageData;
+import org.janelia.jacsstorage.security.JacsSubjectHelper;
 import org.janelia.jacsstorage.serviceutils.HttpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.Path;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 class AgentConnectionHelper {
 
@@ -36,6 +44,37 @@ class AgentConnectionHelper {
             }
         }
         return null;
+    }
+
+    static List<UsageData> retrieveUsageData(String agentUrl, Number storageVolumeId, String subject, String authToken) {
+        String storageUsageEndpoint = String.format("/agent_storage/quota/%s/report/%s",
+                storageVolumeId,
+                StringUtils.defaultIfBlank(JacsSubjectHelper.getNameFromSubjectKey(subject), ""));
+        Client httpClient = null;
+        try {
+            httpClient = HttpUtils.createHttpClient();
+            WebTarget target = httpClient.target(agentUrl)
+                    .path(storageUsageEndpoint);
+            Invocation.Builder targetRequestBuilder = target.request()
+                    .header("Authorization", "Bearer " + authToken)
+                    .header("JacsSubject", subject)
+                    ;
+            Response response = targetRequestBuilder.delete();
+            if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
+                LOG.warn("Agent {} retrieve usage returned {} while trying to get usage data for {} on {}",
+                        agentUrl, response.getStatus(), subject, storageVolumeId);
+            } else {
+                TypeReference<List<UsageData>> typeRef = new TypeReference<List<UsageData>>(){};
+                return response.readEntity(new GenericType<>(typeRef.getType()));
+            }
+        } catch (Exception e) {
+            LOG.warn("Error raised during agent retrieve usage for {} on {}", subject, storageVolumeId, e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+        return ImmutableList.of();
     }
 
     static boolean deleteStorage(String agentUrl, Number dataBundleId, String subject, String authToken) {
