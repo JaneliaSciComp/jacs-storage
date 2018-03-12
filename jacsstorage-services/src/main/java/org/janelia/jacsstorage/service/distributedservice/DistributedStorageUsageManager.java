@@ -33,7 +33,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
             LOG.warn("No volume found for {}", storageVolumeId);
             throw new IllegalArgumentException("No volume found for " + storageVolumeId);
         }
-        return AgentConnectionHelper.retrieveUsageData(storageVolumes.get(0).getStorageServiceURL(),
+        return AgentConnectionHelper.retrieveVolumeUsageData(storageVolumes.get(0).getStorageServiceURL(),
                 storageVolumeId,
                 null,
                 jacsCredentials.getAuthToken());
@@ -46,7 +46,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
             LOG.warn("No volume found for {}", storageVolumeId);
             throw new IllegalArgumentException("No volume found for " + storageVolumeId);
         }
-        List<UsageData> usageDataReport = AgentConnectionHelper.retrieveUsageData(storageVolumes.get(0).getStorageServiceURL(),
+        List<UsageData> usageDataReport = AgentConnectionHelper.retrieveVolumeUsageData(storageVolumes.get(0).getStorageServiceURL(),
                 storageVolumeId,
                 username,
                 jacsCredentials.getAuthToken());
@@ -55,11 +55,28 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
 
     @Override
     public List<UsageData> getUsageByStoragePath(String storagePath, JacsCredentials jacsCredentials) {
-        return null;
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(storagePath));
+        if (CollectionUtils.isEmpty(storageVolumes)) {
+            LOG.warn("No volume found for {}", storagePath);
+            throw new IllegalArgumentException("No volume found for " + storagePath);
+        }
+        return AgentConnectionHelper.retrieveDataPathUsageData(storageVolumes.get(0).getStorageServiceURL(),
+                storagePath,
+                null,
+                jacsCredentials.getAuthToken());
     }
 
     @Override
     public UsageData getUsageByStoragePathForUser(String storagePath, String username, JacsCredentials jacsCredentials) {
-        return null;
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(storagePath));
+        if (CollectionUtils.isEmpty(storageVolumes)) {
+            LOG.warn("No volume found for {}", storagePath);
+            throw new IllegalArgumentException("No volume found for " + storagePath);
+        }
+        List<UsageData> usageDataReport = AgentConnectionHelper.retrieveDataPathUsageData(storageVolumes.get(0).getStorageServiceURL(),
+                storagePath,
+                username,
+                jacsCredentials.getAuthToken());
+        return CollectionUtils.isEmpty(usageDataReport) ? UsageData.EMPTY : usageDataReport.get(0);
     }
 }

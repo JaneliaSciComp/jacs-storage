@@ -6,6 +6,7 @@ import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageContentReader;
 import org.janelia.jacsstorage.service.StorageLookupService;
+import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 
 import java.lang.annotation.Annotation;
@@ -32,5 +33,6 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getStorageAllocatorService()).qualifiedBy(localInstanceAnnotation).to(StorageAllocatorService.class);
         bind(dependenciesProducer.getStorageLookupService()).qualifiedBy(localInstanceAnnotation).to(StorageLookupService.class);
         bind(dependenciesProducer.getStorageVolumeManager()).qualifiedBy(localInstanceAnnotation).to(StorageVolumeManager.class);
+        bind(dependenciesProducer.getStorageUsageManager()).qualifiedBy(localInstanceAnnotation).to(StorageUsageManager.class);
     }
 }

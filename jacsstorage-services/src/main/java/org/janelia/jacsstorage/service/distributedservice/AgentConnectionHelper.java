@@ -46,7 +46,7 @@ class AgentConnectionHelper {
         return null;
     }
 
-    static List<UsageData> retrieveUsageData(String agentUrl, Number storageVolumeId, String subject, String authToken) {
+    static List<UsageData> retrieveVolumeUsageData(String agentUrl, Number storageVolumeId, String subject, String authToken) {
         String storageUsageEndpoint = String.format("/agent_storage/quota/%s/report/%s",
                 storageVolumeId,
                 StringUtils.defaultIfBlank(JacsSubjectHelper.getNameFromSubjectKey(subject), ""));
@@ -69,6 +69,37 @@ class AgentConnectionHelper {
             }
         } catch (Exception e) {
             LOG.warn("Error raised during agent retrieve usage for {} on {}", subject, storageVolumeId, e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+        return ImmutableList.of();
+    }
+
+    static List<UsageData> retrieveDataPathUsageData(String agentUrl, String storagePath, String subject, String authToken) {
+        String storageUsageEndpoint = String.format("/agent_storage/path_quota/%s/report/%s",
+                storagePath,
+                StringUtils.defaultIfBlank(JacsSubjectHelper.getNameFromSubjectKey(subject), ""));
+        Client httpClient = null;
+        try {
+            httpClient = HttpUtils.createHttpClient();
+            WebTarget target = httpClient.target(agentUrl)
+                    .path(storageUsageEndpoint);
+            Invocation.Builder targetRequestBuilder = target.request()
+                    .header("Authorization", "Bearer " + authToken)
+                    .header("JacsSubject", subject)
+                    ;
+            Response response = targetRequestBuilder.delete();
+            if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
+                LOG.warn("Agent {} retrieve usage returned {} while trying to get usage data for {} on {}",
+                        agentUrl, response.getStatus(), subject, storagePath);
+            } else {
+                TypeReference<List<UsageData>> typeRef = new TypeReference<List<UsageData>>(){};
+                return response.readEntity(new GenericType<>(typeRef.getType()));
+            }
+        } catch (Exception e) {
+            LOG.warn("Error raised during agent retrieve usage for {} on {}", subject, storagePath, e);
         } finally {
             if (httpClient != null) {
                 httpClient.close();

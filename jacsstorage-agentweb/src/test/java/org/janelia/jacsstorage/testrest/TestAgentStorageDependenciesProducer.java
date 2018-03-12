@@ -7,6 +7,7 @@ import org.janelia.jacsstorage.filter.JWTAuthFilter;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
+import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 
 import javax.enterprise.inject.Produces;
@@ -18,6 +19,7 @@ public class TestAgentStorageDependenciesProducer {
     private DataStorageService dataStorageService = mock(DataStorageService.class);
     private StorageAllocatorService storageAllocatorService = mock(StorageAllocatorService.class);
     private StorageLookupService storageLookupService = mock(StorageLookupService.class);
+    private StorageUsageManager storageUsageManager = mock(StorageUsageManager.class);
     private StorageVolumeManager storageVolumeManager = mock(StorageVolumeManager.class);
     private AgentState agentState = mock(AgentState.class);
     private JWTAuthFilter jwtAuthFilter = mock(JWTAuthFilter.class);
@@ -40,6 +42,11 @@ public class TestAgentStorageDependenciesProducer {
     @Produces @LocalInstance
     public StorageVolumeManager getStorageVolumeManager() {
         return storageVolumeManager;
+    }
+
+    @Produces @LocalInstance
+    public StorageUsageManager getStorageUsageManager() {
+        return storageUsageManager;
     }
 
     @Produces

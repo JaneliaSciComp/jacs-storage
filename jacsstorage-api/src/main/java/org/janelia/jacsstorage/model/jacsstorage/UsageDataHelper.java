@@ -45,23 +45,24 @@ class UsageDataHelper {
         }
     }
 
-    static Optional<Double> percentage(Number numerator, Number denominator) {
+    static Double percentage(Number numerator, Number denominator) {
         if (numerator == null || denominator == null || denominator.doubleValue() == 0.) {
-            return Optional.empty();
+            return null;
         } else {
-            return Optional.of(numerator.doubleValue() / denominator.doubleValue());
+            return numerator.doubleValue() / denominator.doubleValue();
         }
     }
 
-    static Optional<Integer> compare(Number v1, Number v2) {
+    static Integer compare(Number v1, Number v2) {
         if (v1 == null || v2 == null) {
-            return Optional.empty();
+            return null;
         } else if (v1.doubleValue() < v2.doubleValue()) {
-            return Optional.of(-1);
+            return -1;
         } else if (v1.doubleValue() > v2.doubleValue()) {
-            return Optional.of(1);
+            return 1;
         } else {
-            return Optional.of(0);
+            return 0;
         }
     }
+
 }
