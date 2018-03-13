@@ -107,7 +107,7 @@ public class AgentState {
         };
     }
 
-    public synchronized void disconnect() {
+    private synchronized void disconnect() {
         agentConnectionChecker.dispose();
         if (registeredToken != null) {
             AgentConnectionHelper.deregisterAgent(masterHttpURL, agentHttpURL, registeredToken);
@@ -129,11 +129,11 @@ public class AgentState {
         return localAgentInfo;
     }
 
-    public boolean isRegistered() {
+    boolean isRegistered() {
         return StringUtils.isNotBlank(registeredToken);
     }
 
-    public void setRegisteredToken(String registeredToken) {
+    void setRegisteredToken(String registeredToken) {
         this.registeredToken = registeredToken;
     }
 
