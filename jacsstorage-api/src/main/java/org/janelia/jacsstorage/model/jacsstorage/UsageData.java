@@ -96,12 +96,12 @@ public class UsageData {
     public String getDetails() {
         Double usageRatio = UsageDataHelper.percentage(spaceUsed, totalSpace);
         if (usageRatio == null) {
-            return "No quota is defined for this lab";
+            return "Not available";
         } else {
             Supplier<String> statusFromWarnComparison = () -> {
                 Integer warnComparisonResult = UsageDataHelper.compare(usageRatio, warnPercentage);
                 if (warnComparisonResult == null) {
-                    return "No quota is defined for this lab";
+                    return "Not available";
                 } else {
                     return warnComparisonResult >= 0
                             ? String.format("Quota usage (%.2f%%) exceeds warning threshold (%.2f%%)",
