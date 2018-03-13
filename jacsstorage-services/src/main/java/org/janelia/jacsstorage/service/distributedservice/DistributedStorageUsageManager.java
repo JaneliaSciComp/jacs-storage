@@ -27,7 +27,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
     }
 
     @Override
-    public List<UsageData> getVolumeUsage(Number storageVolumeId, JacsCredentials jacsCredentials) {
+    public List<UsageData> getUsageByVolumeId(Number storageVolumeId, JacsCredentials jacsCredentials) {
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setId(storageVolumeId));
         if (CollectionUtils.isEmpty(storageVolumes)) {
             LOG.warn("No volume found for {}", storageVolumeId);
@@ -40,7 +40,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
     }
 
     @Override
-    public UsageData getVolumeUsageForUser(Number storageVolumeId, String username, JacsCredentials jacsCredentials) {
+    public UsageData getUsageByVolumeIdForUser(Number storageVolumeId, String username, JacsCredentials jacsCredentials) {
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setId(storageVolumeId));
         if (CollectionUtils.isEmpty(storageVolumes)) {
             LOG.warn("No volume found for {}", storageVolumeId);
@@ -48,6 +48,33 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
         }
         List<UsageData> usageDataReport = AgentConnectionHelper.retrieveVolumeUsageData(storageVolumes.get(0).getStorageServiceURL(),
                 storageVolumeId,
+                username,
+                jacsCredentials.getAuthToken());
+        return CollectionUtils.isEmpty(usageDataReport) ? UsageData.EMPTY : usageDataReport.get(0);
+    }
+
+    @Override
+    public List<UsageData> getUsageByVolumeName(String volumeName, JacsCredentials jacsCredentials) {
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setStorageName(volumeName));
+        if (CollectionUtils.isEmpty(storageVolumes)) {
+            LOG.warn("No volume found for {}", volumeName);
+            throw new IllegalArgumentException("No volume found for " + volumeName);
+        }
+        return AgentConnectionHelper.retrieveVolumeUsageData(storageVolumes.get(0).getStorageServiceURL(),
+                storageVolumes.get(0).getId(),
+                null,
+                jacsCredentials.getAuthToken());
+    }
+
+    @Override
+    public UsageData getUsageByVolumeNameForUser(String volumeName, String username, JacsCredentials jacsCredentials) {
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setStorageName(volumeName));
+        if (CollectionUtils.isEmpty(storageVolumes)) {
+            LOG.warn("No volume found for {}", volumeName);
+            throw new IllegalArgumentException("No volume found for " + volumeName);
+        }
+        List<UsageData> usageDataReport = AgentConnectionHelper.retrieveVolumeUsageData(storageVolumes.get(0).getStorageServiceURL(),
+                storageVolumes.get(0).getId(),
                 username,
                 jacsCredentials.getAuthToken());
         return CollectionUtils.isEmpty(usageDataReport) ? UsageData.EMPTY : usageDataReport.get(0);

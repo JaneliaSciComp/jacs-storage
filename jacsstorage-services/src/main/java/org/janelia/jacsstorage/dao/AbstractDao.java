@@ -11,10 +11,11 @@ import java.lang.reflect.ParameterizedType;
  */
 public abstract class AbstractDao<T extends BaseEntity> implements Dao<T> {
     protected Class<T> getEntityType() {
-        return getGenericParameterType(this.getClass(), 0);
+        return getGenericParameterType(this.getClass());
     }
 
-    private <T> Class<T> getGenericParameterType(Class<?> parameterizedClass, int paramIndex) {
-        return (Class<T>)((ParameterizedType)parameterizedClass.getGenericSuperclass()).getActualTypeArguments()[paramIndex];
+    @SuppressWarnings("unchecked")
+    private Class<T> getGenericParameterType(Class<?> parameterizedClass) {
+        return (Class<T>)((ParameterizedType)parameterizedClass.getGenericSuperclass()).getActualTypeArguments()[0];
     }
 }

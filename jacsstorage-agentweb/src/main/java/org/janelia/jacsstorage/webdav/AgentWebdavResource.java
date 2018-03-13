@@ -217,7 +217,8 @@ public class AgentWebdavResource {
                 new JacsBundleBuilder()
                         .dataBundleId(dataBundleId)
                         .usedSpaceInBytes(newBundleSize)
-                        .build(), SecurityUtils.getUserPrincipal(securityContext)
+                        .build(),
+                SecurityUtils.getUserPrincipal(securityContext)
         );
         return Response
                 .created(resourceURI.getBaseUriBuilder().path(Constants.AGENTSTORAGE_URI_PATH).path("{dataBundleId}").build(dataBundleId))

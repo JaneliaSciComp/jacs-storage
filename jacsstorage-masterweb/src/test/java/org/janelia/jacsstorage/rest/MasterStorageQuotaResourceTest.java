@@ -3,12 +3,12 @@ package org.janelia.jacsstorage.rest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.app.JAXAgentStorageApp;
+import org.janelia.jacsstorage.app.JAXMasterStorageApp;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
-import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
+import org.janelia.jacsstorage.testrest.TestMasterStorageDependenciesProducer;
 import org.janelia.jacsstorage.testrest.TestResourceBinder;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -24,13 +24,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
 
-public class AgentVolumeResourceTest extends AbstractCdiInjectedResourceTest {
+public class MasterStorageQuotaResourceTest extends AbstractCdiInjectedResourceTest {
 
-    private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
+    private TestMasterStorageDependenciesProducer dependenciesProducer = new TestMasterStorageDependenciesProducer();
 
     @Override
-    protected JAXAgentStorageApp configure() {
-        return new JAXAgentStorageApp() {
+    protected JAXMasterStorageApp configure() {
+        return new JAXMasterStorageApp() {
             @Override
             protected Set<Class<?>> getAppClasses() {
                 return ImmutableSet.<Class<?>>builder()
@@ -53,7 +53,7 @@ public class AgentVolumeResourceTest extends AbstractCdiInjectedResourceTest {
     @Override
     protected Class<?>[] getTestBeanProviders() {
         return new Class<?>[] {
-                TestAgentStorageDependenciesProducer.class
+                TestMasterStorageDependenciesProducer.class
         };
     }
 
@@ -89,7 +89,7 @@ public class AgentVolumeResourceTest extends AbstractCdiInjectedResourceTest {
         };
         for (TestData td : testData) {
             Response testQuotaResponse = target()
-                    .path(Constants.AGENTSTORAGE_URI_PATH)
+                    .path("storage")
                     .path("quota")
                     .path(td.testVolumeName)
                     .path("report")
@@ -101,7 +101,7 @@ public class AgentVolumeResourceTest extends AbstractCdiInjectedResourceTest {
             assertThat(usageDataResponse, equalTo(dependenciesProducer.getObjectMapper().writeValueAsString(ImmutableList.of(testUsageData))));
 
             Response testStatusResponse = target()
-                    .path(Constants.AGENTSTORAGE_URI_PATH)
+                    .path("storage")
                     .path("quota")
                     .path(td.testVolumeName)
                     .path("status")
@@ -146,7 +146,7 @@ public class AgentVolumeResourceTest extends AbstractCdiInjectedResourceTest {
         };
         for (TestData td : testData) {
             Response testResponse = target()
-                    .path(Constants.AGENTSTORAGE_URI_PATH)
+                    .path("storage")
                     .path("volume_quota")
                     .path(td.testVolumeId.toString())
                     .path("report")
@@ -191,7 +191,7 @@ public class AgentVolumeResourceTest extends AbstractCdiInjectedResourceTest {
         };
         for (TestData td : testData) {
             Response testResponse = target()
-                    .path(Constants.AGENTSTORAGE_URI_PATH)
+                    .path("storage")
                     .path("path_quota")
                     .path(td.testPath)
                     .path("report")

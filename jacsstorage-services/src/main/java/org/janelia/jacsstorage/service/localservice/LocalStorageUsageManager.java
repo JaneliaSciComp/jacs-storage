@@ -40,7 +40,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
     }
 
     @Override
-    public List<UsageData> getVolumeUsage(Number volumeId, JacsCredentials jacsCredentials) {
+    public List<UsageData> getUsageByVolumeId(Number volumeId, JacsCredentials jacsCredentials) {
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(volumeId);
         if (storageVolume == null) {
             LOG.warn("No volume found for {}", volumeId);
@@ -50,12 +50,43 @@ public class LocalStorageUsageManager implements StorageUsageManager {
     }
 
     @Override
-    public UsageData getVolumeUsageForUser(Number volumeId, String username, JacsCredentials jacsCredentials) {
+    public UsageData getUsageByVolumeIdForUser(Number volumeId, String username, JacsCredentials jacsCredentials) {
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(volumeId);
         if (storageVolume == null) {
             LOG.warn("No volume found for {}", volumeId);
             throw new IllegalArgumentException("No volume found for " + volumeId);
         }
+        return getVolumeUsageForUser(storageVolume, username);
+    }
+
+
+    @Override
+    public List<UsageData> getUsageByVolumeName(String volumeName, JacsCredentials jacsCredentials) {
+        List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(
+                new StorageQuery().setStorageName(volumeName).setAccessibleOnHost(storageHost)
+        );
+        if (localVolumes.isEmpty()) {
+            LOG.warn("No storage volume found for {}", volumeName);
+            throw new IllegalArgumentException("No volume found for " + volumeName);
+        } else if (localVolumes.size() > 1) {
+            LOG.warn("More than one storage volumes found for {} on host {} -> {}", volumeName, storageHost, localVolumes);
+        }
+        JacsStorageVolume storageVolume = localVolumes.get(0); // even if there are more volumes pick the first one - this assumes that the first one has the longest match
+        return getVolumeUsage(storageVolume);
+    }
+
+    @Override
+    public UsageData getUsageByVolumeNameForUser(String volumeName, String username, JacsCredentials jacsCredentials) {
+        List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(
+                new StorageQuery().setStorageName(volumeName).setAccessibleOnHost(storageHost)
+        );
+        if (localVolumes.isEmpty()) {
+            LOG.warn("No storage volume found for {}", volumeName);
+            throw new IllegalArgumentException("No volume found for " + volumeName);
+        } else if (localVolumes.size() > 1) {
+            LOG.warn("More than one storage volumes found for {} on host {} -> {}", volumeName, storageHost, localVolumes);
+        }
+        JacsStorageVolume storageVolume = localVolumes.get(0); // even if there are more volumes pick the first one - this assumes that the first one has the longest match
         return getVolumeUsageForUser(storageVolume, username);
     }
 
@@ -68,7 +99,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             LOG.warn("No storage volume found for {}", storagePath);
             throw new IllegalArgumentException("No volume found for " + storagePath);
         } else if (localVolumes.size() > 1) {
-            LOG.warn("More than one storage volumes found for {} -> {}", storagePath, localVolumes);
+            LOG.warn("More than one storage volumes found for {} on host {} -> {}", storagePath, storageHost, localVolumes);
         }
         JacsStorageVolume storageVolume = localVolumes.get(0); // even if there are more volumes pick the first one - this assumes that the first one has the longest match
         return getVolumeUsage(storageVolume);
@@ -76,12 +107,14 @@ public class LocalStorageUsageManager implements StorageUsageManager {
 
     @Override
     public UsageData getUsageByStoragePathForUser(String storagePath, String username, JacsCredentials jacsCredentials) {
-        List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(storagePath));
+        List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(
+                new StorageQuery().setDataStoragePath(storagePath).setAccessibleOnHost(storageHost)
+        );
         if (localVolumes.isEmpty()) {
             LOG.warn("No storage volume found for {}", storagePath);
             throw new IllegalArgumentException("No volume found for " + storagePath);
         } else if (localVolumes.size() > 1) {
-            LOG.warn("More than one storage volumes found for {} -> {}", storagePath, localVolumes);
+            LOG.warn("More than one storage volumes found for {} on host {} -> {}", storagePath, storageHost, localVolumes);
         }
         JacsStorageVolume storageVolume = localVolumes.get(0); // even if there are more volumes pick the first one - this assumes that the first one has the longest match
         return getVolumeUsageForUser(storageVolume, username);
@@ -113,8 +146,8 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             storagePath = storagePath.toRealPath().toAbsolutePath();
         } catch (IOException e) {
             LOG.warn("Storage path {} could not be resolved to a real path for user {} on volume {}",
-                    storagePath, username, storageVolume);
-            throw new IllegalArgumentException("No storage path found for " + username + " on " + storageVolume.getId());
+                    storagePath, username, storageVolume, e);
+            return null;
         }
 
         Pattern p = Pattern.compile(".*groups/(\\w+)/"+username+".*");
@@ -136,7 +169,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
     private List<UsageData> getVolumeUsage(JacsStorageVolume storageVolume) {
         if (StringUtils.isBlank(storageVolume.getSystemUsageFile())) {
             LOG.warn("No system usage report was configured for {}", storageVolume);
-            throw new IllegalArgumentException("No system usage configured for " + storageVolume.getId());
+            return null;
         }
         List<UsageData> usageDataReport = new ArrayList<>();
         Scanner scanner = null;

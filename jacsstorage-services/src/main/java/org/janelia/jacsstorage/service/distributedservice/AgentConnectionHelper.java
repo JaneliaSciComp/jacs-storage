@@ -47,7 +47,7 @@ class AgentConnectionHelper {
     }
 
     static List<UsageData> retrieveVolumeUsageData(String agentUrl, Number storageVolumeId, String subject, String authToken) {
-        String storageUsageEndpoint = String.format("/agent_storage/quota/%s/report/%s",
+        String storageUsageEndpoint = String.format("/agent_storage/volume_quota/%s/report/%s",
                 storageVolumeId,
                 StringUtils.defaultIfBlank(JacsSubjectHelper.getNameFromSubjectKey(subject), ""));
         Client httpClient = null;
