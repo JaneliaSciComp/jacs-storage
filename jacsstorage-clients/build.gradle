@@ -9,6 +9,7 @@ buildscript {
 
 plugins {
     id 'application'
+    id 'distribution'
     id 'nebula.rpm' version '4.4.0'
 }
 
