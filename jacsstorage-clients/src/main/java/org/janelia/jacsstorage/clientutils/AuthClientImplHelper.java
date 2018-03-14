@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.clientutils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.jackson.JacksonFeature;
 
 import javax.net.ssl.SSLContext;
@@ -34,7 +35,7 @@ public class AuthClientImplHelper {
             Map<String, String> tokenResponse = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .post(Entity.json(ImmutableMap.of(
                             "username", userName,
-                            "password", password
+                            "password", StringUtils.defaultIfBlank(password, "")
                     )), new GenericType<>(typeRef.getType()))
                     ;
             return tokenResponse.get("token");

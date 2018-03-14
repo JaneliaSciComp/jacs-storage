@@ -318,14 +318,14 @@ public class StorageClientImplHelper {
         }
     }
 
-    public Optional<String> createNewFile(String connectionURL, Number dataBundleId, String newDirPath, InputStream contentStream, String authToken) {
-        LOG.debug("Create new file {}:{}:{} ({})", connectionURL, dataBundleId, newDirPath, authToken);
+    public Optional<String> createNewFile(String connectionURL, Number dataBundleId, String newFilePath, InputStream contentStream, String authToken) {
+        LOG.debug("Create new file {}:{}:{} ({})", connectionURL, dataBundleId, newFilePath, authToken);
         DataStorageInfo storageRequest = new DataStorageInfo().setNumericId(dataBundleId);
         return retrieveStorageInfo(connectionURL, storageRequest, authToken)
                 .flatMap((DataStorageInfo storageInfo) -> {
                     String agentStorageServiceURL = storageInfo.getConnectionURL();
-                    LOG.debug("Invoke agent {} to create new file {}/{}", agentStorageServiceURL, dataBundleId, newDirPath);
-                    return addNewStorageContent(agentStorageServiceURL, storageInfo.getNumericId(), newDirPath, contentStream, authToken);
+                    LOG.debug("Invoke agent {} to create new file {}/{}", agentStorageServiceURL, dataBundleId, newFilePath);
+                    return addNewStorageContent(agentStorageServiceURL, storageInfo.getNumericId(), newFilePath, contentStream, authToken);
                 });
     }
 
@@ -369,6 +369,61 @@ public class StorageClientImplHelper {
                 return new StorageMessageResponse(StorageMessageResponse.OK, "");
             } else {
                 return new StorageMessageResponse(StorageMessageResponse.ERROR, "Response status: " + responseStatus);
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    public Map<String, Object> searchBundles(String storageServiceURL,
+                                             Number bundleId,
+                                             String bundleOwnerKey,
+                                             String bundleName,
+                                             String storageHost,
+                                             List<String> storageTags,
+                                             int pageNumber,
+                                             int pageSize,
+                                             String authToken) {
+        String storageEndpoint = "/storage";
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(storageServiceURL).path(storageEndpoint);
+            if (bundleId != null && !"0".equals(bundleId.toString())) {
+                target = target.queryParam("id", bundleId);
+            }
+            if (StringUtils.isNotBlank(bundleOwnerKey)) {
+                target = target.queryParam("ownerKey", bundleOwnerKey);
+            }
+            if (StringUtils.isNotBlank(bundleName)) {
+                target = target.queryParam("name", bundleName);
+            }
+            if (StringUtils.isNotBlank(storageHost)) {
+                target = target.queryParam("storageHost", storageHost);
+            }
+            if (!storageTags.isEmpty()) {
+                target = target.queryParam("storageTags", storageHost);
+            }
+            if (pageNumber > 0) {
+                target = target.queryParam("page", pageNumber);
+            }
+            if (pageSize > 0) {
+                target = target.queryParam("length", pageSize);
+            }
+            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
+                    .header("Authorization", "Bearer " + authToken)
+                    .get()
+                    ;
+            int responseStatus = response.getStatus();
+            TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>(){};
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return response.readEntity(new GenericType<>(typeRef.getType()));
+            } else {
+                return response.readEntity(new GenericType<>(typeRef.getType()));
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
