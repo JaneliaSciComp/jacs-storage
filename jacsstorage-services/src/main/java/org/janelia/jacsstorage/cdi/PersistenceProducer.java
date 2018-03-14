@@ -1,9 +1,13 @@
 package org.janelia.jacsstorage.cdi;
 
+import com.google.common.base.Splitter;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoDatabase;
+import org.apache.commons.lang3.StringUtils;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
@@ -18,17 +22,26 @@ import org.slf4j.LoggerFactory;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class PersistenceProducer {
     private static final Logger LOG = LoggerFactory.getLogger(PersistenceProducer.class);
+    private static final String DEFAULT_MONGO_AUTH_DB = "admin";
 
+    @Inject
     @PropertyValue(name = "MongoDB.ConnectionURL")
+    private String mongoConnectionURL;
     @Inject
-    private String nmongoConnectionURL;
+    @PropertyValue(name = "MongoDB.ServerName")
+    private String mongoServer;
+    @Inject
     @PropertyValue(name = "MongoDB.Database")
-    @Inject
     private String mongoDatabase;
+    @Inject
+    @PropertyValue(name = "MongoDB.AuthDatabase", defaultValue=DEFAULT_MONGO_AUTH_DB)
+    private String authMongoDatabase;
 
     @ApplicationScoped
     @Produces
@@ -36,6 +49,8 @@ public class PersistenceProducer {
             @PropertyValue(name = "MongoDB.ThreadsAllowedToBlockForConnectionMultiplier") int threadsAllowedToBlockMultiplier,
             @PropertyValue(name = "MongoDB.ConnectionsPerHost") int connectionsPerHost,
             @PropertyValue(name = "MongoDB.ConnectTimeout") int connectTimeout,
+            @PropertyValue(name = "MongoDB.Username") String username,
+            @PropertyValue(name = "MongoDB.Password") String password,
             ObjectMapperFactory objectMapperFactory) {
         CodecRegistry codecRegistry = RegistryHelper.createCodecRegistry(objectMapperFactory);
         MongoClientOptions.Builder optionsBuilder =
@@ -44,10 +59,30 @@ public class PersistenceProducer {
                         .connectionsPerHost(connectionsPerHost)
                         .connectTimeout(connectTimeout)
                         .codecRegistry(codecRegistry);
-        MongoClientURI mongoConnectionString = new MongoClientURI(nmongoConnectionURL, optionsBuilder);
-        LOG.info("Creating Mongo client {} using database {}", mongoConnectionString, mongoDatabase);
-        MongoClient mongoClient = new MongoClient(mongoConnectionString);
-        return mongoClient;
+        if (StringUtils.isNotBlank(mongoServer)) {
+            // use the server address
+            List<ServerAddress> members = Splitter.on(',').trimResults().omitEmptyStrings().splitToList(mongoServer)
+                    .stream()
+                    .map(ServerAddress::new)
+                    .collect(Collectors.toList());
+            if (StringUtils.isNotBlank(username)) {
+                String credentialsDb = StringUtils.defaultIfBlank(authMongoDatabase, mongoDatabase);
+                char[] passwordChars = StringUtils.isBlank(password) ? null : password.toCharArray();
+                MongoCredential credential = MongoCredential.createMongoCRCredential(username, credentialsDb, passwordChars);
+                MongoClient m = new MongoClient(members, credential, optionsBuilder.build());
+                LOG.info("Connected to MongoDB ({}@{}) as user {}", mongoDatabase, mongoServer, username);
+                return m;
+            } else {
+                MongoClient m = new MongoClient(members, optionsBuilder.build());
+                LOG.info("Connected to MongoDB ({}@{})", mongoDatabase, mongoServer);
+                return m;
+            }
+        } else {
+            // use the connection URI
+            MongoClientURI mongoConnectionString = new MongoClientURI(mongoConnectionURL, optionsBuilder);
+            LOG.info("Creating Mongo client {} using database {}", mongoConnectionString, mongoDatabase);
+            return new MongoClient(mongoConnectionString);
+        }
     }
 
     @Produces
