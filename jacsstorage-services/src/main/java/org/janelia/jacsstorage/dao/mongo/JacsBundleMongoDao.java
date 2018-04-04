@@ -34,6 +34,10 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
     @Inject
     public JacsBundleMongoDao(MongoDatabase mongoDatabase, IdGenerator idGenerator) {
         super(mongoDatabase, idGenerator);
+    }
+
+    @Override
+    protected void createDocumentIndexes() {
         IndexOptions indexOptions = new IndexOptions();
         indexOptions.unique(true);
         mongoCollection.createIndex(Indexes.ascending("ownerKey", "name"), indexOptions);

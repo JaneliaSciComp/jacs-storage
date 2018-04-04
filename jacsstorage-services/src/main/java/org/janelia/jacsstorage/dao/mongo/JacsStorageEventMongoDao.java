@@ -19,6 +19,10 @@ public class JacsStorageEventMongoDao extends AbstractMongoDao<JacsStorageEvent>
     }
 
     @Override
+    protected void createDocumentIndexes() {
+    }
+
+    @Override
     public void update(JacsStorageEvent entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         throw new UnsupportedOperationException("Update not supported for storage event");
     }

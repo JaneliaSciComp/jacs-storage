@@ -71,6 +71,11 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
         return persistenceInfo.storeName();
     }
 
+    /**
+     * This is a placeholder for creating the collection indexes. For now nobody invokes this method.
+     */
+    abstract protected void createDocumentIndexes();
+
     @Override
     public T findById(Number id) {
         Iterator<T> entityDocsItr = findIterable(eq("_id", id), null, 0, 2, getEntityType()).iterator();

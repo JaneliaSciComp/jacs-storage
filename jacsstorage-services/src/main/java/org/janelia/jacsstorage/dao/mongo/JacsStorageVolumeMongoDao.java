@@ -42,6 +42,10 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
     @Inject
     public JacsStorageVolumeMongoDao(MongoDatabase mongoDatabase, IdGenerator idGenerator) {
         super(mongoDatabase, idGenerator);
+    }
+
+    @Override
+    protected void createDocumentIndexes() {
         mongoCollection.createIndex(Indexes.ascending("storageHost", "name"),
                 new IndexOptions()
                         .unique(true)
