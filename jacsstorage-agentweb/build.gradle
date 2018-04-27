@@ -84,6 +84,7 @@ project(":jacsstorage-agentweb") {
         }
 
         link("/etc/systemd/system/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
+        link("/etc/systemd/system/multi-user.target.wants/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
     }
 }
 
