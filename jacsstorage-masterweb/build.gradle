@@ -81,7 +81,7 @@ project(":jacsstorage-masterweb") {
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
-        copy("/etc/systemd/system/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
+        link("/etc/systemd/system/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
         link("/etc/systemd/system/multi-user.target.wants/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
     }
 }
