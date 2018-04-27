@@ -18,10 +18,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -129,30 +131,43 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     }
 
     private long getAvailableStorageSpaceInBytes(String storageDirName) {
-        try {
-            return getFileStore(storageDirName).getUsableSpace();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+        return getFileStore(storageDirName)
+                .map(fs -> {
+                    try {
+                        return fs.getUsableSpace();
+                    } catch (IOException e) {
+                        LOG.error("Error trying to get usable storage space {}", storageDirName, e);
+                        return 0L;
+                    }
+                })
+                .orElse(0L)
+                ;
     }
 
     private long getTotalStorageSpaceInBytes(String storageDirName) {
-        try {
-            return getFileStore(storageDirName).getTotalSpace();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+        return getFileStore(storageDirName)
+                .map(fs -> {
+                    try {
+                        return fs.getTotalSpace();
+                    } catch (IOException e) {
+                        LOG.error("Error trying to get total storage space {}", storageDirName, e);
+                        return 0L;
+                    }
+                })
+                .orElse(0L)
+                ;
     }
 
-    private FileStore getFileStore(String storageDirName) {
+    private Optional<FileStore> getFileStore(String storageDirName) {
         try {
             java.nio.file.Path storagePath = Paths.get(storageDirName);
             if (Files.notExists(storagePath)) {
                 Files.createDirectories(storagePath);
             }
-            return Files.getFileStore(storagePath);
+            return Optional.of(Files.getFileStore(storagePath));
         } catch (Exception e) {
-            throw new IllegalStateException(e);
+            LOG.error("Access error for storage {}", storageDirName, e);
+            return Optional.empty();
         }
     }
 
