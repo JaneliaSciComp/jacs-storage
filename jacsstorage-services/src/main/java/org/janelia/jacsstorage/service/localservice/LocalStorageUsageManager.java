@@ -5,6 +5,7 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
 import org.janelia.jacsstorage.security.JacsCredentials;
@@ -39,6 +40,9 @@ public class LocalStorageUsageManager implements StorageUsageManager {
         this.storageHost = StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());;
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public List<UsageData> getUsageByVolumeId(Number volumeId, JacsCredentials jacsCredentials) {
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(volumeId);
@@ -49,6 +53,9 @@ public class LocalStorageUsageManager implements StorageUsageManager {
         return getVolumeUsage(storageVolume);
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public UsageData getUsageByVolumeIdForUser(Number volumeId, String username, JacsCredentials jacsCredentials) {
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(volumeId);
@@ -59,7 +66,9 @@ public class LocalStorageUsageManager implements StorageUsageManager {
         return getVolumeUsageForUser(storageVolume, username);
     }
 
-
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public List<UsageData> getUsageByVolumeName(String volumeName, JacsCredentials jacsCredentials) {
         List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(
@@ -75,6 +84,9 @@ public class LocalStorageUsageManager implements StorageUsageManager {
         return getVolumeUsage(storageVolume);
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public UsageData getUsageByVolumeNameForUser(String volumeName, String username, JacsCredentials jacsCredentials) {
         List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(
@@ -90,6 +102,9 @@ public class LocalStorageUsageManager implements StorageUsageManager {
         return getVolumeUsageForUser(storageVolume, username);
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public List<UsageData> getUsageByStoragePath(String storagePath, JacsCredentials jacsCredentials) {
         List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(
@@ -105,6 +120,9 @@ public class LocalStorageUsageManager implements StorageUsageManager {
         return getVolumeUsage(storageVolume);
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public UsageData getUsageByStoragePathForUser(String storagePath, String username, JacsCredentials jacsCredentials) {
         List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(

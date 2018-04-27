@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.service.impl;
 
 import org.janelia.jacsstorage.dao.JacsStorageEventDao;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageEvent;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageEventBuilder;
 import org.janelia.jacsstorage.service.StorageEventLogger;
@@ -21,6 +22,9 @@ public class DaoStorageEventLoggerImpl implements StorageEventLogger {
         this.storageEventDao = storageEventDao;
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public JacsStorageEvent logStorageEvent(String name, String description, Object data, String status) {
         JacsStorageEvent jacsStorageEvent = new JacsStorageEventBuilder()

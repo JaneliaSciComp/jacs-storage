@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service.impl;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
@@ -25,6 +26,7 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
         this.bundleDao = bundleDao;
     }
 
+    @TimedMethod
     @Override
     public Optional<JacsBundle> allocateStorage(String dataBundlePathPrefix, JacsBundle dataBundle, JacsCredentials credentials) {
         return selectStorageVolume(dataBundle)
@@ -72,6 +74,7 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
         return existingBundle;
     }
 
+    @TimedMethod
     protected JacsBundle retrieveExistingStorage(JacsBundle dataBundle) {
         JacsBundle existingBundle = bundleDao.findById(dataBundle.getId());
         if (existingBundle == null) {

@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service.distributedservice;
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
 import org.janelia.jacsstorage.security.JacsCredentials;
@@ -26,6 +27,9 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
         this.storageVolumeManager = storageVolumeManager;
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public List<UsageData> getUsageByVolumeId(Number storageVolumeId, JacsCredentials jacsCredentials) {
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setId(storageVolumeId));
@@ -39,6 +43,9 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
                 jacsCredentials.getAuthToken());
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public UsageData getUsageByVolumeIdForUser(Number storageVolumeId, String username, JacsCredentials jacsCredentials) {
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setId(storageVolumeId));
@@ -53,6 +60,9 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
         return CollectionUtils.isEmpty(usageDataReport) ? UsageData.EMPTY : usageDataReport.get(0);
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public List<UsageData> getUsageByVolumeName(String volumeName, JacsCredentials jacsCredentials) {
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setStorageName(volumeName));
@@ -66,6 +76,9 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
                 jacsCredentials.getAuthToken());
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public UsageData getUsageByVolumeNameForUser(String volumeName, String username, JacsCredentials jacsCredentials) {
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setStorageName(volumeName));
@@ -80,6 +93,9 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
         return CollectionUtils.isEmpty(usageDataReport) ? UsageData.EMPTY : usageDataReport.get(0);
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public List<UsageData> getUsageByStoragePath(String storagePath, JacsCredentials jacsCredentials) {
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(storagePath));
@@ -93,6 +109,9 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
                 jacsCredentials.getAuthToken());
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public UsageData getUsageByStoragePathForUser(String storagePath, String username, JacsCredentials jacsCredentials) {
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(storagePath));
