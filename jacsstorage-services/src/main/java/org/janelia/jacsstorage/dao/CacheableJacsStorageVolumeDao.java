@@ -7,6 +7,8 @@ import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Cached data accessed by ID.
  */
@@ -14,6 +16,7 @@ public class CacheableJacsStorageVolumeDao extends AbstractCacheableEntityByIdDa
 
     private static final Cache<Number, JacsStorageVolume> JACS_VOLUME_CACHE = CacheBuilder.newBuilder()
             .maximumSize(100)
+            .expireAfterAccess(5, TimeUnit.MINUTES)
             .build();
 
     private JacsStorageVolumeDao dao;

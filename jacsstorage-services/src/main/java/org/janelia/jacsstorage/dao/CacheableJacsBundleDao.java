@@ -6,6 +6,8 @@ import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Cached data accessed by ID.
  */
@@ -13,6 +15,7 @@ public class CacheableJacsBundleDao extends AbstractCacheableEntityByIdDao<JacsB
 
     private static final Cache<Number, JacsBundle> JACS_BUNDLE_CACHE = CacheBuilder.newBuilder()
             .maximumSize(100)
+            .expireAfterAccess(5, TimeUnit.MINUTES)
             .build();
 
     private JacsBundleDao dao;
