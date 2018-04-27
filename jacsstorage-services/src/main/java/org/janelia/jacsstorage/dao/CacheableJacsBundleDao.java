@@ -1,15 +1,19 @@
 package org.janelia.jacsstorage.dao;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
-import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 
 /**
  * Cached data accessed by ID.
  */
 public class CacheableJacsBundleDao extends AbstractCacheableEntityByIdDao<JacsBundle> implements JacsBundleDao {
+
+    private static final Cache<Number, JacsBundle> JACS_BUNDLE_CACHE = CacheBuilder.newBuilder()
+            .maximumSize(100)
+            .build();
 
     private JacsBundleDao dao;
 
@@ -35,6 +39,11 @@ public class CacheableJacsBundleDao extends AbstractCacheableEntityByIdDao<JacsB
     @Override
     protected JacsBundleDao getDelegator() {
         return dao;
+    }
+
+    @Override
+    protected Cache<Number, JacsBundle> getCache() {
+        return JACS_BUNDLE_CACHE;
     }
 }
 

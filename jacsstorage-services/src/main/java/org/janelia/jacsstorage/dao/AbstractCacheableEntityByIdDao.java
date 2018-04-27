@@ -7,6 +7,8 @@ import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.model.BaseEntity;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,18 +21,15 @@ import java.util.concurrent.ExecutionException;
  *
  * @param <T> entity type
  */
-public abstract class AbstractCacheableEntityByIdDao<T extends BaseEntity> implements ReadWriteDao<T> {
+public abstract class AbstractCacheableEntityByIdDao<T extends BaseEntity>
+        extends AbstractDao<T>
+        implements ReadWriteDao<T> {
 
-    private final Cache<Number, T> ENTITY_ID_CACHE = CacheBuilder.newBuilder()
-            .maximumSize(100)
-            .build(new CacheLoader<Number, T>() {
-                @Override
-                public T load(Number key) throws Exception {
-                    return getDelegator().findById(key);
-                }
-            });
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractCacheableEntityByIdDao.class);
 
     protected abstract ReadWriteDao<T> getDelegator();
+
+    protected abstract Cache<Number, T> getCache();
 
     @Override
     public void save(T entity) {
@@ -59,14 +58,15 @@ public abstract class AbstractCacheableEntityByIdDao<T extends BaseEntity> imple
     @Override
     public T findById(Number id) {
         try {
-            return ENTITY_ID_CACHE.get(id, new Callable<T>() {
+            return getCache().get(id, new Callable<T>() {
                 @Override
                 public T call() {
                     return getDelegator().findById(id);
                 }
             });
         } catch (Exception e) {
-            throw new IllegalArgumentException("Error reading " + id + " from local cache");
+            LOG.warn("No entity of type {} found for {}", getEntityType(), id, e);
+            return null;
         }
     }
 
@@ -86,7 +86,7 @@ public abstract class AbstractCacheableEntityByIdDao<T extends BaseEntity> imple
     }
 
     private void invalidateCache(T entity) {
-        ENTITY_ID_CACHE.invalidate(entity.getId());
+        getCache().invalidate(entity.getId());
     }
 }
 
