@@ -6,6 +6,8 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
+import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.service.distributedservice.StorageAgentManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +66,7 @@ public class StorageAgentsResource {
                 .build();
     }
 
+    @Timed
     @Consumes("application/json")
     @POST
     @ApiOperation(value = "Register/re-register agent")
@@ -79,6 +82,7 @@ public class StorageAgentsResource {
                 .build();
     }
 
+    @Timed
     @Path("url/{agentURL:.+}")
     @DELETE
     @ApiOperation(value = "Deregister agent")

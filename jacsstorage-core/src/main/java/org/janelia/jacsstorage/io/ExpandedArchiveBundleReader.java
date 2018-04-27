@@ -7,6 +7,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.msgpack.core.Preconditions;
 
@@ -68,6 +69,10 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
         return EnumSet.of(JacsStorageFormat.DATA_DIRECTORY);
     }
 
+    @TimedMethod(
+            argList = {0},
+            logResult = true
+    )
     @Override
     protected long readBundleBytes(String source, OutputStream stream) throws Exception {
         TarArchiveOutputStream outputStream = new TarArchiveOutputStream(stream, TarConstants.DEFAULT_RCDSIZE);
@@ -86,6 +91,9 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
         return archiver.nBytes;
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public List<DataNodeInfo> listBundleContent(String source, String entryName, int depth) {
         Path sourcePath = getSourcePath(source);
@@ -109,6 +117,10 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
         }
     }
 
+    @TimedMethod(
+            argList = {0, 1},
+            logResult = true
+    )
     @Override
     public long readDataEntry(String source, String entryName, OutputStream outputStream) throws IOException {
         Path sourcePath = getSourcePath(source);

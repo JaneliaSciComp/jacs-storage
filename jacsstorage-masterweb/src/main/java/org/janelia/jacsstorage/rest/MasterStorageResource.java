@@ -20,10 +20,10 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.security.JacsSecurityContext;
 import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
-import org.janelia.jacsstorage.service.LogStorageEvent;
+import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
-import org.janelia.jacsstorage.service.Timed;
+import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

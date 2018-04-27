@@ -12,7 +12,7 @@ import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageContentReader;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.jacsstorage.service.Timed;
+import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

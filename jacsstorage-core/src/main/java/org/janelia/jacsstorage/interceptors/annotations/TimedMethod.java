@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.interceptors.annotations;
 
 import javax.enterprise.util.Nonbinding;
 import javax.interceptor.InterceptorBinding;
@@ -9,12 +9,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Inherited
-@Logged
+@Timed
 @InterceptorBinding
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
-public @interface LogStorageEvent {
-    @Nonbinding String eventName() default "";
-    @Nonbinding String description() default "";
+public @interface TimedMethod {
+    /**
+     * @return the list of arguments to record together with the timing information.
+     */
     @Nonbinding int[] argList() default {};
+
+    @Nonbinding boolean logResult() default false;
 }

@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.io;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.msgpack.core.Preconditions;
 
@@ -26,6 +27,10 @@ public class SingleFileBundleReader extends AbstractBundleReader {
         return EnumSet.of(JacsStorageFormat.SINGLE_DATA_FILE);
     }
 
+    @TimedMethod(
+            argList = {0},
+            logResult = true
+    )
     @Override
     protected long readBundleBytes(String source, OutputStream stream) throws Exception {
         Path sourcePath = getSourcePath(source);
@@ -33,6 +38,9 @@ public class SingleFileBundleReader extends AbstractBundleReader {
         return Files.copy(sourcePath, stream);
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public List<DataNodeInfo> listBundleContent(String source, String entryName, int depth) {
         Path sourcePath = getSourcePath(source);
@@ -43,6 +51,10 @@ public class SingleFileBundleReader extends AbstractBundleReader {
         return ImmutableList.of(pathToDataNodeInfo(sourcePath, sourcePath, (rootPath, nodePath) -> rootPath.toString()));
     }
 
+    @TimedMethod(
+            argList = {0, 1},
+            logResult = true
+    )
     @Override
     public long readDataEntry(String source, String entryName, OutputStream outputStream) throws IOException {
         Path sourcePath = getSourcePath(source);

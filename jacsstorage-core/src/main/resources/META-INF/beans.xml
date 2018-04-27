@@ -5,4 +5,7 @@
        <scan>
               <exclude name="org.janelia.jacsstorage.model.**"/>
        </scan>
+       <interceptors>
+              <class>org.janelia.jacsstorage.interceptors.TimedInterceptor</class>
+       </interceptors>
 </beans>

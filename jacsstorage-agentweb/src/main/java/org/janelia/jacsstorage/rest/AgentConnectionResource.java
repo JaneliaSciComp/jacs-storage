@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
+import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,7 @@ public class AgentConnectionResource {
                 .build();
     }
 
+    @Timed
     @Consumes(MediaType.APPLICATION_JSON)
     @POST
     @ApiOperation(value = "Connect this agent to the specified master URL")

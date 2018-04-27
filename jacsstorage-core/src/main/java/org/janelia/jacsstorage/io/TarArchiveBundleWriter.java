@@ -6,6 +6,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 
@@ -38,6 +39,10 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
         return EnumSet.of(JacsStorageFormat.ARCHIVE_DATA_FILE);
     }
 
+    @TimedMethod(
+            argList = {1},
+            logResult = true
+    )
     @Override
     protected long writeBundleBytes(InputStream stream, String target) throws Exception {
         Path targetPath = Paths.get(target);
@@ -48,6 +53,9 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
         return Files.copy(stream, Paths.get(target));
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public long createDirectoryEntry(String dataPath, String entryName) {
         return createNewEntry(dataPath, entryName, 0L,
@@ -64,6 +72,10 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
         );
     }
 
+    @TimedMethod(
+            argList = {0, 1},
+            logResult = true
+    )
     @Override
     public long createFileEntry(String dataPath, String entryName, InputStream contentStream) {
         Path tempPath = null;

@@ -16,7 +16,7 @@ import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.jacsstorage.service.Timed;
+import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.serviceutils.HttpUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -14,7 +14,7 @@ import static org.mockito.Mockito.spy;
 
 public class AbstractCdiInjectedResourceTest extends JerseyTest {
 
-    protected SeContainer container;
+    private SeContainer container;
 
     @Before
     public void setupPreconditionCheck() {

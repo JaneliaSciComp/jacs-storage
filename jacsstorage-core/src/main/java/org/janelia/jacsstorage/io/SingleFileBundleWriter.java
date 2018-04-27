@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.io;
 
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.io.InputStream;
@@ -16,6 +17,10 @@ public class SingleFileBundleWriter extends AbstractBundleWriter {
         return EnumSet.of(JacsStorageFormat.SINGLE_DATA_FILE);
     }
 
+    @TimedMethod(
+            argList = {1},
+            logResult = true
+    )
     @Override
     protected long writeBundleBytes(InputStream stream, String target) throws Exception {
         Path targetPath = Paths.get(target);
@@ -26,11 +31,18 @@ public class SingleFileBundleWriter extends AbstractBundleWriter {
         return Files.copy(stream, targetPath);
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public long createDirectoryEntry(String dataPath, String entryName) {
         throw new UnsupportedOperationException("Method is not supported");
     }
 
+    @TimedMethod(
+            argList = {0, 1},
+            logResult = true
+    )
     @Override
     public long createFileEntry(String dataPath, String entryName, InputStream contentStream) {
         Path filePath = Paths.get(dataPath);

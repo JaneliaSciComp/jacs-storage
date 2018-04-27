@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.io;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.HashingOutputStream;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.OutputStream;
@@ -14,6 +15,10 @@ import java.util.function.BiFunction;
 
 public abstract class AbstractBundleReader implements BundleReader {
 
+    @TimedMethod(
+            argList = {0},
+            logResult = true
+    )
     @Override
     public TransferInfo readBundle(String source, OutputStream stream) {
         try {

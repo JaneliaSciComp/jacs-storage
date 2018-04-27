@@ -22,11 +22,12 @@ import org.janelia.jacsstorage.security.JacsSubjectHelper;
 import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
-import org.janelia.jacsstorage.service.LogStorageEvent;
+import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.jacsstorage.service.Timed;
+import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,6 +93,7 @@ public class AgentStorageResource {
             eventName = "HTTP_STREAM_STORAGE_DATA",
             argList = {0, 1}
     )
+    @TimedMethod(argList = {0, 1})
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @POST
     @Path("{dataBundleId}")
@@ -298,6 +300,7 @@ public class AgentStorageResource {
             eventName = "CREATE_STORAGE_FILE",
             argList = {0, 1, 2}
     )
+    @TimedMethod(argList = {0, 1, 2})
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
     @POST
@@ -320,6 +323,7 @@ public class AgentStorageResource {
             eventName = "CREATE_STORAGE_FILE",
             argList = {0, 1, 2}
     )
+    @TimedMethod(argList = {0, 1, 2})
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
     @PUT
@@ -338,6 +342,7 @@ public class AgentStorageResource {
         return createFile(dataBundleId, dataEntryPath, securityContext, contentStream);
     }
 
+    @TimedMethod(argList = {0, 1, 2})
     private Response createFile(Long dataBundleId,
                                 String dataEntryPath,
                                 SecurityContext securityContext,

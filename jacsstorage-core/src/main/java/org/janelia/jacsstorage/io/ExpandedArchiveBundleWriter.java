@@ -6,6 +6,7 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.io.IOException;
@@ -25,6 +26,10 @@ public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
         return EnumSet.of(JacsStorageFormat.DATA_DIRECTORY);
     }
 
+    @TimedMethod(
+            argList = {1},
+            logResult = true
+    )
     @Override
     public long writeBundleBytes(InputStream stream, String target) throws Exception {
         long nBytes = 0;
@@ -42,6 +47,9 @@ public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
         return nBytes;
     }
 
+    @TimedMethod(
+            logResult = true
+    )
     @Override
     public long createDirectoryEntry(String dataPath, String entryName) {
         return createNewEntry(dataPath, entryName,
@@ -58,6 +66,10 @@ public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
                 });
     }
 
+    @TimedMethod(
+            argList = {0, 1},
+            logResult = true
+    )
     @Override
     public long createFileEntry(String dataPath, String entryName, InputStream contentStream) {
         return createNewEntry(dataPath, entryName,
