@@ -1,8 +1,8 @@
 [Unit]
 Description=Jacs Storage Agent Service
 Wants=network-online.target
-After=network.target network-online.target
-RequiresMountFor=/opt:/data
+Requires=basic.target
+After=network.target network-online.target basic.target
 
 [Service]
 Type=simple
