@@ -48,7 +48,10 @@ project(":jacsstorage-masterweb") {
         os = LINUX
 
         def rpmInstallDir = "/opt/servers/jacsstorage/${project.name}-${version}"
+        def systemServiceDir = "/etc/systemd/system"
         def installEnv = ["jacs.runtime.env.installDir": rpmInstallDir]
+
+        postInstall "cp ${rpmInstallDir}/etc/${project.name}.service ${systemServiceDir}/${project.name}.service"
 
         into "${rpmInstallDir}"
 
@@ -81,8 +84,7 @@ project(":jacsstorage-masterweb") {
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
-        link("/etc/systemd/system/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
-        link("/etc/systemd/system/multi-user.target.wants/${project.name}.service", "${rpmInstallDir}/etc/${project.name}.service")
+        link("${systemServiceDir}/multi-user.target.wants/${project.name}.service", "${systemServiceDir}/${project.name}.service")
     }
 }
 
