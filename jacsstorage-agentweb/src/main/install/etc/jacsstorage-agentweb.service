@@ -1,13 +1,13 @@
 [Unit]
 Description=Jacs Storage Agent Service
+Wants=network-online.target
 After=network.target network-online.target
-Requires=network-online.target
 
 [Service]
 Type=simple
 User=jacs
 ExecStart=/bin/sh ${jacs.runtime.env.installDir}/bin/run-service.sh
-Restart=on-abort
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
