@@ -1,8 +1,8 @@
 [Unit]
 Description=Jacs Storage Master Service
 Wants=network-online.target
-Requires=basic.target
-After=network.target network-online.target basic.target
+After=network.target network-online.target
+RequiresMountsFor=/misc/local
 
 [Service]
 Type=simple
