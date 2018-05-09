@@ -145,15 +145,17 @@ public class ContentStorageResource {
 
     Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, JacsCredentials jacsCredentials) {
         Invocation.Builder requestWithCredentialsBuilder = requestBuilder;
-        if (jacsCredentials.hasAuthToken()) {
-            requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
-                    "Authorization",
-                    "Bearer " + jacsCredentials.getAuthToken());
-        }
-        if (jacsCredentials.hasAuthSubject()) {
-            requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
-                    "JacsSubject",
-                    jacsCredentials.getAuthSubject());
+        if (jacsCredentials != null) {
+            if (jacsCredentials.hasAuthToken()) {
+                requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
+                        "Authorization",
+                        "Bearer " + jacsCredentials.getAuthToken());
+            }
+            if (jacsCredentials.hasAuthSubject()) {
+                requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
+                        "JacsSubject",
+                        jacsCredentials.getAuthSubject());
+            }
         }
         return requestWithCredentialsBuilder;
     }
