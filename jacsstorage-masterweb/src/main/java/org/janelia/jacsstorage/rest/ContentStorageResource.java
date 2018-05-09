@@ -29,9 +29,11 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
@@ -50,7 +52,13 @@ public class ContentStorageResource {
     @Inject @RemoteInstance
     private StorageVolumeManager storageVolumeManager;
 
-    @RequireAuthentication
+    /**
+     * Retrieve the content of a file using the file path.
+     *
+     * @param fullFileNameParam
+     * @param securityContext
+     * @return
+     */
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("storage_path/{filePath:.+}")
@@ -106,9 +114,12 @@ public class ContentStorageResource {
             try {
                 httpClient = HttpUtils.createHttpClient();
                 WebTarget target = httpClient.target(url);
-                Response response = target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE)
-                        .header("Authorization", "Bearer " + jacsCredentials.getAuthToken())
-                        .header("JacsSubject", jacsCredentials.getAuthSubject())
+                target.request(MediaType.APPLICATION_OCTET_STREAM);
+
+                Response response =
+                        createRequestWithCredentials(target.request(
+                                MediaType.APPLICATION_OCTET_STREAM_TYPE),
+                                jacsCredentials)
                         .get();
                 int responseStatus = response.getStatus();
                 if (responseStatus == Response.Status.OK.getStatusCode()) {
@@ -132,4 +143,18 @@ public class ContentStorageResource {
         };
     }
 
+    Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, JacsCredentials jacsCredentials) {
+        Invocation.Builder requestWithCredentialsBuilder = requestBuilder;
+        if (jacsCredentials.hasAuthToken()) {
+            requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
+                    "Authorization",
+                    "Bearer " + jacsCredentials.getAuthToken());
+        }
+        if (jacsCredentials.hasAuthSubject()) {
+            requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
+                    "JacsSubject",
+                    jacsCredentials.getAuthSubject());
+        }
+        return requestWithCredentialsBuilder;
+    }
 }

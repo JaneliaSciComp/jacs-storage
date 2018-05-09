@@ -31,7 +31,6 @@ import javax.ws.rs.core.UriInfo;
 
 @Timed
 @RequestScoped
-@RequireAuthentication
 @Produces(MediaType.APPLICATION_JSON)
 @Path(Constants.AGENTSTORAGE_URI_PATH)
 @Api(value = "Agent storage API based on file's path. This API requires an authenticated subject.")
@@ -59,8 +58,7 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response checkPath(@PathParam("filePath") String fullDataPathNameParam,
-                              @Context SecurityContext securityContext) {
+    public Response checkPath(@PathParam("filePath") String fullDataPathNameParam) {
         LOG.info("Check path {}", fullDataPathNameParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
@@ -82,8 +80,7 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response retrieveData(@PathParam("dataPath") String fullDataPathNameParam,
-                                 @Context SecurityContext securityContext) {
+    public Response retrieveData(@PathParam("dataPath") String fullDataPathNameParam) {
         LOG.info("Retrieve data from {}", fullDataPathNameParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
@@ -115,5 +112,4 @@ public class PathBasedAgentStorageResource {
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
         return storageResourceHelper.retrieveContentFromFile(storageVolume, storageRelativeFilePath);
     }
-
 }

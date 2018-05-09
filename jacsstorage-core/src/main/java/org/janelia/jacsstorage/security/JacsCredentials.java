@@ -27,6 +27,10 @@ public class JacsCredentials implements Principal {
         return this;
     }
 
+    public boolean hasAuthSubject() {
+        return StringUtils.isNotBlank(authSubject);
+    }
+
     public JacsCredentials setSubjectProxy(String subjectProxy) {
         this.subjectProxy = subjectProxy;
         return this;
@@ -39,6 +43,10 @@ public class JacsCredentials implements Principal {
     public JacsCredentials setAuthToken(String authToken) {
         this.authToken = authToken;
         return this;
+    }
+
+    public boolean hasAuthToken() {
+        return StringUtils.isNotBlank(authToken);
     }
 
     public JWTClaimsSet getClaims() {
