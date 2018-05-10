@@ -13,6 +13,7 @@ import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class CachedTokenCredentialsValidator implements TokenCredentialsValidator {
@@ -28,16 +29,21 @@ public class CachedTokenCredentialsValidator implements TokenCredentialsValidato
     }
 
     @Override
-    public String authorizationScheme() {
-        return impl.authorizationScheme();
+    public boolean acceptToken(String token) {
+        return impl.acceptToken(token);
     }
 
     @Override
-    public JacsCredentials validateToken(String token, String subject) {
-        try {
-            return CREDENTIALS_CACHE.get(token, () -> impl.validateToken(token, subject));
-        } catch (Exception e) {
-            throw new SecurityException(e);
+    public Optional<JacsCredentials> validateToken(String token, String subject) {
+        JacsCredentials credentials = CREDENTIALS_CACHE.getIfPresent(token);
+        if (credentials == null) {
+            return impl.validateToken(token, subject)
+                    .map(jc -> {
+                        CREDENTIALS_CACHE.put(token, jc);
+                        return jc;
+                    });
+        } else {
+            return Optional.of(credentials);
         }
     }
 }

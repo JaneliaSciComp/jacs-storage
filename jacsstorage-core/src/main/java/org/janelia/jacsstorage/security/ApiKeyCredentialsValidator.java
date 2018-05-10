@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 public class ApiKeyCredentialsValidator implements TokenCredentialsValidator {
     private static final Logger LOG = LoggerFactory.getLogger(ApiKeyCredentialsValidator.class);
 
@@ -14,23 +16,29 @@ public class ApiKeyCredentialsValidator implements TokenCredentialsValidator {
     }
 
     @Override
-    public String authorizationScheme() {
-        return "APIKEY";
+    public boolean acceptToken(String token) {
+        return StringUtils.isNotBlank(getTokenKey(token));
+    }
+
+    private String getTokenKey(String token) {
+        String tokenKey = "";
+        if (StringUtils.startsWithIgnoreCase(token, "APIKEY ")) {
+            tokenKey = token.substring("APIKEY ".length()).trim();
+        }
+        return tokenKey;
     }
 
     @Override
-    public JacsCredentials validateToken(String token, String subject) {
-        if (StringUtils.isBlank(token)) {
-            throw new SecurityException("Authentication token is empty");
-        }
-        if (token.equals(apiKey)) {
-            return new JacsCredentials()
+    public Optional<JacsCredentials> validateToken(String token, String subject) {
+        String tokenKey = getTokenKey(token);
+        if (tokenKey.equals(apiKey)) {
+            return Optional.of(new JacsCredentials()
                     .setAuthSubject(subject)
                     .setSubjectProxy(subject)
-                    .setAuthToken(token);
+                    .setAuthToken(tokenKey));
         } else {
-            LOG.warn("Invalid API Key: {}", token);
-            throw new SecurityException("Invalid API Key");
+            LOG.warn("Invalid API Key: {}", tokenKey);
+            return Optional.empty();
         }
     }
 }

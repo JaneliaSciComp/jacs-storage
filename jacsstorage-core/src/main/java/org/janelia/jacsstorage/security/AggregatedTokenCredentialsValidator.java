@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 public class AggregatedTokenCredentialsValidator implements TokenCredentialsValidator {
     private static final Logger LOG = LoggerFactory.getLogger(AggregatedTokenCredentialsValidator.class);
@@ -16,22 +18,23 @@ public class AggregatedTokenCredentialsValidator implements TokenCredentialsVali
     }
 
     @Override
-    public String authorizationScheme() {
-        throw new UnsupportedOperationException();
+    public boolean acceptToken(String token) {
+        for (TokenCredentialsValidator tokenValidator : tokenValidatorsList) {
+            if (tokenValidator.acceptToken(token)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
-    public JacsCredentials validateToken(String token, String subject) {
-        if (StringUtils.isBlank(token)) {
-            throw new SecurityException("Authentication token is empty");
-        }
+    public Optional<JacsCredentials> validateToken(String token, String subject) {
         for (TokenCredentialsValidator tokenValidator : tokenValidatorsList) {
-            String tokenValidatorAuthScheme = tokenValidator.authorizationScheme() + " ";
-            if (StringUtils.startsWithIgnoreCase(token, tokenValidatorAuthScheme)) {
-                return tokenValidator.validateToken(token.substring(tokenValidatorAuthScheme.length()), subject);
+            if (tokenValidator.acceptToken(token)) {
+                return tokenValidator.validateToken(token, subject);
             }
         }
         LOG.warn("No token validator found for: {}", token);
-        throw new SecurityException("Unsupported authorization scheme for token " + token);
+        return Optional.empty();
     }
 }

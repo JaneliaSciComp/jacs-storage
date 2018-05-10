@@ -65,7 +65,9 @@ public class AgentWebdavResource {
     private UriInfo resourceURI;
 
     @Consumes(MediaType.APPLICATION_XML)
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces({
+            MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
+    })
     @PROPFIND
     @Path("data_storage/{dataBundleId}{entry:(/entry/[^/]+?)?}")
     public Response dataStoragePropFindByStorageId(@PathParam("dataBundleId") Long dataBundleId,
@@ -98,7 +100,9 @@ public class AgentWebdavResource {
     }
 
     @Consumes(MediaType.APPLICATION_XML)
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces({
+            MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
+    })
     @PROPFIND
     @Path("data_storage_path/{dataStoragePath:.+}")
     public Response dataStoragePropFindByPath(@PathParam("dataStoragePath") String dataStoragePath,

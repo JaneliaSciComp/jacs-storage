@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.filter;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.security.AggregatedTokenCredentialsValidator;
@@ -18,16 +19,19 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Map;
 
 @Priority(Priorities.AUTHENTICATION)
 public class JWTAuthFilter implements ContainerRequestFilter {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
-    private static final String SUBJECT_HEADER = "JacsSubject";
+    private static final String SUBJECT_PARAM_NAME = "JacsSubject";
+    private static final String AUTHORIZATION_COOKIE = "JacsToken";
 
     @Context
     private ResourceInfo resourceInfo;
@@ -45,14 +49,17 @@ public class JWTAuthFilter implements ContainerRequestFilter {
             // everybody is allowed to access the method
             return;
         }
-        MultivaluedMap<String, String> headers = requestContext.getHeaders();
-        String authHeaderValue = headers.getFirst(AUTHORIZATION_HEADER);
-        String subject = headers.getFirst(SUBJECT_HEADER);
-        TokenCredentialsValidator tokenValidator = getTokenValidator();
+        String authToken = getTokenFromRequest(requestContext);
+        String subject = getSubjectFromRequest(requestContext);
+
         try {
-            JacsSecurityContext securityContext = new JacsSecurityContext(tokenValidator.validateToken(authHeaderValue, subject),
-                    "https".equals(requestContext.getUriInfo().getRequestUri().getScheme()),
-                    "JWT");
+            TokenCredentialsValidator tokenValidator = getTokenValidator();
+            JacsSecurityContext securityContext = tokenValidator.validateToken(authToken, subject)
+                    .map(jacsCredentials -> new JacsSecurityContext(
+                                jacsCredentials,
+                                "https".equals(requestContext.getUriInfo().getRequestUri().getScheme()),
+                                "JWT"))
+                    .orElseThrow(() -> new SecurityException("Invalid authentication token " + authToken));
             requestContext.setSecurityContext(securityContext);
         } catch (Exception e) {
             requestContext.abortWith(
@@ -69,4 +76,63 @@ public class JWTAuthFilter implements ContainerRequestFilter {
                 new CachedTokenCredentialsValidator(new JwtTokenCredentialsValidator(jwtSecretKey))
         ));
     }
+
+    private String getTokenFromRequest(ContainerRequestContext requestContext) {
+        MultivaluedMap<String, String> headers = requestContext.getHeaders();
+        String token = getTokenFromAuthorizationHeader(headers);
+        if (StringUtils.isNotBlank(token)) {
+            return token;
+        } else {
+            return getTokenFromCookie(requestContext);
+        }
+    }
+
+    private String getSubjectFromRequest(ContainerRequestContext requestContext) {
+        MultivaluedMap<String, String> headers = requestContext.getHeaders();
+        String subject = getSubjectFromHeader(headers);
+        if (StringUtils.isNotBlank(subject)) {
+            return subject;
+        } else {
+            return getSubjectFromCookie(requestContext);
+        }
+    }
+
+    private String getTokenFromAuthorizationHeader(MultivaluedMap<String, String> headers) {
+        String authorizationHeader = headers.getFirst(AUTHORIZATION_HEADER);
+        if (StringUtils.isNotBlank(authorizationHeader)) {
+            return authorizationHeader;
+        } else {
+            return "";
+        }
+    }
+
+    private String getTokenFromCookie(ContainerRequestContext requestContext) {
+        Map<String, Cookie> requestCookies = requestContext.getCookies();
+        Cookie authorizationCookie = requestCookies.get(AUTHORIZATION_COOKIE);
+        if (authorizationCookie != null) {
+            String authorizationToken = authorizationCookie.getValue();
+            if (StringUtils.isNotBlank(authorizationToken)) {
+                return AUTHORIZATION_COOKIE + " " + authorizationToken;
+            } else {
+                return "";
+            }
+        } else {
+            return "";
+        }
+    }
+
+    private String getSubjectFromHeader(MultivaluedMap<String, String> headers) {
+        return headers.getFirst(SUBJECT_PARAM_NAME);
+    }
+
+    private String getSubjectFromCookie(ContainerRequestContext requestContext) {
+        Map<String, Cookie> requestCookies = requestContext.getCookies();
+        Cookie subjectCookie = requestCookies.get(SUBJECT_PARAM_NAME);
+        if (subjectCookie != null) {
+            return subjectCookie.getValue();
+        } else {
+            return "";
+        }
+    }
+
 }

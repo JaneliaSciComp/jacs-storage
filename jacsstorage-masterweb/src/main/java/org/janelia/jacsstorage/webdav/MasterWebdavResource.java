@@ -56,7 +56,9 @@ public class MasterWebdavResource {
     private UriInfo resourceURI;
 
     @Consumes(MediaType.APPLICATION_XML)
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces({
+            MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
+    })
     @PROPFIND
     @Path("storage_prefix/{storagePrefix:.+}")
     public Response dataStoragePropFindByStoragePrefix(@PathParam("storagePrefix") String storagePrefix,
@@ -91,7 +93,9 @@ public class MasterWebdavResource {
     }
 
     @Consumes(MediaType.APPLICATION_XML)
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces({
+            MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
+    })
     @PROPFIND
     @Path("data_storage_path/{dataStoragePath:.+}")
     public Response dataStoragePropFindByStoragePath(@PathParam("dataStoragePath") String dataStoragePath,

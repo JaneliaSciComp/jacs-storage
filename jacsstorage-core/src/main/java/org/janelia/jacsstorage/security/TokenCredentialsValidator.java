@@ -1,6 +1,8 @@
 package org.janelia.jacsstorage.security;
 
+import java.util.Optional;
+
 public interface TokenCredentialsValidator {
-    String authorizationScheme();
-    JacsCredentials validateToken(String token, String subject);
+    boolean acceptToken(String token);
+    Optional<JacsCredentials> validateToken(String token, String subject);
 }

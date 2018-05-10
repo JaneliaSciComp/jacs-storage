@@ -13,6 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 public class JwtTokenCredentialsValidator implements TokenCredentialsValidator {
     private static final String USERNAME_CLAIM = "user_name";
     private static final Logger LOG = LoggerFactory.getLogger(JwtTokenCredentialsValidator.class);
@@ -24,14 +26,22 @@ public class JwtTokenCredentialsValidator implements TokenCredentialsValidator {
     }
 
     @Override
-    public String authorizationScheme() {
-        return "Bearer";
+    public boolean acceptToken(String token) {
+        return StringUtils.isNotBlank(getJwt(token));
     }
 
-    public JacsCredentials validateToken(String token, String subject) {
-        if (StringUtils.isBlank(token)) {
-            throw new SecurityException("Authentication token is empty");
+    private String getJwt(String token) {
+        String jwt = "";
+        if (StringUtils.startsWithIgnoreCase(token, "Bearer ")) {
+            jwt = token.substring("Bearer ".length()).trim();
+        } else if (StringUtils.startsWithIgnoreCase(token, "JacsToken ")) {
+            jwt = token.substring("JacsToken ".length()).trim();
         }
+        return jwt;
+    }
+
+    public Optional<JacsCredentials> validateToken(String token, String subject) {
+        String jwt = getJwt(token);
         try {
             ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
             JWSAlgorithm expectedJWSAlg = JWSAlgorithm.HS256;
@@ -39,15 +49,15 @@ public class JwtTokenCredentialsValidator implements TokenCredentialsValidator {
             JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, jwtKeySource);
             jwtProcessor.setJWSKeySelector(keySelector);
 
-            JWTClaimsSet claimsSet = jwtProcessor.process(token, null);
+            JWTClaimsSet claimsSet = jwtProcessor.process(jwt, null);
 
-            return new JacsCredentials()
+            return Optional.of(new JacsCredentials()
                     .setAuthSubject(StringUtils.defaultIfBlank(claimsSet.getSubject(), claimsSet.getStringClaim(USERNAME_CLAIM)))
                     .setSubjectProxy(subject)
-                    .setAuthToken(token)
-                    .setClaims(claimsSet);
+                    .setAuthToken(jwt)
+                    .setClaims(claimsSet));
         } catch (Exception e) {
-            LOG.error("Error while validating {}", token, e);
+            LOG.error("Error while validating {}", jwt, e);
             throw new SecurityException(e);
         }
     }
