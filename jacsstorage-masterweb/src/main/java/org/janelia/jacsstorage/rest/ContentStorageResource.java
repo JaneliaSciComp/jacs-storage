@@ -37,7 +37,9 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriBuilder;
 import java.io.InputStream;
+import java.net.URI;
 
 @Timed
 @RequestScoped
@@ -159,4 +161,48 @@ public class ContentStorageResource {
         }
         return requestWithCredentialsBuilder;
     }
+
+    /**
+     * Retrieve the content of a file using the file path.
+     *
+     * @param fullFileNameParam
+     * @param securityContext
+     * @return
+     */
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @GET
+    @Path("redirected_storage_path/{filePath:.+}")
+    @ApiOperation(value = "Get file content", notes = "")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Success", response = StreamingOutput.class),
+            @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
+    })
+    public Response redirectForContent(@PathParam("filePath") String fullFileNameParam, @Context SecurityContext securityContext) {
+        LOG.info("Stream content of {}", fullFileNameParam);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
+        return storageResourceHelper.handleResponseForFullDataPathParam(
+                fullFileNameParam,
+                (dataBundle, dataEntryPath) -> dataBundle.getStorageVolume()
+                            .map(storageVolume -> Response
+                                        .temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
+                                                .path("/agent_api/agent_storage/")
+                                                .path(dataBundle.getId().toString())
+                                                .path("entry_content")
+                                                .path(dataEntryPath)
+                                                .build())
+                                        .build())
+                            .orElse(Response
+                                    .status(Response.Status.BAD_REQUEST.getStatusCode())
+                                    .entity(new ErrorResponse("No volume associated with databundle " + dataBundle.getId()))
+                                    .build()),
+                (storageVolume, dataEntryPath) -> Response
+                            .temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
+                                    .path("agent_storage/storage_volume")
+                                    .path(storageVolume.getId().toString())
+                                    .path(dataEntryPath)
+                                    .build())
+                            .build()
+        );
+    }
+
 }
