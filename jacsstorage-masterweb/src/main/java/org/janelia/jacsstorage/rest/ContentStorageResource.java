@@ -64,7 +64,8 @@ public class ContentStorageResource {
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
     @Path("storage_path/{filePath:.+}")
-    @ApiOperation(value = "Get file content", notes = "")
+    @ApiOperation(value = "Get file content",
+            notes = "Retrieve the content using the file path.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Success", response = StreamingOutput.class),
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
@@ -169,7 +170,7 @@ public class ContentStorageResource {
     }
 
     /**
-     * Retrieve the content of a file using the file path.
+     * Redirect to the agent URL for retrieving the content using the file path.
      *
      * @param fullFileNameParam
      * @param securityContext
@@ -177,10 +178,12 @@ public class ContentStorageResource {
      */
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
-    @Path("redirected_storage_path/{filePath:.+}")
-    @ApiOperation(value = "Get file content", notes = "")
+    @Path("storage_path_redirect/{filePath:.+}")
+    @ApiOperation(value = "Get file content",
+            notes = "Return the redirect URL to for retrieving the content based on the file path")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = StreamingOutput.class),
+            @ApiResponse(code = 307, message = "Success", response = StreamingOutput.class),
+            @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
     })
     public Response redirectForContent(@PathParam("filePath") String fullFileNameParam, @Context SecurityContext securityContext) {
