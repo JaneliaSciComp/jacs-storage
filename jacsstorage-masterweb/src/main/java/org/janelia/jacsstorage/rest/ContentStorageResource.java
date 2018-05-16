@@ -101,13 +101,19 @@ public class ContentStorageResource {
     private Response retrieveFileFromVolume(JacsStorageVolume storageVolume, String dataEntryPath, JacsCredentials jacsCredentials) {
         LOG.info("Retrieve file {} from volume {}", dataEntryPath, storageVolume);
         String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
-        StreamingOutput stream = streamFromURL(
-                            storageServiceURL + "agent_storage/storage_volume/" + storageVolume.getId() + "/" + dataEntryPath,
-                            jacsCredentials);
-        return Response
-                .ok(stream, MediaType.APPLICATION_OCTET_STREAM)
-                .header("content-disposition","attachment; filename = " + storageVolume.getId() + "/" + dataEntryPath)
-                .build();
+        if (StringUtils.isNotBlank(storageServiceURL)) {
+            StreamingOutput stream = streamFromURL(
+                    storageServiceURL + "agent_storage/storage_volume/" + storageVolume.getId() + "/" + dataEntryPath,
+                    jacsCredentials);
+            return Response
+                    .ok(stream, MediaType.APPLICATION_OCTET_STREAM)
+                    .header("content-disposition", "attachment; filename = " + storageVolume.getId() + "/" + dataEntryPath)
+                    .build();
+        } else {
+            return Response.status(Response.Status.BAD_GATEWAY)
+                    .entity(new ErrorResponse("No storage service URL found to serve " + dataEntryPath))
+                    .build();
+        }
     }
 
     private StreamingOutput streamFromURL(String url, JacsCredentials jacsCredentials) {
@@ -195,13 +201,21 @@ public class ContentStorageResource {
                                     .status(Response.Status.BAD_REQUEST.getStatusCode())
                                     .entity(new ErrorResponse("No volume associated with databundle " + dataBundle.getId()))
                                     .build()),
-                (storageVolume, dataEntryPath) -> Response
-                            .temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
-                                    .path("agent_storage/storage_volume")
-                                    .path(storageVolume.getId().toString())
-                                    .path(dataEntryPath)
-                                    .build())
-                            .build()
+                (storageVolume, dataEntryPath) -> {
+                    if (StringUtils.isNotBlank(storageVolume.getStorageServiceURL())) {
+                        return Response
+                                .temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
+                                        .path("agent_storage/storage_volume")
+                                        .path(storageVolume.getId().toString())
+                                        .path(dataEntryPath)
+                                        .build())
+                                .build();
+                    } else {
+                        return Response.status(Response.Status.BAD_GATEWAY)
+                                .entity(new ErrorResponse("No storage service URL found to serve " + dataEntryPath))
+                                .build();
+                    }
+                }
         );
     }
 
