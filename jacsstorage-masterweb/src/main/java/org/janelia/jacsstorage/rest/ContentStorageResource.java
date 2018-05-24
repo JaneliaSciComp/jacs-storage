@@ -12,12 +12,11 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.security.JacsSubjectHelper;
-import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.serviceutils.HttpUtils;
+import org.janelia.jacsstorage.serviceutils.HttpClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +32,6 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
@@ -121,7 +119,7 @@ public class ContentStorageResource {
         return output -> {
             Client httpClient = null;
             try {
-                httpClient = HttpUtils.createHttpClient();
+                httpClient = HttpClientUtils.createHttpClient();
                 WebTarget target = httpClient.target(url);
                 target.request(MediaType.APPLICATION_OCTET_STREAM);
 

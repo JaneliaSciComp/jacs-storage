@@ -8,12 +8,12 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.coreutils.FileUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -41,7 +41,7 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     protected long readBundleBytes(String source, OutputStream stream) throws Exception {
         Path sourcePath = getSourcePath(source);
         checkSourcePath(sourcePath);
-        return Files.copy(sourcePath, stream);
+        return FileUtils.copyFrom(sourcePath, stream);
     }
 
     @TimedMethod(

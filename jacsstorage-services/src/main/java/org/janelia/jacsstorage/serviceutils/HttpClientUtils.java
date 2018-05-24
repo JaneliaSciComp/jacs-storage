@@ -12,7 +12,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
 
-public class HttpUtils {
+public class HttpClientUtils {
 
     public static Client createHttpClient() throws Exception {
         SSLContext sslContext = SSLContext.getInstance("TLSv1");

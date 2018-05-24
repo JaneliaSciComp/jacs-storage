@@ -1,7 +1,7 @@
 package org.janelia.jacsstorage.agent;
 
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
-import org.janelia.jacsstorage.serviceutils.HttpUtils;
+import org.janelia.jacsstorage.serviceutils.HttpClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +19,7 @@ class AgentConnectionHelper {
         String registrationEndpoint = "/agents/url";
         Client httpClient = null;
         try {
-            httpClient = HttpUtils.createHttpClient();
+            httpClient = HttpClientUtils.createHttpClient();
             WebTarget target = httpClient.target(masterServiceUrl)
                     .path(registrationEndpoint)
                     .path(agentURL);
@@ -45,7 +45,7 @@ class AgentConnectionHelper {
         String registrationEndpoint = "/agents";
         Client httpClient = null;
         try {
-            httpClient = HttpUtils.createHttpClient();
+            httpClient = HttpClientUtils.createHttpClient();
             WebTarget target = httpClient.target(masterServiceUrl).path(registrationEndpoint);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .post(Entity.json(agentInfo))
@@ -70,7 +70,7 @@ class AgentConnectionHelper {
         String registrationEndpoint = "/agents/url";
         Client httpClient = null;
         try {
-            httpClient = HttpUtils.createHttpClient();
+            httpClient = HttpClientUtils.createHttpClient();
             WebTarget target = httpClient.target(masterServiceUrl)
                     .path(registrationEndpoint)
                     .path(agentURL)

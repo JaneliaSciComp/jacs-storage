@@ -6,11 +6,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
 import org.janelia.jacsstorage.security.JacsSubjectHelper;
-import org.janelia.jacsstorage.serviceutils.HttpUtils;
+import org.janelia.jacsstorage.serviceutils.HttpClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.Path;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
@@ -26,7 +25,7 @@ class AgentConnectionHelper {
         String agentStatusEndpoint = "/connection/status";
         Client httpClient = null;
         try {
-            httpClient = HttpUtils.createHttpClient();
+            httpClient = HttpClientUtils.createHttpClient();
             WebTarget target = httpClient.target(agentUrl).path(agentStatusEndpoint);
             Response response = target.request()
                     .get()
@@ -52,7 +51,7 @@ class AgentConnectionHelper {
                 StringUtils.defaultIfBlank(JacsSubjectHelper.getNameFromSubjectKey(subject), ""));
         Client httpClient = null;
         try {
-            httpClient = HttpUtils.createHttpClient();
+            httpClient = HttpClientUtils.createHttpClient();
             WebTarget target = httpClient.target(agentUrl)
                     .path(storageUsageEndpoint);
             Invocation.Builder targetRequestBuilder = target.request()
@@ -83,7 +82,7 @@ class AgentConnectionHelper {
                 StringUtils.defaultIfBlank(JacsSubjectHelper.getNameFromSubjectKey(subject), ""));
         Client httpClient = null;
         try {
-            httpClient = HttpUtils.createHttpClient();
+            httpClient = HttpClientUtils.createHttpClient();
             WebTarget target = httpClient.target(agentUrl)
                     .path(storageUsageEndpoint);
             Invocation.Builder targetRequestBuilder = target.request()
@@ -112,7 +111,7 @@ class AgentConnectionHelper {
         String deleteStorageEndpoint = String.format("/agent_storage/%d", dataBundleId);
         Client httpClient = null;
         try {
-            httpClient = HttpUtils.createHttpClient();
+            httpClient = HttpClientUtils.createHttpClient();
             WebTarget target = httpClient.target(agentUrl)
                         .path(deleteStorageEndpoint);
             Invocation.Builder targetRequestBuilder = target.request()
