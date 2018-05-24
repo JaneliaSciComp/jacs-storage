@@ -7,6 +7,8 @@ import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.PathHandler;
+import io.undertow.server.handlers.accesslog.AccessLogHandler;
+import io.undertow.server.handlers.accesslog.AccessLogReceiver;
 import io.undertow.server.handlers.resource.PathResourceManager;
 import io.undertow.server.handlers.resource.ResourceHandler;
 import io.undertow.servlet.Servlets;
@@ -49,8 +51,10 @@ public abstract class AbstractStorageApp {
         protected String deployment = "jacsstorage";
         @Parameter(names = "-context-path", description = "Base context path", required = false)
         protected String baseContextPath = "/jacsstorage";
+        @Parameter(names = "-nio", description = "Number of IO threads", required = false)
+        private int nIOThreads = 64;
         @Parameter(names = "-nworkers", description = "Number of worker threads", required = false)
-        private int nWorkers = 100;
+        private int nWorkers = 64 * 8;
         @Parameter(names = "-h", description = "Display help", arity = 0, required = false)
         protected boolean displayUsage = false;
         @DynamicParameter(names = "-D", description = "Dynamic application parameters that could override application properties")
@@ -112,15 +116,21 @@ public abstract class AbstractStorageApp {
         ResourceHandler staticHandler =
                 resource(new PathResourceManager(Paths.get("swagger-webapp"), 100));
 
-        PathHandler storageHandler = Handlers.path(
-                Handlers.redirect(docsContextPath))
-                .addPrefixPath(docsContextPath, staticHandler)
-                .addPrefixPath(contextPath, restApiHttpHandler);
+        HttpHandler storageHandler = new AccessLogHandler(
+                Handlers.path(
+                        Handlers.redirect(docsContextPath))
+                        .addPrefixPath(docsContextPath, staticHandler)
+                        .addPrefixPath(contextPath, restApiHttpHandler),
+                new Slf4jAccessLogReceiver(LOG),
+                "combined",
+                this.getClass().getClassLoader()
+        );
 
         LOG.info("Start JACS storage listener on {}:{}", appArgs.host, appArgs.portNumber);
         server = Undertow
                     .builder()
                     .addHttpListener(appArgs.portNumber, appArgs.host)
+                    .setIoThreads(appArgs.nIOThreads)
                     .setWorkerThreads(appArgs.nWorkers)
                     .setHandler(storageHandler)
                     .build();
