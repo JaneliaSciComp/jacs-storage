@@ -135,7 +135,6 @@ public class AgentStorageResource {
         StreamingOutput bundleStream = output -> {
             try {
                 dataStorageService.retrieveDataStream(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), output);
-                output.flush();
             } catch (Exception e) {
                 throw new WebApplicationException(e);
             }

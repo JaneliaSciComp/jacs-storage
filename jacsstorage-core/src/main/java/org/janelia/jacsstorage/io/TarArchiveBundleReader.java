@@ -149,7 +149,6 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                 throw new IllegalArgumentException("No entry " + normalizedEntryName + " found under " + source);
             else {
                 tarOutputStream.finish();
-                tarOutputStream.flush();
                 return nbytes;
             }
         } finally {
