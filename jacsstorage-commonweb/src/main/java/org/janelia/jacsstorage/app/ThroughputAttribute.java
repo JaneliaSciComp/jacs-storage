@@ -31,10 +31,15 @@ public class ThroughputAttribute implements ExchangeAttribute {
     public String readAttribute(final HttpServerExchange exchange) {
         long bytesSent = exchange.getResponseBytesSent();
         long requestStartTime = exchange.getRequestStartTime();
-        if (bytesSent == 0 || requestStartTime == -1) {
+        if (bytesSent == 0) {
             return " "; // N/A
         } else {
-            final long nanos = System.nanoTime() - requestStartTime;
+            final long nanos;
+            if (requestStartTime <= 0) {
+                nanos = 1L;
+            } else {
+                nanos = System.nanoTime() - requestStartTime;
+            }
             double tp = (bytesSent * 8  * 1000.) / nanos;
             return String.format("%7.3f", tp);
         }
