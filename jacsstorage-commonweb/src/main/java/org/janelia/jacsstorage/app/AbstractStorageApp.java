@@ -5,10 +5,19 @@ import com.beust.jcommander.Parameter;
 import io.swagger.jersey.config.JerseyJaxrsConfig;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
+import io.undertow.attribute.BytesSentAttribute;
+import io.undertow.attribute.CompositeExchangeAttribute;
+import io.undertow.attribute.ConstantExchangeAttribute;
+import io.undertow.attribute.DateTimeAttribute;
+import io.undertow.attribute.ExchangeAttribute;
+import io.undertow.attribute.RemoteHostAttribute;
+import io.undertow.attribute.RemoteUserAttribute;
+import io.undertow.attribute.RequestMethodAttribute;
+import io.undertow.attribute.RequestPathAttribute;
+import io.undertow.attribute.ResponseCodeAttribute;
+import io.undertow.attribute.ResponseTimeAttribute;
 import io.undertow.server.HttpHandler;
-import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
-import io.undertow.server.handlers.accesslog.AccessLogReceiver;
 import io.undertow.server.handlers.resource.PathResourceManager;
 import io.undertow.server.handlers.resource.ResourceHandler;
 import io.undertow.servlet.Servlets;
@@ -16,7 +25,6 @@ import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
 import io.undertow.servlet.api.ListenerInfo;
 import io.undertow.servlet.api.ServletInfo;
-import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.servlet.ServletProperties;
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
@@ -29,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.ServletException;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static io.undertow.Handlers.resource;
 import static io.undertow.servlet.Servlets.servlet;
@@ -121,9 +130,24 @@ public abstract class AbstractStorageApp {
                         Handlers.redirect(docsContextPath))
                         .addPrefixPath(docsContextPath, staticHandler)
                         .addPrefixPath(contextPath, restApiHttpHandler),
-                new Slf4jAccessLogReceiver(LOG),
-                "combined",
-                this.getClass().getClassLoader()
+                new Slf4jAccessLogReceiver(LoggerFactory.getLogger(getJaxConfigName())),
+                "ignored",
+                new CompositeExchangeAttribute(new ExchangeAttribute[] {
+                        RemoteHostAttribute.INSTANCE, // <RemoteIP>
+                        RemoteUserAttribute.INSTANCE, // <RemoteUser>
+                        new ConstantExchangeAttribute(getJaxConfigName()), // <Application-Id>
+                        DateTimeAttribute.INSTANCE, // <timestamp>
+                        RequestMethodAttribute.INSTANCE, // <HttpVerb>
+                        RequestPathAttribute.INSTANCE, // <RequestPath>
+                        new ConstantExchangeAttribute("status="),
+                        ResponseCodeAttribute.INSTANCE, // status=<ResponseStatus>
+                        new ConstantExchangeAttribute("response_bytes="),
+                        new BytesSentAttribute(false), // response_bytes=<ResponseBytes>
+                        new ConstantExchangeAttribute("rt="),
+                        new ResponseTimeAttribute(TimeUnit.SECONDS), // rt=<ResponseTime>
+                        new ConstantExchangeAttribute("tp="),
+                        new ThroughputAttribute() // tp=<Throughput>
+                })
         );
 
         LOG.info("Start JACS storage listener on {}:{}", appArgs.host, appArgs.portNumber);
