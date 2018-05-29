@@ -132,22 +132,18 @@ public abstract class AbstractStorageApp {
                         .addPrefixPath(contextPath, restApiHttpHandler),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(getJaxConfigName())),
                 "ignored",
-                new CompositeExchangeAttribute(new ExchangeAttribute[] {
+                new JoinedExchangeAttribute(new ExchangeAttribute[] {
                         RemoteHostAttribute.INSTANCE, // <RemoteIP>
                         RemoteUserAttribute.INSTANCE, // <RemoteUser>
                         new ConstantExchangeAttribute(getJaxConfigName()), // <Application-Id>
                         DateTimeAttribute.INSTANCE, // <timestamp>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         RequestPathAttribute.INSTANCE, // <RequestPath>
-                        new ConstantExchangeAttribute("status="),
-                        ResponseCodeAttribute.INSTANCE, // status=<ResponseStatus>
-                        new ConstantExchangeAttribute("response_bytes="),
-                        new BytesSentAttribute(false), // response_bytes=<ResponseBytes>
-                        new ConstantExchangeAttribute("rt="),
-                        new ResponseTimeAttribute(TimeUnit.SECONDS), // rt=<ResponseTime>
-                        new ConstantExchangeAttribute("tp="),
-                        new ThroughputAttribute() // tp=<Throughput>
-                })
+                        new NameValueAttribute("status", ResponseCodeAttribute.INSTANCE), // status=<ResponseStatus>
+                        new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>
+                        new NameValueAttribute("rt", new ResponseTimeAttribute(TimeUnit.SECONDS)), // rt=<ResponseTime>
+                        new NameValueAttribute("tp", new ThroughputAttribute()) // tp=<Throughput>
+                }, " ")
         );
 
         LOG.info("Start JACS storage listener on {}:{}", appArgs.host, appArgs.portNumber);
