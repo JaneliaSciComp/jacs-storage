@@ -5,6 +5,7 @@ import com.beust.jcommander.Parameter;
 import io.swagger.jersey.config.JerseyJaxrsConfig;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
+import io.undertow.UndertowOptions;
 import io.undertow.attribute.BytesSentAttribute;
 import io.undertow.attribute.CompositeExchangeAttribute;
 import io.undertow.attribute.ConstantExchangeAttribute;
@@ -15,7 +16,6 @@ import io.undertow.attribute.RemoteUserAttribute;
 import io.undertow.attribute.RequestMethodAttribute;
 import io.undertow.attribute.RequestPathAttribute;
 import io.undertow.attribute.ResponseCodeAttribute;
-import io.undertow.attribute.ResponseTimeAttribute;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.handlers.resource.PathResourceManager;
@@ -141,7 +141,7 @@ public abstract class AbstractStorageApp {
                         RequestPathAttribute.INSTANCE, // <RequestPath>
                         new NameValueAttribute("status", ResponseCodeAttribute.INSTANCE), // status=<ResponseStatus>
                         new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>
-                        new NameValueAttribute("rt", new ResponseTimeAttribute(TimeUnit.SECONDS)), // rt=<ResponseTime>
+                        new NameValueAttribute("rt", new ResponseTimeAttribute()), // rt=<ResponseTime>
                         new NameValueAttribute("tp", new ThroughputAttribute()) // tp=<Throughput>
                 }, " ")
         );
@@ -151,6 +151,7 @@ public abstract class AbstractStorageApp {
                     .builder()
                     .addHttpListener(appArgs.portNumber, appArgs.host)
                     .setIoThreads(appArgs.nIOThreads)
+                    .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, true)
                     .setWorkerThreads(appArgs.nWorkers)
                     .setHandler(storageHandler)
                     .build();

@@ -22,32 +22,36 @@ import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.attribute.ReadOnlyAttributeException;
 import io.undertow.server.HttpServerExchange;
 
+import java.util.concurrent.TimeUnit;
+
 /**
- * Throughput attribute
+ * Response attribute
  */
-public class ThroughputAttribute implements ExchangeAttribute {
+public class ResponseTimeAttribute implements ExchangeAttribute {
 
     @Override
     public String readAttribute(final HttpServerExchange exchange) {
-        long bytesSent = exchange.getResponseBytesSent();
         long requestStartTime = exchange.getRequestStartTime();
-        if (bytesSent == 0) {
-            return ""; // N/A
+        if(requestStartTime == -1) {
+            return "";
         } else {
-            final long nanos;
-            if (requestStartTime <= 0) {
-                return "n/a"; // N/A
-            } else {
-                nanos = System.nanoTime() - requestStartTime;
-            }
-            double tp = (bytesSent * 8  * 1000.) / nanos;
-            return String.format("%7.3f", tp);
+            final long nanos = System.nanoTime() - requestStartTime;
+            StringBuilder buf = new StringBuilder();
+            long milis = TimeUnit.MILLISECONDS.convert(nanos, TimeUnit.NANOSECONDS);
+            buf.append(Long.toString(milis / 1000));
+            buf.append('.');
+            int remains = (int) (milis % 1000);
+            buf.append(Long.toString(remains / 100));
+            remains = remains % 100;
+            buf.append(Long.toString(remains / 10));
+            buf.append(Long.toString(remains % 10));
+            return buf.toString();
         }
     }
 
     @Override
     public void writeAttribute(final HttpServerExchange exchange, final String newValue) throws ReadOnlyAttributeException {
-        throw new ReadOnlyAttributeException("Throughput", newValue);
+        throw new ReadOnlyAttributeException("Response time", newValue);
     }
 
 }
