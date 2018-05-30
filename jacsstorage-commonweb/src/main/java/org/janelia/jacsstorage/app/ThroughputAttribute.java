@@ -41,7 +41,7 @@ public class ThroughputAttribute implements ExchangeAttribute {
                 nanos = System.nanoTime() - requestStartTime;
             }
             double tp = (bytesSent * 8  * 1000.) / nanos;
-            return String.format("%7.3f", tp);
+            return String.format("%-7.3f", tp);
         }
     }
 
