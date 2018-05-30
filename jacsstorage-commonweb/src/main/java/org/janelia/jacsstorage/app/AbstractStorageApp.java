@@ -63,6 +63,8 @@ public abstract class AbstractStorageApp {
         private int nIOThreads = 64;
         @Parameter(names = "-nworkers", description = "Number of worker threads", required = false)
         private int nWorkers = 64 * 8;
+        @Parameter(names = "-appId", description = "application ID")
+        protected String applicationId;
         @Parameter(names = "-h", description = "Display help", arity = 0, required = false)
         protected boolean displayUsage = false;
         @DynamicParameter(names = "-D", description = "Dynamic application parameters that could override application properties")
@@ -134,7 +136,7 @@ public abstract class AbstractStorageApp {
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {
                         RemoteHostAttribute.INSTANCE, // <RemoteIP>
                         RemoteUserAttribute.INSTANCE, // <RemoteUser>
-                        new ConstantExchangeAttribute(getJaxConfigName()), // <Application-Id>
+                        new ConstantExchangeAttribute(getApplicationId(appArgs)), // <Application-Id>
                         DateTimeAttribute.INSTANCE, // <timestamp>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         RequestPathAttribute.INSTANCE, // <RequestPath>
@@ -160,6 +162,8 @@ public abstract class AbstractStorageApp {
     private void run() {
         server.start();
     }
+
+    abstract String getApplicationId(AppArgs appArgs);
 
     abstract String getJaxConfigName();
 

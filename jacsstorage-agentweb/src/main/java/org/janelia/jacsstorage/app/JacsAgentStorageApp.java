@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 public class JacsAgentStorageApp extends AbstractStorageApp {
 
     private static final Logger LOG = LoggerFactory.getLogger(JacsAgentStorageApp.class);
+    private static final String DEFAULT_APP_ID = "JacsStorageWorker";
 
     private static class AgentArgs extends AbstractStorageApp.AppArgs {
         @Parameter(names = "-masterURL", description = "URL of the master datatransfer to which to connect", required = false)
@@ -56,6 +57,15 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         }
         // start the HTTP application
         app.start(agentArgs);
+    }
+
+    @Override
+    String getApplicationId(AppArgs appArgs) {
+        if (StringUtils.isBlank(appArgs.applicationId)) {
+            return DEFAULT_APP_ID;
+        } else {
+            return appArgs.applicationId;
+        }
     }
 
     @Override
