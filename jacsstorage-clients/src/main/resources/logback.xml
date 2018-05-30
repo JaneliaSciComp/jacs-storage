@@ -12,9 +12,9 @@
     <logger name="org.glassfish" level="error" />
     <logger name="org.mongodb.driver" level="error" />
     <logger name="org.xnio.nio" level="error" />
-    <logger name="org.janelia.jacsstorage" level="debug" />
+    <logger name="org.janelia.jacsstorage" level="info" />
 
-    <root level="debug">
+    <root level="info">
         <appender-ref ref="CONSOLE" />
     </root>
 

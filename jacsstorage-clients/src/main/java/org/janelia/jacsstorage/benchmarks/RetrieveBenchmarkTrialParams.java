@@ -26,6 +26,8 @@ public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
     long nStorageRecords;
     @Param({""})
     String storageEntry;
+    @Param({""})
+    String entriesPathsFile;
     private List<String> entryPathList;
 
     @Setup(Level.Trial)
@@ -35,7 +37,6 @@ public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
         if (StringUtils.isNotBlank(nStorageRecordsParam)) {
             nStorageRecords = Long.valueOf(nStorageRecordsParam);
         }
-        String entriesPathsFile = params.getParam("entriesPathsFile");
         if (StringUtils.isNotBlank(entriesPathsFile)) {
             try {
                 entryPathList = Files.readAllLines(Paths.get(entriesPathsFile));

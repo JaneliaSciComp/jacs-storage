@@ -194,8 +194,13 @@ public class StorageRetrieveBenchmark {
             jc.usage();
             System.exit(1);
         }
-        String authToken = new AuthClientImplHelper(benchmarksCmdLineParams.authURL).authenticate(benchmarksCmdLineParams.username, benchmarksCmdLineParams.password);
-        System.out.println("AuthToken: " + authToken);
+        String authToken = "";
+        if (StringUtils.isNotBlank(benchmarksCmdLineParams.username)) {
+            authToken = new AuthClientImplHelper(benchmarksCmdLineParams.authURL).authenticate(benchmarksCmdLineParams.username, benchmarksCmdLineParams.password);
+            System.out.println("AuthToken: " + authToken);
+        } else {
+            System.out.println("No Auth");
+        }
         String dataOwnerKey = benchmarksCmdLineParams.getUserKey();
         long nStorageRecords = new StorageClientImplHelper().countStorageRecords(benchmarksCmdLineParams.serverURL, benchmarksCmdLineParams.bundleId, authToken);
         String benchmarks;

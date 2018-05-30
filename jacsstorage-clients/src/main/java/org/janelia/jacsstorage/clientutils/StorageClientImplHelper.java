@@ -247,7 +247,7 @@ public class StorageClientImplHelper {
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return Optional.of(response.readEntity(InputStream.class));
             } else {
-                LOG.warn("Stream data returned with status {}", responseStatus);
+                LOG.warn("Stream data returned with status {} for {}", responseStatus, target);
                 return Optional.empty();
             }
         } catch (Exception e) {
@@ -277,7 +277,7 @@ public class StorageClientImplHelper {
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return Optional.of(response.readEntity(InputStream.class));
             } else {
-                LOG.warn("Stream data returned with status {}", responseStatus);
+                LOG.warn("Stream data returned with status {} for {}", responseStatus, target);
                 return Optional.empty();
             }
         } catch (Exception e) {
@@ -461,7 +461,7 @@ public class StorageClientImplHelper {
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return Optional.of(response.readEntity(InputStream.class));
             } else {
-                LOG.warn("Stream data returned with status {}", responseStatus);
+                LOG.warn("Stream data returned with status {} for {}", responseStatus, target);
                 return Optional.empty();
             }
         } catch (Exception e) {
@@ -489,7 +489,7 @@ public class StorageClientImplHelper {
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return Optional.of(response.readEntity(InputStream.class));
             } else {
-                LOG.warn("Stream data returned with status {}", responseStatus);
+                LOG.warn("Stream data returned with status {} for {}", responseStatus, target);
                 return Optional.empty();
             }
         } catch (Exception e) {
