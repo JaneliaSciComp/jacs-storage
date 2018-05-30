@@ -1,9 +1,6 @@
 package org.janelia.jacsstorage.app;
 
 import com.beust.jcommander.JCommander;
-import io.undertow.attribute.ConstantExchangeAttribute;
-import io.undertow.attribute.ExchangeAttribute;
-import io.undertow.attribute.ResolvedPathAttribute;
 import io.undertow.predicate.Predicate;
 import io.undertow.predicate.Predicates;
 import io.undertow.servlet.api.ListenerInfo;
@@ -57,10 +54,7 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
     @Override
     protected Predicate getAccessLogFilter() {
         return Predicates.not(
-                Predicates.equals(new ExchangeAttribute[]{
-                        new ConstantExchangeAttribute("/agents/url"),
-                        ResolvedPathAttribute.INSTANCE
-                })
+                Predicates.prefix("/agents/url")
         );
     }
 
