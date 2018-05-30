@@ -7,7 +7,6 @@ import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.attribute.BytesSentAttribute;
-import io.undertow.attribute.CompositeExchangeAttribute;
 import io.undertow.attribute.ConstantExchangeAttribute;
 import io.undertow.attribute.DateTimeAttribute;
 import io.undertow.attribute.ExchangeAttribute;
@@ -16,6 +15,8 @@ import io.undertow.attribute.RemoteUserAttribute;
 import io.undertow.attribute.RequestMethodAttribute;
 import io.undertow.attribute.RequestPathAttribute;
 import io.undertow.attribute.ResponseCodeAttribute;
+import io.undertow.predicate.Predicate;
+import io.undertow.predicate.Predicates;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.handlers.resource.PathResourceManager;
@@ -37,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.ServletException;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static io.undertow.Handlers.resource;
 import static io.undertow.servlet.Servlets.servlet;
@@ -143,7 +143,8 @@ public abstract class AbstractStorageApp {
                         new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>
                         new NameValueAttribute("rt", new ResponseTimeAttribute()), // rt=<ResponseTime>
                         new NameValueAttribute("tp", new ThroughputAttribute()) // tp=<Throughput>
-                }, " ")
+                }, " "),
+                getAccessLogFilter()
         );
 
         LOG.info("Start JACS storage listener on {}:{}", appArgs.host, appArgs.portNumber);
@@ -155,6 +156,10 @@ public abstract class AbstractStorageApp {
                     .setWorkerThreads(appArgs.nWorkers)
                     .setHandler(storageHandler)
                     .build();
+    }
+
+    protected Predicate getAccessLogFilter() {
+        return Predicates.truePredicate();
     }
 
     private void run() {

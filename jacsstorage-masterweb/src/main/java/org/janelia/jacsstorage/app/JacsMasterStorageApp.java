@@ -1,12 +1,16 @@
 package org.janelia.jacsstorage.app;
 
 import com.beust.jcommander.JCommander;
+import io.undertow.attribute.ConstantExchangeAttribute;
+import io.undertow.attribute.ExchangeAttribute;
+import io.undertow.attribute.ResolvedPathAttribute;
+import io.undertow.predicate.Predicate;
+import io.undertow.predicate.Predicates;
 import io.undertow.servlet.api.ListenerInfo;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
-import javax.servlet.ServletException;
 
 /**
  * This is the master storage application.
@@ -48,6 +52,16 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
     ListenerInfo[] getAppListeners() {
         return new ListenerInfo[] {
         };
+    }
+
+    @Override
+    protected Predicate getAccessLogFilter() {
+        return Predicates.not(
+                Predicates.equals(new ExchangeAttribute[]{
+                        new ConstantExchangeAttribute("/agents/url"),
+                        ResolvedPathAttribute.INSTANCE
+                })
+        );
     }
 
 }

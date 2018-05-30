@@ -37,9 +37,7 @@ public class NameValueAttribute implements ExchangeAttribute {
 
     @Override
     public String readAttribute(HttpServerExchange exchange) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(name).append('=').append(valueAttr.readAttribute(exchange));
-        return sb.toString();
+        return name + "=" + valueAttr.readAttribute(exchange);
     }
 
     @Override
