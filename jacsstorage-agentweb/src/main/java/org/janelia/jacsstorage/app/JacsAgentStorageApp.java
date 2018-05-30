@@ -2,6 +2,8 @@ package org.janelia.jacsstorage.app;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import io.undertow.predicate.Predicate;
+import io.undertow.predicate.Predicates;
 import io.undertow.servlet.api.ListenerInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.agent.AgentState;
@@ -76,6 +78,13 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     ListenerInfo[] getAppListeners() {
         return new ListenerInfo[] {
         };
+    }
+
+    @Override
+    Predicate getAccessLogFilter() {
+        return Predicates.not(
+                Predicates.prefix("/connection/status")
+        );
     }
 
 }

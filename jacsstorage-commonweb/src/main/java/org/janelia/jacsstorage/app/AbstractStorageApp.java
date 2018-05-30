@@ -16,7 +16,6 @@ import io.undertow.attribute.RequestMethodAttribute;
 import io.undertow.attribute.RequestPathAttribute;
 import io.undertow.attribute.ResponseCodeAttribute;
 import io.undertow.predicate.Predicate;
-import io.undertow.predicate.Predicates;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.handlers.resource.PathResourceManager;
@@ -158,10 +157,6 @@ public abstract class AbstractStorageApp {
                     .build();
     }
 
-    protected Predicate getAccessLogFilter() {
-        return Predicates.truePredicate();
-    }
-
     private void run() {
         server.start();
     }
@@ -171,4 +166,6 @@ public abstract class AbstractStorageApp {
     abstract String getRestApi(AppArgs appArgs);
 
     abstract ListenerInfo[] getAppListeners();
+
+    abstract Predicate getAccessLogFilter();
 }

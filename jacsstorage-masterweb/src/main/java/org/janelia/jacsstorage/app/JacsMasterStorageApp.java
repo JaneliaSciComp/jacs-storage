@@ -52,10 +52,9 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
     }
 
     @Override
-    protected Predicate getAccessLogFilter() {
+    Predicate getAccessLogFilter() {
         return Predicates.not(
                 Predicates.prefix("/agents/url")
         );
     }
-
 }
