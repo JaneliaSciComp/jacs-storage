@@ -16,7 +16,9 @@ class BenchmarksCmdLineParams {
     @Parameter(names = "-threads", description = "Number of threads")
     int nThreads = 5;
     @Parameter(names = "-server", description = "Master storage server URL")
-    String serverURL = "http://jdcu1:8880/jacsstorage/master_api/v1";
+    String serverURL = "http://jacs-dev:8880/jacsstorage/master_api/v1";
+    @Parameter(names = "-agent", description = "Agent storage server URL")
+    String agentURL = "http://jacs-dev:8881/jacsstorage/agent_api/v1";
     @Parameter(names = "-dataFormat", description = "Data bundle format")
     JacsStorageFormat dataFormat = JacsStorageFormat.DATA_DIRECTORY;
     @Parameter(names = "-storageHost", description = "Storage tags")
@@ -29,6 +31,8 @@ class BenchmarksCmdLineParams {
     String localPath = "";
     @Parameter(names = "-entryName", description = "Entry name")
     String entryName = "";
+    @Parameter(names = "-entriesFile", description = "File containing list of paths to retrieve")
+    String entriesPathsFile = "";
     // authentication params
     @Parameter(names = "-authServer", description = "Authentication server URL")
     String authURL = "https://jacs-dev.int.janelia.org//SCSW/AuthenticationService/v1";

@@ -129,6 +129,60 @@ public class StorageRetrieveBenchmark {
         return Paths.get(trialParams.dataLocation, String.valueOf(RandomUtils.nextLong(0, Integer.MAX_VALUE)));
     }
 
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void streamPathContentFromAgentAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        streamPathContentFromAgentImpl(trialParams, blackhole);
+    }
+
+    private void streamPathContentFromAgentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        OutputStream targetStream = new NullOutputStream();
+        long nbytes = trialParams.storageClientHelper.streamPathContentFromAgent(trialParams.agentURL, trialParams.getRandomEntry(), trialParams.authToken)
+                .map(is -> {
+                    try {
+                        if (StringUtils.isBlank(trialParams.dataLocation)) {
+                            return ByteStreams.copy(is, targetStream);
+                        } else {
+                            Path dataLocation = getTempDataLocation(trialParams);
+                            Files.createDirectories(dataLocation.getParent());
+                            return Files.copy(is, dataLocation);
+                        }
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                })
+                .orElse(0L);
+        blackhole.consume(nbytes);
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void streamPathContentFromMasterAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        streamPathContentFromMasterImpl(trialParams, blackhole);
+    }
+
+    private void streamPathContentFromMasterImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        OutputStream targetStream = new NullOutputStream();
+        long nbytes = trialParams.storageClientHelper.streamPathContentFromMaster(trialParams.serverURL, trialParams.getRandomEntry(), trialParams.authToken)
+                .map(is -> {
+                    try {
+                        if (StringUtils.isBlank(trialParams.dataLocation)) {
+                            return ByteStreams.copy(is, targetStream);
+                        } else {
+                            Path dataLocation = getTempDataLocation(trialParams);
+                            Files.createDirectories(dataLocation.getParent());
+                            return Files.copy(is, dataLocation);
+                        }
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                })
+                .orElse(0L);
+        blackhole.consume(nbytes);
+    }
+
     public static void main(String[] args) throws RunnerException {
         BenchmarksCmdLineParams benchmarksCmdLineParams = new BenchmarksCmdLineParams();
         JCommander jc = JCommander.newBuilder()
@@ -159,12 +213,14 @@ public class StorageRetrieveBenchmark {
                 .shouldFailOnError(true)
                 .detectJvmArgs()
                 .param("serverURL", benchmarksCmdLineParams.serverURL)
+                .param("agentURL", benchmarksCmdLineParams.agentURL)
                 .param("ownerKey", dataOwnerKey)
                 .param("storageHost", StringUtils.defaultIfBlank(benchmarksCmdLineParams.storageHost, ""))
                 .param("storageTags", benchmarksCmdLineParams.getStorageTagsAsString())
                 .param("dataLocation", benchmarksCmdLineParams.localPath)
                 .param("dataBundleId", benchmarksCmdLineParams.bundleId.toString())
                 .param("storageEntry", benchmarksCmdLineParams.entryName)
+                .param("entriesPathsFile", benchmarksCmdLineParams.entriesPathsFile)
                 .param("authToken", authToken)
                 .param("nStorageRecords", String.valueOf(nStorageRecords));
         if (benchmarksCmdLineParams.bundleId != null) {

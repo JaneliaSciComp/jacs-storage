@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.clientutils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
@@ -18,6 +19,7 @@ import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
@@ -41,8 +43,9 @@ public class StorageClientImplHelper {
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
-            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
-                    .header("Authorization", "Bearer " + authToken)
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON_TYPE),
+                    authToken,
+                    null)
                     .post(Entity.json(storageRequest))
                     ;
             int responseStatus = response.getStatus();
@@ -72,8 +75,9 @@ public class StorageClientImplHelper {
                 target = target.queryParam("id", bundleId);
             }
             LOG.debug("Count {} as {}", target, authToken);
-            Response response = target.request()
-                    .header("Authorization", "Bearer " + authToken)
+            Response response = createRequestWithCredentials(target.request(),
+                    authToken,
+                    null)
                     .get()
                     ;
             int responseStatus = response.getStatus();
@@ -115,8 +119,9 @@ public class StorageClientImplHelper {
                 target = target.queryParam("length", request.getPageSize());
             }
             LOG.debug("List {} as {}", target, authToken);
-            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
-                    .header("Authorization", "Bearer " + authToken)
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON_TYPE),
+                    authToken,
+                    null)
                     .get()
                     ;
             int responseStatus = response.getStatus();
@@ -148,8 +153,9 @@ public class StorageClientImplHelper {
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
-            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
-                    .header("Authorization", "Bearer " + authToken)
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON_TYPE),
+                    authToken,
+                    null)
                     .get()
                     ;
             int responseStatus = response.getStatus();
@@ -177,8 +183,9 @@ public class StorageClientImplHelper {
                     .path(storageContentEndpoint)
                     .path("list");
             LOG.debug("List content {} as {}", target, authToken);
-            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
-                    .header("Authorization", "Bearer " + authToken)
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON_TYPE),
+                    authToken,
+                    null)
                     .get()
                     ;
             int responseStatus = response.getStatus();
@@ -204,8 +211,9 @@ public class StorageClientImplHelper {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
             LOG.debug("Stream data to {} as {}", target, authToken);
-            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
-                    .header("Authorization", "Bearer " + authToken)
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON_TYPE),
+                    authToken,
+                    null)
                     .post(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE))
                     ;
             int responseStatus = response.getStatus();
@@ -231,10 +239,10 @@ public class StorageClientImplHelper {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
             LOG.debug("Stream data from {} as {}", target, authToken);
-            Response response = target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE)
-                    .header("Authorization", "Bearer " + authToken)
-                    .get()
-                    ;
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE),
+                    authToken,
+                    null)
+                    .get();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return Optional.of(response.readEntity(InputStream.class));
@@ -261,10 +269,10 @@ public class StorageClientImplHelper {
                     .path("entry_content")
                     .path(entryPath);
             LOG.debug("Stream data entry from {} as {}", target, authToken);
-            Response response = target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE)
-                    .header("Authorization", "Bearer " + authToken)
-                    .get()
-                    ;
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE),
+                    authToken,
+                    null)
+                    .get();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return Optional.of(response.readEntity(InputStream.class));
@@ -298,8 +306,9 @@ public class StorageClientImplHelper {
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
-            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
-                    .header("Authorization", "Bearer " + authToken)
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON_TYPE),
+                    authToken,
+                    null)
                     .post(Entity.json("")) // empty request body
                     ;
             int responseStatus = response.getStatus();
@@ -335,8 +344,9 @@ public class StorageClientImplHelper {
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
-            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
-                    .header("Authorization", "Bearer " + authToken)
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON_TYPE),
+                    authToken,
+                    null)
                     .post(Entity.entity(contentStream, MediaType.APPLICATION_OCTET_STREAM_TYPE))
                     ;
             int responseStatus = response.getStatus();
@@ -414,16 +424,73 @@ public class StorageClientImplHelper {
             if (pageSize > 0) {
                 target = target.queryParam("length", pageSize);
             }
-            Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
-                    .header("Authorization", "Bearer " + authToken)
-                    .get()
-                    ;
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON_TYPE),
+                    authToken,
+                    null)
+                    .get();
             int responseStatus = response.getStatus();
             TypeReference<Map<String, Object>> typeRef = new TypeReference<Map<String, Object>>(){};
             if (responseStatus == Response.Status.OK.getStatusCode()) {
                 return response.readEntity(new GenericType<>(typeRef.getType()));
             } else {
                 return response.readEntity(new GenericType<>(typeRef.getType()));
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    public Optional<InputStream> streamPathContentFromMaster(String connectionURL, String dataPath, String authToken) {
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(connectionURL)
+                    .path("/storage_content/storage_path_redirect")
+                    .path(dataPath)
+                    .property(ClientProperties.FOLLOW_REDIRECTS, true);
+            LOG.debug("Stream data entry from {} as {}", target, authToken);
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE),
+                    authToken,
+                    null)
+                    .get();
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return Optional.of(response.readEntity(InputStream.class));
+            } else {
+                LOG.warn("Stream data returned with status {}", responseStatus);
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (httpClient != null) {
+                httpClient.close();
+            }
+        }
+    }
+
+    public Optional<InputStream> streamPathContentFromAgent(String connectionURL, String dataPath, String authToken) {
+        Client httpClient = null;
+        try {
+            httpClient = createHttpClient();
+            WebTarget target = httpClient.target(connectionURL)
+                    .path("/agent_storage/storage_path")
+                    .path(dataPath);
+            LOG.debug("Stream data entry from {} as {}", target, authToken);
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE),
+                    authToken,
+                    null)
+                    .get();
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return Optional.of(response.readEntity(InputStream.class));
+            } else {
+                LOG.warn("Stream data returned with status {}", responseStatus);
+                return Optional.empty();
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -458,6 +525,21 @@ public class StorageClientImplHelper {
                 .hostnameVerifier((s, sslSession) -> true)
                 .register(new JacksonFeature())
                 .build();
+    }
+
+    Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, String authToken, String jacsPrincipal) {
+        Invocation.Builder requestWithCredentialsBuilder = requestBuilder;
+        if (StringUtils.isNotBlank(authToken)) {
+            requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
+                    "Authorization",
+                    "Bearer " + authToken);
+        }
+        if (StringUtils.isNotBlank(jacsPrincipal)) {
+            requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
+                    "JacsSubject",
+                    jacsPrincipal);
+        }
+        return requestWithCredentialsBuilder;
     }
 
 }

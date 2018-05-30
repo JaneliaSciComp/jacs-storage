@@ -19,6 +19,8 @@ public class BenchmarkTrialParams {
     @Param({""})
     String serverURL;
     @Param({""})
+    String agentURL;
+    @Param({""})
     String ownerKey;
     @Param({""})
     String dataLocation;
@@ -40,6 +42,7 @@ public class BenchmarkTrialParams {
     @Setup(Level.Trial)
     public void setUp(BenchmarkParams params) {
         serverURL = params.getParam("serverURL");
+        agentURL = params.getParam("agentURL");
         ownerKey = params.getParam("ownerKey");
         dataLocation = params.getParam("dataLocation");
         dataFormat = params.getParam("dataFormat");

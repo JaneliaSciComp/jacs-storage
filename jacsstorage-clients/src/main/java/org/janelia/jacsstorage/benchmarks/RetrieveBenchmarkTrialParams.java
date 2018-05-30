@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.benchmarks;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.openjdk.jmh.annotations.Level;
@@ -11,9 +12,12 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.BenchmarkParams;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 @State(Scope.Benchmark)
 public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
@@ -22,7 +26,7 @@ public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
     long nStorageRecords;
     @Param({""})
     String storageEntry;
-
+    private List<String> entryPathList;
 
     @Setup(Level.Trial)
     public void setUp(BenchmarkParams params) {
@@ -30,6 +34,14 @@ public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
         String nStorageRecordsParam = params.getParam("nStorageRecords");
         if (StringUtils.isNotBlank(nStorageRecordsParam)) {
             nStorageRecords = Long.valueOf(nStorageRecordsParam);
+        }
+        String entriesPathsFile = params.getParam("entriesPathsFile");
+        if (StringUtils.isNotBlank(entriesPathsFile)) {
+            try {
+                entryPathList = Files.readAllLines(Paths.get(entriesPathsFile));
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
     }
 
@@ -41,5 +53,9 @@ public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
                 PathUtils.deletePath(tempBenchmarkDataPath);
             }
         }
+    }
+
+    public String getRandomEntry() {
+        return entryPathList.get(RandomUtils.nextInt(0, entryPathList.size()));
     }
 }
