@@ -15,6 +15,7 @@ import io.undertow.attribute.RemoteUserAttribute;
 import io.undertow.attribute.RequestMethodAttribute;
 import io.undertow.attribute.RequestPathAttribute;
 import io.undertow.attribute.ResponseCodeAttribute;
+import io.undertow.attribute.ResponseHeaderAttribute;
 import io.undertow.predicate.Predicate;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
@@ -25,6 +26,7 @@ import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
 import io.undertow.servlet.api.ListenerInfo;
 import io.undertow.servlet.api.ServletInfo;
+import io.undertow.util.HttpString;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.servlet.ServletProperties;
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
@@ -140,6 +142,7 @@ public abstract class AbstractStorageApp {
                         DateTimeAttribute.INSTANCE, // <timestamp>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         RequestPathAttribute.INSTANCE, // <RequestPath>
+                        new NameValueAttribute("location_header", new ResponseHeaderAttribute(new HttpString("Location"))), // location=<ResponseLocation>
                         new NameValueAttribute("status", ResponseCodeAttribute.INSTANCE), // status=<ResponseStatus>
                         new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>
                         new NameValueAttribute("rt", new ResponseTimeAttribute()), // rt=<ResponseTime>

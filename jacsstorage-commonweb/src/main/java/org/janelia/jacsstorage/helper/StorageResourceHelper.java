@@ -2,6 +2,8 @@ package org.janelia.jacsstorage.helper;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -38,27 +40,27 @@ public class StorageResourceHelper {
         this.storageVolumeManager = storageVolumeManager;
     }
 
-    public Response handleResponseForFullDataPathParam(String fullDataPathParam,
-                                                       BiFunction<JacsBundle, String, Response> bundleBasedResponseHandler,
-                                                       BiFunction<JacsStorageVolume, String, Response> fileBasedResponseHandler) {
+    @Timed
+    public Supplier<Response> handleResponseForFullDataPathParam(String fullDataPathParam,
+                                                                 BiFunction<JacsBundle, String, Response> bundleBasedResponseHandler,
+                                                                 BiFunction<JacsStorageVolume, String, Response> fileBasedResponseHandler) {
         String fullDataPathName = StringUtils.prependIfMissing(fullDataPathParam, "/");
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(fullDataPathName));
-        JacsStorageVolume selectedVolume = null;
         if (storageVolumes.isEmpty()) {
             LOG.warn("No volume found to match {}", fullDataPathName);
-            return Response
+            return () -> Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No managed volume found for " + fullDataPathName))
                     .build();
         } else if (storageVolumes.size() > 1) {
             LOG.warn("More than one storage volumes found for {} -> {}", fullDataPathName, storageVolumes);
         }
-        selectedVolume = storageVolumes.get(0);
+        JacsStorageVolume selectedVolume = storageVolumes.get(0);
         // check if the first path component after the storage prefix is a bundle ID
         java.nio.file.Path storageRelativeFileDataPath = selectedVolume.getStorageRelativePath(fullDataPathName);
         if (storageRelativeFileDataPath == null) {
             LOG.warn("Path {} is not a relative path to {} ", fullDataPathName, selectedVolume);
-            return Response
+            return () -> Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No relative path found for " + fullDataPathName))
                     .build();
@@ -75,12 +77,13 @@ public class StorageResourceHelper {
             LOG.debug("Path {} is not a data bundle - first component is not numeric", storageRelativeFileDataPath);
         }
         if (dataBundle == null) {
-            return fileBasedResponseHandler.apply(selectedVolume, storageRelativeFileDataPath.toString());
+            return () -> fileBasedResponseHandler.apply(selectedVolume, storageRelativeFileDataPath.toString());
         } else {
             String dataEntryPath = fileDataPathComponents > 1
                     ? storageRelativeFileDataPath.subpath(1, fileDataPathComponents).toString()
                     : "";
-            return bundleBasedResponseHandler.apply(dataBundle, dataEntryPath);
+            JacsBundle selectedDataBundle = dataBundle;
+            return () -> bundleBasedResponseHandler.apply(selectedDataBundle, dataEntryPath);
         }
     }
 

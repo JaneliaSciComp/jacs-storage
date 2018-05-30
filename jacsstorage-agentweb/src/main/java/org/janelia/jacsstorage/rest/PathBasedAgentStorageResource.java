@@ -67,7 +67,7 @@ public class PathBasedAgentStorageResource {
                         .ok()
                         .build(),
                 (storageVolume, dataEntryPath) -> storageResourceHelper.checkContentFromFile(storageVolume, dataEntryPath)
-        );
+        ).get();
     }
 
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
@@ -87,7 +87,7 @@ public class PathBasedAgentStorageResource {
                 fullDataPathNameParam,
                 (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath),
                 (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, dataEntryPath)
-        );
+        ).get();
     }
 
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})

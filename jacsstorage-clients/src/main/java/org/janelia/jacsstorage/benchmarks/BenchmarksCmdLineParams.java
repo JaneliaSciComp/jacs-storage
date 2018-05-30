@@ -1,7 +1,9 @@
 package org.janelia.jacsstorage.benchmarks;
 
 import com.beust.jcommander.Parameter;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.openjdk.jmh.runner.options.TimeValue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +13,8 @@ class BenchmarksCmdLineParams {
     int warmupIterations = 5;
     @Parameter(names = "-measurements", description = "Measurement iterations")
     int measurementIterations = 5;
+    @Parameter(names = "-measurementTime", description = "Measurement time")
+    String measurementTime = "";
     @Parameter(names = "-forks", description = "Number of process instances")
     int nForks = 1;
     @Parameter(names = "-threads", description = "Number of threads")
@@ -54,5 +58,13 @@ class BenchmarksCmdLineParams {
 
     String getStorageTagsAsString() {
         return storageTags.stream().reduce((t1, t2) -> t1 + "," + t2).orElse("");
+    }
+
+    TimeValue getMeasurementTime() {
+        if (StringUtils.isBlank(measurementTime)) {
+            return TimeValue.NONE;
+        } else {
+            return TimeValue.fromString(measurementTime);
+        }
     }
 }

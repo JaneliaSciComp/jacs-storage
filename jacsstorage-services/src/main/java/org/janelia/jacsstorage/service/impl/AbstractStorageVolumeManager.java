@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
+import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
@@ -19,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 
+@Timed
 public abstract class AbstractStorageVolumeManager implements StorageVolumeManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractStorageVolumeManager.class);

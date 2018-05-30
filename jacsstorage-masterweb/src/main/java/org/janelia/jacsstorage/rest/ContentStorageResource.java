@@ -75,7 +75,7 @@ public class ContentStorageResource {
                 fullFileNameParam,
                 (dataBundle, dataEntryPath) -> retrieveFileFromBundle(dataBundle, dataEntryPath, SecurityUtils.getUserPrincipal(securityContext)),
                 (storageVolume, dataEntryPath) -> retrieveFileFromVolume(storageVolume, dataEntryPath, SecurityUtils.getUserPrincipal(securityContext))
-        );
+        ).get();
     }
 
     private Response retrieveFileFromBundle(JacsBundle dataBundle, String dataEntryPath, JacsCredentials jacsCredentials) {
@@ -216,7 +216,7 @@ public class ContentStorageResource {
                                 .build();
                     }
                 }
-        );
+        ).get();
     }
 
 }

@@ -23,6 +23,7 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
+import org.openjdk.jmh.runner.options.TimeValue;
 import org.openjdk.jmh.util.NullOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,6 +137,13 @@ public class StorageRetrieveBenchmark {
         streamPathContentFromAgentImpl(trialParams, blackhole);
     }
 
+    @Benchmark
+    @BenchmarkMode({Mode.Throughput})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void streamPathContentFromAgentThrpt(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        streamPathContentFromAgentImpl(trialParams, blackhole);
+    }
+
     private void streamPathContentFromAgentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         OutputStream targetStream = new NullOutputStream();
         long nbytes = trialParams.storageClientHelper.streamPathContentFromAgent(trialParams.agentURL, trialParams.getRandomEntry(), trialParams.authToken)
@@ -160,6 +168,13 @@ public class StorageRetrieveBenchmark {
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void streamPathContentFromMasterAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        streamPathContentFromMasterImpl(trialParams, blackhole);
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.Throughput})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void streamPathContentFromMasterThrpt(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         streamPathContentFromMasterImpl(trialParams, blackhole);
     }
 
@@ -213,6 +228,7 @@ public class StorageRetrieveBenchmark {
                 .include(benchmarks)
                 .warmupIterations(benchmarksCmdLineParams.warmupIterations)
                 .measurementIterations(benchmarksCmdLineParams.measurementIterations)
+                .measurementTime(benchmarksCmdLineParams.getMeasurementTime())
                 .forks(benchmarksCmdLineParams.nForks)
                 .threads(benchmarksCmdLineParams.nThreads)
                 .shouldFailOnError(true)
