@@ -13,8 +13,12 @@ class BenchmarksCmdLineParams {
     int warmupIterations = 5;
     @Parameter(names = "-measurements", description = "Measurement iterations")
     int measurementIterations = 5;
+    @Parameter(names = "-measurementBatch", description = "Measurement batch size")
+    int measurementBatchSize = 1;
     @Parameter(names = "-measurementTime", description = "Measurement time")
     String measurementTime = "";
+    @Parameter(names = "-warmupTime", description = "Warmup time")
+    String warmupTime = "";
     @Parameter(names = "-forks", description = "Number of process instances")
     int nForks = 1;
     @Parameter(names = "-threads", description = "Number of threads")
@@ -65,6 +69,14 @@ class BenchmarksCmdLineParams {
             return TimeValue.NONE;
         } else {
             return TimeValue.fromString(measurementTime);
+        }
+    }
+
+    TimeValue getWarmupTime() {
+        if (StringUtils.isBlank(warmupTime)) {
+            return TimeValue.NONE;
+        } else {
+            return TimeValue.fromString(warmupTime);
         }
     }
 }
