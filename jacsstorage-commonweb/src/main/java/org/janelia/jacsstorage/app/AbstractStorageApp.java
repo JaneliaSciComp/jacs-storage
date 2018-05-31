@@ -142,7 +142,7 @@ public abstract class AbstractStorageApp {
                         DateTimeAttribute.INSTANCE, // <timestamp>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         RequestPathAttribute.INSTANCE, // <RequestPath>
-                        new NameValueAttribute("location_header", new ResponseHeaderAttribute(new HttpString("Location"))), // location=<ResponseLocation>
+                        new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location"))), // location=<ResponseLocation>
                         new NameValueAttribute("status", ResponseCodeAttribute.INSTANCE), // status=<ResponseStatus>
                         new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>
                         new NameValueAttribute("rt", new ResponseTimeAttribute()), // rt=<ResponseTime>
