@@ -3,6 +3,10 @@ package org.janelia.jacsstorage.clientutils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.glassfish.jersey.apache.connector.ApacheClientProperties;
+import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
@@ -21,6 +25,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -520,7 +525,19 @@ public class StorageClientImplHelper {
                 }
         };
         sslContext.init(null, trustManagers, new SecureRandom());
+        ClientConfig clientConfig = new ClientConfig();
+        // values are in milliseconds
+        clientConfig.property(ClientProperties.READ_TIMEOUT, 2000);
+        clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 500);
+
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+        connectionManager.setMaxTotal(100);
+        connectionManager.setDefaultMaxPerRoute(20);
+
+        clientConfig.property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager);
+
         return ClientBuilder.newBuilder()
+                .withConfig(clientConfig)
                 .sslContext(sslContext)
                 .hostnameVerifier((s, sslSession) -> true)
                 .register(new JacksonFeature())

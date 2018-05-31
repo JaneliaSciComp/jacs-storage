@@ -25,6 +25,7 @@ project(":jacsstorage-clients") {
                        CDI_SE_CORE_LIB,
                        CMDLINE_ARG_LIB,
                        JAX_RS_JERSEY_CLIENT_LIB,
+                       JAX_RS_JERSEY_CONNECTORS_LIB,
                        JAX_RS_JERSEY_INJECT_LIB,
                        JAX_RS_JERSEY_MEDIA_JSON_LIB
     }
