@@ -85,6 +85,12 @@ public class StorageRetrieveBenchmark {
                         return ByteStreams.copy(is, targetStream);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
+                    } finally {
+                        try {
+                            is.close();
+                        } catch (IOException ignore) {
+                            // ignore
+                        }
                     }
                 })
                 .orElse(0L);
@@ -120,6 +126,12 @@ public class StorageRetrieveBenchmark {
                         }
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
+                    } finally {
+                        try {
+                            is.close();
+                        } catch (IOException ignore) {
+                            // ignore
+                        }
                     }
                 })
                 .orElse(0L);
@@ -158,6 +170,12 @@ public class StorageRetrieveBenchmark {
                         }
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
+                    } finally {
+                        try {
+                            is.close();
+                        } catch (IOException ignore) {
+                            // ignore
+                        }
                     }
                 })
                 .orElse(0L);
@@ -192,6 +210,12 @@ public class StorageRetrieveBenchmark {
                         }
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
+                    } finally {
+                        try {
+                            is.close();
+                        } catch (IOException ignore) {
+                            // ignore
+                        }
                     }
                 })
                 .orElse(0L);

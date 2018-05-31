@@ -446,7 +446,6 @@ public class StorageClientImplHelper {
 
     public Optional<InputStream> streamPathContentFromMaster(String connectionURL, String dataPath, String authToken) {
         Client httpClient = null;
-        Response response = null;
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL)
@@ -454,7 +453,7 @@ public class StorageClientImplHelper {
                     .path(dataPath)
                     .property(ClientProperties.FOLLOW_REDIRECTS, true);
             LOG.debug("Stream data entry from {} as {}", target, authToken);
-            response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE),
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE),
                     authToken,
                     null)
                     .get();
@@ -468,9 +467,6 @@ public class StorageClientImplHelper {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            if (response != null) {
-                response.close();
-            }
             if (httpClient != null) {
                 httpClient.close();
             }
@@ -479,14 +475,13 @@ public class StorageClientImplHelper {
 
     public Optional<InputStream> streamPathContentFromAgent(String connectionURL, String dataPath, String authToken) {
         Client httpClient = null;
-        Response response = null;
         try {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(connectionURL)
                     .path("/agent_storage/storage_path")
                     .path(dataPath);
             LOG.debug("Stream data entry from {} as {}", target, authToken);
-            response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE),
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE),
                     authToken,
                     null)
                     .get();
@@ -500,9 +495,6 @@ public class StorageClientImplHelper {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         } finally {
-            if (response != null) {
-                response.close();
-            }
             if (httpClient != null) {
                 httpClient.close();
             }
