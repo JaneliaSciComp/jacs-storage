@@ -11,7 +11,6 @@ import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
-import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -20,7 +19,6 @@ import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datatransfer.StorageMessageResponse;
-import org.openjdk.jmh.runner.options.TimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -538,7 +536,6 @@ public class StorageClientImplHelper {
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
         connectionManager.setMaxTotal(100);
         connectionManager.setDefaultMaxPerRoute(20);
-        connectionManager.closeExpiredConnections();
 
         // values are in milliseconds
         final RequestConfig requestConfig = RequestConfig.custom()
@@ -548,7 +545,6 @@ public class StorageClientImplHelper {
                 .build();
 
         ClientConfig clientConfig = new ClientConfig()
-                .connectorProvider(new ApacheConnectorProvider())
                 .property(ClientProperties.ASYNC_THREADPOOL_SIZE, 200)
                 .property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager)
                 .property(ApacheClientProperties.REQUEST_CONFIG, requestConfig);
