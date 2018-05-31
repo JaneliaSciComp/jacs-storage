@@ -11,7 +11,7 @@ import java.util.List;
 class BenchmarksCmdLineParams {
 
     @Parameter(names = "-profilerName", description = "Benchmark profiler name. " +
-            "Valid profilers: {CL, COMP, GC, HS_CL, HS_COMP, HS_GC, HS_RT, HS_THR, STACK}")
+            "Valid profilers: {cl, comp, gc, hs_cl, hs_comp, hs_gc, hs_rt, hs_thr, stack}")
     public String profilerName;
     @Parameter(names = "-warmup", description = "Warmup iterations")
     int warmupIterations = 5;

@@ -225,7 +225,6 @@ public class StorageRetrieveBenchmark {
             benchmarks = StorageRetrieveBenchmark.class.getSimpleName();
         }
         ChainedOptionsBuilder optBuilder = new OptionsBuilder()
-                .addProfiler(benchmarksCmdLineParams.profilerName)
                 .include(benchmarks)
                 .warmupIterations(benchmarksCmdLineParams.warmupIterations)
                 .warmupTime(benchmarksCmdLineParams.getWarmupTime())
@@ -249,6 +248,9 @@ public class StorageRetrieveBenchmark {
                 .param("nStorageRecords", String.valueOf(nStorageRecords));
         if (benchmarksCmdLineParams.bundleId != null) {
             optBuilder = optBuilder.param("dataBundleId", benchmarksCmdLineParams.bundleId.toString());
+        }
+        if (StringUtils.isNotBlank(benchmarksCmdLineParams.profilerName)) {
+            optBuilder.addProfiler(benchmarksCmdLineParams.profilerName);
         }
 
         Options opt = optBuilder.build();
