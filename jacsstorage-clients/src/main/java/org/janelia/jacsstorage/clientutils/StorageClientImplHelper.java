@@ -3,8 +3,15 @@ package org.janelia.jacsstorage.clientutils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
+import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -13,6 +20,7 @@ import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datatransfer.StorageMessageResponse;
+import org.openjdk.jmh.runner.options.TimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -523,20 +531,30 @@ public class StorageClientImplHelper {
                 }
         };
         sslContext.init(null, trustManagers, new SecureRandom());
-        ClientConfig clientConfig = new ClientConfig();
-        // values are in milliseconds
-        clientConfig.property(ClientProperties.READ_TIMEOUT, 2000);
-        clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 500);
-
-        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+        Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                .register("https", new SSLConnectionSocketFactory(sslContext))
+                .build();
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
         connectionManager.setMaxTotal(100);
         connectionManager.setDefaultMaxPerRoute(20);
+        connectionManager.closeExpiredConnections();
 
-        clientConfig.property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager);
+        // values are in milliseconds
+        final RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectionRequestTimeout(2000)
+                .setConnectTimeout(500)
+                .setSocketTimeout(2000)
+                .build();
+
+        ClientConfig clientConfig = new ClientConfig()
+                .connectorProvider(new ApacheConnectorProvider())
+                .property(ClientProperties.ASYNC_THREADPOOL_SIZE, 200)
+                .property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager)
+                .property(ApacheClientProperties.REQUEST_CONFIG, requestConfig);
 
         return ClientBuilder.newBuilder()
                 .withConfig(clientConfig)
-                .sslContext(sslContext)
                 .hostnameVerifier((s, sslSession) -> true)
                 .register(new JacksonFeature())
                 .build();
