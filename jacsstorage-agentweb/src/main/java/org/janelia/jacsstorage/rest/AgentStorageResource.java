@@ -207,7 +207,7 @@ public class AgentStorageResource {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-        return storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath);
+        return storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath).build();
     }
 
     @LogStorageEvent(

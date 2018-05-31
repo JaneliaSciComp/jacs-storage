@@ -11,6 +11,7 @@ import org.janelia.jacsstorage.config.ApplicationConfigValueResolver;
 import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.impl.AbstractStorageVolumeManager;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Timed
 @LocalInstance
 public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
 

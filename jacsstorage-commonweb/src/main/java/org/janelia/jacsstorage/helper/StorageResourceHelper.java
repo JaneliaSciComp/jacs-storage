@@ -3,7 +3,6 @@ package org.janelia.jacsstorage.helper;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -25,8 +24,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
+@Timed
 public class StorageResourceHelper {
     private static final Logger LOG = LoggerFactory.getLogger(StorageResourceHelper.class);
 
@@ -40,18 +39,17 @@ public class StorageResourceHelper {
         this.storageVolumeManager = storageVolumeManager;
     }
 
-    @Timed
-    public Supplier<Response> handleResponseForFullDataPathParam(String fullDataPathParam,
-                                                                 BiFunction<JacsBundle, String, Response> bundleBasedResponseHandler,
-                                                                 BiFunction<JacsStorageVolume, String, Response> fileBasedResponseHandler) {
+    public Response.ResponseBuilder handleResponseForFullDataPathParam(String fullDataPathParam,
+                                                                       BiFunction<JacsBundle, String, Response.ResponseBuilder> bundleBasedResponseHandler,
+                                                                       BiFunction<JacsStorageVolume, String, Response.ResponseBuilder> fileBasedResponseHandler) {
         String fullDataPathName = StringUtils.prependIfMissing(fullDataPathParam, "/");
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(fullDataPathName));
         if (storageVolumes.isEmpty()) {
             LOG.warn("No volume found to match {}", fullDataPathName);
-            return () -> Response
+            return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No managed volume found for " + fullDataPathName))
-                    .build();
+                    ;
         } else if (storageVolumes.size() > 1) {
             LOG.warn("More than one storage volumes found for {} -> {}", fullDataPathName, storageVolumes);
         }
@@ -60,10 +58,10 @@ public class StorageResourceHelper {
         java.nio.file.Path storageRelativeFileDataPath = selectedVolume.getStorageRelativePath(fullDataPathName);
         if (storageRelativeFileDataPath == null) {
             LOG.warn("Path {} is not a relative path to {} ", fullDataPathName, selectedVolume);
-            return () -> Response
+            return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No relative path found for " + fullDataPathName))
-                    .build();
+                    ;
         }
         int fileDataPathComponents = storageRelativeFileDataPath.getNameCount();
         JacsBundle dataBundle = null;
@@ -77,34 +75,31 @@ public class StorageResourceHelper {
             LOG.debug("Path {} is not a data bundle - first component is not numeric", storageRelativeFileDataPath);
         }
         if (dataBundle == null) {
-            return () -> fileBasedResponseHandler.apply(selectedVolume, storageRelativeFileDataPath.toString());
+            return fileBasedResponseHandler.apply(selectedVolume, storageRelativeFileDataPath.toString());
         } else {
             String dataEntryPath = fileDataPathComponents > 1
                     ? storageRelativeFileDataPath.subpath(1, fileDataPathComponents).toString()
                     : "";
-            JacsBundle selectedDataBundle = dataBundle;
-            return () -> bundleBasedResponseHandler.apply(selectedDataBundle, dataEntryPath);
+            return bundleBasedResponseHandler.apply(dataBundle, dataEntryPath);
         }
     }
 
-    public Response checkContentFromFile(JacsStorageVolume storageVolume, String dataEntryPath) {
+    public Response.ResponseBuilder checkContentFromFile(JacsStorageVolume storageVolume, String dataEntryPath) {
         if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath))) {
             return Response
-                    .ok()
-                    .build();
+                    .ok();
         } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath))) {
             return Response
-                    .ok()
-                    .build();
+                    .ok();
         } else {
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No path found for " + dataEntryPath + " on volume " + storageVolume.getName()))
-                    .build();
+                    ;
         }
     }
 
-    public Response retrieveContentFromFile(JacsStorageVolume storageVolume, String dataEntryPath) {
+    public Response.ResponseBuilder retrieveContentFromFile(JacsStorageVolume storageVolume, String dataEntryPath) {
         if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath))) {
             return retrieveContentFromFile(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath));
         } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath))) {
@@ -113,11 +108,11 @@ public class StorageResourceHelper {
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No path found for " + dataEntryPath + " on volume " + storageVolume.getName()))
-                    .build();
+                    ;
         }
     }
 
-    private Response retrieveContentFromFile(Path filePath) {
+    private Response.ResponseBuilder retrieveContentFromFile(Path filePath) {
         JacsStorageFormat storageFormat = Files.isRegularFile(filePath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
         StreamingOutput fileStream = output -> {
             try {
@@ -130,10 +125,10 @@ public class StorageResourceHelper {
         return Response
                 .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
                 .header("content-disposition","attachment; filename = " + filePath.toFile().getName())
-                .build();
+                ;
     }
 
-    public Response retrieveContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath) {
+    public Response.ResponseBuilder retrieveContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath) {
         StreamingOutput bundleStream = output -> {
             try {
                 storageContentReader.readDataEntryStream(
@@ -149,7 +144,7 @@ public class StorageResourceHelper {
         return Response
                 .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)
                 .header("content-disposition","attachment; filename = " + JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()) + "-" + dataBundle.getName() + "/" + dataEntryPath)
-                .build();
+                ;
     }
 
 }

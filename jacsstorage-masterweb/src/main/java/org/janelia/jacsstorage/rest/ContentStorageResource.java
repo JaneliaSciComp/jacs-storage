@@ -75,10 +75,10 @@ public class ContentStorageResource {
                 fullFileNameParam,
                 (dataBundle, dataEntryPath) -> retrieveFileFromBundle(dataBundle, dataEntryPath, SecurityUtils.getUserPrincipal(securityContext)),
                 (storageVolume, dataEntryPath) -> retrieveFileFromVolume(storageVolume, dataEntryPath, SecurityUtils.getUserPrincipal(securityContext))
-        ).get();
+        ).build();
     }
 
-    private Response retrieveFileFromBundle(JacsBundle dataBundle, String dataEntryPath, JacsCredentials jacsCredentials) {
+    private Response.ResponseBuilder retrieveFileFromBundle(JacsBundle dataBundle, String dataEntryPath, JacsCredentials jacsCredentials) {
         LOG.info("Retrieve file {} from storage {}", dataEntryPath, dataBundle);
         return dataBundle.getStorageVolume()
                 .map(storageVolume -> {
@@ -88,16 +88,16 @@ public class ContentStorageResource {
                     return Response
                             .ok(stream, MediaType.APPLICATION_OCTET_STREAM)
                             .header("content-disposition","attachment; filename = " + JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()) + "-" + dataBundle.getName() + "/" + dataEntryPath)
-                            .build();
+                            ;
                 })
                 .orElse(Response
                         .status(Response.Status.BAD_REQUEST.getStatusCode())
                         .entity(new ErrorResponse("No volume associated with databundle " + dataBundle.getId()))
-                        .build())
+                )
         ;
     }
 
-    private Response retrieveFileFromVolume(JacsStorageVolume storageVolume, String dataEntryPath, JacsCredentials jacsCredentials) {
+    private Response.ResponseBuilder retrieveFileFromVolume(JacsStorageVolume storageVolume, String dataEntryPath, JacsCredentials jacsCredentials) {
         LOG.info("Retrieve file {} from volume {}", dataEntryPath, storageVolume);
         String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
         if (StringUtils.isNotBlank(storageServiceURL)) {
@@ -107,11 +107,11 @@ public class ContentStorageResource {
             return Response
                     .ok(stream, MediaType.APPLICATION_OCTET_STREAM)
                     .header("content-disposition", "attachment; filename = " + storageVolume.getId() + "/" + dataEntryPath)
-                    .build();
+                    ;
         } else {
             return Response.status(Response.Status.BAD_GATEWAY)
                     .entity(new ErrorResponse("No storage service URL found to serve " + dataEntryPath))
-                    .build();
+                    ;
         }
     }
 
@@ -196,11 +196,11 @@ public class ContentStorageResource {
                                                 .path("entry_content")
                                                 .path(dataEntryPath)
                                                 .build())
-                                        .build())
+                            )
                             .orElse(Response
                                     .status(Response.Status.BAD_REQUEST.getStatusCode())
                                     .entity(new ErrorResponse("No volume associated with databundle " + dataBundle.getId()))
-                                    .build()),
+                            ),
                 (storageVolume, dataEntryPath) -> {
                     if (StringUtils.isNotBlank(storageVolume.getStorageServiceURL())) {
                         return Response
@@ -209,14 +209,14 @@ public class ContentStorageResource {
                                         .path(storageVolume.getId().toString())
                                         .path(dataEntryPath)
                                         .build())
-                                .build();
+                                ;
                     } else {
                         return Response.status(Response.Status.BAD_GATEWAY)
                                 .entity(new ErrorResponse("No storage service URL found to serve " + dataEntryPath))
-                                .build();
+                                ;
                     }
                 }
-        ).get();
+        ).build();
     }
 
 }

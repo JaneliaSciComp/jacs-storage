@@ -6,13 +6,12 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
+import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageContentReader;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +25,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
 @Timed
@@ -64,10 +62,9 @@ public class PathBasedAgentStorageResource {
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 fullDataPathNameParam,
                 (dataBundle, dataEntryPath) -> Response
-                        .ok()
-                        .build(),
+                        .ok(),
                 (storageVolume, dataEntryPath) -> storageResourceHelper.checkContentFromFile(storageVolume, dataEntryPath)
-        ).get();
+        ).build();
     }
 
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
@@ -87,7 +84,7 @@ public class PathBasedAgentStorageResource {
                 fullDataPathNameParam,
                 (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath),
                 (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, dataEntryPath)
-        ).get();
+        ).build();
     }
 
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
@@ -110,6 +107,6 @@ public class PathBasedAgentStorageResource {
                     .build();
         }
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
-        return storageResourceHelper.retrieveContentFromFile(storageVolume, storageRelativeFilePath);
+        return storageResourceHelper.retrieveContentFromFile(storageVolume, storageRelativeFilePath).build();
     }
 }
