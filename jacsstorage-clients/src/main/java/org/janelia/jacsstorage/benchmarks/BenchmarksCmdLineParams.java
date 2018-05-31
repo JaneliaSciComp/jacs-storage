@@ -9,6 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 class BenchmarksCmdLineParams {
+
+    @Parameter(names = "-profilerName", description = "Benchmark profiler name. " +
+            "Valid profilers: {CL, COMP, GC, HS_CL, HS_COMP, HS_GC, HS_RT, HS_THR, STACK}")
+    public String profilerName;
     @Parameter(names = "-warmup", description = "Warmup iterations")
     int warmupIterations = 5;
     @Parameter(names = "-measurements", description = "Measurement iterations")

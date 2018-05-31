@@ -12,6 +12,7 @@ import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.impl.AbstractStorageVolumeManager;
@@ -28,7 +29,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Timed
 @LocalInstance
 public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
 
@@ -51,6 +51,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         this.managedVolumes = managedVolumes;
     }
 
+    @TimedMethod
     public List<JacsStorageVolume> getManagedVolumes(StorageQuery storageQuery) {
         LOG.debug("Find managed volumes using {}", storageQuery);
         return Stream.concat(managedVolumes.stream(), Stream.of(JacsStorageVolume.OVERFLOW_VOLUME))

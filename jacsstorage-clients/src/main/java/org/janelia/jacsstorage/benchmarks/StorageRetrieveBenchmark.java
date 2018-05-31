@@ -225,6 +225,7 @@ public class StorageRetrieveBenchmark {
             benchmarks = StorageRetrieveBenchmark.class.getSimpleName();
         }
         ChainedOptionsBuilder optBuilder = new OptionsBuilder()
+                .addProfiler(benchmarksCmdLineParams.profilerName)
                 .include(benchmarks)
                 .warmupIterations(benchmarksCmdLineParams.warmupIterations)
                 .warmupTime(benchmarksCmdLineParams.getWarmupTime())

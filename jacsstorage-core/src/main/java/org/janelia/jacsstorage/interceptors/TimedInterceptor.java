@@ -37,18 +37,17 @@ public class TimedInterceptor {
         }
         Method m = null;
         Map<String, String> logData = new LinkedHashMap<>();
+        String logLevel = "debug";
         try {
             m = invocationContext.getMethod();
+            TimedMethod timedMethodAnnotation = m.getAnnotation(TimedMethod.class);
             Parameter[] parameters = m.getParameters();
             Object[] parameterValues = invocationContext.getParameters();
-            populateLogData(m, parameters, parameterValues, invocationResult, logData);
+            populateLogData(m, parameters, parameterValues, invocationResult, timedMethodAnnotation, logData);
         } catch (Exception e) {
             LOG.warn("Error while trying to get method to time access", e);
         } finally {
-            if (logData.isEmpty())
-                LOG.info("Accessed method: {} - {} ms", m, (completedAccess - startAccess) / 1000000.);
-            else
-                LOG.info("Accessed method: {} with {}  - {} ms", m, logData, (completedAccess - startAccess) / 1000000.);
+            logTimingInfo(m, logData, (completedAccess - startAccess) / 1000000., logLevel);
         }
         if (me != null) {
             throw me;
@@ -57,10 +56,25 @@ public class TimedInterceptor {
         }
     }
 
-    private void populateLogData(Method m, Parameter[] parameters, Object[] parameterValues, Object methodResult, Map<String, String> logData) {
+    private void logTimingInfo(Method method, Map<String, String> logData, double accessTimeInMillis, String logLevel) {
+        Class<?> mDeclaringClass = method.getDeclaringClass();
+        Logger logger = LoggerFactory.getLogger(mDeclaringClass);
+        if (logLevel.equalsIgnoreCase("info")) {
+            logger.info("Accessed method: {}.{} with {}  - {} ms",
+                    mDeclaringClass.getSimpleName(), method.getName(), logData, accessTimeInMillis);
+        } else {
+            logger.debug("Accessed method: {}.{} with {}  - {} ms",
+                    mDeclaringClass.getSimpleName(), method.getName(), logData, accessTimeInMillis);
+        }
+    }
+
+    private void populateLogData(Method m, Parameter[] parameters,
+                                 Object[] parameterValues,
+                                 Object methodResult,
+                                 TimedMethod timedMethodAnnotation,
+                                 Map<String, String> logData) {
         boolean includeResult = false;
         IntStream argStream;
-        TimedMethod timedMethodAnnotation = m.getAnnotation(TimedMethod.class);
         if (timedMethodAnnotation != null) {
             if (timedMethodAnnotation.argList().length > 0) {
                 argStream = Arrays.stream(timedMethodAnnotation.argList());

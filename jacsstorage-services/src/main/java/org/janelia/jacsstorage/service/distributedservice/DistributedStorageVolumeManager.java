@@ -5,6 +5,7 @@ import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.impl.AbstractStorageVolumeManager;
@@ -12,7 +13,6 @@ import org.janelia.jacsstorage.service.impl.AbstractStorageVolumeManager;
 import javax.inject.Inject;
 import java.util.List;
 
-@Timed
 @RemoteInstance
 public class DistributedStorageVolumeManager extends AbstractStorageVolumeManager {
 
@@ -26,6 +26,7 @@ public class DistributedStorageVolumeManager extends AbstractStorageVolumeManage
         this.storageHelper = new DistributedStorageHelper(agentManager);
     }
 
+    @TimedMethod
     public List<JacsStorageVolume> getManagedVolumes(StorageQuery storageQuery) {
         PageRequest pageRequest = new PageRequest();
         List<JacsStorageVolume> managedVolumes = storageVolumeDao.findMatchingVolumes(storageQuery, pageRequest).getResultList();

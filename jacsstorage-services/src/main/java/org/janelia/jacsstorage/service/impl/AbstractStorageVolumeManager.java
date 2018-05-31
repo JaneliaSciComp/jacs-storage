@@ -20,7 +20,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 
-@Timed
 public abstract class AbstractStorageVolumeManager implements StorageVolumeManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractStorageVolumeManager.class);
