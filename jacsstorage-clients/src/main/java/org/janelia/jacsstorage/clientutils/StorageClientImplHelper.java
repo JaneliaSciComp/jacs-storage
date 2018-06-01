@@ -477,7 +477,7 @@ public class StorageClientImplHelper {
             throw new IllegalStateException(e);
         } finally {
             if (httpClient != null) {
-                httpClient.close();
+//                httpClient.close();
             }
         }
     }
@@ -505,7 +505,7 @@ public class StorageClientImplHelper {
             throw new IllegalStateException(e);
         } finally {
             if (httpClient != null) {
-                httpClient.close();
+//                httpClient.close();
             }
         }
     }
