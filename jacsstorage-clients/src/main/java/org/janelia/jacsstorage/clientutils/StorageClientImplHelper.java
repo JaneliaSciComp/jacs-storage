@@ -478,7 +478,7 @@ public class StorageClientImplHelper {
         sslContext.init(null, trustManagers, new SecureRandom());
         Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                .register("https", new SSLConnectionSocketFactory(sslContext))
+                .register("https", new SSLConnectionSocketFactory(sslContext, (s, sslSession) -> true))
                 .build();
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
         connectionManager.setMaxTotal(1000);
@@ -502,7 +502,6 @@ public class StorageClientImplHelper {
 
         return ClientBuilder.newBuilder()
                 .withConfig(clientConfig)
-                .hostnameVerifier((s, sslSession) -> true)
                 .register(new JacksonFeature())
                 .build();
     }
