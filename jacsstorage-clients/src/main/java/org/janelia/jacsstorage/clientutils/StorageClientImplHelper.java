@@ -541,7 +541,7 @@ public class StorageClientImplHelper {
         final RequestConfig requestConfig = RequestConfig.custom()
                 .setConnectionRequestTimeout(2000)
                 .setConnectTimeout(500)
-                .setSocketTimeout(2000)
+                .setSocketTimeout(1000)
                 .build();
 
         ClientConfig clientConfig = new ClientConfig()
