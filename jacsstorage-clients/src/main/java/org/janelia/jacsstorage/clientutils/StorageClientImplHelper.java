@@ -48,7 +48,7 @@ import java.util.Optional;
 public class StorageClientImplHelper {
     private static final Logger LOG = LoggerFactory.getLogger(StorageClientImplHelper.class);
 
-    private Client httpClient = null;
+    private static Client httpClient = null;
 
     public Optional<DataStorageInfo> allocateStorage(String connectionURL, DataStorageInfo storageRequest, String authToken) {
         String storageEndpoint = "/storage";
