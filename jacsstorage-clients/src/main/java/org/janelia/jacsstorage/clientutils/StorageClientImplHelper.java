@@ -481,8 +481,8 @@ public class StorageClientImplHelper {
                 .register("https", new SSLConnectionSocketFactory(sslContext))
                 .build();
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
-        connectionManager.setMaxTotal(100);
-        connectionManager.setDefaultMaxPerRoute(20);
+        connectionManager.setMaxTotal(1000);
+        connectionManager.setDefaultMaxPerRoute(500);
         connectionManager.setDefaultSocketConfig(SocketConfig.custom()
                 .setSoReuseAddress(true)
                 .setSoKeepAlive(true)
@@ -496,7 +496,7 @@ public class StorageClientImplHelper {
                 .build();
 
         ClientConfig clientConfig = new ClientConfig()
-                .property(ClientProperties.ASYNC_THREADPOOL_SIZE, 200)
+                .property(ClientProperties.ASYNC_THREADPOOL_SIZE, 2000)
                 .property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager)
                 .property(ApacheClientProperties.REQUEST_CONFIG, requestConfig);
 
