@@ -6,11 +6,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
+import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -481,6 +483,10 @@ public class StorageClientImplHelper {
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
         connectionManager.setMaxTotal(100);
         connectionManager.setDefaultMaxPerRoute(20);
+        connectionManager.setDefaultSocketConfig(SocketConfig.custom()
+                .setSoReuseAddress(true)
+                .setSoKeepAlive(true)
+                .build());
 
         // values are in milliseconds
         final RequestConfig requestConfig = RequestConfig.custom()
