@@ -496,9 +496,9 @@ public class StorageClientImplHelper {
                 .build();
 
         ClientConfig clientConfig = new ClientConfig()
-                .property(ClientProperties.ASYNC_THREADPOOL_SIZE, 2000)
                 .property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager)
-                .property(ApacheClientProperties.REQUEST_CONFIG, requestConfig);
+                .property(ApacheClientProperties.REQUEST_CONFIG, requestConfig)
+                ;
 
         return ClientBuilder.newBuilder()
                 .withConfig(clientConfig)
