@@ -442,7 +442,7 @@ public class StorageClientImplHelper {
         }
     }
 
-    private synchronized Client getHttpClient() {
+    private Client getHttpClient() {
         if (httpClient == null) {
             synchronized (this) {
                 try {
