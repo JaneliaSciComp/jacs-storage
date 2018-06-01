@@ -46,11 +46,12 @@ import java.util.Optional;
 public class StorageClientImplHelper {
     private static final Logger LOG = LoggerFactory.getLogger(StorageClientImplHelper.class);
 
+    private Client httpClient = null;
+
     public Optional<DataStorageInfo> allocateStorage(String connectionURL, DataStorageInfo storageRequest, String authToken) {
         String storageEndpoint = "/storage";
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
             Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON_TYPE),
                     authToken,
@@ -67,18 +68,13 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
         }
     }
 
     public long countStorageRecords(String connectionURL, Number bundleId, String authToken) {
         String storageEndpoint = "/storage/size";
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
             if (bundleId != null) {
                 target = target.queryParam("id", bundleId);
@@ -99,18 +95,13 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
         }
     }
 
     public PageResult<DataStorageInfo> listStorageRecords(String connectionURL, String storageHost, List<String> storageTags, Number bundleId, PageRequest request, String authToken) {
         String storageEndpoint = "/storage";
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
             if (bundleId != null && !"0".equals(bundleId.toString())) {
                 target = target.queryParam("id", bundleId);
@@ -142,10 +133,6 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
         }
     }
 
@@ -158,9 +145,8 @@ public class StorageClientImplHelper {
         }
         LOG.debug("Retrieve storage info from {} using {} as {}", connectionURL, storageEndpoint, authToken);
 
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
             Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON_TYPE),
                     authToken,
@@ -176,18 +162,13 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
         }
     }
 
     public List<DataNodeInfo> listStorageContent(String connectionURL, Number bundleId, String authToken) {
         String storageContentEndpoint = String.format("/agent_storage/%s", bundleId);
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(connectionURL)
                     .path(storageContentEndpoint)
                     .path("list");
@@ -206,18 +187,13 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
         }
     }
 
     public Optional<DataStorageInfo> streamDataToStore(String connectionURL, DataStorageInfo storageInfo, InputStream dataStream, String authToken) {
         String dataStreamEndpoint = String.format("/agent_storage/%s", storageInfo.getId());
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
             LOG.debug("Stream data to {} as {}", target, authToken);
             Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON_TYPE),
@@ -234,18 +210,13 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
         }
     }
 
     public Optional<InputStream> streamDataFromStore(String connectionURL, Number storageId, String authToken) {
         String dataStreamEndpoint = String.format("/agent_storage/%s", storageId);
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
             LOG.debug("Stream data from {} as {}", target, authToken);
             Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE),
@@ -261,18 +232,13 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
         }
     }
 
     public Optional<InputStream> streamDataEntryFromStorage(String connectionURL, Number storageId, String entryPath, String authToken) {
         String dataStreamEndpoint = String.format("/agent_storage/%s", storageId);
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(connectionURL)
                     .path(dataStreamEndpoint)
                     .path("entry_content")
@@ -291,10 +257,6 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
         }
     }
 
@@ -311,9 +273,8 @@ public class StorageClientImplHelper {
 
     private Optional<String> addNewStorageFolder(String connectionURL, Number storageId, String newDirEntryPath, String authToken) {
         String dataStreamEndpoint = String.format("/agent_storage/%s/directory/%s", storageId, newDirEntryPath);
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
             Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON_TYPE),
                     authToken,
@@ -329,10 +290,6 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
         }
     }
 
@@ -349,9 +306,8 @@ public class StorageClientImplHelper {
 
     private Optional<String> addNewStorageContent(String connectionURL, Number storageId, String newFileEntryPath, InputStream contentStream, String authToken) {
         String dataStreamEndpoint = String.format("/agent_storage/%s/file/%s", storageId, newFileEntryPath);
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(dataStreamEndpoint);
             Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON_TYPE),
                     authToken,
@@ -367,18 +323,13 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
         }
     }
 
     public StorageMessageResponse ping(String connectionURL) throws IOException {
         String endpoint = "/storage/status";
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(endpoint);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .get()
@@ -391,10 +342,6 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
         }
     }
 
@@ -408,9 +355,8 @@ public class StorageClientImplHelper {
                                              int pageSize,
                                              String authToken) {
         String storageEndpoint = "/storage";
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(storageServiceURL).path(storageEndpoint);
             if (bundleId != null && !"0".equals(bundleId.toString())) {
                 target = target.queryParam("id", bundleId);
@@ -446,17 +392,12 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
         }
     }
 
     public Optional<InputStream> streamPathContentFromMaster(String connectionURL, String dataPath, String authToken) {
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(connectionURL)
                     .path("/storage_content/storage_path_redirect")
                     .path(dataPath)
@@ -475,17 +416,12 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-//                httpClient.close();
-            }
         }
     }
 
     public Optional<InputStream> streamPathContentFromAgent(String connectionURL, String dataPath, String authToken) {
-        Client httpClient = null;
         try {
-            httpClient = createHttpClient();
+            httpClient = getHttpClient();
             WebTarget target = httpClient.target(connectionURL)
                     .path("/agent_storage/storage_path")
                     .path(dataPath);
@@ -503,14 +439,23 @@ public class StorageClientImplHelper {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
-        } finally {
-            if (httpClient != null) {
-//                httpClient.close();
-            }
         }
     }
 
-    private Client createHttpClient() throws Exception {
+    private synchronized Client getHttpClient() {
+        if (httpClient == null) {
+            synchronized (this) {
+                try {
+                    httpClient = createNewHttpClient();
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+        }
+        return httpClient;
+    }
+
+    private Client createNewHttpClient() throws Exception {
         SSLContext sslContext = SSLContext.getInstance("TLSv1");
         TrustManager[] trustManagers = {
                 new X509TrustManager() {
