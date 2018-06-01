@@ -156,6 +156,13 @@ public class StorageRetrieveBenchmark {
         streamPathContentFromAgentImpl(trialParams, blackhole);
     }
 
+    @Benchmark
+    @BenchmarkMode({Mode.SampleTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void streamPathContentFromAgentSampleTime(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        streamPathContentFromAgentImpl(trialParams, blackhole);
+    }
+
     private void streamPathContentFromAgentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         OutputStream targetStream = new NullOutputStream();
         long nbytes = trialParams.storageClientHelper.streamPathContentFromAgent(trialParams.agentURL, trialParams.getRandomEntry(), trialParams.authToken)
@@ -193,6 +200,13 @@ public class StorageRetrieveBenchmark {
     @BenchmarkMode({Mode.Throughput})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void streamPathContentFromMasterThrpt(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        streamPathContentFromMasterImpl(trialParams, blackhole);
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.SampleTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void streamPathContentFromMasterSampleTime(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         streamPathContentFromMasterImpl(trialParams, blackhole);
     }
 
