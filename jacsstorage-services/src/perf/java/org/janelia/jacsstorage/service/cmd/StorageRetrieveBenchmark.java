@@ -25,6 +25,7 @@ import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -42,9 +43,10 @@ public class StorageRetrieveBenchmark {
 
     private void streamPathContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         OutputStream targetStream = new NullOutputStream();
-        String dataEntry = trialParams.getRandomEntry();
+        Path dataEntry = Paths.get(trialParams.getRandomEntry());
         try {
-            TransferInfo ti = trialParams.storageContentReader.retrieveDataStream(Paths.get(dataEntry), JacsStorageFormat.SINGLE_DATA_FILE, targetStream);
+
+            TransferInfo ti = trialParams.storageContentReader.retrieveDataStream(dataEntry, JacsStorageFormat.SINGLE_DATA_FILE, targetStream);
             blackhole.consume(ti);
         } catch (IOException e) {
             LOG.error("Error reading {}", dataEntry, e);
@@ -68,9 +70,6 @@ public class StorageRetrieveBenchmark {
         } else {
             benchmarks = StorageRetrieveBenchmark.class.getSimpleName();
         }
-
-        SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
-        SeContainer container = containerInit.initialize();
 
         ChainedOptionsBuilder optBuilder = new OptionsBuilder()
                 .include(benchmarks)
