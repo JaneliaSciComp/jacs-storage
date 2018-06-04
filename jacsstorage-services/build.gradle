@@ -1,3 +1,11 @@
+plugins {
+    id 'application'
+    id 'distribution'
+}
+
+applicationName = 'benchmarks'
+mainClassName = 'BenchmarkApp'
+
 project(":jacsstorage-services") {
     dependencies {
         api project(":jacsstorage-core")
@@ -7,6 +15,35 @@ project(":jacsstorage-services") {
                        JAVAMAIL_LIB,
                        MONGODB_DRIVER_LIB,
                        REFLECTIONS_LIB
+
+        perfImplementation project,
+                           BENCHMARK_CORE_LIB,
+                           BENCHMARK_ANN_PROCESSOR_LIB,
+                           CDI_API_LIB,
+                           CDI_SE_CORE_LIB,
+                           CMDLINE_ARG_LIB
+
+    }
+
+    task createStorageRetrieveBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
+        mainClassName = "org.janelia.jacsstorage.service.cmd.StorageRetrieveBenchmark"
+        classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
+        outputDir = startScripts.outputDir
+        applicationName = "storageRetrieveBenchmarks"
+    }
+
+    distributions {
+        benchmarks {
+            contents {
+                into("bin") {
+                    from(createStorageRetrieveBenchmark)
+                }
+                into("lib") {
+                    from(project.perfJar.outputs.files)
+                    from(project.configurations.perfRuntimeClasspath)
+                }
+            }
+        }
     }
 }
 

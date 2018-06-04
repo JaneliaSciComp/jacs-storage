@@ -8,31 +8,43 @@ allprojects {
 subprojects {
     apply from: "${rootDir}/deps.gradle"
 
+    configurations {
+        provided
+        implementation.extendsFrom(provided)
+        integrationTestCompileOnly.extendsFrom(testCompileOnly)
+        integrationTestImplementation.extendsFrom(testImplementation)
+        integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+        perfImplementation.extendsFrom(implementation)
+        perfRuntimeOnly.extendsFrom(runtimeOnly)
+    }
+
+    sourceSets {
+        perf {
+            java {
+                runtimeClasspath += perf.output
+            }
+        }
+        integrationTest {
+            java {
+                compileClasspath += main.output + test.output
+                runtimeClasspath += main.output + test.output
+                srcDir file('src/integrationTest/java')
+            }
+            resources {
+                srcDir file('src/integrationTest/resources')
+            }
+        }
+    }
+
+    dependencies {
+        perfImplementation BENCHMARK_CORE_LIB,
+                           BENCHMARK_ANN_PROCESSOR_LIB
+    }
+
     afterEvaluate {
         repositories {
             mavenLocal()
             mavenCentral()
-        }
-
-        configurations {
-            provided
-            implementation.extendsFrom(provided)
-            integrationTestCompileOnly.extendsFrom(testCompileOnly)
-            integrationTestImplementation.extendsFrom(testImplementation)
-            integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
-        }
-
-        sourceSets {
-            integrationTest {
-                java {
-                    compileClasspath += main.output + test.output
-                    runtimeClasspath += main.output + test.output
-                    srcDir file('src/integrationTest/java')
-                }
-                resources {
-                    srcDir file('src/integrationTest/resources')
-                }
-             }
         }
 
         compileJava {
@@ -51,33 +63,46 @@ subprojects {
             }
         }
 
+        compilePerfJava {
+            doFirst {
+                options.compilerArgs = [
+                        '-Xlint:deprecation'
+                ]
+            }
+        }
+
         idea {
             module {
                 downloadSources = true
                 downloadJavadoc = true
                 scopes.TEST.plus += [
-		    configurations.integrationTestCompileOnly,
-		    configurations.integrationTestRuntime
-		]
+                    configurations.integrationTestCompileOnly,
+                    configurations.integrationTestRuntime
+                ]
             }
         }
 
-        task integrationTest(type: Test) {
-            testClassesDirs += sourceSets.integrationTest.output.classesDirs
-            classpath = sourceSets.integrationTest.runtimeClasspath
-        }
-
-        check.dependsOn integrationTest
-        integrationTest.mustRunAfter test
    }
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
+    task perfJar(type: Jar, dependsOn: perfClasses) {
+        from sourceSets.perf.output
+        classifier = "perf"
+    }
+
+    task integrationTest(type: Test) {
+        testClassesDirs += sourceSets.integrationTest.output.classesDirs
+        classpath = sourceSets.integrationTest.runtimeClasspath
+    }
+
+    check.dependsOn integrationTest
+    integrationTest.mustRunAfter test
 }
 
 task updateWrapper(type: Wrapper) {
-    gradleVersion = "4.6"
+    gradleVersion = "4.8"
 }
 
 def filteringProperties(otherProperties) {

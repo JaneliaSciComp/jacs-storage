@@ -113,7 +113,6 @@ dependencies {
                        POWERMOCK_API_MOCKITO_LIB,
                        POWERMOCK_JUNIT4_LIB
 
-
     testRuntimeOnly ASSERTJ_LIB,
                     HAMCREST_LIB,
                     JUNIT_LIB,
