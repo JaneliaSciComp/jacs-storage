@@ -4,8 +4,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.io.TransferInfo;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.glassfish.jersey.server.ContainerResponse;
+import org.janelia.jacsstorage.rest.PathBasedAgentStorageResource;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -22,12 +22,13 @@ import org.openjdk.jmh.util.NullOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.net.URI;
 import java.util.Collection;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class StorageRetrieveBenchmark {
@@ -37,25 +38,39 @@ public class StorageRetrieveBenchmark {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void streamPathContentAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
-        streamPathContentFromResourceImpl(trialParams, blackhole);
+    public void streamPathContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        streamPathContentFuture(trialParams, blackhole);
+    }
+
+    private void streamPathContentFuture(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        String dataEntry = trialParams.getRandomEntry();
+        try {
+            URI requestURI = UriBuilder.fromMethod(PathBasedAgentStorageResource.class, "retrieveData")
+                    .path(dataEntry)
+                    .build();
+            Future<ContainerResponse> responseFuture = trialParams.appHandler().apply(trialParams.request(requestURI, "GET"));
+            blackhole.consume(responseFuture);
+        } catch (Exception e) {
+            LOG.error("Error reading {}", dataEntry, e);
+        }
     }
 
     @Benchmark
-    @BenchmarkMode({Mode.Throughput})
+    @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void streamPathContentThrpt(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
-        streamPathContentFromResourceImpl(trialParams, blackhole);
+    public void streamPathContentAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        streamPathContentImpl(trialParams, blackhole);
     }
 
-    private void streamPathContentFromResourceImpl(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+    private void streamPathContentImpl(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
         OutputStream targetStream = new NullOutputStream();
         String dataEntry = trialParams.getRandomEntry();
         try {
-            InputStream response = trialParams.getTarget().path("agent_storage").path("storage_path").path(dataEntry).request().get(InputStream.class);
+            URI requestURI = UriBuilder.fromMethod(PathBasedAgentStorageResource.class, "retrieveData").build();
+            InputStream response = trialParams.getTarget(requestURI).path(dataEntry).request().get(InputStream.class);
             long n = ByteStreams.copy(response, targetStream);
             blackhole.consume(n);
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error("Error reading {}", dataEntry, e);
         }
     }
