@@ -42,7 +42,6 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         JacsAgentStorageApp app = container.select(JacsAgentStorageApp.class).get();
 
         AgentState agentState = container.select(AgentState.class).get();
-        ExecutorService agentExecutor = container.select(ExecutorService.class).get();
         // update agent info
         agentState.updateAgentInfo(
                 UriBuilder.fromPath(app.getRestApi(agentArgs))

@@ -29,6 +29,7 @@ project(":jacsstorage-agentweb") {
 
         perfImplementation project,
                            CMDLINE_ARG_LIB,
+                           JAX_RS_JERSEY_TEST_LIB,
                            JAX_RS_JERSEY_TEST_PROVIDER_LIB
 
     }
