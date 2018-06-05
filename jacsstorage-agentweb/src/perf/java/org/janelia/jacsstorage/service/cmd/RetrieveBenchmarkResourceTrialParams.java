@@ -20,13 +20,14 @@ import javax.enterprise.inject.se.SeContainerInitializer;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Application;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
 @State(Scope.Benchmark)
-public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
+public class RetrieveBenchmarkResourceTrialParams {
     @Param({""})
     String entriesPathsFile;
     private List<String> entryPathList;
@@ -36,7 +37,7 @@ public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
     @Setup(Level.Trial)
     public void setUpTrial(BenchmarkParams params) {
         try {
-            super.setUp();
+            setApplicationHandler();
             jaxRsClient = ClientBuilder.newClient(LoopBackConnectorProvider.getClientConfig());
             if (StringUtils.isNotBlank(entriesPathsFile)) {
                 entryPathList = Files.readAllLines(Paths.get(entriesPathsFile));
@@ -44,10 +45,9 @@ public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
-
     }
 
-    protected JAXAgentStorageApp configure() {
+    private Application setApplicationHandler() {
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
         SeContainer container = containerInit.initialize();
         JAXAgentStorageApp app = container.select(JAXAgentStorageApp.class).get();
