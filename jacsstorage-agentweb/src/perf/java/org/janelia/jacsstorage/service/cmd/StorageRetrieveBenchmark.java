@@ -5,6 +5,7 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.ContainerResponse;
+import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.PathBasedAgentStorageResource;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -45,13 +46,11 @@ public class StorageRetrieveBenchmark {
     private void streamPathContentFuture(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
         String dataEntry = trialParams.getRandomEntry();
         try {
-            URI requestURI = UriBuilder.fromMethod(PathBasedAgentStorageResource.class, "retrieveData")
+            URI requestURI = UriBuilder.fromPath(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(dataEntry)
                     .build(dataEntry);
             Future<ContainerResponse> responseFuture = trialParams.appHandler().apply(trialParams.request(requestURI, "GET"));
-            InputStream responseStream = (InputStream) responseFuture.get().getEntity();
-            OutputStream targetStream = new NullOutputStream();
-            long n = ByteStreams.copy(responseStream, targetStream);
-            blackhole.consume(n);
+            ContainerResponse response = responseFuture.get();
+            blackhole.consume(response.getStatus());
         } catch (Exception e) {
             LOG.error("Error reading {}", dataEntry, e);
 	        throw new IllegalStateException(e);
