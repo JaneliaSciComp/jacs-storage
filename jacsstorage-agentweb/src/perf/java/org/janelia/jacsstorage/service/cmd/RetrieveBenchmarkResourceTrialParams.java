@@ -29,10 +29,11 @@ import java.nio.file.Paths;
 import java.util.List;
 
 @State(Scope.Benchmark)
-public class RetrieveBenchmarkResourceTrialParams {
+public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
     @Param({""})
     String entriesPathsFile;
     private List<String> entryPathList;
+    private Application application;
     private ApplicationHandler handler;
     private Client jaxRsClient;
 
@@ -40,14 +41,20 @@ public class RetrieveBenchmarkResourceTrialParams {
     public void setUpTrial(BenchmarkParams params) {
         try {
             setApplicationHandler();
-            ClientConfig clientConfig = new ClientConfig();
-            jaxRsClient = ClientBuilder.newClient(clientConfig);
+            super.setUp();
+            jaxRsClient = client();
             if (StringUtils.isNotBlank(entriesPathsFile)) {
                 entryPathList = Files.readAllLines(Paths.get(entriesPathsFile));
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    @Override
+    protected Application configure() {
+        setApplication();
+        return application;
     }
 
     @TearDown
@@ -57,12 +64,17 @@ public class RetrieveBenchmarkResourceTrialParams {
         }
     }
 
-    private Application setApplicationHandler() {
-        SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
-        SeContainer container = containerInit.initialize();
-        JAXAgentStorageApp app = container.select(JAXAgentStorageApp.class).get();
-        handler = new ApplicationHandler(app);
-        return app;
+    private void setApplicationHandler() {
+        setApplication();
+        handler = new ApplicationHandler(application);
+    }
+
+    private void setApplication() {
+        if (application == null) {
+            SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
+            SeContainer container = containerInit.initialize();
+            application = container.select(JAXAgentStorageApp.class).get();
+        }
     }
 
     public Client getJaxRsClient() {
