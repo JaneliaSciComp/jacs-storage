@@ -57,6 +57,11 @@ public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
 
     @TearDown
     public void shutdown() {
+        try {
+            super.tearDown();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private void setApplicationHandler() {
