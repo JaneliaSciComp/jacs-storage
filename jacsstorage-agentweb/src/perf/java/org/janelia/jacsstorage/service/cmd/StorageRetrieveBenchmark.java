@@ -23,6 +23,7 @@ import org.openjdk.jmh.util.NullOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,10 +68,9 @@ public class StorageRetrieveBenchmark {
             Future<ContainerResponse> responseFuture = streamPathContentFuture(dataEntry, trialParams);
             ContainerResponse response = responseFuture.get();
             blackhole.consume(response.getStatus());
-            InputStream responseStream = (InputStream) response.getEntity();
+            StreamingOutput responseStream = (StreamingOutput) response.getEntity();
             OutputStream targetStream = new NullOutputStream();
-            long n = ByteStreams.copy(responseStream, targetStream);
-            blackhole.consume(n);
+            responseStream.write(targetStream);
         } catch (Exception e) {
             LOG.error("Error reading {}", dataEntry, e);
             throw new IllegalStateException(e);

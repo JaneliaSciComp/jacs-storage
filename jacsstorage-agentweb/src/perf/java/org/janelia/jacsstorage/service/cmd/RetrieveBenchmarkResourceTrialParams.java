@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.service.cmd;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.server.ApplicationHandler;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.test.JerseyTest;
@@ -39,7 +40,8 @@ public class RetrieveBenchmarkResourceTrialParams {
     public void setUpTrial(BenchmarkParams params) {
         try {
             setApplicationHandler();
-            jaxRsClient = ClientBuilder.newClient(LoopBackConnectorProvider.getClientConfig());
+            ClientConfig clientConfig = new ClientConfig();
+            jaxRsClient = ClientBuilder.newClient(clientConfig);
             if (StringUtils.isNotBlank(entriesPathsFile)) {
                 entryPathList = Files.readAllLines(Paths.get(entriesPathsFile));
             }
