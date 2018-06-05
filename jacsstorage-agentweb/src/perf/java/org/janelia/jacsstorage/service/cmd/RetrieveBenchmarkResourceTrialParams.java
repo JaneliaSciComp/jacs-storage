@@ -13,6 +13,7 @@ import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.BenchmarkParams;
 
 import javax.enterprise.inject.se.SeContainer;
@@ -44,6 +45,13 @@ public class RetrieveBenchmarkResourceTrialParams {
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    @TearDown
+    public void shutdown() {
+        if (jaxRsClient != null) {
+            jaxRsClient.close();
         }
     }
 
