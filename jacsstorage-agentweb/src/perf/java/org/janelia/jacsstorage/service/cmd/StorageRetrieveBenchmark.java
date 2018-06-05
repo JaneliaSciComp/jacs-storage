@@ -38,20 +38,20 @@ public class StorageRetrieveBenchmark {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void streamPathContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
-        streamPathContentFuture(trialParams, blackhole);
+    public Future<ContainerResponse> streamPathContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        return streamPathContentFuture(trialParams, blackhole);
     }
 
-    private void streamPathContentFuture(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+    private Future<ContainerResponse> streamPathContentFuture(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
         String dataEntry = trialParams.getRandomEntry();
         try {
             URI requestURI = UriBuilder.fromMethod(PathBasedAgentStorageResource.class, "retrieveData")
-                    .path(dataEntry)
-                    .build();
+                    .build(dataEntry);
             Future<ContainerResponse> responseFuture = trialParams.appHandler().apply(trialParams.request(requestURI, "GET"));
-            blackhole.consume(responseFuture);
+	    return responseFuture;
         } catch (Exception e) {
             LOG.error("Error reading {}", dataEntry, e);
+	    throw new IllegalStateException(e);
         }
     }
 
@@ -66,8 +66,8 @@ public class StorageRetrieveBenchmark {
         OutputStream targetStream = new NullOutputStream();
         String dataEntry = trialParams.getRandomEntry();
         try {
-            URI requestURI = UriBuilder.fromMethod(PathBasedAgentStorageResource.class, "retrieveData").build();
-            InputStream response = trialParams.getTarget(requestURI).path(dataEntry).request().get(InputStream.class);
+            URI requestURI = UriBuilder.fromMethod(PathBasedAgentStorageResource.class, "retrieveData").build(dataEntry);
+            InputStream response = trialParams.getTarget(requestURI).request().get(InputStream.class);
             long n = ByteStreams.copy(response, targetStream);
             blackhole.consume(n);
         } catch (Exception e) {
