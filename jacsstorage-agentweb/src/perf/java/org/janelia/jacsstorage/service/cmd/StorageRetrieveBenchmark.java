@@ -87,9 +87,11 @@ public class StorageRetrieveBenchmark {
     private void streamPathContentImpl(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
         String dataEntry = trialParams.getRandomEntry();
         try {
-            URI requestURI = UriBuilder.fromPath("/agent_storage").path("storage_path").path(dataEntry)
-                    .build(dataEntry);
-            InputStream response = trialParams.getTarget(requestURI).request().get(InputStream.class);
+            InputStream response = trialParams.target()
+                    .path("/agent_storage")
+                    .path("storage_path")
+                    .path(dataEntry)
+                    .request().get(InputStream.class);
             OutputStream targetStream = new NullOutputStream();
             long n = ByteStreams.copy(response, targetStream);
             blackhole.consume(n);

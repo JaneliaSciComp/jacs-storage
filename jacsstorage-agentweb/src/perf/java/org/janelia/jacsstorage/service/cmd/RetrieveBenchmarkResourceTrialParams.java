@@ -85,10 +85,6 @@ public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
         return handler;
     }
 
-    public WebTarget getTarget(URI requestURI) {
-        return jaxRsClient.target(requestURI);
-    }
-
     public ContainerRequest request(URI requestURI, String method) {
         return ContainerRequestBuilder.from(requestURI, method).build();
 
