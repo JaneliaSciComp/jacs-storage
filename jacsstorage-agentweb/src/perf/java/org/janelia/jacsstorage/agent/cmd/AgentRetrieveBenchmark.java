@@ -1,12 +1,10 @@
-package org.janelia.jacsstorage.service.cmd;
+package org.janelia.jacsstorage.agent.cmd;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.ContainerResponse;
-import org.janelia.jacsstorage.rest.Constants;
-import org.janelia.jacsstorage.rest.PathBasedAgentStorageResource;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -25,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
@@ -33,9 +30,9 @@ import java.util.Collection;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class StorageRetrieveBenchmark {
+public class AgentRetrieveBenchmark {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StorageRetrieveBenchmark.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AgentRetrieveBenchmark.class);
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
@@ -113,9 +110,9 @@ public class StorageRetrieveBenchmark {
         }
         String benchmarks;
         if (StringUtils.isNotBlank(benchmarksCmdLineParams.benchmarksRegex)) {
-            benchmarks = StorageRetrieveBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
+            benchmarks = AgentRetrieveBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
         } else {
-            benchmarks = StorageRetrieveBenchmark.class.getSimpleName();
+            benchmarks = AgentRetrieveBenchmark.class.getSimpleName();
         }
 
         ChainedOptionsBuilder optBuilder = new OptionsBuilder()

@@ -34,8 +34,8 @@ project(":jacsstorage-agentweb") {
 
     }
 
-    task createStorageRetrieveBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
-        mainClassName = "org.janelia.jacsstorage.service.cmd.StorageRetrieveBenchmark"
+    task createAgentRetrieveBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
+        mainClassName = "org.janelia.jacsstorage.agent.cmd.AgentRetrieveBenchmark"
         classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
         outputDir = startScripts.outputDir
         applicationName = "storageRetrieveBenchmarks"
@@ -45,7 +45,7 @@ project(":jacsstorage-agentweb") {
         benchmarks {
             contents {
                 into("bin") {
-                    from(createStorageRetrieveBenchmark)
+                    from(createAgentRetrieveBenchmark)
                 }
                 into("lib") {
                     from(project.perfJar.outputs.files)

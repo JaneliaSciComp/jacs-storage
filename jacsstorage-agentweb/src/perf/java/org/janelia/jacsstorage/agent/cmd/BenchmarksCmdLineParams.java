@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.cmd;
+package org.janelia.jacsstorage.agent.cmd;
 
 import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;

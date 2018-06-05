@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.cmd;
+package org.janelia.jacsstorage.agent.cmd;
 
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,14 +35,12 @@ public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
     private List<String> entryPathList;
     private Application application;
     private ApplicationHandler handler;
-    private Client jaxRsClient;
 
     @Setup(Level.Trial)
     public void setUpTrial(BenchmarkParams params) {
         try {
             setApplicationHandler();
             super.setUp();
-            jaxRsClient = client();
             if (StringUtils.isNotBlank(entriesPathsFile)) {
                 entryPathList = Files.readAllLines(Paths.get(entriesPathsFile));
             }
@@ -59,9 +57,6 @@ public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
 
     @TearDown
     public void shutdown() {
-        if (jaxRsClient != null) {
-            jaxRsClient.close();
-        }
     }
 
     private void setApplicationHandler() {
@@ -75,10 +70,6 @@ public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
             SeContainer container = containerInit.initialize();
             application = container.select(JAXAgentStorageApp.class).get();
         }
-    }
-
-    public Client getJaxRsClient() {
-        return jaxRsClient;
     }
 
     public ApplicationHandler appHandler() {
