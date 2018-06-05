@@ -39,21 +39,41 @@ public class StorageRetrieveBenchmark {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void streamPathContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
-        streamPathContentFuture(trialParams, blackhole);
+    public void streamPathContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams) {
+        streamPathContentFuture(trialParams.getRandomEntry(), trialParams);
     }
 
-    private void streamPathContentFuture(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
-        String dataEntry = trialParams.getRandomEntry();
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public void streamPathContentFromFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        streamPathContentFromFuture(trialParams, blackhole);
+    }
+
+    private Future<ContainerResponse> streamPathContentFuture(String dataEntry, RetrieveBenchmarkResourceTrialParams trialParams) {
         try {
             URI requestURI = UriBuilder.fromPath("/agent_storage").path("storage_path").path(dataEntry)
                     .build(dataEntry);
-            Future<ContainerResponse> responseFuture = trialParams.appHandler().apply(trialParams.request(requestURI, "GET"));
-            ContainerResponse response = responseFuture.get();
-            blackhole.consume(response.getStatus());
+            return trialParams.appHandler().apply(trialParams.request(requestURI, "GET"));
         } catch (Exception e) {
             LOG.error("Error reading {}", dataEntry, e);
 	        throw new IllegalStateException(e);
+        }
+    }
+
+    private void streamPathContentFromFuture(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        String dataEntry = trialParams.getRandomEntry();
+        try {
+            Future<ContainerResponse> responseFuture = streamPathContentFuture(dataEntry, trialParams);
+            ContainerResponse response = responseFuture.get();
+            blackhole.consume(response.getStatus());
+            InputStream responseStream = (InputStream) response.getEntity();
+            OutputStream targetStream = new NullOutputStream();
+            long n = ByteStreams.copy(responseStream, targetStream);
+            blackhole.consume(n);
+        } catch (Exception e) {
+            LOG.error("Error reading {}", dataEntry, e);
+            throw new IllegalStateException(e);
         }
     }
 

@@ -15,19 +15,18 @@ import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageRequestBuilder;
 import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.security.JacsSecurityContext;
 import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
-import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
-import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -47,7 +46,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Timed
-@RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("storage")
 @SwaggerDefinition(
