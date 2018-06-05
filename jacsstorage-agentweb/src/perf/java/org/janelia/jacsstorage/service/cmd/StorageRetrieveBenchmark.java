@@ -46,7 +46,7 @@ public class StorageRetrieveBenchmark {
     private void streamPathContentFuture(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
         String dataEntry = trialParams.getRandomEntry();
         try {
-            URI requestURI = UriBuilder.fromPath(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(dataEntry)
+            URI requestURI = UriBuilder.fromPath("/agent_storage").path("storage_path").path(dataEntry)
                     .build(dataEntry);
             Future<ContainerResponse> responseFuture = trialParams.appHandler().apply(trialParams.request(requestURI, "GET"));
             ContainerResponse response = responseFuture.get();
