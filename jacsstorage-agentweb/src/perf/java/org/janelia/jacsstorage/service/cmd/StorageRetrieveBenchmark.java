@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.service.cmd;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
+import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -22,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,24 +37,24 @@ public class StorageRetrieveBenchmark {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void streamPathContentAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamPathContentImpl(trialParams, blackhole);
+    public void streamPathContentAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        streamPathContentFromResourceImpl(trialParams, blackhole);
     }
 
     @Benchmark
     @BenchmarkMode({Mode.Throughput})
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public void streamPathContentThrpt(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamPathContentImpl(trialParams, blackhole);
+    public void streamPathContentThrpt(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        streamPathContentFromResourceImpl(trialParams, blackhole);
     }
 
-    private void streamPathContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+    private void streamPathContentFromResourceImpl(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
         OutputStream targetStream = new NullOutputStream();
-        Path dataEntry = Paths.get(trialParams.getRandomEntry());
+        String dataEntry = trialParams.getRandomEntry();
         try {
-
-            TransferInfo ti = trialParams.storageContentReader.retrieveDataStream(dataEntry, JacsStorageFormat.SINGLE_DATA_FILE, targetStream);
-            blackhole.consume(ti);
+            InputStream response = trialParams.getTarget().path("agent_storage").path("storage_path").path(dataEntry).request().get(InputStream.class);
+            long n = ByteStreams.copy(response, targetStream);
+            blackhole.consume(n);
         } catch (IOException e) {
             LOG.error("Error reading {}", dataEntry, e);
         }
