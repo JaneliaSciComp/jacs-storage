@@ -34,14 +34,14 @@ public class StorageRetrieveBenchmark {
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamPathContentAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         streamPathContentImpl(trialParams, blackhole);
     }
 
     @Benchmark
     @BenchmarkMode({Mode.Throughput})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamPathContentThrpt(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         streamPathContentImpl(trialParams, blackhole);
     }
