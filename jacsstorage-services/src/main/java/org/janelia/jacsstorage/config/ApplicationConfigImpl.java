@@ -8,19 +8,20 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 public class ApplicationConfigImpl implements ApplicationConfig {
-    private final Properties configProperties = new Properties();
+    private final Map<String, String> configProperties = new HashMap<>();
 
     private final ApplicationConfigValueResolver configValueResolver = new ApplicationConfigValueResolver();
 
     @Override
     public String getStringPropertyValue(String name) {
-        String value = configProperties.getProperty(name);
-        String resolvedValue = configValueResolver.resolve(value, Maps.fromProperties(configProperties));
+        String value = configProperties.get(name);
+        String resolvedValue = configValueResolver.resolve(value, configProperties);
         return resolvedValue;
     }
 
@@ -96,7 +97,9 @@ public class ApplicationConfigImpl implements ApplicationConfig {
 
     @Override
     public void load(InputStream stream) throws IOException {
-        configProperties.load(stream);
+        Properties toLoad = new Properties();
+        toLoad.load(stream);
+        putAll(Maps.fromProperties(toLoad));
     }
 
     @Override
@@ -112,7 +115,7 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     @Override
     public Map<String, String> asMap() {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-        configProperties.stringPropertyNames().forEach(k -> {
+        configProperties.keySet().forEach(k -> {
             String v = getStringPropertyValue(k);
             if (k != null && v != null) builder.put(k, v);
         });
