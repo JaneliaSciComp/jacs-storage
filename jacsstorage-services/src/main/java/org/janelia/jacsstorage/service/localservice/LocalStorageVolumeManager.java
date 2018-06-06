@@ -11,7 +11,6 @@ import org.janelia.jacsstorage.config.ApplicationConfigValueResolver;
 import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
-import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.NotificationService;
@@ -21,9 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.nio.file.FileStore;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -47,15 +43,39 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
                                      @PropertyValue(name = "StorageAgent.StorageVolumes") List<String> managedVolumes) {
         super(storageVolumeDao, capacityNotifier);
         this.applicationConfig = applicationConfig;
-        this.storageHost = StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());;
+        this.storageHost = StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
         this.managedVolumes = managedVolumes;
     }
 
     @TimedMethod
+    @Override
+    public Optional<JacsStorageVolume> getFullVolumeInfo(String volumeName) {
+        if (managedVolumes.contains(volumeName)) {
+            JacsStorageVolume storageVolume = getLocalVolumeInfo(volumeName);
+            fillVolumeSpaceInfo(storageVolume);
+            return Optional.of(storageVolume);
+        } else {
+            LOG.warn("Volume {} not available at {}", volumeName, storageHost);
+            return Optional.empty();
+        }
+    }
+
+    private void fillVolumeSpaceInfo(JacsStorageVolume storageVolume) {
+        storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getStorageRootDir()));
+        long totalSpace = getTotalStorageSpaceInBytes(storageVolume.getStorageRootDir());
+        if (totalSpace != 0) {
+            storageVolume.setPercentageFull((int) ((totalSpace - storageVolume.getAvailableSpaceInBytes()) * 100 / totalSpace));
+        } else {
+            LOG.warn("Total space calculated is 0");
+        }
+    }
+
+    @TimedMethod
+    @Override
     public List<JacsStorageVolume> getManagedVolumes(StorageQuery storageQuery) {
         LOG.debug("Find managed volumes using {}", storageQuery);
         return Stream.concat(managedVolumes.stream(), Stream.of(JacsStorageVolume.OVERFLOW_VOLUME))
-                .map(this::getVolumeInfo)
+                .map(this::getLocalVolumeInfo)
                 .filter(sv -> StringUtils.isBlank(storageQuery.getDataStoragePath()) ||
                         storageQuery.getDataStoragePath().startsWith(sv.getStoragePathPrefix()) ||
                         storageQuery.getDataStoragePath().startsWith(sv.getStorageRootDir())
@@ -80,7 +100,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
                 .collect(Collectors.toList());
     }
 
-    private JacsStorageVolume getVolumeInfo(String volumeName) {
+    private JacsStorageVolume getLocalVolumeInfo(String volumeName) {
         JacsStorageVolume storageVolume = new JacsStorageVolume();
         boolean shared;
         if (JacsStorageVolume.OVERFLOW_VOLUME.equals(volumeName)) {
@@ -96,19 +116,12 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
                 getVolumeConfigPropertyName(volumeName, "RootDir")));
         storageVolume.setStoragePathPrefix(getStoragePathPrefix(volumeName));
         storageVolume.setStorageTags(getStorageVolumeTags(volumeName));
-        storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getStorageRootDir()));
         storageVolume.setQuotaFailPercent(applicationConfig.getDoublePropertyValue(
                 getVolumeConfigPropertyName(volumeName, "QuotaFailPercent")));
         storageVolume.setQuotaWarnPercent(applicationConfig.getDoublePropertyValue(
                 getVolumeConfigPropertyName(volumeName, "QuotaWarnPercent")));
         storageVolume.setSystemUsageFile(applicationConfig.getStringPropertyValue(
                 getVolumeConfigPropertyName(volumeName, "SystemUsageFile")));
-        long totalSpace = getTotalStorageSpaceInBytes(storageVolume.getStorageRootDir());
-        if (totalSpace != 0) {
-            storageVolume.setPercentageFull((int) ((totalSpace - storageVolume.getAvailableSpaceInBytes()) * 100 / totalSpace));
-        } else {
-            LOG.warn("Total space calculated is 0");
-        }
         return storageVolume;
     }
 
@@ -133,20 +146,6 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         return tags.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
     }
 
-    private long getAvailableStorageSpaceInBytes(String storageDirName) {
-        return getFileStore(storageDirName)
-                .map(fs -> {
-                    try {
-                        return fs.getUsableSpace();
-                    } catch (IOException e) {
-                        LOG.error("Error trying to get usable storage space {}", storageDirName, e);
-                        return 0L;
-                    }
-                })
-                .orElse(0L)
-                ;
-    }
-
     private long getTotalStorageSpaceInBytes(String storageDirName) {
         return getFileStore(storageDirName)
                 .map(fs -> {
@@ -159,19 +158,6 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
                 })
                 .orElse(0L)
                 ;
-    }
-
-    private Optional<FileStore> getFileStore(String storageDirName) {
-        try {
-            java.nio.file.Path storagePath = Paths.get(storageDirName);
-            if (Files.notExists(storagePath)) {
-                Files.createDirectories(storagePath);
-            }
-            return Optional.of(Files.getFileStore(storagePath));
-        } catch (Exception e) {
-            LOG.error("Access error for storage {}", storageDirName, e);
-            return Optional.empty();
-        }
     }
 
 }

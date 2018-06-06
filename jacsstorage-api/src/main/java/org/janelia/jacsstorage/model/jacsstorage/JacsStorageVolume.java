@@ -100,10 +100,6 @@ public class JacsStorageVolume extends AbstractEntity {
         this.availableSpaceInBytes = availableSpaceInBytes;
     }
 
-    public boolean hasAvailableSpaceInBytes() {
-        return availableSpaceInBytes != null && availableSpaceInBytes > 0;
-    }
-
     public Integer getPercentageFull() {
         return percentageFull;
     }
@@ -201,7 +197,6 @@ public class JacsStorageVolume extends AbstractEntity {
                 .append("name", name)
                 .append("storageTags", storageTags)
                 .append("storageRootDir", storageRootDir)
-                .append("availableSpaceInBytes", availableSpaceInBytes)
                 .append("storageServiceURL", storageServiceURL)
                 .append("systemUsageFile", systemUsageFile)
                 .toString();

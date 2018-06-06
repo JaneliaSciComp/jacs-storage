@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
-import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
@@ -15,10 +15,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
 
 public abstract class AbstractStorageVolumeManager implements StorageVolumeManager {
 
@@ -39,6 +41,7 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
         return storageVolumeDao.findById(volumeId);
     }
 
+    @TimedMethod
     public JacsStorageVolume updateVolumeInfo(JacsStorageVolume storageVolume) {
         JacsStorageVolume currentVolumeInfo;
 
@@ -118,23 +121,30 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
         return currentVolumeInfo;
     }
 
-    private long getAvailableStorageSpaceInBytes(String storageDirName) {
-        try {
-            return getFileStore(storageDirName).getUsableSpace();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+    protected long getAvailableStorageSpaceInBytes(String storageDirName) {
+        return getFileStore(storageDirName)
+                .map(fs -> {
+                    try {
+                        return fs.getUsableSpace();
+                    } catch (IOException e) {
+                        LOG.error("Error trying to get usable storage space {}", storageDirName, e);
+                        return 0L;
+                    }
+                })
+                .orElse(0L)
+                ;
     }
 
-    private FileStore getFileStore(String storageDirName) {
+    protected Optional<FileStore> getFileStore(String storageDirName) {
         try {
             java.nio.file.Path storagePath = Paths.get(storageDirName);
             if (Files.notExists(storagePath)) {
                 Files.createDirectories(storagePath);
             }
-            return Files.getFileStore(storagePath);
+            return Optional.of(Files.getFileStore(storagePath));
         } catch (Exception e) {
-            throw new IllegalStateException(e);
+            LOG.error("Access error for storage {}", storageDirName, e);
+            return Optional.empty();
         }
     }
 

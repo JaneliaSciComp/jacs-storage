@@ -147,7 +147,7 @@ public class ContentStorageResource {
         };
     }
 
-    Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, JacsCredentials jacsCredentials) {
+    private Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, JacsCredentials jacsCredentials) {
         Invocation.Builder requestWithCredentialsBuilder = requestBuilder;
         if (jacsCredentials != null) {
             if (jacsCredentials.hasAuthToken()) {
