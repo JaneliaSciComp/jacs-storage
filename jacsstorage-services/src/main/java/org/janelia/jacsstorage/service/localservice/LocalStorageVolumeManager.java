@@ -73,7 +73,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     @TimedMethod
     @Override
     public List<JacsStorageVolume> getManagedVolumes(StorageQuery storageQuery) {
-        LOG.debug("Find managed volumes using {}", storageQuery);
+        LOG.trace("Query managed volumes using {}", storageQuery);
         return Stream.concat(managedVolumes.stream(), Stream.of(JacsStorageVolume.OVERFLOW_VOLUME))
                 .map(this::getLocalVolumeInfo)
                 .filter(sv -> StringUtils.isBlank(storageQuery.getDataStoragePath()) ||
