@@ -36,14 +36,14 @@ public class AgentRetrieveBenchmark {
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamPathContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams) {
         streamPathContentFuture(trialParams.getRandomEntry(), trialParams);
     }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamPathContentFromFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
         streamPathContentFromFuture(trialParams, blackhole);
     }
@@ -76,7 +76,7 @@ public class AgentRetrieveBenchmark {
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamPathContentAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
         streamPathContentImpl(trialParams, blackhole);
     }
