@@ -80,7 +80,6 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
                 .collect(Collectors.toList());
     }
 
-    @TimedMethod
     private JacsStorageVolume getVolumeInfo(String volumeName) {
         JacsStorageVolume storageVolume = new JacsStorageVolume();
         boolean shared;
