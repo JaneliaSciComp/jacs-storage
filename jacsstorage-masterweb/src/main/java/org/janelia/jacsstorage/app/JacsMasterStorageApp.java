@@ -1,9 +1,6 @@
 package org.janelia.jacsstorage.app;
 
 import com.beust.jcommander.JCommander;
-import io.undertow.predicate.Predicate;
-import io.undertow.predicate.Predicates;
-import io.undertow.servlet.api.ListenerInfo;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.enterprise.inject.se.SeContainer;
@@ -46,26 +43,14 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
     }
 
     @Override
-    String getRestApi(AppArgs appArgs) {
-        StringBuilder apiPathBuilder = new StringBuilder();
-        if (StringUtils.isNotBlank(appArgs.baseContextPath)) {
-            apiPathBuilder.append(StringUtils.prependIfMissing(appArgs.baseContextPath, "/"));
-        }
-        apiPathBuilder.append("/master_api/")
-                .append(getApiVersion());
-        return apiPathBuilder.toString();
+    String getRestApiContext() {
+        return "master_api";
     }
 
     @Override
-    ListenerInfo[] getAppListeners() {
-        return new ListenerInfo[] {
+    String[] getPathsExcludedFromAccessLog() {
+        return new String[]{
+                "/agents/url"
         };
-    }
-
-    @Override
-    Predicate getAccessLogFilter() {
-        return Predicates.not(
-                Predicates.prefix("/agents/url")
-        );
     }
 }

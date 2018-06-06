@@ -13,19 +13,17 @@ import org.slf4j.LoggerFactory;
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
 import javax.ws.rs.core.UriBuilder;
-import java.util.concurrent.ExecutorService;
 
 /**
  * This is the agent storage application.
  */
 public class JacsAgentStorageApp extends AbstractStorageApp {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JacsAgentStorageApp.class);
     private static final String DEFAULT_APP_ID = "JacsStorageWorker";
 
-    private static class AgentArgs extends AbstractStorageApp.AppArgs {
+    private static class AgentArgs extends AppArgs {
         @Parameter(names = "-masterURL", description = "URL of the master datatransfer to which to connect", required = false)
-        private String masterHttpUrl;
+        String masterHttpUrl;
     }
 
     public static void main(String[] args) {
@@ -44,7 +42,11 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         AgentState agentState = container.select(AgentState.class).get();
         // update agent info
         agentState.updateAgentInfo(
-                UriBuilder.fromPath(app.getRestApi(agentArgs))
+                UriBuilder.fromPath(new ContextPathBuilder()
+                        .path(agentArgs.baseContextPath)
+                        .path(app.getRestApiContext())
+                        .path(app.getApiVersion())
+                        .build())
                         .scheme("http")
                         .host(agentState.getStorageHost())
                         .port(agentArgs.portNumber)
@@ -73,27 +75,15 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     }
 
     @Override
-    String getRestApi(AppArgs appArgs) {
-        StringBuilder apiPathBuilder = new StringBuilder();
-        if (StringUtils.isNotBlank(appArgs.baseContextPath)) {
-            apiPathBuilder.append(StringUtils.prependIfMissing(appArgs.baseContextPath, "/"));
-        }
-        apiPathBuilder.append("/agent_api/")
-                .append(getApiVersion());
-        return apiPathBuilder.toString();
+    String getRestApiContext() {
+        return "agent_api";
     }
 
     @Override
-    ListenerInfo[] getAppListeners() {
-        return new ListenerInfo[] {
+    String[] getPathsExcludedFromAccessLog() {
+        return new String[]{
+                "/connection/status"
         };
-    }
-
-    @Override
-    Predicate getAccessLogFilter() {
-        return Predicates.not(
-                Predicates.prefix("/connection/status")
-        );
     }
 
 }
