@@ -22,7 +22,7 @@ public class StoragePersistBenchmark {
 
     @Benchmark
     @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void persist(PersistBenchmarkTrialParams trialParams, PersistBenchmarkInvocationParams invocationParams) throws Exception {
         trialParams.storageClient.persistData(trialParams.dataLocation, invocationParams.dataStorageInfo, trialParams.authToken);
     }

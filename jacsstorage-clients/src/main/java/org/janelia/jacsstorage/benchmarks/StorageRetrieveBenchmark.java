@@ -43,14 +43,14 @@ public class StorageRetrieveBenchmark {
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void listStorageAvg(RetrieveBenchmarkTrialParams trialParams, ListContentBenchmarkInvocationParams invocationParams) {
         listStorageImpl(trialParams, invocationParams);
     }
 
     @Benchmark
     @BenchmarkMode({Mode.Throughput})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void listStorageThrpt(RetrieveBenchmarkTrialParams trialParams, ListContentBenchmarkInvocationParams invocationParams) {
         listStorageImpl(trialParams, invocationParams);
     }
@@ -64,14 +64,14 @@ public class StorageRetrieveBenchmark {
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamStorageContentEntryAvg(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
         streamStorageContentEntryImpl(trialParams, invocationParams, blackhole);
     }
 
     @Benchmark
     @BenchmarkMode({Mode.Throughput})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamStorageContentEntryThrpt(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
         streamStorageContentEntryImpl(trialParams, invocationParams, blackhole);
     }
@@ -99,14 +99,14 @@ public class StorageRetrieveBenchmark {
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamStorageContentAvg(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
         streamStorageContentImpl(trialParams, invocationParams, blackhole);
     }
 
     @Benchmark
     @BenchmarkMode({Mode.Throughput})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamStorageContentThrpt(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
         streamStorageContentImpl(trialParams, invocationParams, blackhole);
     }
@@ -144,21 +144,21 @@ public class StorageRetrieveBenchmark {
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamPathContentFromAgentAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         streamPathContentFromAgentImpl(trialParams, blackhole);
     }
 
     @Benchmark
     @BenchmarkMode({Mode.Throughput})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamPathContentFromAgentThrpt(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         streamPathContentFromAgentImpl(trialParams, blackhole);
     }
 
     @Benchmark
     @BenchmarkMode({Mode.SampleTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamPathContentFromAgentSampleTime(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         streamPathContentFromAgentImpl(trialParams, blackhole);
     }
@@ -191,21 +191,21 @@ public class StorageRetrieveBenchmark {
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamPathContentFromMasterAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         streamPathContentFromMasterImpl(trialParams, blackhole);
     }
 
     @Benchmark
     @BenchmarkMode({Mode.Throughput})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamPathContentFromMasterThrpt(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         streamPathContentFromMasterImpl(trialParams, blackhole);
     }
 
     @Benchmark
     @BenchmarkMode({Mode.SampleTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamPathContentFromMasterSampleTime(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         streamPathContentFromMasterImpl(trialParams, blackhole);
     }

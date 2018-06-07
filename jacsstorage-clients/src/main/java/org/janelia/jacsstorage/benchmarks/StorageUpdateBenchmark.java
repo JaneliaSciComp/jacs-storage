@@ -23,7 +23,7 @@ public class StorageUpdateBenchmark {
 
     @Benchmark
     @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void createDir(BenchmarkTrialParams trialParams, UpdateBenchmarkInvocationParams invocationParams) throws Exception {
         trialParams.storageClientHelper.createNewDirectory(
                 trialParams.serverURL,
@@ -35,7 +35,7 @@ public class StorageUpdateBenchmark {
 
     @Benchmark
     @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void createNewFile(BenchmarkTrialParams trialParams, UpdateBenchmarkInvocationParams invocationParams) throws Exception {
         trialParams.storageClientHelper.createNewFile(
                 trialParams.serverURL,
