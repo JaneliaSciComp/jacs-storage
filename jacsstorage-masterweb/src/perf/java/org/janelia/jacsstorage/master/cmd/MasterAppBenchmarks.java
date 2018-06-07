@@ -9,7 +9,6 @@ import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
-import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.Runner;
@@ -17,13 +16,10 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-import org.openjdk.jmh.util.NullOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
-import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.concurrent.Future;
@@ -36,13 +32,13 @@ public class MasterAppBenchmarks {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public void redirectPathContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams) {
-        redirectPathContentFuture(trialParams.getRandomEntry(), trialParams);
+    public Future<ContainerResponse> redirectPathContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams) {
+        return redirectPathContentFuture(trialParams.getRandomEntry(), trialParams);
     }
 
     private Future<ContainerResponse> redirectPathContentFuture(String dataEntry, RetrieveBenchmarkResourceTrialParams trialParams) {
         try {
-            URI requestURI = UriBuilder.fromPath("/agent_storage").path("storage_path").path(dataEntry)
+            URI requestURI = UriBuilder.fromPath("/storage_content").path("storage_path_redirect").path(dataEntry)
                     .build(dataEntry);
             return trialParams.appHandler().apply(trialParams.request(requestURI, "GET"));
         } catch (Exception e) {
