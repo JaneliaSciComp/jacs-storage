@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
+import javax.ws.rs.core.Application;
 
 /**
  * This is the master storage application.
@@ -38,8 +39,8 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
     }
 
     @Override
-    String getJaxConfigName() {
-        return JAXMasterStorageApp.class.getName();
+    Application getJaxApplication() {
+        return new JAXMasterStorageApp();
     }
 
     @Override

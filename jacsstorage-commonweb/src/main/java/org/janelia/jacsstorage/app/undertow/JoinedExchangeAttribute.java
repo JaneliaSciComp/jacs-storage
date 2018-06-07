@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.janelia.jacsstorage.app;
+package org.janelia.jacsstorage.app.undertow;
 
 import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.attribute.ReadOnlyAttributeException;

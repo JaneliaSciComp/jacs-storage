@@ -2,16 +2,12 @@ package org.janelia.jacsstorage.app;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import io.undertow.predicate.Predicate;
-import io.undertow.predicate.Predicates;
-import io.undertow.servlet.api.ListenerInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.agent.AgentState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
+import javax.ws.rs.core.Application;
 import javax.ws.rs.core.UriBuilder;
 
 /**
@@ -22,7 +18,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     private static final String DEFAULT_APP_ID = "JacsStorageWorker";
 
     private static class AgentArgs extends AppArgs {
-        @Parameter(names = "-masterURL", description = "URL of the master datatransfer to which to connect", required = false)
+        @Parameter(names = "-masterURL", description = "URL of the master datatransfer to which to connect")
         String masterHttpUrl;
     }
 
@@ -70,8 +66,8 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     }
 
     @Override
-    String getJaxConfigName() {
-        return JAXAgentStorageApp.class.getName();
+    Application getJaxApplication() {
+        return new JAXAgentStorageApp();
     }
 
     @Override

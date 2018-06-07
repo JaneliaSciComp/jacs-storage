@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.app;
+package org.janelia.jacsstorage.app.undertow;
 
 import io.undertow.server.handlers.accesslog.AccessLogReceiver;
 import org.slf4j.Logger;

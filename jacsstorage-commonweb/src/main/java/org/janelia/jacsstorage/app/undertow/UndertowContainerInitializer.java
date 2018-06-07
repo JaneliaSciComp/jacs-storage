@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.app;
+package org.janelia.jacsstorage.app.undertow;
 
 import io.swagger.jersey.config.JerseyJaxrsConfig;
 import io.undertow.Handlers;
@@ -27,6 +27,9 @@ import io.undertow.servlet.api.ServletInfo;
 import io.undertow.util.HttpString;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.servlet.ServletProperties;
+import org.janelia.jacsstorage.app.AppArgs;
+import org.janelia.jacsstorage.app.ContainerInitializer;
+import org.janelia.jacsstorage.app.ContextPathBuilder;
 import org.jboss.weld.environment.servlet.Listener;
 import org.jboss.weld.module.web.servlet.WeldInitialListener;
 import org.jboss.weld.module.web.servlet.WeldTerminalListener;
@@ -34,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
+import javax.ws.rs.core.Application;
 import java.nio.file.Paths;
 
 import static io.undertow.Handlers.resource;
@@ -44,27 +48,24 @@ public class UndertowContainerInitializer implements ContainerInitializer {
     private static final Logger LOG = LoggerFactory.getLogger(UndertowContainerInitializer.class);
 
     private final String applicationId;
-    private final String jaxConfigName;
     private final String restApiContext;
     private final String restApiVersion;
     private final String[] excludedPathsFromAccessLog;
 
     private Undertow server;
 
-    UndertowContainerInitializer(String applicationId,
-                                 String jaxConfigName,
-                                 String restApiContext,
-                                 String restApiVersion,
-                                 String[] excludedPathsFromAccessLog) {
+    public UndertowContainerInitializer(String applicationId,
+                                        String restApiContext,
+                                        String restApiVersion,
+                                        String[] excludedPathsFromAccessLog) {
         this.applicationId = applicationId;
-        this.jaxConfigName = jaxConfigName;
         this.restApiContext = restApiContext;
         this.restApiVersion = restApiVersion;
         this.excludedPathsFromAccessLog = excludedPathsFromAccessLog;
     }
 
     @Override
-    public void initialize(AppArgs appArgs) throws ServletException {
+    public void initialize(Application application, AppArgs appArgs) throws ServletException {
         String contextPath = new ContextPathBuilder()
                 .path(appArgs.baseContextPath)
                 .path(restApiContext)
@@ -76,14 +77,14 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         .setLoadOnStartup(1)
                         .setAsyncSupported(true)
                         .setEnabled(true)
-                        .addInitParam(ServletProperties.JAXRS_APPLICATION_CLASS, jaxConfigName)
+                        .addInitParam(ServletProperties.JAXRS_APPLICATION_CLASS, application.getClass().getName())
                         .addInitParam("jersey.config.server.wadl.disableWadl", "true")
                         .addMapping("/*")
                 ;
 
         String basepath = "http://" + appArgs.host + ":" + appArgs.portNumber + contextPath;
-        ServletInfo swaggerServlet =
-                servlet("swaggerServlet", JerseyJaxrsConfig.class)
+        ServletInfo swaggerDocsServlet =
+                servlet("swaggerDocsServlet", JerseyJaxrsConfig.class)
                         .setLoadOnStartup(2)
                         .addInitParam("api.version", restApiVersion)
                         .addInitParam("swagger.api.basepath", basepath);
@@ -97,7 +98,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         .addListener(Servlets.listener(WeldInitialListener.class))
                         .addListener(Servlets.listener(Listener.class))
                         .addListener(Servlets.listener(WeldTerminalListener.class))
-                        .addServlets(restApiServlet, swaggerServlet)
+                        .addServlets(restApiServlet, swaggerDocsServlet)
                 ;
 
         LOG.info("Deploy REST API at {}", basepath);
@@ -114,7 +115,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         Handlers.redirect(docsContextPath))
                         .addPrefixPath(docsContextPath, staticHandler)
                         .addPrefixPath(contextPath, restApiHttpHandler),
-                new Slf4jAccessLogReceiver(LoggerFactory.getLogger(jaxConfigName)),
+                new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),
                 "ignored",
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {
                         RemoteHostAttribute.INSTANCE, // <RemoteIP>

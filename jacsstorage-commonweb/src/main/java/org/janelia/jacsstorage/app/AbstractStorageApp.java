@@ -1,7 +1,10 @@
 package org.janelia.jacsstorage.app;
 
+import org.janelia.jacsstorage.app.grizzly.GrizzlyContainerInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.core.Application;
 
 /**
  * This is the bootstrap application for JACS services.
@@ -11,15 +14,14 @@ public abstract class AbstractStorageApp {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractStorageApp.class);
 
     protected void start(AppArgs appArgs) {
-        ContainerInitializer containerInitializer = new UndertowContainerInitializer(
+        ContainerInitializer containerInitializer = new GrizzlyContainerInitializer(
                 getApplicationId(appArgs),
-                getJaxConfigName(),
                 getRestApiContext(),
                 getApiVersion(),
                 getPathsExcludedFromAccessLog()
         );
         try {
-            containerInitializer.initialize(appArgs);
+            containerInitializer.initialize(this.getJaxApplication(), appArgs);
             containerInitializer.start();
         } catch (Exception e) {
             LOG.error("Error starting the application", e);
@@ -32,7 +34,7 @@ public abstract class AbstractStorageApp {
 
     abstract String getApplicationId(AppArgs appArgs);
 
-    abstract String getJaxConfigName();
+    abstract Application getJaxApplication();
 
     abstract String getRestApiContext();
 

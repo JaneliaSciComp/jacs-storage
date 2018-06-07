@@ -16,38 +16,33 @@
  *  limitations under the License.
  */
 
-package org.janelia.jacsstorage.app;
+package org.janelia.jacsstorage.app.undertow;
 
 import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.attribute.ReadOnlyAttributeException;
 import io.undertow.server.HttpServerExchange;
 
 /**
- * Throughput attribute
+ * Name value attribute
  */
-public class ThroughputAttribute implements ExchangeAttribute {
+public class NameValueAttribute implements ExchangeAttribute {
 
-    @Override
-    public String readAttribute(final HttpServerExchange exchange) {
-        long bytesSent = exchange.getResponseBytesSent();
-        long requestStartTime = exchange.getRequestStartTime();
-        if (bytesSent == 0) {
-            return ""; // N/A
-        } else {
-            final long nanos;
-            if (requestStartTime <= 0) {
-                return "n/a"; // N/A
-            } else {
-                nanos = System.nanoTime() - requestStartTime;
-            }
-            double tp = (bytesSent * 8  * 1000.) / nanos;
-            return String.format("%-7.3f", tp);
-        }
+    private final String name;
+    private final ExchangeAttribute valueAttr;
+
+    public NameValueAttribute(String name, ExchangeAttribute valueAttr) {
+        this.name = name;
+        this.valueAttr = valueAttr;
     }
 
     @Override
-    public void writeAttribute(final HttpServerExchange exchange, final String newValue) throws ReadOnlyAttributeException {
-        throw new ReadOnlyAttributeException("Throughput", newValue);
+    public String readAttribute(HttpServerExchange exchange) {
+        return name + "=" + valueAttr.readAttribute(exchange);
+    }
+
+    @Override
+    public void writeAttribute(HttpServerExchange exchange, String newValue) throws ReadOnlyAttributeException {
+        valueAttr.writeAttribute(exchange, newValue);
     }
 
 }

@@ -41,6 +41,7 @@ dependencies {
         JAX_RS_JERSEY_MEDIA_JSON_LIB = "org.glassfish.jersey.media:jersey-media-json-jackson:${JERSEY_VERSION}"
         JAX_RS_JERSEY_CONTAINERS_LIB = "org.glassfish.jersey.containers:jersey-container-servlet-core:${JERSEY_VERSION}"
         JAX_RS_JERSEY_CDI_SERVLET_LIB = "org.glassfish.jersey.ext.cdi:jersey-cdi1x-servlet:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_HTTP_CONTAINERS_LIB = "org.glassfish.jersey.containers:jersey-container-grizzly2-http:${JERSEY_VERSION}"
         JAX_RS_JERSEY_INJECT_LIB = "org.glassfish.jersey.inject:jersey-hk2:${JERSEY_VERSION}"
         JAX_RS_JERSEY_TEST_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-util:${JERSEY_VERSION}"
         JAX_RS_JERSEY_TEST_PROVIDER_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-bundle:${JERSEY_VERSION}"
@@ -52,10 +53,12 @@ dependencies {
         CMDLINE_ARG_LIB = "com.beust:jcommander:1.72"
 
         // servlet engine
-        JAVAX_SERVLET_API_LIB = "javax.servlet:javax.servlet-api:3.1.0"
+        JAVAX_SERVLET_API_LIB = "javax.servlet:javax.servlet-api:4.0.1"
         UNDERTOW_VERSION = "1.4.22.Final"
         UNDERTOW_CORE_LIB = "io.undertow:undertow-core:${UNDERTOW_VERSION}"
         UNDERTOW_SERVLET_LIB = "io.undertow:undertow-servlet:${UNDERTOW_VERSION}"
+        GRIZZLY_VERSION = "2.4.3"
+        GRIZZLY_SERVLET_LIB = "org.glassfish.grizzly:grizzly-http-servlet:${GRIZZLY_VERSION}"
 
         // REST API documentation
         SWAGGER_VERSION = "1.5.16"
