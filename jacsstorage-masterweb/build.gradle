@@ -32,7 +32,7 @@ project(":jacsstorage-masterweb") {
     }
 
     task createMasterBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
-        mainClassName = "org.janelia.jacsstorage.agent.cmd.MasterAppBenchmarks"
+        mainClassName = "org.janelia.jacsstorage.master.cmd.MasterAppBenchmarks"
         classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
         outputDir = startScripts.outputDir
         applicationName = "masterAppBenchmarks"
