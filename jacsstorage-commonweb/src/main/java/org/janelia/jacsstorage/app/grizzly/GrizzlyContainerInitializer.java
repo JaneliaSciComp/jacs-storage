@@ -5,6 +5,7 @@ import org.glassfish.grizzly.http.server.HttpServer;
 
 import org.glassfish.grizzly.http.server.ServerConfiguration;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
+import org.glassfish.grizzly.http.server.accesslog.AccessLogBuilder;
 import org.glassfish.grizzly.servlet.DefaultServlet;
 import org.glassfish.grizzly.servlet.ServletRegistration;
 import org.glassfish.grizzly.servlet.WebappContext;
@@ -81,7 +82,7 @@ public class GrizzlyContainerInitializer implements ContainerInitializer {
         swaggerDocsContext.addServlet("SwaggerDocsContentServlet", new DefaultServlet(new StaticHttpHandler("swagger-webapp")) {});
         swaggerDocsContext.deploy(server);
 
-
+        new AccessLogBuilder("grizzly-accesslog.log").instrument(server.getServerConfiguration());
         LOG.info("Start JACS storage listener on {}:{}", appArgs.host, appArgs.portNumber);
 
     }
