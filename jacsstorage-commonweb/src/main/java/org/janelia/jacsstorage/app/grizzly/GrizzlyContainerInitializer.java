@@ -82,7 +82,7 @@ public class GrizzlyContainerInitializer implements ContainerInitializer {
         swaggerDocsContext.addServlet("SwaggerDocsContentServlet", new DefaultServlet(new StaticHttpHandler("swagger-webapp")) {});
         swaggerDocsContext.deploy(server);
 
-        new AccessLogBuilder("grizzly-accesslog.log").instrument(server.getServerConfiguration());
+        new AccessLogBuilder(applicationId + "-accesslog.log").instrument(server.getServerConfiguration());
         LOG.info("Start JACS storage listener on {}:{}", appArgs.host, appArgs.portNumber);
 
     }
