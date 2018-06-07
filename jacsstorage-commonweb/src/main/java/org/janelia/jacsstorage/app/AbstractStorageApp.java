@@ -1,6 +1,6 @@
 package org.janelia.jacsstorage.app;
 
-import org.janelia.jacsstorage.app.grizzly.GrizzlyContainerInitializer;
+import org.janelia.jacsstorage.app.undertow.UndertowContainerInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +14,7 @@ public abstract class AbstractStorageApp {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractStorageApp.class);
 
     protected void start(AppArgs appArgs) {
-        ContainerInitializer containerInitializer = new GrizzlyContainerInitializer(
+        ContainerInitializer containerInitializer = new UndertowContainerInitializer(
                 getApplicationId(appArgs),
                 getRestApiContext(),
                 getApiVersion(),
