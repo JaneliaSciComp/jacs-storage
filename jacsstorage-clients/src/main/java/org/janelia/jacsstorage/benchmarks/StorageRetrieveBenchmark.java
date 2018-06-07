@@ -23,7 +23,6 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-import org.openjdk.jmh.runner.options.TimeValue;
 import org.openjdk.jmh.util.NullOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -237,9 +236,9 @@ public class StorageRetrieveBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        BenchmarksCmdLineParams benchmarksCmdLineParams = new BenchmarksCmdLineParams();
+        ClientBenchmarksCmdLineParams cmdLineParams = new ClientBenchmarksCmdLineParams();
         JCommander jc = JCommander.newBuilder()
-                .addObject(benchmarksCmdLineParams)
+                .addObject(cmdLineParams)
                 .build();
         try {
             jc.parse(args);
@@ -248,47 +247,47 @@ public class StorageRetrieveBenchmark {
             System.exit(1);
         }
         String authToken = "";
-        if (StringUtils.isNotBlank(benchmarksCmdLineParams.username)) {
-            authToken = new AuthClientImplHelper(benchmarksCmdLineParams.authURL).authenticate(benchmarksCmdLineParams.username, benchmarksCmdLineParams.password);
+        if (StringUtils.isNotBlank(cmdLineParams.username)) {
+            authToken = new AuthClientImplHelper(cmdLineParams.authURL).authenticate(cmdLineParams.username, cmdLineParams.password);
             System.out.println("AuthToken: " + authToken);
         } else {
             System.out.println("No Auth");
         }
-        String dataOwnerKey = benchmarksCmdLineParams.getUserKey();
-        long nStorageRecords = new StorageClientImplHelper().countStorageRecords(benchmarksCmdLineParams.serverURL, benchmarksCmdLineParams.bundleId, authToken);
+        String dataOwnerKey = cmdLineParams.getUserKey();
+        long nStorageRecords = new StorageClientImplHelper().countStorageRecords(cmdLineParams.serverURL, cmdLineParams.bundleId, authToken);
         String benchmarks;
-        if (StringUtils.isNotBlank(benchmarksCmdLineParams.benchmarksRegex)) {
-            benchmarks = StorageRetrieveBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
+        if (StringUtils.isNotBlank(cmdLineParams.benchmarksRegex)) {
+            benchmarks = StorageRetrieveBenchmark.class.getSimpleName() + "\\." + cmdLineParams.benchmarksRegex;
         } else {
             benchmarks = StorageRetrieveBenchmark.class.getSimpleName();
         }
         ChainedOptionsBuilder optBuilder = new OptionsBuilder()
                 .include(benchmarks)
-                .warmupIterations(benchmarksCmdLineParams.warmupIterations)
-                .warmupTime(benchmarksCmdLineParams.getWarmupTime())
-                .measurementIterations(benchmarksCmdLineParams.measurementIterations)
-                .measurementTime(benchmarksCmdLineParams.getMeasurementTime())
-                .measurementBatchSize(benchmarksCmdLineParams.measurementBatchSize)
-                .forks(benchmarksCmdLineParams.nForks)
-                .threads(benchmarksCmdLineParams.nThreads)
+                .warmupIterations(cmdLineParams.warmupIterations)
+                .warmupTime(cmdLineParams.getWarmupTime())
+                .measurementIterations(cmdLineParams.measurementIterations)
+                .measurementTime(cmdLineParams.getMeasurementTime())
+                .measurementBatchSize(cmdLineParams.measurementBatchSize)
+                .forks(cmdLineParams.nForks)
+                .threads(cmdLineParams.nThreads)
                 .shouldFailOnError(true)
                 .detectJvmArgs()
-                .param("serverURL", benchmarksCmdLineParams.serverURL)
-                .param("agentURL", benchmarksCmdLineParams.agentURL)
+                .param("serverURL", cmdLineParams.serverURL)
+                .param("agentURL", cmdLineParams.agentURL)
                 .param("ownerKey", dataOwnerKey)
-                .param("storageHost", StringUtils.defaultIfBlank(benchmarksCmdLineParams.storageHost, ""))
-                .param("storageTags", benchmarksCmdLineParams.getStorageTagsAsString())
-                .param("dataLocation", benchmarksCmdLineParams.localPath)
-                .param("dataBundleId", benchmarksCmdLineParams.bundleId.toString())
-                .param("storageEntry", benchmarksCmdLineParams.entryName)
-                .param("entriesPathsFile", benchmarksCmdLineParams.entriesPathsFile)
+                .param("storageHost", StringUtils.defaultIfBlank(cmdLineParams.storageHost, ""))
+                .param("storageTags", cmdLineParams.getStorageTagsAsString())
+                .param("dataLocation", cmdLineParams.localPath)
+                .param("dataBundleId", cmdLineParams.bundleId.toString())
+                .param("storageEntry", cmdLineParams.entryName)
+                .param("entriesPathsFile", cmdLineParams.entriesPathsFile)
                 .param("authToken", authToken)
                 .param("nStorageRecords", String.valueOf(nStorageRecords));
-        if (benchmarksCmdLineParams.bundleId != null) {
-            optBuilder = optBuilder.param("dataBundleId", benchmarksCmdLineParams.bundleId.toString());
+        if (cmdLineParams.bundleId != null) {
+            optBuilder = optBuilder.param("dataBundleId", cmdLineParams.bundleId.toString());
         }
-        if (StringUtils.isNotBlank(benchmarksCmdLineParams.profilerName)) {
-            optBuilder.addProfiler(benchmarksCmdLineParams.profilerName);
+        if (StringUtils.isNotBlank(cmdLineParams.profilerName)) {
+            optBuilder.addProfiler(cmdLineParams.profilerName);
         }
 
         Options opt = optBuilder.build();

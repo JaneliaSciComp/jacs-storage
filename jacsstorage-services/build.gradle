@@ -16,10 +16,10 @@ project(":jacsstorage-services") {
                        MONGODB_DRIVER_LIB,
                        REFLECTIONS_LIB
 
-        perfImplementation project,
-                           CDI_API_LIB,
-                           CDI_SE_CORE_LIB,
-                           CMDLINE_ARG_LIB
+        perfApi project,
+                CDI_API_LIB,
+                CDI_SE_CORE_LIB,
+                CMDLINE_ARG_LIB
     }
 
     task createStorageRetrieveBenchmark(type: CreateStartScripts, dependsOn: perfJar) {

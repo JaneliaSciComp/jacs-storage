@@ -25,9 +25,31 @@ project(":jacsstorage-masterweb") {
         testImplementation JAX_RS_JERSEY_TEST_LIB,
                            JAX_RS_JERSEY_TEST_PROVIDER_LIB
 
+        perfImplementation project,
+                           project(path: ":jacsstorage-services", configuration: "perf"),
+                           JAX_RS_JERSEY_TEST_LIB,
+                           JAX_RS_JERSEY_TEST_PROVIDER_LIB
+    }
+
+    task createMasterBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
+        mainClassName = "org.janelia.jacsstorage.agent.cmd.MasterAppBenchmarks"
+        classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
+        outputDir = startScripts.outputDir
+        applicationName = "agentRetrieveBenchmarks"
     }
 
     distributions {
+        benchmarks {
+            contents {
+                into("bin") {
+                    from(createMasterBenchmark)
+                }
+                into("lib") {
+                    from(project.perfJar.outputs.files)
+                    from(project.configurations.perfRuntimeClasspath)
+                }
+            }
+        }
         main {
             contents {
                 into('swagger-webapp') {

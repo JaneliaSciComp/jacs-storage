@@ -14,8 +14,11 @@ subprojects {
         integrationTestCompileOnly.extendsFrom(testCompileOnly)
         integrationTestImplementation.extendsFrom(testImplementation)
         integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
-        perfImplementation.extendsFrom(implementation)
-        perfRuntimeOnly.extendsFrom(runtimeOnly)
+        perf
+        perfApi.extendsFrom(api)
+        perfCompileOnly.extendsFrom(compileOnly)
+        perfImplementation.extendsFrom(perfApi, implementation)
+        perfRuntimeOnly.extendsFrom(runtimeOnly, perfImplementation)
     }
 
     sourceSets {
@@ -50,7 +53,7 @@ subprojects {
         compileJava {
             doFirst {
                 options.compilerArgs = [
-                    '-Xlint:deprecation'
+                        '-Xlint:deprecation'
                 ]
             }
         }
@@ -58,7 +61,7 @@ subprojects {
         compileTestJava {
             doFirst {
                 options.compilerArgs = [
-                    '-Xlint:deprecation'
+                        '-Xlint:deprecation'
                 ]
             }
         }
@@ -87,7 +90,7 @@ subprojects {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
-    task perfJar(type: Jar, dependsOn: perfClasses) {
+    task perfJar(type: Jar, dependsOn: configurations.perf) {
         from sourceSets.perf.output
         classifier = "perf"
     }
@@ -95,6 +98,10 @@ subprojects {
     task integrationTest(type: Test) {
         testClassesDirs += sourceSets.integrationTest.output.classesDirs
         classpath = sourceSets.integrationTest.runtimeClasspath
+    }
+
+    artifacts {
+        perf perfJar
     }
 
     check.dependsOn integrationTest

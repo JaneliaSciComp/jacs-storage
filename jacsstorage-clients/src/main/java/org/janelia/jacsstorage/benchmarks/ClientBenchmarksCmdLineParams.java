@@ -8,7 +8,7 @@ import org.openjdk.jmh.runner.options.TimeValue;
 import java.util.ArrayList;
 import java.util.List;
 
-class BenchmarksCmdLineParams {
+class ClientBenchmarksCmdLineParams {
 
     @Parameter(names = "-profilerName", description = "Benchmark profiler name. " +
             "Valid profilers: {cl, comp, gc, hs_cl, hs_comp, hs_gc, hs_rt, hs_thr, stack}")

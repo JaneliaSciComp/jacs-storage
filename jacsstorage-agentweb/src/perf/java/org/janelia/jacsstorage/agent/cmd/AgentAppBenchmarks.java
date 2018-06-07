@@ -5,6 +5,7 @@ import com.beust.jcommander.ParameterException;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.ContainerResponse;
+import org.janelia.jacsstorage.service.cmd.BenchmarksCmdLineParams;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -30,9 +31,9 @@ import java.util.Collection;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class AgentRetrieveBenchmark {
+public class AgentAppBenchmarks {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AgentRetrieveBenchmark.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AgentAppBenchmarks.class);
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
@@ -98,9 +99,9 @@ public class AgentRetrieveBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        BenchmarksCmdLineParams benchmarksCmdLineParams = new BenchmarksCmdLineParams();
+        BenchmarksCmdLineParams cmdLineParams = new BenchmarksCmdLineParams();
         JCommander jc = JCommander.newBuilder()
-                .addObject(benchmarksCmdLineParams)
+                .addObject(cmdLineParams)
                 .build();
         try {
             jc.parse(args);
@@ -109,27 +110,27 @@ public class AgentRetrieveBenchmark {
             System.exit(1);
         }
         String benchmarks;
-        if (StringUtils.isNotBlank(benchmarksCmdLineParams.benchmarksRegex)) {
-            benchmarks = AgentRetrieveBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
+        if (StringUtils.isNotBlank(cmdLineParams.benchmarksRegex)) {
+            benchmarks = AgentAppBenchmarks.class.getSimpleName() + "\\." + cmdLineParams.benchmarksRegex;
         } else {
-            benchmarks = AgentRetrieveBenchmark.class.getSimpleName();
+            benchmarks = AgentAppBenchmarks.class.getSimpleName();
         }
 
         ChainedOptionsBuilder optBuilder = new OptionsBuilder()
                 .include(benchmarks)
-                .warmupIterations(benchmarksCmdLineParams.warmupIterations)
-                .warmupTime(benchmarksCmdLineParams.getWarmupTime())
-                .measurementIterations(benchmarksCmdLineParams.measurementIterations)
-                .measurementTime(benchmarksCmdLineParams.getMeasurementTime())
-                .measurementBatchSize(benchmarksCmdLineParams.measurementBatchSize)
-                .forks(benchmarksCmdLineParams.nForks)
-                .threads(benchmarksCmdLineParams.nThreads)
+                .warmupIterations(cmdLineParams.warmupIterations)
+                .warmupTime(cmdLineParams.getWarmupTime())
+                .measurementIterations(cmdLineParams.measurementIterations)
+                .measurementTime(cmdLineParams.getMeasurementTime())
+                .measurementBatchSize(cmdLineParams.measurementBatchSize)
+                .forks(cmdLineParams.nForks)
+                .threads(cmdLineParams.nThreads)
                 .shouldFailOnError(true)
                 .detectJvmArgs()
-                .param("entriesPathsFile", benchmarksCmdLineParams.entriesPathsFile)
+                .param("entriesPathsFile", cmdLineParams.entriesPathsFile)
                 ;
-        if (StringUtils.isNotBlank(benchmarksCmdLineParams.profilerName)) {
-            optBuilder.addProfiler(benchmarksCmdLineParams.profilerName);
+        if (StringUtils.isNotBlank(cmdLineParams.profilerName)) {
+            optBuilder.addProfiler(cmdLineParams.profilerName);
         }
 
         Options opt = optBuilder.build();

@@ -28,14 +28,13 @@ project(":jacsstorage-agentweb") {
                            JAX_RS_JERSEY_TEST_PROVIDER_LIB
 
         perfImplementation project,
-                           CMDLINE_ARG_LIB,
+                           project(path: ":jacsstorage-services", configuration: "perf"),
                            JAX_RS_JERSEY_TEST_LIB,
                            JAX_RS_JERSEY_TEST_PROVIDER_LIB
-
     }
 
-    task createAgentRetrieveBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
-        mainClassName = "org.janelia.jacsstorage.agent.cmd.AgentRetrieveBenchmark"
+    task createAgentBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
+        mainClassName = "org.janelia.jacsstorage.agent.cmd.AgentAppBenchmarks"
         classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
         outputDir = startScripts.outputDir
         applicationName = "agentRetrieveBenchmarks"
@@ -45,7 +44,7 @@ project(":jacsstorage-agentweb") {
         benchmarks {
             contents {
                 into("bin") {
-                    from(createAgentRetrieveBenchmark)
+                    from(createAgentBenchmark)
                 }
                 into("lib") {
                     from(project.perfJar.outputs.files)

@@ -28,9 +28,9 @@ public class StoragePersistBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        BenchmarksCmdLineParams benchmarksCmdLineParams = new BenchmarksCmdLineParams();
+        ClientBenchmarksCmdLineParams cmdLineParams = new ClientBenchmarksCmdLineParams();
         JCommander jc = JCommander.newBuilder()
-                .addObject(benchmarksCmdLineParams)
+                .addObject(cmdLineParams)
                 .build();
         try {
             jc.parse(args);
@@ -38,29 +38,29 @@ public class StoragePersistBenchmark {
             jc.usage();
             System.exit(1);
         }
-        String authToken = new AuthClientImplHelper(benchmarksCmdLineParams.authURL).authenticate(benchmarksCmdLineParams.username, benchmarksCmdLineParams.password);
-        String dataOwnerKey = benchmarksCmdLineParams.getUserKey();
+        String authToken = new AuthClientImplHelper(cmdLineParams.authURL).authenticate(cmdLineParams.username, cmdLineParams.password);
+        String dataOwnerKey = cmdLineParams.getUserKey();
         String benchmarks;
-        if (StringUtils.isNotBlank(benchmarksCmdLineParams.benchmarksRegex)) {
-            benchmarks =  StoragePersistBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
+        if (StringUtils.isNotBlank(cmdLineParams.benchmarksRegex)) {
+            benchmarks =  StoragePersistBenchmark.class.getSimpleName() + "\\." + cmdLineParams.benchmarksRegex;
         } else {
             benchmarks =  StoragePersistBenchmark.class.getSimpleName();
         }
         Options opt = new OptionsBuilder()
                 .include(benchmarks)
-                .warmupIterations(benchmarksCmdLineParams.warmupIterations)
-                .measurementIterations(benchmarksCmdLineParams.measurementIterations)
-                .forks(benchmarksCmdLineParams.nForks)
-                .threads(benchmarksCmdLineParams.nThreads)
+                .warmupIterations(cmdLineParams.warmupIterations)
+                .measurementIterations(cmdLineParams.measurementIterations)
+                .forks(cmdLineParams.nForks)
+                .threads(cmdLineParams.nThreads)
                 .shouldFailOnError(true)
                 .detectJvmArgs()
-                .param("serverURL", benchmarksCmdLineParams.serverURL)
+                .param("serverURL", cmdLineParams.serverURL)
                 .param("ownerKey", dataOwnerKey)
-                .param("dataLocation", benchmarksCmdLineParams.localPath)
-                .param("dataFormat", benchmarksCmdLineParams.dataFormat.name())
-                .param("storageHost", benchmarksCmdLineParams.storageHost)
-                .param("storageTags", benchmarksCmdLineParams.getStorageTagsAsString())
-                .param("storageContext", benchmarksCmdLineParams.storageContext)
+                .param("dataLocation", cmdLineParams.localPath)
+                .param("dataFormat", cmdLineParams.dataFormat.name())
+                .param("storageHost", cmdLineParams.storageHost)
+                .param("storageTags", cmdLineParams.getStorageTagsAsString())
+                .param("storageContext", cmdLineParams.storageContext)
                 .param("authToken", authToken)
                 .build();
 
