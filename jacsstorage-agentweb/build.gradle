@@ -37,7 +37,7 @@ project(":jacsstorage-agentweb") {
         mainClassName = "org.janelia.jacsstorage.agent.cmd.AgentAppBenchmarks"
         classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
         outputDir = startScripts.outputDir
-        applicationName = "agentRetrieveBenchmarks"
+        applicationName = "agentAppBenchmarks"
     }
 
     distributions {
