@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 
 public class StorageClientImplHelper {
     private static final Logger LOG = LoggerFactory.getLogger(StorageClientImplHelper.class);
@@ -515,7 +516,15 @@ public class StorageClientImplHelper {
         ClientConfig clientConfig = new ClientConfig()
                 .property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager)
                 .property(ApacheClientProperties.REQUEST_CONFIG, requestConfig)
-                .executorService(Executors.newFixedThreadPool(100))
+                .executorService(Executors.newFixedThreadPool(100, new ThreadFactory() {
+
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread t = new Thread(r);
+                        t.setDaemon(true);
+                        return t;
+                    }
+                }))
                 ;
 
         return ClientBuilder.newBuilder()
