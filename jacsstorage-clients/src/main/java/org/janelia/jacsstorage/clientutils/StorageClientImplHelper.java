@@ -438,6 +438,11 @@ public class StorageClientImplHelper {
                     @Override
                     public void completed(InputStream inputStream) {
                         // Completed
+                        try {
+                            inputStream.close();
+                        } catch (Exception closeExc) {
+                            LOG.error("Error closing stream for {} from {}", dataPath, connectionURL, closeExc);
+                        }
                     }
 
                     @Override
