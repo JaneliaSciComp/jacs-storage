@@ -254,6 +254,7 @@ public class StorageRetrieveBenchmark {
                         try {
                             long nBytes = ByteStreams.copy(inputStream, targetStream);
                             blackhole.consume(nBytes);
+                            inputStream.close();
                         } catch (Exception closeExc) {
                             LOG.error("Error closing stream for {}", dataPath, closeExc);
                         }

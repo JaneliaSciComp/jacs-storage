@@ -516,7 +516,7 @@ public class StorageClientImplHelper {
         ClientConfig clientConfig = new ClientConfig()
                 .property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager)
                 .property(ApacheClientProperties.REQUEST_CONFIG, requestConfig)
-                .executorService(Executors.newFixedThreadPool(100, new ThreadFactory() {
+                .executorService(Executors.newFixedThreadPool(200, new ThreadFactory() {
 
                     @Override
                     public Thread newThread(Runnable r) {
