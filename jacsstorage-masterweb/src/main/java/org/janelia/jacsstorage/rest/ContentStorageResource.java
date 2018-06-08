@@ -172,6 +172,7 @@ public class ContentStorageResource {
      * @param securityContext
      * @return
      */
+    @Produces({MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON})
     @HEAD
     @Path("storage_path_redirect/{filePath:.+}")
     @ApiOperation(value = "Get file content",
