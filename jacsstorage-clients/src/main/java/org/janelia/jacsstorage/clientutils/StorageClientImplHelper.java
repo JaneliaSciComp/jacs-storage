@@ -31,6 +31,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.InvocationCallback;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
@@ -44,6 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Future;
 
 public class StorageClientImplHelper {
     private static final Logger LOG = LoggerFactory.getLogger(StorageClientImplHelper.class);
@@ -419,6 +421,30 @@ public class StorageClientImplHelper {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    public Future<InputStream> asyncStreamPathContentFromMaster(String connectionURL, String dataPath, String authToken) {
+        httpClient = getHttpClient();
+        WebTarget target = httpClient.target(connectionURL)
+                .path("/storage_content/storage_path_redirect")
+                .path(dataPath)
+                .property(ClientProperties.FOLLOW_REDIRECTS, true);
+        LOG.debug("Stream data entry from {} as {}", target, authToken);
+        return createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE),
+                authToken,
+                null)
+                .async()
+                .get(new InvocationCallback<InputStream>() {
+                    @Override
+                    public void completed(InputStream inputStream) {
+                        // Completed
+                    }
+
+                    @Override
+                    public void failed(Throwable failureExc) {
+                        LOG.error("Error retrieving {} from {}", dataPath, connectionURL, failureExc);
+                    }
+                });
     }
 
     public Optional<InputStream> streamPathContentFromAgent(String connectionURL, String dataPath, String authToken) {

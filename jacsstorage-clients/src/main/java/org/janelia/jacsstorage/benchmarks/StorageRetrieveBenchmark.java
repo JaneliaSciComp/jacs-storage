@@ -28,12 +28,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class StorageRetrieveBenchmark {
@@ -233,6 +235,13 @@ public class StorageRetrieveBenchmark {
                 })
                 .orElse(0L);
         blackhole.consume(nbytes);
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    public Future<InputStream> streamAsyncPathContentFromMasterAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        return trialParams.storageClientHelper.asyncStreamPathContentFromMaster(trialParams.serverURL, trialParams.getRandomEntry(), trialParams.authToken);
     }
 
     public static void main(String[] args) throws RunnerException {
