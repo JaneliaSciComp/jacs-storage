@@ -9,6 +9,7 @@ import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.results.Result;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.Runner;
@@ -32,17 +33,25 @@ public class MasterAppBenchmarks {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public Future<ContainerResponse> redirectPathContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams) {
-        return redirectPathContentFuture(trialParams.getRandomEntry(), trialParams);
+    public void redirectPathContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        try {
+            Future<ContainerResponse> responseFuture = redirectPathContentFuture(trialParams.getRandomEntry(), trialParams);
+            ContainerResponse response = responseFuture.get();
+            blackhole.consume(response.getStatus());
+            blackhole.consume(response.getHeaderString("Location"));
+        } catch (Exception e) {
+            LOG.error("Error redirecting the request", e);
+            throw new IllegalStateException(e);
+        }
     }
 
     private Future<ContainerResponse> redirectPathContentFuture(String dataEntry, RetrieveBenchmarkResourceTrialParams trialParams) {
+        URI requestURI = UriBuilder.fromPath("/storage_content").path("storage_path_redirect").path(dataEntry)
+                .build(dataEntry);
         try {
-            URI requestURI = UriBuilder.fromPath("/storage_content").path("storage_path_redirect").path(dataEntry)
-                    .build(dataEntry);
             return trialParams.appHandler().apply(trialParams.request(requestURI, "GET"));
         } catch (Exception e) {
-            LOG.error("Error reading {}", dataEntry, e);
+            LOG.error("Error while redirecting {} for {}", requestURI, dataEntry, e);
 	        throw new IllegalStateException(e);
         }
     }
