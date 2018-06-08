@@ -98,8 +98,29 @@ public class AgentAppBenchmarks {
         }
     }
 
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    public void streamPathContentFromVolumePathAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        String dataEntry = trialParams.getRandomEntry();
+        try {
+            InputStream response = trialParams.target()
+                    .path("/agent_storage")
+                    .path("storage_volume")
+                    .path(trialParams.storageVolumeId)
+                    .path(dataEntry)
+                    .request().get(InputStream.class);
+            OutputStream targetStream = new NullOutputStream();
+            long n = ByteStreams.copy(response, targetStream);
+            blackhole.consume(n);
+        } catch (Exception e) {
+            LOG.error("Error reading {}", dataEntry, e);
+        }
+
+    }
+
     public static void main(String[] args) throws RunnerException {
-        BenchmarksCmdLineParams cmdLineParams = new BenchmarksCmdLineParams();
+        AgentBenchmarksCmdLineParams cmdLineParams = new AgentBenchmarksCmdLineParams();
         JCommander jc = JCommander.newBuilder()
                 .addObject(cmdLineParams)
                 .build();
@@ -128,6 +149,7 @@ public class AgentAppBenchmarks {
                 .shouldFailOnError(true)
                 .detectJvmArgs()
                 .param("entriesPathsFile", cmdLineParams.entriesPathsFile)
+                .param("storageVolumeId", cmdLineParams.storageVolumeId)
                 ;
         if (StringUtils.isNotBlank(cmdLineParams.profilerName)) {
             optBuilder.addProfiler(cmdLineParams.profilerName);

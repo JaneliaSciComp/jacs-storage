@@ -32,6 +32,8 @@ import java.util.List;
 public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
     @Param({""})
     String entriesPathsFile;
+    @Param({""})
+    String storageVolumeId;
     private List<String> entryPathList;
     private Application application;
     private ApplicationHandler handler;
