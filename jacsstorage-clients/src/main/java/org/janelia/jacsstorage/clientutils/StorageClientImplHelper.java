@@ -486,6 +486,7 @@ public class StorageClientImplHelper {
         connectionManager.setDefaultSocketConfig(SocketConfig.custom()
                 .setSoReuseAddress(true)
                 .setSoKeepAlive(true)
+                .setRcvBufSize(16384)
                 .build());
 
         // values are in milliseconds
