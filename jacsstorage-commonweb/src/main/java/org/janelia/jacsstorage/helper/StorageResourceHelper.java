@@ -1,5 +1,7 @@
 package org.janelia.jacsstorage.helper;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
@@ -23,11 +25,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 @Timed
 public class StorageResourceHelper {
     private static final Logger LOG = LoggerFactory.getLogger(StorageResourceHelper.class);
+
+    private static final int N_VOL_DIR_COMPONENTS = 4;
+    private static final Cache<String, JacsStorageVolume> VOLUMES_BY_PATH_CACHE = CacheBuilder.newBuilder()
+            .maximumSize(100)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
     private final StorageContentReader storageContentReader;
     private final StorageLookupService storageLookupService;
@@ -81,6 +91,33 @@ public class StorageResourceHelper {
     }
 
     private JacsStorageVolume getStorageVolumeForDir(String dirName) {
+        try {
+            Path dir = Paths.get(dirName);
+            int dirComponents = dir.getNameCount();
+            String dirKey;
+            if (dirComponents < N_VOL_DIR_COMPONENTS) {
+                dirKey = dirName;
+            } else {
+                if (dir.getRoot() == null) {
+                    dirKey = dir.subpath(0, N_VOL_DIR_COMPONENTS).toString();
+                } else {
+                    dirKey = dir.getRoot().resolve(dir.subpath(0, N_VOL_DIR_COMPONENTS)).toString();
+                }
+            }
+            String cachedDirKey = dirKey;
+            return VOLUMES_BY_PATH_CACHE.get(cachedDirKey, new Callable<JacsStorageVolume>() {
+                @Override
+                public JacsStorageVolume call() {
+                    return retrieveStorageVolumeForDir(cachedDirKey);
+                }
+            });
+        } catch (Exception e) {
+            LOG.error("Error retrieving volumen for {}", dirName, e);
+            return null;
+        }
+    }
+
+    private JacsStorageVolume retrieveStorageVolumeForDir(String dirName) {
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(dirName));
         if (storageVolumes.isEmpty()) {
             LOG.warn("No volume found to match {}", dirName);
