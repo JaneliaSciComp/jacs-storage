@@ -12,7 +12,6 @@ import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
-import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -45,6 +44,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class StorageClientImplHelper {
@@ -515,6 +515,7 @@ public class StorageClientImplHelper {
         ClientConfig clientConfig = new ClientConfig()
                 .property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager)
                 .property(ApacheClientProperties.REQUEST_CONFIG, requestConfig)
+                .executorService(Executors.newFixedThreadPool(100))
                 ;
 
         return ClientBuilder.newBuilder()

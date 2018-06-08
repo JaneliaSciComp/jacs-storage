@@ -6,11 +6,11 @@ import com.google.common.io.ByteStreams;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.clientutils.AuthClientImplHelper;
+import org.janelia.jacsstorage.clientutils.StorageClientImplHelper;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageResult;
-import org.janelia.jacsstorage.clientutils.AuthClientImplHelper;
-import org.janelia.jacsstorage.clientutils.StorageClientImplHelper;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -244,7 +244,7 @@ public class StorageRetrieveBenchmark {
     public void streamAsyncPathContentFromMasterAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         OutputStream targetStream = new NullOutputStream();
         String dataPath = trialParams.getRandomEntry();
-        trialParams.storageClientHelper.asyncStreamPathContentFromMaster(trialParams.serverURL,
+        Future<InputStream> streamFuture = trialParams.storageClientHelper.asyncStreamPathContentFromMaster(trialParams.serverURL,
                 dataPath,
                 trialParams.authToken,
                 new InvocationCallback<InputStream>() {
@@ -264,6 +264,7 @@ public class StorageRetrieveBenchmark {
                         LOG.error("Error retrieving {}", dataPath, failureExc);
                     }
                 });
+        blackhole.consume(streamFuture);
     }
 
     public static void main(String[] args) throws RunnerException {
