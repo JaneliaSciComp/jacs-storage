@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -31,11 +32,12 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
     private final NotificationService capacityNotifier;
 
     @Inject
-    public AbstractStorageVolumeManager(JacsStorageVolumeDao storageVolumeDao, NotificationService capacityNotifier) {
+    public AbstractStorageVolumeManager(@Cacheable JacsStorageVolumeDao storageVolumeDao, NotificationService capacityNotifier) {
         this.storageVolumeDao = storageVolumeDao;
         this.capacityNotifier = capacityNotifier;
     }
 
+    @TimedMethod
     @Override
     public JacsStorageVolume getVolumeById(Number volumeId) {
         return storageVolumeDao.findById(volumeId);

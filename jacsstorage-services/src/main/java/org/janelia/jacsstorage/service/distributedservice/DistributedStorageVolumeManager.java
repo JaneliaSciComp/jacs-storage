@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
+import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
@@ -19,7 +20,7 @@ public class DistributedStorageVolumeManager extends AbstractStorageVolumeManage
     private final DistributedStorageHelper storageHelper;
 
     @Inject
-    public DistributedStorageVolumeManager(JacsStorageVolumeDao storageVolumeDao,
+    public DistributedStorageVolumeManager(@Cacheable JacsStorageVolumeDao storageVolumeDao,
                                            StorageAgentManager agentManager,
                                            NotificationService capacityNotifier) {
         super(storageVolumeDao, capacityNotifier);

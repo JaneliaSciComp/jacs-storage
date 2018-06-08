@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
+import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.config.ApplicationConfig;
@@ -36,7 +37,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     private final ApplicationConfigValueResolver configValueResolver = new ApplicationConfigValueResolver();
 
     @Inject
-    public LocalStorageVolumeManager(JacsStorageVolumeDao storageVolumeDao,
+    public LocalStorageVolumeManager(@Cacheable JacsStorageVolumeDao storageVolumeDao,
                                      NotificationService capacityNotifier,
                                      @ApplicationProperties ApplicationConfig applicationConfig,
                                      @PropertyValue(name = "StorageAgent.StorageHost") String storageHost,
