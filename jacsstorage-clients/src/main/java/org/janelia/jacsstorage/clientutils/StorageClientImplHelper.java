@@ -423,7 +423,7 @@ public class StorageClientImplHelper {
         }
     }
 
-    public Future<InputStream> asyncStreamPathContentFromMaster(String connectionURL, String dataPath, String authToken) {
+    public Future<InputStream> asyncStreamPathContentFromMaster(String connectionURL, String dataPath, String authToken, InvocationCallback<InputStream> callback) {
         httpClient = getHttpClient();
         WebTarget target = httpClient.target(connectionURL)
                 .path("/storage_content/storage_path_redirect")
@@ -434,22 +434,7 @@ public class StorageClientImplHelper {
                 authToken,
                 null)
                 .async()
-                .get(new InvocationCallback<InputStream>() {
-                    @Override
-                    public void completed(InputStream inputStream) {
-                        // Completed
-                        try {
-                            inputStream.close();
-                        } catch (Exception closeExc) {
-                            LOG.error("Error closing stream for {} from {}", dataPath, connectionURL, closeExc);
-                        }
-                    }
-
-                    @Override
-                    public void failed(Throwable failureExc) {
-                        LOG.error("Error retrieving {} from {}", dataPath, connectionURL, failureExc);
-                    }
-                });
+                .get(callback);
     }
 
     public Optional<InputStream> streamPathContentFromAgent(String connectionURL, String dataPath, String authToken) {

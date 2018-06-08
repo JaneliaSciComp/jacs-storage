@@ -27,6 +27,7 @@ import org.openjdk.jmh.util.NullOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.client.InvocationCallback;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -241,8 +242,28 @@ public class StorageRetrieveBenchmark {
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamAsyncPathContentFromMasterAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        Future<InputStream> streamFuture = trialParams.storageClientHelper.asyncStreamPathContentFromMaster(trialParams.serverURL, trialParams.getRandomEntry(), trialParams.authToken);
-        blackhole.consume(streamFuture);
+        OutputStream targetStream = new NullOutputStream();
+        String dataPath = trialParams.getRandomEntry();
+        trialParams.storageClientHelper.asyncStreamPathContentFromMaster(trialParams.serverURL,
+                dataPath,
+                trialParams.authToken,
+                new InvocationCallback<InputStream>() {
+                    @Override
+                    public void completed(InputStream inputStream) {
+                        // Completed
+                        try {
+                            long nBytes = ByteStreams.copy(inputStream, targetStream);
+                            blackhole.consume(nBytes);
+                        } catch (Exception closeExc) {
+                            LOG.error("Error closing stream for {}", dataPath, closeExc);
+                        }
+                    }
+
+                    @Override
+                    public void failed(Throwable failureExc) {
+                        LOG.error("Error retrieving {}", dataPath, failureExc);
+                    }
+                });
     }
 
     public static void main(String[] args) throws RunnerException {
