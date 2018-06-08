@@ -20,7 +20,7 @@ public class DistributedStorageVolumeManager extends AbstractStorageVolumeManage
     private final DistributedStorageHelper storageHelper;
 
     @Inject
-    public DistributedStorageVolumeManager(@Cacheable JacsStorageVolumeDao storageVolumeDao,
+    public DistributedStorageVolumeManager(JacsStorageVolumeDao storageVolumeDao,
                                            StorageAgentManager agentManager,
                                            NotificationService capacityNotifier) {
         super(storageVolumeDao, capacityNotifier);

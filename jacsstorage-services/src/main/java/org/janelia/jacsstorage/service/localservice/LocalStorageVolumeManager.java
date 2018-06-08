@@ -37,7 +37,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     private final ApplicationConfigValueResolver configValueResolver = new ApplicationConfigValueResolver();
 
     @Inject
-    public LocalStorageVolumeManager(@Cacheable JacsStorageVolumeDao storageVolumeDao,
+    public LocalStorageVolumeManager(JacsStorageVolumeDao storageVolumeDao,
                                      NotificationService capacityNotifier,
                                      @ApplicationProperties ApplicationConfig applicationConfig,
                                      @PropertyValue(name = "StorageAgent.StorageHost") String storageHost,

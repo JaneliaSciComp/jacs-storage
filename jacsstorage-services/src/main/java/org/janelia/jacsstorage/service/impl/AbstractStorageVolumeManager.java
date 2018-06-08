@@ -31,8 +31,7 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
     protected final JacsStorageVolumeDao storageVolumeDao;
     private final NotificationService capacityNotifier;
 
-    @Inject
-    public AbstractStorageVolumeManager(@Cacheable JacsStorageVolumeDao storageVolumeDao, NotificationService capacityNotifier) {
+    protected AbstractStorageVolumeManager(JacsStorageVolumeDao storageVolumeDao, NotificationService capacityNotifier) {
         this.storageVolumeDao = storageVolumeDao;
         this.capacityNotifier = capacityNotifier;
     }
@@ -44,6 +43,7 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
     }
 
     @TimedMethod
+    @Override
     public JacsStorageVolume updateVolumeInfo(JacsStorageVolume storageVolume) {
         JacsStorageVolume currentVolumeInfo;
 

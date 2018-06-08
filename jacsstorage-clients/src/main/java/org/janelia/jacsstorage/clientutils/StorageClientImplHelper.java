@@ -498,7 +498,7 @@ public class StorageClientImplHelper {
                 .register("https", new SSLConnectionSocketFactory(sslContext, (s, sslSession) -> true))
                 .build();
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
-        connectionManager.setMaxTotal(1000);
+        connectionManager.setMaxTotal(200);
         connectionManager.setDefaultMaxPerRoute(500);
         connectionManager.setDefaultSocketConfig(SocketConfig.custom()
                 .setSoReuseAddress(true)
