@@ -47,7 +47,7 @@ public class PathBasedAgentStorageResource {
     private UriInfo resourceURI;
 
     @HEAD
-    @Path("storage_path/{filePath:.*}")
+    @Path("storage_path/{dataPath:.*}")
     @ApiOperation(value = "Check if the specified file path identifies a valid data bundle entry content.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The content was found"),
@@ -55,7 +55,7 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response checkPath(@PathParam("filePath") String fullDataPathNameParam) {
+    public Response checkPath(@PathParam("dataPath") String fullDataPathNameParam) {
         LOG.info("Check path {}", fullDataPathNameParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
@@ -84,6 +84,29 @@ public class PathBasedAgentStorageResource {
                 (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath),
                 (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, dataEntryPath)
         ).build();
+    }
+
+    @HEAD
+    @Path("storage_volume/{storageVolumeId}/{storageRelativePath:.+}")
+    @ApiOperation(value = "Check if the specified file path identifies a valid data bundle entry content.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The content was found"),
+            @ApiResponse(code = 404, message = "Invalid file path"),
+            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
+    public Response checkPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
+                                               @PathParam("storageRelativePath") String storageRelativeFilePath) {
+        LOG.info("Check data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
+        JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
+        if (storageVolume == null) {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
+                    .build();
+        }
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
+        return storageResourceHelper.checkContentFromFile(storageVolume, storageRelativeFilePath).build();
     }
 
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})

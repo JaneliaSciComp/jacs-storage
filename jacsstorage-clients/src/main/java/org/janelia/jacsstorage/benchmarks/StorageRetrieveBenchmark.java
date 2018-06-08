@@ -241,6 +241,14 @@ public class StorageRetrieveBenchmark {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
+    public void checkPathContentFromMasterAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        boolean bresult = trialParams.storageClientHelper.checkPathContentFromMaster(trialParams.serverURL, trialParams.getRandomEntry(), trialParams.authToken);
+        blackhole.consume(bresult);
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamAsyncPathContentFromMasterAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         OutputStream targetStream = new NullOutputStream();
         String dataPath = trialParams.getRandomEntry();

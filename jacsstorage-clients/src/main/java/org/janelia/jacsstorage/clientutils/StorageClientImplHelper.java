@@ -424,6 +424,30 @@ public class StorageClientImplHelper {
         }
     }
 
+    public boolean checkPathContentFromMaster(String connectionURL, String dataPath, String authToken) {
+        try {
+            httpClient = getHttpClient();
+            WebTarget target = httpClient.target(connectionURL)
+                    .path("/storage_content/storage_path_redirect")
+                    .path(dataPath)
+                    .property(ClientProperties.FOLLOW_REDIRECTS, true);
+            LOG.debug("Stream data entry from {} as {}", target, authToken);
+            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE),
+                    authToken,
+                    null)
+                    .head();
+            int responseStatus = response.getStatus();
+            if (responseStatus == Response.Status.OK.getStatusCode()) {
+                return true;
+            } else {
+                LOG.warn("Stream data returned with status {} for {}", responseStatus, target);
+                return false;
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     public Future<InputStream> asyncStreamPathContentFromMaster(String connectionURL, String dataPath, String authToken, InvocationCallback<InputStream> callback) {
         httpClient = getHttpClient();
         WebTarget target = httpClient.target(connectionURL)
