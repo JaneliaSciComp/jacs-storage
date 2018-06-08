@@ -46,6 +46,7 @@ public class PathBasedAgentStorageResource {
     @Context
     private UriInfo resourceURI;
 
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
     @HEAD
     @Path("storage_path/{dataPath:.*}")
     @ApiOperation(value = "Check if the specified file path identifies a valid data bundle entry content.")
@@ -86,7 +87,7 @@ public class PathBasedAgentStorageResource {
         ).build();
     }
 
-    @Produces({MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON})
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
     @HEAD
     @Path("storage_volume/{storageVolumeId}/{storageRelativePath:.+}")
     @ApiOperation(value = "Check if the specified file path identifies a valid data bundle entry content.")

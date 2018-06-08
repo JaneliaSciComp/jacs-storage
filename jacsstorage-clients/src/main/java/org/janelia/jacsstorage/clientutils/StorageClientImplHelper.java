@@ -432,7 +432,7 @@ public class StorageClientImplHelper {
                     .path(dataPath)
                     .property(ClientProperties.FOLLOW_REDIRECTS, true);
             LOG.debug("Stream data entry from {} as {}", target, authToken);
-            Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE),
+            Response response = createRequestWithCredentials(target.request(MediaType.TEXT_PLAIN),
                     authToken,
                     null)
                     .head();
