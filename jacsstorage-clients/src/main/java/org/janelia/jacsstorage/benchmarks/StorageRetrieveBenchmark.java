@@ -240,8 +240,9 @@ public class StorageRetrieveBenchmark {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public Future<InputStream> streamAsyncPathContentFromMasterAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        return trialParams.storageClientHelper.asyncStreamPathContentFromMaster(trialParams.serverURL, trialParams.getRandomEntry(), trialParams.authToken);
+    public void streamAsyncPathContentFromMasterAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        Future<InputStream> streamFuture = trialParams.storageClientHelper.asyncStreamPathContentFromMaster(trialParams.serverURL, trialParams.getRandomEntry(), trialParams.authToken);
+        blackhole.consume(streamFuture);
     }
 
     public static void main(String[] args) throws RunnerException {
