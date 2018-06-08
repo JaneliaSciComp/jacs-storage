@@ -183,7 +183,7 @@ public class ContentStorageResource {
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
     })
     public Response redirectForContentCheck(@PathParam("filePath") String fullFileNameParam, @Context SecurityContext securityContext) {
-        LOG.info("Stream content of {}", fullFileNameParam);
+        LOG.info("Check {}", fullFileNameParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 fullFileNameParam,
