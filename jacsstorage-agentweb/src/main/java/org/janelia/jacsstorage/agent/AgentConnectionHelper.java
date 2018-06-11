@@ -26,10 +26,11 @@ class AgentConnectionHelper {
             Response response = target.request()
                     .get()
                     ;
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                LOG.warn("Agent deregistration returned {}", response.getStatus());
-            } else {
+            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
                 return response.readEntity(StorageAgentInfo.class);
+            } else {
+                LOG.warn("Agent deregistration returned {}", response.getStatus());
+                response.close();
             }
         } catch (Exception e) {
             LOG.warn("Error raised during agent deregistration", e);
@@ -54,8 +55,10 @@ class AgentConnectionHelper {
             int responseStatus = response.getStatus();
             if (responseStatus < Response.Status.BAD_REQUEST.getStatusCode()) {
                 return response.readEntity(StorageAgentInfo.class);
+            } else {
+                LOG.warn("Register agent returned {}", responseStatus);
+                response.close();
             }
-            LOG.warn("Register agent returned {}", responseStatus);
         } catch (Exception e) {
             LOG.error("Error while registering {}", agentInfo, e);
         } finally {
@@ -82,6 +85,7 @@ class AgentConnectionHelper {
             if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
                 LOG.warn("Agent deregistration returned {}", response.getStatus());
             }
+            response.close();
         } catch (Exception e) {
             LOG.warn("Error raised during agent deregistration", e);
         } finally {

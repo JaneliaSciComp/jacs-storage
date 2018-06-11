@@ -117,12 +117,13 @@ public class ContentStorageResource {
     private StreamingOutput streamFromURL(String url, JacsCredentials jacsCredentials) {
         return output -> {
             Client httpClient = null;
+            Response response = null;
             try {
                 httpClient = HttpClientUtils.createHttpClient();
                 WebTarget target = httpClient.target(url);
                 target.request(MediaType.APPLICATION_OCTET_STREAM);
 
-                Response response =
+                response =
                         createRequestWithCredentials(target.request(
                                 MediaType.APPLICATION_OCTET_STREAM_TYPE),
                                 jacsCredentials)
@@ -131,6 +132,7 @@ public class ContentStorageResource {
                 if (responseStatus == Response.Status.OK.getStatusCode()) {
                     InputStream stream = response.readEntity(InputStream.class);
                     ByteStreams.copy(stream, output);
+                    stream.close();
                 } else {
                     LOG.warn("{} returned {} status", url, responseStatus);
                     throw new WebApplicationException(responseStatus);
@@ -141,6 +143,9 @@ public class ContentStorageResource {
                 LOG.error("Error streaming data from {}", url, e);
                 throw new WebApplicationException(e);
             } finally {
+                if (response != null) {
+                    response.close();
+                }
                 if (httpClient != null) {
                     httpClient.close();
                 }

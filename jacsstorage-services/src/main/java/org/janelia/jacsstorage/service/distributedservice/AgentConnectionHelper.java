@@ -30,10 +30,11 @@ class AgentConnectionHelper {
             Response response = target.request()
                     .get()
                     ;
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                LOG.warn("Agent getStatus returned {}", response.getStatus());
-            } else {
+            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
                 return response.readEntity(StorageAgentInfo.class);
+            } else {
+                LOG.warn("Agent getStatus returned {}", response.getStatus());
+                response.close();
             }
         } catch (Exception e) {
             LOG.warn("Error raised during agent getStatus", e);
@@ -62,6 +63,7 @@ class AgentConnectionHelper {
             if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
                 LOG.warn("Agent {} retrieve usage returned {} while trying to get usage data for {} on {}",
                         agentUrl, response.getStatus(), subject, storageVolumeId);
+                response.close();
             } else {
                 TypeReference<List<UsageData>> typeRef = new TypeReference<List<UsageData>>(){};
                 return response.readEntity(new GenericType<>(typeRef.getType()));
@@ -93,6 +95,7 @@ class AgentConnectionHelper {
             if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
                 LOG.warn("Agent {} retrieve usage returned {} while trying to get usage data for {} on {}",
                         agentUrl, response.getStatus(), subject, storagePath);
+                response.close();
             } else {
                 TypeReference<List<UsageData>> typeRef = new TypeReference<List<UsageData>>(){};
                 return response.readEntity(new GenericType<>(typeRef.getType()));
@@ -110,6 +113,7 @@ class AgentConnectionHelper {
     static boolean deleteStorage(String agentUrl, Number dataBundleId, String subject, String authToken) {
         String deleteStorageEndpoint = String.format("/agent_storage/%d", dataBundleId);
         Client httpClient = null;
+        Response response = null;
         try {
             httpClient = HttpClientUtils.createHttpClient();
             WebTarget target = httpClient.target(agentUrl)
@@ -118,7 +122,7 @@ class AgentConnectionHelper {
                     .header("Authorization", "Bearer " + authToken)
                     .header("JacsSubject", subject)
                     ;
-            Response response = targetRequestBuilder.delete();
+            response = targetRequestBuilder.delete();
             if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
                 LOG.warn("Agent {} delete storage returned {} while trying to delete {} by {}",
                         agentUrl, response.getStatus(), dataBundleId, subject);
@@ -128,6 +132,9 @@ class AgentConnectionHelper {
         } catch (Exception e) {
             LOG.warn("Error raised during agent delete storage", e);
         } finally {
+            if (response != null) {
+                response.close();
+            }
             if (httpClient != null) {
                 httpClient.close();
             }

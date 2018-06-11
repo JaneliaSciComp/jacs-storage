@@ -257,14 +257,18 @@ public class StorageRetrieveBenchmark {
                 trialParams.authToken,
                 new InvocationCallback<InputStream>() {
                     @Override
-                    public void completed(InputStream inputStream) {
+                    public void completed(InputStream is) {
                         // Completed
                         try {
-                            long nBytes = ByteStreams.copy(inputStream, targetStream);
+                            long nBytes = ByteStreams.copy(is, targetStream);
                             blackhole.consume(nBytes);
-                            inputStream.close();
                         } catch (Exception closeExc) {
                             LOG.error("Error closing stream for {}", dataPath, closeExc);
+                        } finally {
+                            try {
+                                is.close();
+                            } catch (IOException ignore) {
+                            }
                         }
                     }
 
