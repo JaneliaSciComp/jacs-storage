@@ -542,8 +542,8 @@ public class StorageClientImplHelper {
     private Client createNewHttpClient() {
         // values are in milliseconds
         final RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectionRequestTimeout(50000)
-                .setConnectTimeout(150000)
+                .setConnectionRequestTimeout(120000)
+                .setConnectTimeout(300000)
                 .setSocketTimeout(300000)
                 .build();
 
@@ -588,6 +588,7 @@ public class StorageClientImplHelper {
                     .build();
             PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
             connectionManager.setMaxTotal(1000);
+
             connectionManager.setDefaultSocketConfig(SocketConfig.custom()
                     .setSoReuseAddress(true)
                     .setSoKeepAlive(true)
