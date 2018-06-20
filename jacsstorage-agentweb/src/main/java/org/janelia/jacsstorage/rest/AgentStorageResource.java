@@ -169,7 +169,6 @@ public class AgentStorageResource {
         List<DataNodeInfo> dataBundleCotent = listDataEntries(dataBundle, entryName, depth);
         return Response
                 .ok(dataBundleCotent, MediaType.APPLICATION_JSON)
-                .header("content-disposition","attachment; filename = " + JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()) + "-" + dataBundle.getName())
                 .build();
     }
 
