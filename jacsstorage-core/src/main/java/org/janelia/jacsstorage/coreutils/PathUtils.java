@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.CopyOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -86,28 +87,36 @@ public class PathUtils {
         }
     }
 
-    public static long getSize(String fn) throws IOException {
+    public static long getSize(String fn) {
         return getSize(Paths.get(fn));
     }
 
-    public static long getSize(Path fp) throws IOException {
+    public static long getSize(Path fp) {
         Preconditions.checkArgument(Files.exists(fp), "No path found for " + fp);
         FileSizeVisitor pathVisitor = new FileSizeVisitor();
-        Files.walkFileTree(fp, pathVisitor);
+        try {
+            Files.walkFileTree(fp, pathVisitor);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         return pathVisitor.totalSize;
     }
 
-    public static long getSize(Path fp, BiPredicate<Path, BasicFileAttributes> matcher) throws IOException {
+    public static long getSize(Path fp, BiPredicate<Path, BasicFileAttributes> matcher) {
         Preconditions.checkArgument(Files.exists(fp), "No path found for " + fp);
-        return Files.find(fp, Integer.MAX_VALUE, matcher)
-                .map(p -> {
-                    try {
-                        return Files.size(p);
-                    } catch (IOException e) {
-                        return 0L;
-                    }
-                })
-                .reduce(0L, (s1, s2) -> s1 + s2);
+        try {
+            return Files.find(fp, Integer.MAX_VALUE, matcher)
+                    .map(p -> {
+                        try {
+                            return Files.size(p);
+                        } catch (IOException e) {
+                            return 0L;
+                        }
+                    })
+                    .reduce(0L, (s1, s2) -> s1 + s2);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public static void deletePath(Path fp) throws IOException {

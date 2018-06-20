@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.helper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -131,10 +132,12 @@ public class StorageResourceHelper {
     public Response.ResponseBuilder checkContentFromFile(JacsStorageVolume storageVolume, String dataEntryPath) {
         if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath))) {
             return Response
-                    .ok();
+                    .ok()
+                    .header("Content-Length", PathUtils.getSize(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath)));
         } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath))) {
             return Response
-                    .ok();
+                    .ok()
+                    .header("Content-length", PathUtils.getSize(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath)));
         } else {
             return Response
                     .status(Response.Status.NOT_FOUND)
@@ -158,6 +161,7 @@ public class StorageResourceHelper {
 
     private Response.ResponseBuilder retrieveContentFromFile(Path filePath) {
         JacsStorageFormat storageFormat = Files.isRegularFile(filePath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
+        long fileSize = PathUtils.getSize(filePath);
         StreamingOutput fileStream = output -> {
             try {
                 storageContentReader.retrieveDataStream(filePath, storageFormat, output);
@@ -168,11 +172,13 @@ public class StorageResourceHelper {
         };
         return Response
                 .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-                .header("content-disposition","attachment; filename = " + filePath.toFile().getName())
+                .header("Content-Length", fileSize)
+                .header("Content-Disposition","attachment; filename = " + filePath.toFile().getName())
                 ;
     }
 
     public Response.ResponseBuilder retrieveContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath) {
+        long fileSize = PathUtils.getSize(dataBundle.getRealStoragePath());
         StreamingOutput bundleStream = output -> {
             try {
                 storageContentReader.readDataEntryStream(
@@ -187,7 +193,8 @@ public class StorageResourceHelper {
         };
         return Response
                 .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)
-                .header("content-disposition","attachment; filename = " + JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()) + "-" + dataBundle.getName() + "/" + dataEntryPath)
+                .header("Content-Length", fileSize)
+                .header("Content-Disposition","attachment; filename = " + JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()) + "-" + dataBundle.getName() + "/" + dataEntryPath)
                 ;
     }
 

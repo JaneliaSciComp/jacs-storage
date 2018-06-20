@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.io.TransferInfo;
@@ -21,6 +22,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,13 +32,14 @@ import java.nio.file.Paths;
 import java.util.Set;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({PathBasedAgentStorageResource.class, StorageResourceHelper.class})
+@PrepareForTest({PathBasedAgentStorageResource.class, StorageResourceHelper.class, PathUtils.class})
 public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
 
     private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
@@ -84,8 +87,10 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                         )
                 );
         PowerMockito.mockStatic(Files.class);
+        PowerMockito.mockStatic(PathUtils.class);
         Path expectedDataPath = Paths.get("/volRoot/testPath");
         Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
+        Mockito.when(PathUtils.getSize(eq(expectedDataPath))).thenReturn(10L);
         Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
         String testData = "Test data";
         JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
@@ -96,8 +101,9 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                     out.write(testData.getBytes());
                     return new TransferInfo(testData.length(), checksum.getBytes());
                 });
-        InputStream response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(testPath).request().get(InputStream.class);
-        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response));
+        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(testPath).request().get();
+        assertEquals("10", response.getHeaderString("Content-Length"));
+        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
     }
 
     @Test
@@ -114,10 +120,12 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                         )
                 );
         PowerMockito.mockStatic(Files.class);
+        PowerMockito.mockStatic(PathUtils.class);
         Path expectedDataPath = Paths.get("/volPrefix/testPath");
         Mockito.when(Files.exists(eq(Paths.get("/volRoot", "testPath")))).thenReturn(false);
         Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
         Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
+        Mockito.when(PathUtils.getSize(eq(expectedDataPath))).thenReturn(10L);
         String testData = "Test data";
         JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
         when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(OutputStream.class)))
@@ -127,8 +135,9 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                     out.write(testData.getBytes());
                     return new TransferInfo(testData.length(), checksum.getBytes());
                 });
-        InputStream response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(testPath).request().get(InputStream.class);
-        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response));
+        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(testPath).request().get();
+        assertEquals("10", response.getHeaderString("Content-Length"));
+        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
     }
 
 }
