@@ -22,9 +22,9 @@ public abstract class AbstractBundleReader implements BundleReader {
     @Override
     public TransferInfo readBundle(String source, OutputStream stream) {
         try {
-            HashingOutputStream hashingOutputStream = new HashingOutputStream(Hashing.sha256(), stream);
-            long nBytes = readBundleBytes(source, hashingOutputStream);
-            return new TransferInfo(nBytes, hashingOutputStream.hash().asBytes());
+//            HashingOutputStream hashingOutputStream = new HashingOutputStream(Hashing.sha256(), stream);
+            long nBytes = readBundleBytes(source, stream);
+            return new TransferInfo(nBytes, new byte[0]);
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
         }
