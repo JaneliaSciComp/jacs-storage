@@ -27,23 +27,33 @@ public class FileUtils {
      */
     public static long copyFrom(Path srcPath, OutputStream dstStream)
             throws IOException {
-        try (FileChannel in = FileChannel.open(srcPath)) {
+        try (ReadableByteChannel in = Files.newByteChannel(srcPath)) {
             return copy(in, Channels.newChannel(dstStream));
         }
     }
 
-    private static long copy(FileChannel source, WritableByteChannel sink)
+    private static long copy(ReadableByteChannel source, WritableByteChannel sink)
             throws IOException {
-        long sourceSize = source.size();
-        long position = 0L;
-        while (position < sourceSize) {
-            long bufSize = Math.min(sourceSize - position, Integer.MAX_VALUE);
-            MappedByteBuffer buf = source.map(FileChannel.MapMode.READ_ONLY, position, bufSize);
-            while (buf.hasRemaining()) {
-                position += sink.write(buf);
-            }
+        long nread = 0L;
+        final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
+        int n;
+        while ((n = source.read(buffer)) > 0) {
+            nread += n;
+            // prepare the buffer to be drained
+            buffer.flip();
+            // write to the channel, may block
+            sink.write(buffer);
+            // If partial transfer, shift remainder down
+            // If buffer is empty, same as doing clear()
+            buffer.compact();
         }
-        return sourceSize;
+        // EOF will leave buffer in fill state
+        buffer.flip();
+        // make sure the buffer is fully drained.
+        while (buffer.hasRemaining()) {
+            sink.write(buffer);
+        }
+        return nread;
     }
 
 }
