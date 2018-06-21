@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
@@ -36,7 +37,11 @@ public class FileUtils {
         long sourceSize = source.size();
         long position = 0L;
         while (position < sourceSize) {
-            position += source.transferTo(position, BUFFER_SIZE, sink);
+            long bufSize = Math.min(sourceSize - position, Integer.MAX_VALUE);
+            MappedByteBuffer buf = source.map(FileChannel.MapMode.READ_ONLY, position, bufSize);
+            while (buf.hasRemaining()) {
+                position += sink.write(buf);
+            }
         }
         return sourceSize;
     }
