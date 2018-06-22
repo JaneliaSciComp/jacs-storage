@@ -1,6 +1,8 @@
 package org.janelia.jacsstorage.rest;
 
 import com.google.common.base.Preconditions;
+import com.google.common.hash.Hashing;
+import com.google.common.hash.HashingInputStream;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -17,7 +19,6 @@ import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
-import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.security.JacsSubjectHelper;
@@ -107,9 +108,10 @@ public class AgentStorageResource {
         LOG.info("Create data storage bundle for {}", dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        TransferInfo ti = dataStorageService.persistDataStream(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), bundleStream);
-        dataBundle.setChecksum(Base64.getEncoder().encodeToString(ti.getChecksum()));
-        dataBundle.setUsedSpaceInBytes(ti.getNumBytes());
+        HashingInputStream hashingBundleStream = new HashingInputStream(Hashing.sha256(), bundleStream);
+        long nBytes = dataStorageService.persistDataStream(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), hashingBundleStream);
+        dataBundle.setChecksum(Base64.getEncoder().encodeToString(hashingBundleStream.hash().asBytes()));
+        dataBundle.setUsedSpaceInBytes(nBytes);
         storageAllocatorService.updateStorage(dataBundle, SecurityUtils.getUserPrincipal(securityContext));
         return Response
                 .ok(DataStorageInfo.fromBundle(dataBundle))

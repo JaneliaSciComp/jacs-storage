@@ -1,9 +1,11 @@
 package org.janelia.jacsstorage.datatransfer.impl;
 
+import com.google.common.hash.Hashing;
+import com.google.common.hash.HashingInputStream;
+import com.google.common.hash.HashingOutputStream;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
-import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsDataLocation;
 import org.janelia.jacsstorage.datatransfer.DataTransferService;
 import org.janelia.jacsstorage.datatransfer.State;
@@ -62,10 +64,10 @@ public class DataTransferServiceImpl implements DataTransferService {
             return;
         }
         transferState.openDataTransferChannel();
-        OutputStream senderStream = transferState.getDataWriteChannel()
+        HashingOutputStream senderStream = transferState.getDataWriteChannel()
                 .map((WritableByteChannel dataWriteChannel) -> {
                     transferState.setState(State.READ_DATA_STARTED);
-                    return Channels.newOutputStream(dataWriteChannel);
+                    return new HashingOutputStream(Hashing.sha256(), Channels.newOutputStream(dataWriteChannel));
                 })
                 .orElseThrow(() -> {
                     transferState.setErrorMessage("Transfer channel for reading" + dataLocation + " has not been opened");
@@ -75,9 +77,9 @@ public class DataTransferServiceImpl implements DataTransferService {
         backgroundTransferExecutor.execute(() -> {
             try {
                 transferState.setState(State.READ_DATA);
-                TransferInfo ti = bundleReader.readBundle(dataLocation.getPath(), senderStream);
-                transferState.setTransferredBytes(ti.getNumBytes());
-                transferState.setChecksum(ti.getChecksum());
+                long nbytes = bundleReader.readBundle(dataLocation.getPath(), senderStream);
+                transferState.setTransferredBytes(nbytes);
+                transferState.setChecksum(senderStream.hash().asBytes());
                 transferState.setState(State.READ_DATA_COMPLETE);
             } catch (Exception e) {
                 LOG.error("Error while reading {}", dataLocation, e);
@@ -128,10 +130,10 @@ public class DataTransferServiceImpl implements DataTransferService {
             return;
         }
         transferState.openDataTransferChannel();
-        InputStream receiverStream = transferState.getDataReadChannel()
+        HashingInputStream receiverStream = transferState.getDataReadChannel()
                 .map((ReadableByteChannel dataReadChannel) -> {
                     transferState.setState(State.WRITE_DATA_STARTED);
-                    return Channels.newInputStream(dataReadChannel);
+                    return new HashingInputStream(Hashing.sha256(), Channels.newInputStream(dataReadChannel));
                 })
                 .orElseThrow(() -> {
                     LOG.warn("Transfer channel for writing {} has not been opened", dataLocation);
@@ -142,10 +144,10 @@ public class DataTransferServiceImpl implements DataTransferService {
         backgroundTransferExecutor.execute(() -> {
             try {
                 transferState.setState(State.WRITE_DATA);
-                TransferInfo ti = bundleWriter.writeBundle(receiverStream, dataLocation.getPath());
-                transferState.setTransferredBytes(ti.getNumBytes());
+                long nbytes = bundleWriter.writeBundle(receiverStream, dataLocation.getPath());
+                transferState.setTransferredBytes(nbytes);
                 transferState.setPersistedBytes(PathUtils.getSize(dataLocation.getPath()));
-                transferState.setChecksum(ti.getChecksum());
+                transferState.setChecksum(receiverStream.hash().asBytes());
                 transferState.setState(State.WRITE_DATA_COMPLETE);
             } catch (Exception e) {
                 LOG.error("Error while writing {}", dataLocation, e);

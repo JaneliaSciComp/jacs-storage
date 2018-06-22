@@ -5,7 +5,6 @@ import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
-import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.coreutils.PathUtils;
@@ -32,7 +31,7 @@ public class DataStorageServiceImpl implements DataStorageService {
             logResult = true
     )
     @Override
-    public TransferInfo persistDataStream(Path dataPath, JacsStorageFormat dataStorageFormat, InputStream dataStream) throws IOException {
+    public long persistDataStream(Path dataPath, JacsStorageFormat dataStorageFormat, InputStream dataStream) throws IOException {
         BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataStorageFormat);
         return bundleWriter.writeBundle(new BufferedInputStream(dataStream), dataPath.toString());
     }
@@ -42,7 +41,7 @@ public class DataStorageServiceImpl implements DataStorageService {
             logResult = true
     )
     @Override
-    public TransferInfo retrieveDataStream(Path dataPath, JacsStorageFormat dataStorageFormat, OutputStream dataStream) throws IOException {
+    public long retrieveDataStream(Path dataPath, JacsStorageFormat dataStorageFormat, OutputStream dataStream) throws IOException {
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
         return bundleReader.readBundle(dataPath.toString(), dataStream);
     }

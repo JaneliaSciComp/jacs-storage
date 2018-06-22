@@ -2,14 +2,6 @@ package org.janelia.jacsstorage.service.impl;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
-import org.janelia.jacsstorage.coreutils.PathUtils;
-import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.io.BundleReader;
-import org.janelia.jacsstorage.io.BundleWriter;
-import org.janelia.jacsstorage.io.DataBundleIOProvider;
-import org.janelia.jacsstorage.io.TransferInfo;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,12 +13,6 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Path;
-import java.util.List;
 import java.util.Properties;
 
 public class EmailNotificationService implements NotificationService {

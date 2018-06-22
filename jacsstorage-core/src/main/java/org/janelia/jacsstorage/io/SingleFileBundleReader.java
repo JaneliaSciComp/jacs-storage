@@ -10,6 +10,7 @@ import org.msgpack.core.Preconditions;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -30,10 +31,14 @@ public class SingleFileBundleReader extends AbstractBundleReader {
             logResult = true
     )
     @Override
-    protected long readBundleBytes(String source, OutputStream stream) throws Exception {
+    public long readBundle(String source, OutputStream stream) {
         Path sourcePath = getSourcePath(source);
         checkSourcePath(sourcePath);
-        return FileUtils.copyFrom(sourcePath, stream);
+        try {
+            return FileUtils.copyFrom(sourcePath, stream);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @TimedMethod(

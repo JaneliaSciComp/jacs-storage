@@ -7,7 +7,6 @@ import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
-import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.service.StorageContentReader;
@@ -96,9 +95,8 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(2);
-                    String checksum = "check";
                     out.write(testData.getBytes());
-                    return new TransferInfo(testData.length(), checksum.getBytes());
+                    return (long) testData.length();
                 });
         Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(testPath).request().get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
@@ -130,9 +128,8 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(2);
-                    String checksum = "check";
                     out.write(testData.getBytes());
-                    return new TransferInfo(testData.length(), checksum.getBytes());
+                    return (long) testData.length();
                 });
         Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(testPath).request().get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));

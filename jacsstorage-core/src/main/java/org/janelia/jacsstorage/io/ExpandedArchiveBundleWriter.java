@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.io;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.lang3.StringUtils;
@@ -11,6 +12,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,7 +21,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
+public class ExpandedArchiveBundleWriter implements BundleWriter {
 
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
@@ -31,18 +33,24 @@ public class ExpandedArchiveBundleWriter extends AbstractBundleWriter {
             logResult = true
     )
     @Override
-    public long writeBundleBytes(InputStream stream, String target) throws Exception {
+    public long writeBundle(InputStream stream, String target) {
         long nBytes = 0;
-        ArchiveInputStream inputStream = new ArchiveStreamFactory().createArchiveInputStream(stream);
-        Path targetPath = Paths.get(target);
-        Files.createDirectories(targetPath);
-        for (ArchiveEntry sourceEntry = inputStream.getNextEntry(); sourceEntry != null; sourceEntry = inputStream.getNextEntry()) {
-            Path targetEntryPath = targetPath.resolve(sourceEntry.getName());
-            if (sourceEntry.isDirectory()) {
-                Files.createDirectories(targetEntryPath);
-            } else {
-                nBytes += Files.copy(ByteStreams.limit(inputStream, sourceEntry.getSize()), targetEntryPath);
+        try {
+            ArchiveInputStream inputStream = new ArchiveStreamFactory().createArchiveInputStream(stream);
+            Path targetPath = Paths.get(target);
+            Files.createDirectories(targetPath);
+            for (ArchiveEntry sourceEntry = inputStream.getNextEntry(); sourceEntry != null; sourceEntry = inputStream.getNextEntry()) {
+                Path targetEntryPath = targetPath.resolve(sourceEntry.getName());
+                if (sourceEntry.isDirectory()) {
+                    Files.createDirectories(targetEntryPath);
+                } else {
+                    nBytes += Files.copy(ByteStreams.limit(inputStream, sourceEntry.getSize()), targetEntryPath);
+                }
             }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(e);
         }
         return nBytes;
     }

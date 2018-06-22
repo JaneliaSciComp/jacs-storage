@@ -78,15 +78,12 @@ public class ExpandedBundleReaderWriterTest {
         InputStream testInputStream = null;
         try {
             testOutputStream = new FileOutputStream(testFilePath.toFile());
-            TransferInfo sentInfo = expandedBundleReader.readBundle(testDataDir.toString(), testOutputStream);
-            assertNotNull(sentInfo);
+            long nReadBytes = expandedBundleReader.readBundle(testDataDir.toString(), testOutputStream);
             testOutputStream.close();
             testOutputStream = null;
             testInputStream = new BufferedInputStream(new FileInputStream(testFilePath.toFile()));
-            TransferInfo receivedInfo = expandedArchiveBundleWriter.writeBundle(testInputStream, testExpandedPath.toString());
-            assertNotNull(receivedInfo);
-            assertEquals(sentInfo.getNumBytes(), receivedInfo.getNumBytes());
-            assertArrayEquals(sentInfo.getChecksum(), receivedInfo.getChecksum());
+            long nWrittenBytes = expandedArchiveBundleWriter.writeBundle(testInputStream, testExpandedPath.toString());
+            assertEquals(nReadBytes, nWrittenBytes);
             Files.walkFileTree(testExpandedPath, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
@@ -113,8 +110,8 @@ public class ExpandedBundleReaderWriterTest {
         Path testDataPath = testDataDir.resolve("f_1_1");
         byte[] testDataBytes = Files.readAllBytes(testDataPath);
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        TransferInfo info = expandedBundleReader.readBundle(testDataPath.toString(), output);
-        assertThat(info.getNumBytes(), Matchers.equalTo((long) testDataBytes.length));
+        long nBytes = expandedBundleReader.readBundle(testDataPath.toString(), output);
+        assertThat(nBytes, Matchers.equalTo((long) testDataBytes.length));
         assertThat(output.toByteArray().length, Matchers.greaterThan(testDataBytes.length));
     }
 
@@ -209,7 +206,7 @@ public class ExpandedBundleReaderWriterTest {
         Path missingDataPath = testDataDir.resolve("missing");
         assertThatThrownBy(() -> expandedBundleReader.readBundle(missingDataPath.toString(), new ByteArrayOutputStream()))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("java.lang.IllegalArgumentException: No path found for " + missingDataPath);
+                .hasMessage("No path found for " + missingDataPath);
     }
 
     @Test

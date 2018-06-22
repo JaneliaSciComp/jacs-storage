@@ -13,6 +13,7 @@ import org.msgpack.core.Preconditions;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,20 +73,24 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
             logResult = true
     )
     @Override
-    protected long readBundleBytes(String source, OutputStream stream) throws Exception {
-        TarArchiveOutputStream outputStream = new TarArchiveOutputStream(stream, TarConstants.DEFAULT_RCDSIZE);
-        Path sourcePath = getSourcePath(source);
-        Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
-        Path archiverRootDir;
-        if (Files.isRegularFile(sourcePath)) {
-            archiverRootDir = sourcePath.getParent();
-        } else {
-            archiverRootDir = sourcePath;
+    public long readBundle(String source, OutputStream stream) {
+        try {
+            TarArchiveOutputStream outputStream = new TarArchiveOutputStream(stream, TarConstants.DEFAULT_RCDSIZE);
+            Path sourcePath = getSourcePath(source);
+            Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
+            Path archiverRootDir;
+            if (Files.isRegularFile(sourcePath)) {
+                archiverRootDir = sourcePath.getParent();
+            } else {
+                archiverRootDir = sourcePath;
+            }
+            ArchiveFileVisitor archiver = new ArchiveFileVisitor(archiverRootDir, outputStream);
+            Files.walkFileTree(sourcePath, archiver);
+            outputStream.finish();
+            return archiver.nBytes;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        ArchiveFileVisitor archiver = new ArchiveFileVisitor(archiverRootDir, outputStream);
-        Files.walkFileTree(sourcePath, archiver);
-        outputStream.finish();
-        return archiver.nBytes;
     }
 
     @TimedMethod(
@@ -123,11 +128,7 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
         Path sourcePath = getSourcePath(source);
         Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
         if (StringUtils.isBlank(entryName)) {
-            try {
-                return readBundleBytes(source, outputStream);
-            } catch (Exception e) {
-                throw new IOException(e);
-            }
+            return readBundle(source, outputStream);
         }
         Path entryPath = sourcePath.resolve(entryName);
         if (Files.notExists(entryPath)) {

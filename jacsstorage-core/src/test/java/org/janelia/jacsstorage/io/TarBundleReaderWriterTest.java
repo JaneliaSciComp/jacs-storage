@@ -74,8 +74,7 @@ public class TarBundleReaderWriterTest {
     private Path createTestTarFile() throws IOException {
         Path testTarFilePath = testDirectory.resolve("tarBundle.tar");
         try(OutputStream testOutputStream = new FileOutputStream(testTarFilePath.toFile())) {
-            TransferInfo sentInfo = expandedArchiveBundleReader.readBundle(TEST_DATA_DIRECTORY, testOutputStream);
-            assertNotNull(sentInfo);
+            expandedArchiveBundleReader.readBundle(TEST_DATA_DIRECTORY, testOutputStream);
         }
         return testTarFilePath;
     }
@@ -174,15 +173,12 @@ public class TarBundleReaderWriterTest {
         InputStream testInputStream = null;
         try {
             testOutputStream = new FileOutputStream(testReaderPath.toFile());
-            TransferInfo sentInfo = tarBundleReader.readBundle(testTarFile.toString(), testOutputStream);
-            assertNotNull(sentInfo);
+            long nReadBytes = tarBundleReader.readBundle(testTarFile.toString(), testOutputStream);
             testOutputStream.close();
             testOutputStream = null;
             testInputStream = new BufferedInputStream(new FileInputStream(testReaderPath.toFile()));
-            TransferInfo receivedInfo = tarBundleWriter.writeBundle(testInputStream, testWriterPath.toString());
-            assertNotNull(receivedInfo);
-            assertEquals(sentInfo.getNumBytes(), receivedInfo.getNumBytes());
-            assertArrayEquals(sentInfo.getChecksum(), receivedInfo.getChecksum());
+            long nWrittenBytes = tarBundleWriter.writeBundle(testInputStream, testWriterPath.toString());
+            assertEquals(nReadBytes, nWrittenBytes);
         } finally {
             IOUtils.closeQuietly(testOutputStream);
             IOUtils.closeQuietly(testInputStream);
@@ -203,7 +199,7 @@ public class TarBundleReaderWriterTest {
 
         assertThatThrownBy(() -> tarBundleReader.readBundle(testDataPath.toString(), new ByteArrayOutputStream()))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("java.lang.IllegalArgumentException: No file found for " + testDataPath.toString());
+                .hasMessage("No file found for " + testDataPath.toString());
     }
 
     @Test

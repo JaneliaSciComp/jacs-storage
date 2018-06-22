@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.io.UncheckedIOException;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -27,7 +28,7 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.Function;
 
-public class TarArchiveBundleWriter extends AbstractBundleWriter {
+public class TarArchiveBundleWriter implements BundleWriter {
 
     private static final int PARENT_ENTRY_NOT_DIR_ERRORCODE = -1;
     private static final int PARENT_ENTRY_NOT_FOUND_ERRORCODE = -2;
@@ -45,13 +46,17 @@ public class TarArchiveBundleWriter extends AbstractBundleWriter {
             logResult = true
     )
     @Override
-    protected long writeBundleBytes(InputStream stream, String target) throws Exception {
+    public long writeBundle(InputStream stream, String target) {
         Path targetPath = Paths.get(target);
         if (Files.exists(targetPath)) {
             throw new IllegalArgumentException("Target path " + target + " already exists");
         }
-        Files.createDirectories(targetPath.getParent());
-        return Files.copy(stream, Paths.get(target));
+        try {
+            Files.createDirectories(targetPath.getParent());
+            return Files.copy(stream, Paths.get(target));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @TimedMethod(

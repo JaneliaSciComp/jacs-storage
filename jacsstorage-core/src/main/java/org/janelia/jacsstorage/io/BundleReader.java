@@ -4,7 +4,6 @@ import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
@@ -17,9 +16,9 @@ public interface BundleReader {
      *
      * @param source bundle
      * @param stream to write the bytes formatted as a tar archive
-     * @return data transfer info
+     * @return the number of bytes transfered from source to the output stream
      */
-    TransferInfo readBundle(String source, OutputStream stream);
+    long readBundle(String source, OutputStream stream);
 
     /**
      * List bundle content.

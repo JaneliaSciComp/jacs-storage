@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
-import org.janelia.jacsstorage.io.TransferInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
@@ -82,9 +81,8 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
         when(dataStorageService.retrieveDataStream(eq(Paths.get(testPath)), eq(testFormat), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(2);
-                    String checksum = "check";
                     out.write(testData.getBytes());
-                    return new TransferInfo(testData.length(), checksum.getBytes());
+                    return (long) testData.length();
                 });
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))

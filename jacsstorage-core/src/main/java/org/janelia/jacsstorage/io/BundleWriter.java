@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.io;
 
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
 
@@ -13,9 +12,9 @@ public interface BundleWriter {
      *
      * @param stream a tar archive stream of bytes to be written
      * @param target bundle
-     * @return data transfer info
+     * @return number of bytes transfered from the input stream to the target
      */
-    TransferInfo writeBundle(InputStream stream, String target);
+    long writeBundle(InputStream stream, String target);
 
     /**
      * Create a directory entry if of course the reader supports such operation. The precondition is that the parent entry

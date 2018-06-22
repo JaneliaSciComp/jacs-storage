@@ -3,14 +3,16 @@ package org.janelia.jacsstorage.io;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Set;
 
-public class SingleFileBundleWriter extends AbstractBundleWriter {
+public class SingleFileBundleWriter implements BundleWriter {
 
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
@@ -22,13 +24,17 @@ public class SingleFileBundleWriter extends AbstractBundleWriter {
             logResult = true
     )
     @Override
-    protected long writeBundleBytes(InputStream stream, String target) throws Exception {
+    public long writeBundle(InputStream stream, String target) {
         Path targetPath = Paths.get(target);
         if (Files.exists(targetPath)) {
             throw new IllegalArgumentException("Target path " + target + " already exists");
         }
-        Files.createDirectories(targetPath.getParent());
-        return Files.copy(stream, targetPath);
+        try {
+            Files.createDirectories(targetPath.getParent());
+            return Files.copy(stream, targetPath);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @TimedMethod(
