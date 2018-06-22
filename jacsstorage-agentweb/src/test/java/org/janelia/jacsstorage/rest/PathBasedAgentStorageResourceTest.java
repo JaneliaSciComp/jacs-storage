@@ -85,13 +85,13 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                                 .build()
                         )
                 );
+        String testData = "Test data";
         PowerMockito.mockStatic(Files.class);
         PowerMockito.mockStatic(PathUtils.class);
         Path expectedDataPath = Paths.get("/volRoot/testPath");
         Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
-        Mockito.when(PathUtils.getSize(eq(expectedDataPath))).thenReturn(10L);
+        Mockito.when(PathUtils.getSize(eq(expectedDataPath))).thenReturn((long) testData.getBytes().length);
         Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
-        String testData = "Test data";
         JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
         when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(OutputStream.class)))
                 .then(invocation -> {
@@ -101,7 +101,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                     return new TransferInfo(testData.length(), checksum.getBytes());
                 });
         Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(testPath).request().get();
-        assertEquals("10", response.getHeaderString("Content-Length"));
+        assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
     }
 
@@ -120,12 +120,12 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 );
         PowerMockito.mockStatic(Files.class);
         PowerMockito.mockStatic(PathUtils.class);
+        String testData = "Test data";
         Path expectedDataPath = Paths.get("/volPrefix/testPath");
         Mockito.when(Files.exists(eq(Paths.get("/volRoot", "testPath")))).thenReturn(false);
         Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
         Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
-        Mockito.when(PathUtils.getSize(eq(expectedDataPath))).thenReturn(10L);
-        String testData = "Test data";
+        Mockito.when(PathUtils.getSize(eq(expectedDataPath))).thenReturn((long) testData.getBytes().length);
         JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
         when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(OutputStream.class)))
                 .then(invocation -> {
@@ -135,7 +135,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                     return new TransferInfo(testData.length(), checksum.getBytes());
                 });
         Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(testPath).request().get();
-        assertEquals("10", response.getHeaderString("Content-Length"));
+        assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
     }
 

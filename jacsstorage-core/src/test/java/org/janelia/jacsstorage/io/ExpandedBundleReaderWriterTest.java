@@ -86,7 +86,7 @@ public class ExpandedBundleReaderWriterTest {
             TransferInfo receivedInfo = expandedArchiveBundleWriter.writeBundle(testInputStream, testExpandedPath.toString());
             assertNotNull(receivedInfo);
             assertEquals(sentInfo.getNumBytes(), receivedInfo.getNumBytes());
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!            assertArrayEquals(sentInfo.getChecksum(), receivedInfo.getChecksum()); TODO
+            assertArrayEquals(sentInfo.getChecksum(), receivedInfo.getChecksum());
             Files.walkFileTree(testExpandedPath, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {

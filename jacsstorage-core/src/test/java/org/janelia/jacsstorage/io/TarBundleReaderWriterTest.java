@@ -182,7 +182,7 @@ public class TarBundleReaderWriterTest {
             TransferInfo receivedInfo = tarBundleWriter.writeBundle(testInputStream, testWriterPath.toString());
             assertNotNull(receivedInfo);
             assertEquals(sentInfo.getNumBytes(), receivedInfo.getNumBytes());
-//!!!!!!!!!!!!!!!!!            assertArrayEquals(sentInfo.getChecksum(), receivedInfo.getChecksum()); TODO
+            assertArrayEquals(sentInfo.getChecksum(), receivedInfo.getChecksum());
         } finally {
             IOUtils.closeQuietly(testOutputStream);
             IOUtils.closeQuietly(testInputStream);
