@@ -122,7 +122,7 @@ public class JacsBundleBuilder {
     }
 
     private Optional<JacsStorageVolume> updateBundleStorageVolume(Consumer<JacsStorageVolume> storageVolumeUpdater) {
-        return jacsBundle.setStorageVolume(jacsBundle.getStorageVolume().orElse(new JacsStorageVolume()))
+        return jacsBundle.setStorageVolume(jacsBundle.getStorageVolume().orElseGet(() -> new JacsStorageVolume()))
                 .map(sv -> {
                     storageVolumeUpdater.accept(sv);
                     return sv;

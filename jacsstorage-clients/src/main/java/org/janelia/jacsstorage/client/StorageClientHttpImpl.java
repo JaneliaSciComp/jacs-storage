@@ -78,7 +78,7 @@ public class StorageClientHttpImpl implements StorageClient {
                     }
                 })
                 .map((DataStorageInfo dsi) -> new StorageMessageResponse(StorageMessageResponse.OK, ""))
-                .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "Error allocating storage for " + storageInfo));
+                .orElseGet(() -> new StorageMessageResponse(StorageMessageResponse.ERROR, "Error allocating storage for " + storageInfo));
     }
 
     @Override
@@ -123,7 +123,7 @@ public class StorageClientHttpImpl implements StorageClient {
                         return Optional.of(new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage()));
                     }
                 })
-                .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "Error streaming data from " + storageInfo));
+                .orElseGet(() -> new StorageMessageResponse(StorageMessageResponse.ERROR, "Error streaming data from " + storageInfo));
     }
 
 }

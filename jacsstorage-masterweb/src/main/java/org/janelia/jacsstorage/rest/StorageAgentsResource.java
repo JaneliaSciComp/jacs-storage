@@ -50,7 +50,7 @@ public class StorageAgentsResource {
         LOG.trace("Find registered agent for {}", agentLocationInfo);
         return agentManager.findRegisteredAgent(agentLocationInfo)
                 .map(agentInfo -> Response.ok(agentInfo).build())
-                .orElse(Response.status(Response.Status.NOT_FOUND).build());
+                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @GET

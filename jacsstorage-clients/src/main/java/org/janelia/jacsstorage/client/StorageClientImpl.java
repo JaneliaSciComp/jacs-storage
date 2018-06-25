@@ -36,7 +36,7 @@ public class StorageClientImpl implements StorageClient {
                         return new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage());
                     }
                 })
-                .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "Error allocating storage for " + storageInfo));
+                .orElseGet(() -> new StorageMessageResponse(StorageMessageResponse.ERROR, "Error allocating storage for " + storageInfo));
     }
 
     @Override
@@ -52,7 +52,7 @@ public class StorageClientImpl implements StorageClient {
                     return new StorageMessageResponse(StorageMessageResponse.ERROR, e.getMessage());
                 }
             })
-            .orElse(new StorageMessageResponse(StorageMessageResponse.ERROR, "No connection to " + storageInfo.getName()));
+            .orElseGet(() -> new StorageMessageResponse(StorageMessageResponse.ERROR, "No connection to " + storageInfo.getName()));
     }
 
 }
