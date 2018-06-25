@@ -89,7 +89,7 @@ public class ContentStorageResource {
                             .header("content-disposition","attachment; filename = " + JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()) + "-" + dataBundle.getName() + "/" + dataEntryPath)
                             ;
                 })
-                .orElse(Response
+                .orElseGet(() -> Response
                         .status(Response.Status.BAD_REQUEST.getStatusCode())
                         .entity(new ErrorResponse("No volume associated with databundle " + dataBundle.getId()))
                 )
@@ -201,7 +201,7 @@ public class ContentStorageResource {
                                         .path(dataEntryPath)
                                         .build())
                         )
-                        .orElse(Response
+                        .orElseGet(() -> Response
                                 .status(Response.Status.BAD_REQUEST.getStatusCode())
                                 .entity(new ErrorResponse("No volume associated with databundle " + dataBundle.getId()))
                         ),
@@ -254,7 +254,7 @@ public class ContentStorageResource {
                                                 .path(dataEntryPath)
                                                 .build())
                             )
-                            .orElse(Response
+                            .orElseGet(() -> Response
                                     .status(Response.Status.BAD_REQUEST.getStatusCode())
                                     .entity(new ErrorResponse("No volume associated with databundle " + dataBundle.getId()))
                             ),

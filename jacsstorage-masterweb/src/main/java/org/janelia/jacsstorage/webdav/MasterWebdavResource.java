@@ -167,7 +167,7 @@ public class MasterWebdavResource {
                                                 .build())
                                         .orElseThrow(() -> new IllegalStateException("No volume set for allocated resource " + bi.getId())))
                         .build())
-                .orElse(Response
+                .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
                         .entity(ImmutableMap.of("errormessage", "Error allocating the storage"))
                         .build());

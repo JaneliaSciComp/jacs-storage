@@ -336,7 +336,7 @@ public class MasterStorageResource {
                         .created(resourceURI.getBaseUriBuilder().path(dataBundle.getId().toString()).build())
                         .entity(DataStorageInfo.fromBundle(bi))
                         .build())
-                .orElse(Response
+                .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("Metadata could not be created. Usually the reason is that no agent is available"))
                         .build());
