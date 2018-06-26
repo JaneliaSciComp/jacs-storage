@@ -8,6 +8,7 @@ import io.undertow.attribute.BytesSentAttribute;
 import io.undertow.attribute.ConstantExchangeAttribute;
 import io.undertow.attribute.DateTimeAttribute;
 import io.undertow.attribute.ExchangeAttribute;
+import io.undertow.attribute.QueryStringAttribute;
 import io.undertow.attribute.RemoteHostAttribute;
 import io.undertow.attribute.RemoteUserAttribute;
 import io.undertow.attribute.RequestMethodAttribute;
@@ -124,6 +125,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         DateTimeAttribute.INSTANCE, // <timestamp>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         RequestPathAttribute.INSTANCE, // <RequestPath>
+                        QueryStringAttribute.INSTANCE, // <RequestQuery>
                         new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location"))), // location=<ResponseLocation>
                         new NameValueAttribute("status", ResponseCodeAttribute.INSTANCE), // status=<ResponseStatus>
                         new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>

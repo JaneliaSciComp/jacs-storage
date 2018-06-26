@@ -43,6 +43,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -205,7 +206,7 @@ public class MasterStorageResource {
                                    @QueryParam("name") String dataBundleName,
                                    @QueryParam("ownerKey") String ownerKey,
                                    @QueryParam("storageHost") String storageHost,
-                                   @QueryParam("storageTags") String storageTags,
+                                   @QueryParam("storageTags") List<String> storageTags,
                                    @QueryParam("volumeName") String volumeName,
                                    @QueryParam("page") Long pageNumber,
                                    @QueryParam("length") Integer pageLength,
@@ -223,7 +224,7 @@ public class MasterStorageResource {
                 .name(dataBundleName)
                 .ownerKey(dataOwnerKey)
                 .storageHost(storageHost)
-                .storageTags(storageTags)
+                .storageTagsAsList(storageTags)
                 .volumeName(volumeName)
                 .build();
         LOG.info("Count storage records filtered with: {}", dataBundle);
