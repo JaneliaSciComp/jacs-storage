@@ -140,7 +140,7 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
                 bundleAggregationOpsBuilder.add(Aggregates.match(Filters.eq("referencedVolumes.name", sv.getName())));
             }
             if (CollectionUtils.isNotEmpty(sv.getStorageTags())) {
-                bundleAggregationOpsBuilder.add(Aggregates.match(Filters.all("storageTags", sv.getStorageTags())));
+                bundleAggregationOpsBuilder.add(Aggregates.match(Filters.all("referencedVolumes.storageTags", sv.getStorageTags())));
             }
             if (StringUtils.isNotBlank(sv.getStoragePathPrefix())) {
                 bundleAggregationOpsBuilder.add(Aggregates.match(Filters.eq("referencedVolumes.storagePathPrefix", sv.getStoragePathPrefix())));
