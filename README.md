@@ -83,13 +83,14 @@ jacs.runtime.env.logsRootDir=/data/jacsstorage/prod-logs
 EOF
 ```
 
-`./gradlew --gradle-user-home=local packageRpm`
+`./gradlew --gradle-user-home=local ospackage`
 
 Then on centos use yum to install the generated packages
 
-`sudo yum install jacsstorage-masterweb/build/distributions/jacsstorage-masterweb-1.0.0-1.i386.rpm`
-`sudo yum install jacsstorage-agentweb/build/distributions/jacsstorage-agentweb-1.0.0-1.i386.rpm`
+`sudo yum install jacsstorage-masterweb/build/distributions/jacsstorage-masterweb-${jadeVersion}-1.i386.rpm`
+`sudo yum install jacsstorage-agentweb/build/distributions/jacsstorage-agentweb-${jadeVersion}-1.i386.rpm`
 
+where jadeVersion is the version from the main build.gradle file.
 
 Note that 'ospackage' task just like 'installDist' will not run any unit tests or integration tests so you don't need 
 access to any MongoDB instance.
