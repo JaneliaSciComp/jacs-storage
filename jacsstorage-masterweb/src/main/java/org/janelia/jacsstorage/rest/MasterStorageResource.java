@@ -213,7 +213,7 @@ public class MasterStorageResource {
         String dataOwnerKey;
         if (securityContext.isUserInRole(JacsCredentials.ADMIN)) {
             // if it's an admin use the owner param if set or allow it not to be set
-            dataOwnerKey = StringUtils.defaultIfBlank(ownerKey, SecurityUtils.getUserPrincipal(securityContext).getSubjectKey());
+            dataOwnerKey = ownerKey;
         } else {
             // otherwise use the subject from the security context
             dataOwnerKey = SecurityUtils.getUserPrincipal(securityContext).getSubjectKey();
