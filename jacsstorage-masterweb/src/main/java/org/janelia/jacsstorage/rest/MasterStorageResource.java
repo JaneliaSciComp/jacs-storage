@@ -18,6 +18,7 @@ import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
+import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.security.JacsSecurityContext;
 import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
@@ -100,7 +101,7 @@ public class MasterStorageResource {
                                     @ApiParam(value = "search by storage storage volume parameter") @QueryParam("volumeName") String volumeName,
                                     @Context SecurityContext securityContext) {
         String dataOwnerKey;
-        if (securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
+        if (securityContext.isUserInRole(JacsCredentials.ADMIN)) {
             // if it's an admin use the owner param if set or allow it not to be set
             dataOwnerKey = StringUtils.defaultIfBlank(ownerKey, SecurityUtils.getUserPrincipal(securityContext).getSubjectKey());
         } else {
@@ -210,7 +211,7 @@ public class MasterStorageResource {
                                    @QueryParam("length") Integer pageLength,
                                    @Context SecurityContext securityContext) {
         String dataOwnerKey;
-        if (securityContext.isUserInRole(JacsSecurityContext.ADMIN)) {
+        if (securityContext.isUserInRole(JacsCredentials.ADMIN)) {
             // if it's an admin use the owner param if set or allow it not to be set
             dataOwnerKey = StringUtils.defaultIfBlank(ownerKey, SecurityUtils.getUserPrincipal(securityContext).getSubjectKey());
         } else {

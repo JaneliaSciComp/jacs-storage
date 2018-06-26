@@ -5,8 +5,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.security.Principal;
+import java.util.HashSet;
+import java.util.Set;
 
 public class JacsCredentials implements Principal {
+    public static final String ADMIN = "admin";
+
     private static final String UNAUTHENTICATED = "Unauthenticated";
 
     private String authSubject;
@@ -71,6 +75,10 @@ public class JacsCredentials implements Principal {
 
     public String getSubjectKey() {
         return JacsSubjectHelper.getTypeFromSubjectKey(getName()) + ":" + JacsSubjectHelper.getNameFromSubjectKey(getName());
+    }
+
+    public boolean hasRole(String role) {
+        return true; // ignore the roles for now
     }
 
     @Override

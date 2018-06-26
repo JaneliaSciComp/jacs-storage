@@ -55,7 +55,8 @@ public class JwtTokenCredentialsValidator implements TokenCredentialsValidator {
                     .setAuthSubject(StringUtils.defaultIfBlank(claimsSet.getSubject(), claimsSet.getStringClaim(USERNAME_CLAIM)))
                     .setSubjectProxy(subject)
                     .setAuthToken(jwt)
-                    .setClaims(claimsSet));
+                    .setClaims(claimsSet)
+            );
         } catch (Exception e) {
             LOG.error("Error while validating {}", jwt, e);
             throw new SecurityException(e);

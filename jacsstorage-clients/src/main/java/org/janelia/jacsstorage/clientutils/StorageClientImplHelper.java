@@ -370,6 +370,7 @@ public class StorageClientImplHelper {
         try {
             httpClient = createNewHttpClient();
             WebTarget target = httpClient.target(connectionURL).path(endpoint);
+            LOG.info("Ping {}", target);
             Response response = target.request(MediaType.APPLICATION_JSON_TYPE)
                     .get()
                     ;

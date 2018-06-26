@@ -5,8 +5,6 @@ import java.security.Principal;
 
 public class JacsSecurityContext implements SecurityContext {
 
-    public static final String ADMIN = "admin";
-
     private final JacsCredentials credentials;
     private final boolean secure;
     private final String authScheme;
@@ -24,7 +22,7 @@ public class JacsSecurityContext implements SecurityContext {
 
     @Override
     public boolean isUserInRole(String role) {
-        return false;
+        return credentials.hasRole(role);
     }
 
     @Override

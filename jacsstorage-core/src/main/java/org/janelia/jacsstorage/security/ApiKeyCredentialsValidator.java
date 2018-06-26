@@ -35,7 +35,8 @@ public class ApiKeyCredentialsValidator implements TokenCredentialsValidator {
             return Optional.of(new JacsCredentials()
                     .setAuthSubject(subject)
                     .setSubjectProxy(subject)
-                    .setAuthToken(tokenKey));
+                    .setAuthToken(tokenKey)
+            );
         } else {
             LOG.warn("Invalid API Key: {}", tokenKey);
             return Optional.empty();
