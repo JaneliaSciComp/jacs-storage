@@ -1,3 +1,11 @@
+## General Notes
+
+JADE is a distributed storage system that can manage a set of configured volumes local to the machine or shared 
+- NFS-mounted from a remote host. Typically the shared volumes are read only with the exception of 
+the special OVERFLOW_VOLUME which is selected when a node runs out of available space on the local volumes.
+The system consists of a master node (service) that manages the resource allocation and one or more workers or 
+agents that are responsible with reading and writing the data onto/from the managed volumes.
+
 ## Development 
 
 ### Environment
