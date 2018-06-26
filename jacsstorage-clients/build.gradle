@@ -3,17 +3,16 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.netflix.nebula:gradle-ospackage-plugin:4.4.0'
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:4.8.0'
     }
 }
 
 plugins {
     id 'application'
     id 'distribution'
-    id 'nebula.rpm' version '4.4.0'
+    id 'nebula.rpm' version '4.8.0'
 }
 
-applicationName = 'storageClientApp'
 mainClassName = 'org.janelia.jacsstorage.client.StorageClientApp'
 
 project(":jacsstorage-clients") {
@@ -58,13 +57,26 @@ project(":jacsstorage-clients") {
         applicationName = "storageUpdateBenchmarks"
     }
 
-    applicationDistribution.into("bin") {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        from(createStorageClientApp)
-        from(createStoragePersistBenchmark)
-        from(createStorageRetrieveBenchmark)
-        from(createStorageUpdateBenchmark)
-        fileMode = 0755
+    distributions {
+        benchmarks {
+            contents {
+                into("bin") {
+                    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+                    from(createStoragePersistBenchmark)
+                    from(createStorageRetrieveBenchmark)
+                    from(createStorageUpdateBenchmark)
+                    fileMode = 0755
+                }
+            }
+        }
+        main {
+            contents {
+                into("bin") {
+                    from(createStorageClientApp)
+                    fileMode = 0755
+                }
+            }
+        }
     }
 
     task ospackage(type: Rpm, dependsOn: installDist) {
