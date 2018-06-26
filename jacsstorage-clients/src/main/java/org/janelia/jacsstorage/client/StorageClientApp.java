@@ -43,7 +43,7 @@ public class StorageClientApp {
         String authToken;
 
         String getUserKey() {
-            return "user:" + username;
+            return StringUtils.isNotBlank(username) ? "user:" + username : "";
         }
     }
 
@@ -52,12 +52,19 @@ public class StorageClientApp {
         String localPath;
         @Parameter(names = "-name", description = "Data bundle name")
         String name;
+        @Parameter(names = "-owner", description = "Data bundle owner key")
+        String owner;
         @Parameter(names = "-bundleId", description = "bundle id")
         Long bundleId = 0L;
 
         Long getBundleId() {
             return bundleId != null && bundleId != 0L ? bundleId : null;
         }
+
+        String getOwnerKey() {
+            return StringUtils.isNotBlank(owner) ? "user:" + owner : "";
+        }
+
     }
 
     @Parameters(commandDescription = "Allocate a data bundle.")
@@ -157,7 +164,6 @@ public class StorageClientApp {
         );
         StorageClientImplHelper storageClientHelper = new StorageClientImplHelper();
         DataStorageInfo storageInfo;
-        String dataOwnerKey = cmdMain.getUserKey();
         switch (jc.getParsedCommand()) {
             case "allocate":
                 storageInfo = new DataStorageInfo()
@@ -165,7 +171,7 @@ public class StorageClientApp {
                         .setStorageFormat(JacsStorageFormat.valueOf(cmdAlloc.dataFormat))
                         .setStorageTags(cmdAlloc.storageTags)
                         .addMetadata(cmdAlloc.bundleProperties)
-                        .setOwnerKey(dataOwnerKey)
+                        .setOwnerKey(StringUtils.defaultIfBlank(cmdAlloc.getOwnerKey(), cmdMain.getUserKey()))
                         .setName(cmdAlloc.name);
                 if (StringUtils.isBlank(cmdAlloc.localPath)) {
                     // allocate only
@@ -179,7 +185,7 @@ public class StorageClientApp {
                 storageInfo = new DataStorageInfo()
                         .setConnectionURL(cmdMain.serverURL)
                         .setNumericId(cmdGet.getBundleId())
-                        .setOwnerKey(dataOwnerKey)
+                        .setOwnerKey(cmdGet.getOwnerKey())
                         .setName(cmdGet.name);
                 storageClient.retrieveData(cmdGet.localPath, storageInfo, authToken);
                 break;
@@ -187,7 +193,7 @@ public class StorageClientApp {
                 storageInfo = new DataStorageInfo()
                         .setNumericId(cmdList.getBundleId())
                         .setName(cmdList.name)
-                        .setOwnerKey(dataOwnerKey);
+                        .setOwnerKey(cmdList.getOwnerKey());
                 List<DataNodeInfo> entryList = storageClientHelper.retrieveStorageInfo(cmdMain.serverURL, storageInfo, authToken)
                         .map(ds -> {
                             return storageClientHelper.listStorageContent(ds.getConnectionURL(), ds.getNumericId(), authToken);
@@ -201,7 +207,7 @@ public class StorageClientApp {
                 storageInfo = new DataStorageInfo()
                         .setNumericId(cmdMkdir.getBundleId())
                         .setName(cmdMkdir.name)
-                        .setOwnerKey(dataOwnerKey);
+                        .setOwnerKey(StringUtils.defaultIfBlank(cmdMkdir.getOwnerKey(), cmdMain.getUserKey()));
                 String newFolderURL = storageClientHelper.retrieveStorageInfo(cmdMain.serverURL, storageInfo, authToken)
                         .flatMap(ds -> {
                             return storageClientHelper.createNewDirectory(ds.getConnectionURL(), ds.getNumericId(), cmdMkdir.entryName, authToken);
@@ -225,7 +231,7 @@ public class StorageClientApp {
                 storageInfo = new DataStorageInfo()
                         .setNumericId(cmdMkdir.getBundleId())
                         .setName(cmdMkdir.name)
-                        .setOwnerKey(dataOwnerKey);
+                        .setOwnerKey(StringUtils.defaultIfBlank(cmdMkdir.getOwnerKey(), cmdMain.getUserKey()));
                 String newFileURL = storageClientHelper.retrieveStorageInfo(cmdMain.serverURL, storageInfo, authToken)
                         .flatMap(ds -> {
                             try {
@@ -241,7 +247,7 @@ public class StorageClientApp {
                 break;
             case "search":
                 Map<String, Object> searchResponse = storageClientHelper.searchBundles(cmdMain.serverURL,
-                        cmdSearch.bundleId, cmdMain.getUserKey(), cmdSearch.name, cmdSearch.storageHost, cmdSearch.storageTags,
+                        cmdSearch.bundleId, cmdSearch.getOwnerKey(), cmdSearch.name, cmdSearch.storageHost, cmdSearch.storageTags,
                         cmdSearch.pageNumber, cmdSearch.pageSize, authToken);
                 System.out.println("Search response: " + searchResponse);
                 break;
