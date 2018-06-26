@@ -414,7 +414,9 @@ public class StorageClientImplHelper {
                 target = target.queryParam("storageHost", storageHost);
             }
             if (!storageTags.isEmpty()) {
-                target = target.queryParam("storageTags", storageTags);
+                for (String storageTag : storageTags) {
+                    target = target.queryParam("storageTags", storageTag);
+                }
             }
             if (pageNumber > 0) {
                 target = target.queryParam("page", pageNumber);
