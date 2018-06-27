@@ -239,6 +239,7 @@ public class StorageResourceHelper {
                             newDataNode.setStorageId(dn.getStorageId());
                             newDataNode.setRootLocation(storageVolume.getStorageRootDir());
                             newDataNode.setRootPrefix(storageVolume.getStoragePathPrefix());
+                            newDataNode.setNodeAccessURL(storageVolume.getStorageServiceURL() + "/" + pathRelativeToVolRoot.toString());
                             newDataNode.setNodeRelativePath(pathRelativeToVolRoot.resolve(dn.getNodeRelativePath()).toString());
                             newDataNode.setSize(dn.getSize());
                             newDataNode.setMimeType(dn.getMimeType());

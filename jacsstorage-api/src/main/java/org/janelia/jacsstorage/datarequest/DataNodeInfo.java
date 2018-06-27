@@ -10,6 +10,7 @@ public class DataNodeInfo {
     private String storageId;
     private String rootLocation;
     private String rootPrefix;
+    private String nodeAccessURL;
     private String nodeRelativePath; // node path relative to the root
     private long size;
     private String mimeType;
@@ -48,6 +49,14 @@ public class DataNodeInfo {
 
     public void setRootPrefix(String rootPrefix) {
         this.rootPrefix = rootPrefix;
+    }
+
+    public String getNodeAccessURL() {
+        return nodeAccessURL;
+    }
+
+    public void setNodeAccessURL(String nodeAccessURL) {
+        this.nodeAccessURL = nodeAccessURL;
     }
 
     public String getNodeRelativePath() {
