@@ -1,7 +1,7 @@
 package org.janelia.jacsstorage.provider;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import org.janelia.jacsstorage.cdi.ObjectMapperFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.ext.Provider;
@@ -10,8 +10,10 @@ import javax.ws.rs.ext.Provider;
 public class ObjectMapperResolver extends JacksonJaxbJsonProvider {
 
     @Inject
-    public ObjectMapperResolver(ObjectMapper mapper) {
-        setMapper(mapper);
+    public ObjectMapperResolver(ObjectMapperFactory mapperFactory) {
+        setMapper(
+                mapperFactory.newObjectMapper()
+        );
     }
 
 }

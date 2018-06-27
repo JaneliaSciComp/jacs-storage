@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.testrest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.janelia.jacsstorage.cdi.ObjectMapperFactory;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.filter.JWTAuthFilter;
@@ -49,8 +50,13 @@ public class TestMasterStorageDependenciesProducer {
     }
 
     @Produces
+    public ObjectMapperFactory getObjectMapperFactory() {
+        return ObjectMapperFactory.instance();
+    }
+
+    @Produces
     public ObjectMapper getObjectMapper() {
-        return new ObjectMapper();
+        return getObjectMapperFactory().newObjectMapper();
     }
 
     @Produces
