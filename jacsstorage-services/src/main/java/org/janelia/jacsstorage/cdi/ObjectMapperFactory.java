@@ -31,6 +31,7 @@ public class ObjectMapperFactory {
         return new ObjectMapper()
                 .registerModule(new JodaModule())
                 .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+                .configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false)
                 .configure(SerializationFeature.WRITE_DATES_WITH_ZONE_ID, true)
                 .configure(SerializationFeature.WRITE_ENUMS_USING_TO_STRING, true)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
