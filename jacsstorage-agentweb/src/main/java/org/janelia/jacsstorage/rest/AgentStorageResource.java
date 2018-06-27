@@ -51,6 +51,7 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Base64;
 import java.util.List;
 
@@ -180,6 +181,11 @@ public class AgentStorageResource {
             dataBundleContent.forEach(dn -> {
                 dn.setNumericStorageId(dataBundle.getId());
                 dn.setRootPrefix(virtualStoragePath);
+                dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
+                        .path(AgentStorageResource.class, "getEntryContent")
+                        .build(dataBundle.getId(), dn.getNodeRelativePath())
+                        .toString()
+                );
             });
         }
         return dataBundleContent;
@@ -255,16 +261,14 @@ public class AgentStorageResource {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
+        URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
+                .path(AgentStorageResource.class, "getEntryContent")
+                .build(dataBundleId, dataEntryPath);
         if (CollectionUtils.isNotEmpty(existingEntries)) {
             // if an entry already exists return ACCEPTED(202) instead of CREATED (201)
             return Response
                     .status(Response.Status.ACCEPTED)
-                    .location(resourceURI.getBaseUriBuilder()
-                            .path(Constants.AGENTSTORAGE_URI_PATH)
-                            .path(dataBundleId.toString())
-                            .path("entry_content")
-                            .path(dataEntryPath)
-                            .build())
+                    .location(dataNodeAccessURI)
                     .entity(existingEntries.get(0))
                     .build();
         }
@@ -280,15 +284,11 @@ public class AgentStorageResource {
         newDataNode.setNumericStorageId(dataBundleId);
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
         newDataNode.setRootPrefix(dataBundle.getVirtualRoot());
+        newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(true);
         return Response
-                .created(resourceURI.getBaseUriBuilder()
-                        .path(Constants.AGENTSTORAGE_URI_PATH)
-                        .path(dataBundleId.toString())
-                        .path("entry_content")
-                        .path(dataEntryPath)
-                        .build())
+                .created(dataNodeAccessURI)
                 .entity(newDataNode)
                 .build();
     }
@@ -348,15 +348,14 @@ public class AgentStorageResource {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
+        URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
+                .path(AgentStorageResource.class, "getEntryContent")
+                .build(dataBundleId, dataEntryPath)
+                ;
         if (CollectionUtils.isNotEmpty(existingEntries)) {
             return Response
                     .status(Response.Status.CONFLICT)
-                    .location(resourceURI.getBaseUriBuilder()
-                            .path(Constants.AGENTSTORAGE_URI_PATH)
-                            .path(dataBundleId.toString())
-                            .path("entry_content")
-                            .path(dataEntryPath)
-                            .build())
+                    .location(dataNodeAccessURI)
                     .entity(existingEntries.get(0))
                     .build();
         }
@@ -371,15 +370,11 @@ public class AgentStorageResource {
         newDataNode.setNumericStorageId(dataBundleId);
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
         newDataNode.setRootPrefix(dataBundle.getVirtualRoot());
+        newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(false);
         return Response
-                .created(resourceURI.getBaseUriBuilder()
-                        .path(Constants.AGENTSTORAGE_URI_PATH)
-                        .path(dataBundleId.toString())
-                        .path("entry_content")
-                        .path(dataEntryPath)
-                        .build())
+                .created(dataNodeAccessURI)
                 .entity(newDataNode)
                 .build();
     }

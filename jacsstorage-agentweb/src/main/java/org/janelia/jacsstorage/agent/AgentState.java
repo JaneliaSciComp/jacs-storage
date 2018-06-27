@@ -56,11 +56,11 @@ public class AgentState {
         return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
     }
 
-    public String getMasterHttpURL() {
+    String getMasterHttpURL() {
         return masterHttpURL;
     }
 
-    public String getAgentHttpURL() {
+    String getAgentHttpURL() {
         return agentHttpURL;
     }
 

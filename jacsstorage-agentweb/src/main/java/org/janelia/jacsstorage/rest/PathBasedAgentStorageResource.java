@@ -28,6 +28,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 
 @Timed
 @Produces(MediaType.APPLICATION_JSON)
@@ -108,10 +109,11 @@ public class PathBasedAgentStorageResource {
         LOG.info("List content from location {} with a depthParameter {}", fullDataPathNameParam, depthParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
+        URI baseURI = resourceURI.getBaseUri();
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 fullDataPathNameParam,
-                (dataBundle, dataEntryPath) -> storageResourceHelper.listContentFromDataBundle(dataBundle, dataEntryPath, depth),
-                (storageVolume, dataEntryPath) -> storageResourceHelper.listContentFromPath(storageVolume, dataEntryPath, depth)
+                (dataBundle, dataEntryPath) -> storageResourceHelper.listContentFromDataBundle(dataBundle, baseURI, dataEntryPath, depth),
+                (storageVolume, dataEntryPath) -> storageResourceHelper.listContentFromPath(storageVolume, baseURI, dataEntryPath, depth)
         ).build();
 
     }

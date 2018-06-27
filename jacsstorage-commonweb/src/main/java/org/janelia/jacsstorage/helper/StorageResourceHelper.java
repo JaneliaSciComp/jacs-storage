@@ -23,7 +23,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriBuilder;
 import java.math.BigInteger;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -201,13 +203,19 @@ public class StorageResourceHelper {
                 ;
     }
 
-    public Response.ResponseBuilder listContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath, int depth) {
+    public Response.ResponseBuilder listContentFromDataBundle(JacsBundle dataBundle, URI baseURI, String dataEntryPath, int depth) {
         List<DataNodeInfo> dataBundleContent = storageContentReader.listDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), depth);
         if (CollectionUtils.isNotEmpty(dataBundleContent) && dataBundle.getVirtualRoot() != null) {
             String virtualStoragePath = dataBundle.getVirtualRoot();
             dataBundleContent.forEach(dn -> {
                 dn.setNumericStorageId(dataBundle.getId());
                 dn.setRootPrefix(virtualStoragePath);
+                dn.setNodeAccessURL(UriBuilder.fromUri(baseURI)
+                        .path(dataBundle.getId().toString())
+                        .path("entry_content")
+                        .path(dn.getNodeRelativePath())
+                        .build()
+                        .toString());
             });
         }
         return Response
@@ -215,11 +223,11 @@ public class StorageResourceHelper {
                 ;
     }
 
-    public Response.ResponseBuilder listContentFromPath(JacsStorageVolume storageVolume, String dataEntryPath, int depth) {
+    public Response.ResponseBuilder listContentFromPath(JacsStorageVolume storageVolume, URI baseURI, String dataEntryPath, int depth) {
         if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath))) {
-            return listContentFromPath(storageVolume, Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath), depth);
+            return listContentFromPath(storageVolume, baseURI, Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath), depth);
         } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath))) {
-            return listContentFromPath(storageVolume, Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath), depth);
+            return listContentFromPath(storageVolume, baseURI, Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath), depth);
         } else {
             return Response
                     .status(Response.Status.NOT_FOUND)
@@ -228,19 +236,25 @@ public class StorageResourceHelper {
         }
     }
 
-    private Response.ResponseBuilder listContentFromPath(JacsStorageVolume storageVolume, Path path, int depth) {
+    private Response.ResponseBuilder listContentFromPath(JacsStorageVolume storageVolume, URI baseURI, Path path, int depth) {
         JacsStorageFormat storageFormat = Files.isRegularFile(path) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
         List<DataNodeInfo> entries = storageContentReader.listDataEntries(path, "", storageFormat, depth);
         Path pathRelativeToVolRoot = Paths.get(storageVolume.getStorageRootDir()).relativize(path);
         return Response
                 .ok(entries.stream()
                         .map(dn -> {
+                            String dataNodePathRelativeToVolRoot = pathRelativeToVolRoot.resolve(dn.getNodeRelativePath()).toString();
+                            URI dataNodeAccessURI = UriBuilder.fromUri(baseURI)
+                                    .path("storage_volume")
+                                    .path(storageVolume.getId().toString())
+                                    .path(dataNodePathRelativeToVolRoot)
+                                    .build();
                             DataNodeInfo newDataNode = new DataNodeInfo();
                             newDataNode.setStorageId(dn.getStorageId());
                             newDataNode.setRootLocation(storageVolume.getStorageRootDir());
                             newDataNode.setRootPrefix(storageVolume.getStoragePathPrefix());
-                            newDataNode.setNodeAccessURL(storageVolume.getStorageServiceURL() + "/" + pathRelativeToVolRoot.toString());
-                            newDataNode.setNodeRelativePath(pathRelativeToVolRoot.resolve(dn.getNodeRelativePath()).toString());
+                            newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
+                            newDataNode.setNodeRelativePath(dataNodePathRelativeToVolRoot);
                             newDataNode.setSize(dn.getSize());
                             newDataNode.setMimeType(dn.getMimeType());
                             newDataNode.setCollectionFlag(dn.isCollectionFlag());
