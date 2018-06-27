@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 @Timed
 public class StorageResourceHelper {
@@ -229,9 +230,19 @@ public class StorageResourceHelper {
 
     private Response.ResponseBuilder listContentFromPath(JacsStorageVolume storageVolume, Path path, int depth) {
         JacsStorageFormat storageFormat = Files.isRegularFile(path) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
-        List<DataNodeInfo> dataBundleContent = storageContentReader.listDataEntries(path, "", storageFormat, depth);
+        List<DataNodeInfo> entries = storageContentReader.listDataEntries(path, "", storageFormat, depth);
+        Path pathRelativeToVolRoot = Paths.get(storageVolume.getStorageRootDir()).relativize(path);
         return Response
-                .ok(dataBundleContent, MediaType.APPLICATION_JSON)
+                .ok(entries.stream()
+                        .map(dn -> {
+                            DataNodeInfo newDataNode = new DataNodeInfo();
+                            newDataNode.setRootPrefix(storageVolume.getStoragePathPrefix());
+                            newDataNode.setRootLocation(storageVolume.getStorageRootDir());
+                            newDataNode.setNodeRelativePath(pathRelativeToVolRoot.resolve(dn.getNodeRelativePath()).toString());
+                            return newDataNode;
+                        })
+                        .collect(Collectors.toList()),
+                        MediaType.APPLICATION_JSON)
                 ;
     }
 }
