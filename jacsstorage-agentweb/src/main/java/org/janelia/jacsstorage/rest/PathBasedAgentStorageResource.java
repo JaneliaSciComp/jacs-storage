@@ -8,6 +8,7 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageContentReader;
 import org.janelia.jacsstorage.service.StorageLookupService;
@@ -15,16 +16,17 @@ import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
 @Timed
@@ -85,6 +87,33 @@ public class PathBasedAgentStorageResource {
                 (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath),
                 (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, dataEntryPath)
         ).build();
+    }
+
+    @RequireAuthentication
+    @Produces(MediaType.APPLICATION_JSON)
+    @GET
+    @Path("storage_path/list/{dataPath:.*}")
+    @ApiOperation(
+            value = "List the content.",
+            notes = "Lists tree hierarchy of the storage path"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully read the data bundle content."),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
+    public Response listContent(@PathParam("dataPath") String fullDataPathNameParam,
+                                @QueryParam("depth") Integer depthParam,
+                                @Context SecurityContext securityContext) {
+        LOG.info("List content from location {} with a depthParameter {}", fullDataPathNameParam, depthParam);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
+        int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
+        return storageResourceHelper.handleResponseForFullDataPathParam(
+                fullDataPathNameParam,
+                (dataBundle, dataEntryPath) -> storageResourceHelper.listContentFromDataBundle(dataBundle, dataEntryPath, depth),
+                (storageVolume, dataEntryPath) -> storageResourceHelper.listContentFromPath(storageVolume, dataEntryPath, depth)
+        ).build();
+
     }
 
     @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})

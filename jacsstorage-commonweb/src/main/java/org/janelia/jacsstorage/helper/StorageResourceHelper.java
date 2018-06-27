@@ -2,8 +2,10 @@ package org.janelia.jacsstorage.helper;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
+import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -173,7 +175,7 @@ public class StorageResourceHelper {
         return Response
                 .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
                 .header("Content-Length", fileSize)
-                .header("Content-Disposition","attachment; filename = " + filePath.toFile().getName())
+                .header("Content-Disposition", "attachment; filename = " + filePath.toFile().getName())
                 ;
     }
 
@@ -194,8 +196,42 @@ public class StorageResourceHelper {
         return Response
                 .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)
                 .header("Content-Length", fileSize)
-                .header("Content-Disposition","attachment; filename = " + JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()) + "-" + dataBundle.getName() + "/" + dataEntryPath)
+                .header("Content-Disposition", "attachment; filename = " + JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()) + "-" + dataBundle.getName() + "/" + dataEntryPath)
                 ;
     }
 
+    public Response.ResponseBuilder listContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath, int depth) {
+        List<DataNodeInfo> dataBundleContent = storageContentReader.listDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), depth);
+        if (CollectionUtils.isNotEmpty(dataBundleContent) && dataBundle.getVirtualRoot() != null) {
+            String virtualStoragePath = dataBundle.getVirtualRoot();
+            dataBundleContent.forEach(dn -> {
+                dn.setNumericStorageId(dataBundle.getId());
+                dn.setRootPrefix(virtualStoragePath);
+            });
+        }
+        return Response
+                .ok(dataBundleContent, MediaType.APPLICATION_JSON)
+                ;
+    }
+
+    public Response.ResponseBuilder listContentFromPath(JacsStorageVolume storageVolume, String dataEntryPath, int depth) {
+        if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath))) {
+            return listContentFromPath(storageVolume, Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath), depth);
+        } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath))) {
+            return listContentFromPath(storageVolume, Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath), depth);
+        } else {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No path found for " + dataEntryPath + " on volume " + storageVolume.getName()))
+                    ;
+        }
+    }
+
+    private Response.ResponseBuilder listContentFromPath(JacsStorageVolume storageVolume, Path path, int depth) {
+        JacsStorageFormat storageFormat = Files.isRegularFile(path) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
+        List<DataNodeInfo> dataBundleContent = storageContentReader.listDataEntries(path, "", storageFormat, depth);
+        return Response
+                .ok(dataBundleContent, MediaType.APPLICATION_JSON)
+                ;
+    }
 }

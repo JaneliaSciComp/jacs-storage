@@ -74,7 +74,6 @@ import java.util.List;
 public class AgentStorageResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(AgentStorageResource.class);
-    private static int MAX_ALLOWED_DEPTH = 20;
 
     @Inject
     private DataStorageService dataStorageService;
@@ -167,7 +166,7 @@ public class AgentStorageResource {
         String entryName = StringUtils.isNotBlank(entry)
                 ? entry.trim()
                 : null;
-        int depth = depthParam != null && depthParam >= 0 && depthParam < MAX_ALLOWED_DEPTH ? depthParam : MAX_ALLOWED_DEPTH;
+        int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
         List<DataNodeInfo> dataBundleCotent = listDataEntries(dataBundle, entryName, depth);
         return Response
                 .ok(dataBundleCotent, MediaType.APPLICATION_JSON)
