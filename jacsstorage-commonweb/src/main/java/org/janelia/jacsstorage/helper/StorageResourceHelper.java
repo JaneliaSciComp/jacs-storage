@@ -236,9 +236,15 @@ public class StorageResourceHelper {
                 .ok(entries.stream()
                         .map(dn -> {
                             DataNodeInfo newDataNode = new DataNodeInfo();
-                            newDataNode.setRootPrefix(storageVolume.getStoragePathPrefix());
+                            newDataNode.setStorageId(dn.getStorageId());
                             newDataNode.setRootLocation(storageVolume.getStorageRootDir());
+                            newDataNode.setRootPrefix(storageVolume.getStoragePathPrefix());
                             newDataNode.setNodeRelativePath(pathRelativeToVolRoot.resolve(dn.getNodeRelativePath()).toString());
+                            newDataNode.setSize(dn.getSize());
+                            newDataNode.setMimeType(dn.getMimeType());
+                            newDataNode.setCollectionFlag(dn.isCollectionFlag());
+                            newDataNode.setCreationTime(dn.getCreationTime());
+                            newDataNode.setLastModified(dn.getLastModified());
                             return newDataNode;
                         })
                         .collect(Collectors.toList()),
