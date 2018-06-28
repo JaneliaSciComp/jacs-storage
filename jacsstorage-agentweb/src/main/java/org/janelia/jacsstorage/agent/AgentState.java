@@ -15,6 +15,7 @@ import org.janelia.jacsstorage.resilience.ConnectionTester;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.coreutils.NetUtils;
+import org.janelia.jacsstorage.service.localservice.StorageVolumeBootstrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,7 +140,9 @@ public class AgentState {
 
     @PostConstruct
     public void initialize() {
-        agentManagedVolumes = updateStorageVolumes(storageVolumeManager.getManagedVolumes(new StorageQuery()), (sv) -> true);
+        agentManagedVolumes = updateStorageVolumes(storageVolumeManager.getManagedVolumes(
+                new StorageQuery().setLocalToAnyHost(true)), // only interested in local volumes
+                (sv) -> true);
     }
 
     private List<JacsStorageVolume> updateStorageVolumes(List<JacsStorageVolume> storageVolumes, Predicate<JacsStorageVolume> filter) {

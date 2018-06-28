@@ -140,6 +140,11 @@ public class JacsStorageVolume extends AbstractEntity {
         return shared;
     }
 
+    @JsonIgnore
+    public boolean isNotShared() {
+        return !shared;
+    }
+
     public void setShared(boolean shared) {
         this.shared = shared;
     }

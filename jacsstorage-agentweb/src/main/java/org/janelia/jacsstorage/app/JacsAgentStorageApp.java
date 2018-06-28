@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.agent.AgentState;
+import org.janelia.jacsstorage.service.localservice.StorageVolumeBootstrapper;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
@@ -20,6 +21,8 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     private static class AgentArgs extends AppArgs {
         @Parameter(names = "-masterURL", description = "URL of the master datatransfer to which to connect")
         String masterHttpUrl;
+        @Parameter(names = "-bootstrapStorageVolumes", description = "Bootstrap agent volumes")
+        boolean bootstrapStorageVolumes;
     }
 
     public static void main(String[] args) {
@@ -35,6 +38,10 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
                 .initialize();
         JacsAgentStorageApp app = container.select(JacsAgentStorageApp.class).get();
 
+        if (agentArgs.bootstrapStorageVolumes) {
+            StorageVolumeBootstrapper volumeBootstrapper = container.select(StorageVolumeBootstrapper.class).get();
+            volumeBootstrapper.initializeStorageVolumes();
+        }
         AgentState agentState = container.select(AgentState.class).get();
         // update agent info
         agentState.updateAgentInfo(

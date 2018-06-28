@@ -11,5 +11,6 @@ bin/jacsstorage-agentweb \
      -b 0.0.0.0 \
      -p ${AGENT_HTTP_PORT} \
      -masterURL ${MASTER_URL} \
+     -bootstrapStorageVolumes \
      -DStorageAgent.InitialPingDelayInSeconds=0 \
      $*

@@ -2,11 +2,9 @@ package org.janelia.jacsstorage.service.localservice;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.hamcrest.Matcher;
-import org.hamcrest.beans.HasPropertyWithValue;
-import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
-import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
+import org.janelia.jacsstorage.datarequest.PageRequest;
+import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
@@ -14,7 +12,6 @@ import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,120 +25,88 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({LocalStorageVolumeManager.class})
 public class LocalStorageVolumeManagerTest {
+    private static final String TEST_HOST = "testHost";
 
     private JacsStorageVolumeDao storageVolumeDao;
     private NotificationService capacityNotifier;
+    private StorageVolumeManager storageVolumeManager;
 
     @Before
     public void setUp() {
         storageVolumeDao = mock(JacsStorageVolumeDao.class);
         capacityNotifier = mock(NotificationService.class);
+        storageVolumeManager = new LocalStorageVolumeManager(storageVolumeDao, capacityNotifier, TEST_HOST);
     }
 
     @Test
-    public void managedVolumes() {
-        prepareGetAvailableStorageBytes();
-        class TestData {
-            private final ApplicationConfig applicationConfig;
-            private final Matcher<Iterable<JacsStorageVolume>> matcher;
-
-            private TestData(ApplicationConfig applicationConfig, Matcher<Iterable<JacsStorageVolume>> matcher) {
-                this.applicationConfig = applicationConfig;
-                this.matcher = matcher;
-            }
-        }
-        @SuppressWarnings("unchecked")
-        TestData[] testData = new TestData[] {
-                new TestData(
-                        new ApplicationConfigProvider()
-                                .fromMap(ImmutableMap.<String, String>builder()
-                                        .put("StorageVolume.v1.RootDir", "/data/jadestorage")
-                                        .put("StorageVolume.v1.PathPrefix", "${storageHost}/jadestorage/${otherKey}/storage/${andAnother}")
-                                        .put("StorageVolume.v1.Shared", "false")
-                                        .put("StorageVolume.v1.Tags", "local")
-                                        .put("StorageVolume.v2.RootDir", "/data/jadestorage")
-                                        .put("StorageVolume.v2.PathPrefix", "/shared/jadestorage")
-                                        .put("StorageVolume.v2.Shared", "true")
-                                        .put("StorageVolume.v2.Tags", "shared")
-                                        .put("StorageAgent.StorageHost", "")
-                                        .put("StorageVolume.OVERFLOW_VOLUME.RootDir", "/overflow")
-                                        .build()
-                                )
+    public void mangedVolumes() {
+        Mockito.when(storageVolumeDao.findMatchingVolumes(any(StorageQuery.class), any(PageRequest.class)))
+                .then(invocation -> new PageResult<>(invocation.getArgument(1), ImmutableList.of(
+                        new JacsStorageVolumeBuilder()
+                                .storageHost(TEST_HOST)
+                                .storageRootDir("/root/testDir")
+                                .addTag("t1").addTag("t2")
+                                .storageServiceURL("http://storageURL")
+                                .percentageFull(20)
                                 .build(),
-                        hasItems(
-                                allOf(new HasPropertyWithValue<>("name", equalTo("v1")),
-                                        new HasPropertyWithValue<>("storageRootDir", equalTo("/data/jadestorage")),
-                                        new HasPropertyWithValue<>("storagePathPrefix", equalTo("/" + NetUtils.getCurrentHostName() + "/jadestorage/${otherKey}/storage/${andAnother}")),
-                                        new HasPropertyWithValue<>("shared", equalTo(false))
-                                ),
-                                allOf(new HasPropertyWithValue<>("name", equalTo("v2")),
-                                        new HasPropertyWithValue<>("storageRootDir", equalTo("/data/jadestorage")),
-                                        new HasPropertyWithValue<>("storagePathPrefix", equalTo("/shared/jadestorage")),
-                                        new HasPropertyWithValue<>("shared", equalTo(true))
-                                ),
-                                allOf(new HasPropertyWithValue<>("name", equalTo("OVERFLOW_VOLUME")),
-                                        new HasPropertyWithValue<>("storageRootDir", equalTo("/overflow")),
-                                        new HasPropertyWithValue<>("shared", equalTo(true))
-                                )
-                        )
-                ),
-                new TestData(
-                        new ApplicationConfigProvider()
-                                .fromMap(ImmutableMap.<String, String>builder()
-                                        .put("StorageVolume.v1.RootDir", "/data/jadestorage")
-                                        .put("StorageVolume.v1.PathPrefix", "${StorageAgent.StorageHost}/jadestorage/${otherKey}/storage")
-                                        .put("StorageVolume.v1.Shared", "false")
-                                        .put("StorageVolume.v1.Tags", "local")
-                                        .put("StorageVolume.v2.RootDir", "/data/jadestorage")
-                                        .put("StorageVolume.v2.PathPrefix", "/shared/jadestorage")
-                                        .put("StorageVolume.v2.Shared", "true")
-                                        .put("StorageVolume.v2.Tags", "shared")
-                                        .put("StorageAgent.StorageHost", "TheHost")
-                                        .put("StorageVolume.OVERFLOW_VOLUME.RootDir", "/overflow")
-                                        .build()
-                                )
-                                .build(),
-                        hasItems(
-                                allOf(new HasPropertyWithValue<>("name", equalTo("v1")),
-                                        new HasPropertyWithValue<>("storageRootDir", equalTo("/data/jadestorage")),
-                                        new HasPropertyWithValue<>("storagePathPrefix", equalTo("/TheHost/jadestorage/${otherKey}/storage"))
-                                ),
-                                allOf(new HasPropertyWithValue<>("name", equalTo("v2")),
-                                        new HasPropertyWithValue<>("storageRootDir", equalTo("/data/jadestorage")),
-                                        new HasPropertyWithValue<>("storagePathPrefix", equalTo("/shared/jadestorage"))
-                                ),
-                                allOf(new HasPropertyWithValue<>("name", equalTo("OVERFLOW_VOLUME")),
-                                        new HasPropertyWithValue<>("storageRootDir", equalTo("/overflow"))
-                                )
-                        )
-                )
-        };
-        for (TestData td : testData) {
-            StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
-                    storageVolumeDao,
-                    capacityNotifier,
-                    td.applicationConfig,
-                    td.applicationConfig.getStringPropertyValue("StorageAgent.StorageHost"),
-                    ImmutableList.of("v1", "v2")
-            );
-            List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery());
-            assertThat(storageVolumes, td.matcher);
-        }
+                        new JacsStorageVolumeBuilder()
+                                .shared(true)
+                                .storageRootDir("/root/testSharedDir")
+                                .addTag("t1").addTag("t2")
+                                .storageServiceURL("http://storageURL")
+                                .percentageFull(20)
+                                .build()
+                        ))
+                );
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery());
+        verify(storageVolumeDao).findMatchingVolumes(
+                argThat(argument -> TEST_HOST.equals(argument.getAccessibleOnHost())),
+                any(PageRequest.class));
+        assertThat(storageVolumes, hasSize(2));
     }
 
-    private void prepareGetAvailableStorageBytes() {
+    @Test
+    public void fullVolumeInfo() {
+        String testVolumeName = "v1";
+        Mockito.when(storageVolumeDao.findMatchingVolumes(any(StorageQuery.class), any(PageRequest.class)))
+                .then(invocation -> new PageResult<>(invocation.getArgument(1), ImmutableList.of(
+                        new JacsStorageVolumeBuilder()
+                                .name(testVolumeName)
+                                .storageHost(TEST_HOST)
+                                .storageRootDir("/root/testDir")
+                                .addTag("t1").addTag("t2")
+                                .storageServiceURL("http://storageURL")
+                                .percentageFull(20)
+                                .build()
+                        ))
+                );
+        prepareGetAvailableStorageBytes(199L, 300L);
+        Optional<JacsStorageVolume> storageVolume = storageVolumeManager.getFullVolumeInfo(testVolumeName);
+        verify(storageVolumeDao).findMatchingVolumes(
+                argThat(argument -> testVolumeName.equals(argument.getStorageName()) && TEST_HOST.equals(argument.getAccessibleOnHost())),
+                any(PageRequest.class));
+        assertTrue(storageVolume.isPresent());
+        storageVolume.ifPresent(sv -> {
+            assertEquals(199L, sv.getAvailableSpaceInBytes().longValue());
+        });
+    }
+
+    private void prepareGetAvailableStorageBytes(long usableSpace, long totalSpace) {
         try {
             FileStore testFileStore = mock(FileStore.class);
             PowerMockito.mockStatic(Files.class);
@@ -151,8 +116,8 @@ public class LocalStorageVolumeManagerTest {
                     .then((Answer<Path>) invocation -> invocation.getArgument(0));
             Mockito.when(Files.getFileStore(any(Path.class)))
                     .then((Answer<FileStore>) invocation -> testFileStore);
-            Mockito.when(testFileStore.getUsableSpace()).thenReturn(199L);
-            Mockito.when(testFileStore.getTotalSpace()).thenReturn(300L);
+            Mockito.when(testFileStore.getUsableSpace()).thenReturn(usableSpace);
+            Mockito.when(testFileStore.getTotalSpace()).thenReturn(totalSpace);
         } catch (Exception e) {
             fail(e.toString());
         }
@@ -173,20 +138,13 @@ public class LocalStorageVolumeManagerTest {
                 .storageHost(testHost)
                 .name(testVolume.getName())
                 .build();
-        ApplicationConfig applicationConfig = mock(ApplicationConfig.class);
-
-        prepareGetAvailableStorageBytes();
 
         Mockito.when(storageVolumeDao.getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName()))
                 .then(invocation -> newlyCreatedTestVolume);
-        StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
-                storageVolumeDao,
-                capacityNotifier,
-                applicationConfig,
-                testHost,
-                ImmutableList.of("storageVol")
-        );
+        prepareGetAvailableStorageBytes(199L, 300L);
+
         storageVolumeManager.updateVolumeInfo(testVolume);
+
         Mockito.verify(storageVolumeDao).getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName());
         Mockito.verify(storageVolumeDao).update(newlyCreatedTestVolume, ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
                 .put("storageRootDir", new SetFieldValueHandler<>(testVolume.getStorageRootDir()))
@@ -225,20 +183,11 @@ public class LocalStorageVolumeManagerTest {
                 .percentageFull(90)
                 .build();
 
-        ApplicationConfig applicationConfig = mock(ApplicationConfig.class);
-
-        prepareGetAvailableStorageBytes();
-
         Mockito.when(storageVolumeDao.findById(testVolume.getId())).thenReturn(testVolume);
+        prepareGetAvailableStorageBytes(199L, 300L);
 
-        StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
-                storageVolumeDao,
-                capacityNotifier,
-                applicationConfig,
-                testHost,
-                ImmutableList.of("storageVol")
-        );
         storageVolumeManager.updateVolumeInfo(updatedTestVolume);
+
         Mockito.verify(storageVolumeDao).findById(testVolume.getId());
         Mockito.verify(storageVolumeDao).update(testVolume, ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
                 .put("availableSpaceInBytes", new SetFieldValueHandler<>(updatedTestVolume.getAvailableSpaceInBytes()))
@@ -265,20 +214,13 @@ public class LocalStorageVolumeManagerTest {
                 .name(testVolume.getName())
                 .build();
         newlyCreatedTestVolume.setShared(true);
-        ApplicationConfig applicationConfig = mock(ApplicationConfig.class);
-
-        prepareGetAvailableStorageBytes();
 
         Mockito.when(storageVolumeDao.getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName()))
                 .then(invocation -> newlyCreatedTestVolume);
-        StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
-                storageVolumeDao,
-                capacityNotifier,
-                applicationConfig,
-                testHost,
-                ImmutableList.of("storageVol")
-        );
+        prepareGetAvailableStorageBytes(199L, 300L);
+
         storageVolumeManager.updateVolumeInfo(testVolume);
+
         Mockito.verify(storageVolumeDao).getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName());
         Mockito.verify(storageVolumeDao).update(newlyCreatedTestVolume, ImmutableMap.of(
                 "storageRootDir", new SetFieldValueHandler<>(testVolume.getStorageRootDir()),
@@ -300,21 +242,14 @@ public class LocalStorageVolumeManagerTest {
                 .storageServiceURL("http://storageURL")
                 .build();
         testVolume.setShared(true);
-        ApplicationConfig applicationConfig = mock(ApplicationConfig.class);
-
-        prepareGetAvailableStorageBytes();
 
         Mockito.when(storageVolumeDao.findById(testVolume.getId())).thenReturn(testVolume);
+        prepareGetAvailableStorageBytes(199L, 300L);
 
-        StorageVolumeManager storageVolumeManager = new LocalStorageVolumeManager(
-                storageVolumeDao,
-                capacityNotifier,
-                applicationConfig,
-                testHost,
-                ImmutableList.of("storageVol")
-        );
         storageVolumeManager.updateVolumeInfo(testVolume);
+
         Mockito.verify(storageVolumeDao).findById(testVolume.getId());
         Mockito.verifyNoMoreInteractions(storageVolumeDao);
     }
+
 }

@@ -54,4 +54,9 @@ public class JacsStorageVolumeBuilder {
         jacsStorageVolume.setPercentageFull(v);
         return this;
     }
+
+    public JacsStorageVolumeBuilder shared(boolean flag) {
+        jacsStorageVolume.setShared(flag);
+        return this;
+    }
 }

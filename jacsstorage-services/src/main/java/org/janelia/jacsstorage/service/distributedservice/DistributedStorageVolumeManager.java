@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
-import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;

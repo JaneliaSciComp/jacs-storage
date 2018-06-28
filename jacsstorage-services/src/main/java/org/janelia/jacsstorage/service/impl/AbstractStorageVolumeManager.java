@@ -67,7 +67,7 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
             currentVolumeInfo.setStoragePathPrefix(storageVolume.getStoragePathPrefix());
             updatedVolumeFieldsBuilder.put("storagePathPrefix", new SetFieldValueHandler<>(currentVolumeInfo.getStoragePathPrefix()));
         }
-        if (!storageVolume.isShared()) {
+        if (storageVolume.isNotShared()) {
             storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getStorageRootDir()));
             if (!storageVolume.getAvailableSpaceInBytes().equals(currentVolumeInfo.getAvailableSpaceInBytes())) {
                 LOG.debug("Update availableSpace to {} bytes", storageVolume.getAvailableSpaceInBytes());
@@ -89,7 +89,7 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
                 currentVolumeInfo.setStorageServiceURL(storageVolume.getStorageServiceURL());
                 updatedVolumeFieldsBuilder.put("storageServiceURL", new SetFieldValueHandler<>(currentVolumeInfo.getStorageServiceURL()));
             }
-        } else if (!currentVolumeInfo.isShared()) {
+        } else if (currentVolumeInfo.isNotShared()) {
             // if somehow the current volume is not shared make it shared
             currentVolumeInfo.setShared(true);
             currentVolumeInfo.setStorageServiceURL(null);

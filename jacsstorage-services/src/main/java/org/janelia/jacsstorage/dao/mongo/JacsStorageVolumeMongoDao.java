@@ -96,15 +96,21 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             filtersBuilder.add(Filters.eq("_id", storageQuery.getId()));
         }
         if (StringUtils.isNotBlank(storageQuery.getAccessibleOnHost())) {
-            filtersBuilder.add(Filters.or(
-                    Filters.eq("storageHost", storageQuery.getAccessibleOnHost()), // the storage host equals the one set
-                    Filters.exists("storageHost", false), // or the storage host is not set
-                    Filters.eq("storageHost", null)
-            ));
+            if (storageQuery.isLocalToAnyHost()) {
+                filtersBuilder.add(Filters.eq("storageHost", storageQuery.getAccessibleOnHost())); // select volumes accessible ONLY from the specified host
+            } else {
+                filtersBuilder.add(Filters.or(
+                        Filters.eq("storageHost", storageQuery.getAccessibleOnHost()), // the storage host equals the one set
+                        Filters.exists("storageHost", false), // or the storage host is not set
+                        Filters.eq("storageHost", null)
+                ));
+            }
         } else if (storageQuery.isLocalToAnyHost() || CollectionUtils.isNotEmpty(storageQuery.getStorageHosts())) {
             if (CollectionUtils.isNotEmpty(storageQuery.getStorageHosts())) {
+                // this queries for volumes accessible only locally on the specified hosts
                 filtersBuilder.add(Filters.in("storageHost", storageQuery.getStorageHosts()));
             } else {
+                // this queries for volumes accessible only locally on the corresponding hosts
                 filtersBuilder.add(Filters.exists("storageHost", true)); // the storageHost must be set
                 filtersBuilder.add(Filters.ne("storageHost", null));
             }

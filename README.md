@@ -179,6 +179,25 @@ a bearer token in the 'Authorization' header - 'Authorization: Bearer <tokenvalu
 {"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTg2MjY5NDAsInVzZXJfbmFtZSI6ImphY3MifQ.Yoku2rQfRn4GzoLYCfFc4Sag0jjrnYI_-A5W1W4I-o4","user_name":"jacs"}
 ```
 
+### Bootstrapping storage volumes
+
+To setup the storage volumes managed by an agent - the config must have a property `StorageAgent.BootstrappedVolumes`
+which contains a comma delimited list of volumes to be bootstrapped. Then for each volume from the list
+there must be a set of properties that defines the corresponding root path, whether the volume is local to the host
+or it is a shared volume, the volume tags. The format of this properties is:
+
+`StorageVolume.<volumeName>.<volumeProperty>`
+
+The current supported properties are:
+
+`RootDir` - defines the volume's root directory<br/>
+`Shared` - specifies whether this volume is on a shared mount point<br/>
+`PathPrefix` - virtual root directory<br/>
+`Tags` - list of features or labels attached to the volume<br/>
+
+Once the configuration is prepared for bootstrapping the you only need to start the agent with `-bootstrapStorageVolumes`
+flag 
+
 ### Allocate a storage bundle
 
 The method documentation is available [here](http://jade1:8880/docs/#/Master_storage_API./createBundleInfo)

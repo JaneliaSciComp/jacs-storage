@@ -10,7 +10,7 @@ public class AgentConnectionTester implements ConnectionTester<AgentState> {
 
     private final Consumer<AgentState> action;
 
-    public AgentConnectionTester(Consumer<AgentState> action) {
+    AgentConnectionTester(Consumer<AgentState> action) {
         this.action = action;
     }
 
