@@ -11,6 +11,7 @@ import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.security.JacsSubjectHelper;
 import org.janelia.jacsstorage.service.StorageContentReader;
@@ -211,6 +212,7 @@ public class StorageResourceHelper {
                 dn.setNumericStorageId(dataBundle.getId());
                 dn.setRootPrefix(virtualStoragePath);
                 dn.setNodeAccessURL(UriBuilder.fromUri(baseURI)
+                        .path(Constants.AGENTSTORAGE_URI_PATH)
                         .path(dataBundle.getId().toString())
                         .path("entry_content")
                         .path(dn.getNodeRelativePath())
@@ -245,6 +247,7 @@ public class StorageResourceHelper {
                         .map(dn -> {
                             String dataNodePathRelativeToVolRoot = pathRelativeToVolRoot.resolve(dn.getNodeRelativePath()).toString();
                             URI dataNodeAccessURI = UriBuilder.fromUri(baseURI)
+                                    .path(Constants.AGENTSTORAGE_URI_PATH)
                                     .path("storage_volume")
                                     .path(storageVolume.getId().toString())
                                     .path(dataNodePathRelativeToVolRoot)
