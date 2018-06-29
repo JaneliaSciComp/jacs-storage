@@ -235,7 +235,7 @@ public class ExpandedBundleReaderWriterTest {
     public void tryToCreateDirectoryEntryWhenEntryExist() throws IOException {
         String testData = "d_1_1";
         assertThatThrownBy(() -> expandedArchiveBundleWriter.createDirectoryEntry(testDataDir.toString(), testData))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(DataAlreadyExistException.class)
                 .hasMessage("Entry " + testDataDir.resolve(testData) + " already exists");
     }
 
@@ -259,7 +259,7 @@ public class ExpandedBundleReaderWriterTest {
     public void tryToCreateFileEntryWhenEntryExist() throws IOException {
         String testData = "d_1_1/f_1_1_1";
         assertThatThrownBy(() -> expandedArchiveBundleWriter.createFileEntry(testDataDir.toString(), testData, new FileInputStream(testDataDir.resolve("d_1_1/f_1_1_1").toFile())))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(DataAlreadyExistException.class)
                 .hasMessage("Entry " + testDataDir.resolve(testData) + " already exists");
     }
 

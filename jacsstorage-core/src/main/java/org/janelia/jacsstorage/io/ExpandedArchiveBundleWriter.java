@@ -62,7 +62,7 @@ public class ExpandedArchiveBundleWriter implements BundleWriter {
     public long createDirectoryEntry(String dataPath, String entryName) {
         return createNewEntry(dataPath, entryName,
                 (Path currentEntryPath) -> {
-                    throw new IllegalArgumentException("Entry " + currentEntryPath + " already exists");
+                    throw new DataAlreadyExistException("Entry " + currentEntryPath + " already exists");
                 },
                 (Path currentEntryPath) -> {
                     try {
@@ -82,7 +82,7 @@ public class ExpandedArchiveBundleWriter implements BundleWriter {
     public long createFileEntry(String dataPath, String entryName, InputStream contentStream) {
         return createNewEntry(dataPath, entryName,
                 (Path currentEntryPath) -> {
-                    throw new IllegalArgumentException("Entry " + currentEntryPath + " already exists");
+                    throw new DataAlreadyExistException("Entry " + currentEntryPath + " already exists");
                 },
                 (Path currentEntryPath) -> {
                     try {

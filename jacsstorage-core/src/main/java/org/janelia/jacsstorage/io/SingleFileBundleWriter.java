@@ -6,9 +6,11 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -27,7 +29,7 @@ public class SingleFileBundleWriter implements BundleWriter {
     public long writeBundle(InputStream stream, String target) {
         Path targetPath = Paths.get(target);
         if (Files.exists(targetPath)) {
-            throw new IllegalArgumentException("Target path " + target + " already exists");
+            throw new DataAlreadyExistException("Target path " + target + " already exists");
         }
         try {
             Files.createDirectories(targetPath.getParent());
@@ -53,7 +55,7 @@ public class SingleFileBundleWriter implements BundleWriter {
     public long createFileEntry(String dataPath, String entryName, InputStream contentStream) {
         Path filePath = Paths.get(dataPath);
         if (Files.exists(filePath)) {
-            throw new IllegalArgumentException("File path " + filePath + " already exists");
+            throw new DataAlreadyExistException("File path " + filePath + " already exists");
         }
         try {
             Files.createDirectories(filePath.getParent());

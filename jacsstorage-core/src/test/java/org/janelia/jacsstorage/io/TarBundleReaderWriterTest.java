@@ -228,7 +228,7 @@ public class TarBundleReaderWriterTest {
     public void tryToCreateDirectoryEntryWhenEntryExist() throws IOException {
         String testData = "d_1_1";
         assertThatThrownBy(() -> tarBundleWriter.createDirectoryEntry(testTarFile.toString(), testData))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(DataAlreadyExistException.class)
                 .hasMessage("Entry " + testData + " already exists");
     }
 
@@ -270,7 +270,7 @@ public class TarBundleReaderWriterTest {
     public void tryToCreateFileEntryWhenEntryExist() throws IOException {
         String testData = "d_1_1/f_1_1_1";
         assertThatThrownBy(() -> tarBundleWriter.createFileEntry(testTarFile.toString(), testData, new FileInputStream(Paths.get(TEST_DATA_DIRECTORY, "d_1_1/f_1_1_1").toFile())))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(DataAlreadyExistException.class)
                 .hasMessage("Entry " + testData + " already exists");
     }
 

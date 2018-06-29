@@ -49,7 +49,7 @@ public class TarArchiveBundleWriter implements BundleWriter {
     public long writeBundle(InputStream stream, String target) {
         Path targetPath = Paths.get(target);
         if (Files.exists(targetPath)) {
-            throw new IllegalArgumentException("Target path " + target + " already exists");
+            throw new DataAlreadyExistException("Target path " + target + " already exists");
         }
         try {
             Files.createDirectories(targetPath.getParent());
@@ -150,7 +150,7 @@ public class TarArchiveBundleWriter implements BundleWriter {
             } else if (newEntryPos == PARENT_ENTRY_NOT_FOUND_ERRORCODE){
                 throw new IllegalArgumentException("No parent entry found for " + entryName);
             } else if (newEntryPos == DIR_ENTRY_ALREADY_EXISTS_ERRORCODE || newEntryPos == FILE_ENTRY_ALREADY_EXISTS_ERRORCODE) {
-                throw new IllegalArgumentException("Entry " + entryName + " already exists");
+                throw new DataAlreadyExistException("Entry " + entryName + " already exists");
             } else {
                 throw new IllegalStateException("Unknown error condition while trying to create new entry " + entryName);
             }
