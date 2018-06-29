@@ -182,7 +182,6 @@ public class AgentStorageResource {
                 dn.setNumericStorageId(dataBundle.getId());
                 dn.setRootLocation(dataBundle.getRealStoragePath().toString());
                 dn.setRootPrefix(virtualStoragePath);
-                dn.setNodeRelativePath(entryName);
                 dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
                         .path(AgentStorageResource.class, "getEntryContent")
                         .build(dataBundle.getId(), dn.getNodeRelativePath())
