@@ -5,8 +5,8 @@ import com.google.common.collect.ImmutableSet;
 import io.swagger.jaxrs.listing.ApiListingResource;
 import org.janelia.jacsstorage.filter.CORSResponseFilter;
 import org.janelia.jacsstorage.filter.JWTAuthFilter;
-import org.janelia.jacsstorage.io.DataAlreadyExistException;
 import org.janelia.jacsstorage.provider.ObjectMapperResolver;
+import org.janelia.jacsstorage.rest.DataAlreadyExistRequestHandler;
 import org.janelia.jacsstorage.rest.IOErrorRequestHandler;
 import org.janelia.jacsstorage.rest.IllegalAccessRequestHandler;
 import org.janelia.jacsstorage.rest.IllegalStateRequestHandler;
@@ -26,7 +26,7 @@ public abstract class AbstractJAXApp extends Application {
                         JacksonJaxbXMLProvider.class,
                         JWTAuthFilter.class,
                         CORSResponseFilter.class,
-                        DataAlreadyExistException.class,
+                        DataAlreadyExistRequestHandler.class,
                         InvalidArgumentRequestHandler.class,
                         IllegalAccessRequestHandler.class,
                         IllegalStateRequestHandler.class,
