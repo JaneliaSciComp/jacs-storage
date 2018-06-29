@@ -64,9 +64,7 @@ public class JacsBundle extends AbstractEntity {
 
     @JsonIgnore
     public Path getRealStoragePath() {
-        if (storageVolume == null) {
-            return Paths.get(path);
-        } else if (StringUtils.isNotBlank(storageVolume.getStorageRootDir())) {
+        if (storageVolume != null && StringUtils.isNotBlank(storageVolume.getStorageRootDir())) {
             return Paths.get(storageVolume.getStorageRootDir(), path);
         } else {
             return Paths.get(path);
