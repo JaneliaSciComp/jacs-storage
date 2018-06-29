@@ -7,10 +7,14 @@ import io.swagger.annotations.ApiResponses;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
+import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.security.RequireAuthentication;
+import org.janelia.jacsstorage.security.SecurityUtils;
+import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
-import org.janelia.jacsstorage.service.StorageContentReader;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
@@ -19,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -28,6 +33,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
+import java.io.InputStream;
 import java.net.URI;
 
 @Timed
@@ -39,7 +45,7 @@ public class PathBasedAgentStorageResource {
     private static final Logger LOG = LoggerFactory.getLogger(PathBasedAgentStorageResource.class);
 
     @Inject
-    private StorageContentReader storageContentReader;
+    private DataStorageService dataStorageService;
     @Inject @LocalInstance
     private StorageAllocatorService storageAllocatorService;
     @Inject @LocalInstance
@@ -61,7 +67,7 @@ public class PathBasedAgentStorageResource {
     })
     public Response checkPath(@PathParam("dataPath") String fullDataPathNameParam) {
         LOG.info("Check path {}", fullDataPathNameParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 fullDataPathNameParam,
                 (dataBundle, dataEntryPath) -> Response
@@ -82,11 +88,46 @@ public class PathBasedAgentStorageResource {
     })
     public Response retrieveData(@PathParam("dataPath") String fullDataPathNameParam) {
         LOG.info("Retrieve data from {}", fullDataPathNameParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 fullDataPathNameParam,
                 (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath),
                 (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, dataEntryPath)
+        ).build();
+    }
+
+    @RequireAuthentication
+    @Produces({MediaType.APPLICATION_JSON})
+    @PUT
+    @Path("storage_path/file/{dataPath:.*}")
+    @ApiOperation(value = "Store the content at the specified data path.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 201, message = "The data was saved successfully"),
+            @ApiResponse(code = 404, message = "Invalid data bundle identifier"),
+            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(code = 500, message = "Data write error")
+    })
+    public Response storeData(@PathParam("dataPath") String fullDataPathNameParam, @Context SecurityContext securityContext, InputStream contentStream) {
+        LOG.info("Retrieve data from {}", fullDataPathNameParam);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        return storageResourceHelper.handleResponseForFullDataPathParam(
+                fullDataPathNameParam,
+                (dataBundle, dataEntryPath) ->
+                        storageResourceHelper.storeDataBundleContent(dataBundle,
+                                resourceURI.getBaseUri(),
+                                dataEntryPath,
+                                (Long newEntrySize) -> storageAllocatorService.updateStorage(
+                                            new JacsBundleBuilder()
+                                                    .dataBundleId(dataBundle.getId())
+                                                    .usedSpaceInBytes(newEntrySize)
+                                                    .build(),
+                                            SecurityUtils.getUserPrincipal(securityContext)),
+                                contentStream),
+                (storageVolume, dataEntryPath) ->
+                        storageResourceHelper.storeFileContent(storageVolume,
+                                resourceURI.getBaseUri(),
+                                dataEntryPath,
+                                contentStream)
         ).build();
     }
 
@@ -107,7 +148,7 @@ public class PathBasedAgentStorageResource {
                                 @QueryParam("depth") Integer depthParam,
                                 @Context SecurityContext securityContext) {
         LOG.info("List content from location {} with a depthParameter {}", fullDataPathNameParam, depthParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
         URI baseURI = resourceURI.getBaseUri();
         return storageResourceHelper.handleResponseForFullDataPathParam(
@@ -138,7 +179,7 @@ public class PathBasedAgentStorageResource {
                     .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
                     .build();
         }
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.checkContentFromFile(storageVolume, storageRelativeFilePath).build();
     }
 
@@ -161,7 +202,7 @@ public class PathBasedAgentStorageResource {
                     .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
                     .build();
         }
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageContentReader, storageLookupService, storageVolumeManager);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.retrieveContentFromFile(storageVolume, storageRelativeFilePath).build();
     }
 }

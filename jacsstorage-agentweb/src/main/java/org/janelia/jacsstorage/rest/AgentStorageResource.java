@@ -359,12 +359,13 @@ public class AgentStorageResource {
                     .entity(existingEntries.get(0))
                     .build();
         }
-        long newFileEntrySize = dataStorageService.createFileEntry(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), contentStream);
+        long newFileEntrySize = dataStorageService.writeDataEntryStream(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), contentStream);
         storageAllocatorService.updateStorage(
                 new JacsBundleBuilder()
                         .dataBundleId(dataBundleId)
                         .usedSpaceInBytes(newFileEntrySize)
-                        .build(), SecurityUtils.getUserPrincipal(securityContext)
+                        .build(),
+                SecurityUtils.getUserPrincipal(securityContext)
         );
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundleId);

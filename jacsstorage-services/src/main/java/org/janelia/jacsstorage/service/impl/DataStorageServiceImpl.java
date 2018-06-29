@@ -69,7 +69,7 @@ public class DataStorageServiceImpl implements DataStorageService {
             logResult = true
     )
     @Override
-    public long createFileEntry(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, InputStream contentStream) {
+    public long writeDataEntryStream(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, InputStream contentStream) {
         BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataStorageFormat);
         return bundleWriter.createFileEntry(dataPath.toString(), entryName, contentStream);
     }
