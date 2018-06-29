@@ -191,7 +191,7 @@ public class StorageResourceHelper {
     }
 
     public Response.ResponseBuilder retrieveContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath) {
-        long fileSize = PathUtils.getSize(dataBundle.getRealStoragePath());
+        long fileSize = PathUtils.getSize(dataBundle.getRealStoragePath().resolve(StringUtils.defaultIfBlank(dataEntryPath, "")));
         StreamingOutput bundleStream = output -> {
             try {
                 dataStorageService.readDataEntryStream(
