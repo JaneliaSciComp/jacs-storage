@@ -183,6 +183,7 @@ public class AgentStorageResource {
                 dn.setRootLocation(dataBundle.getRealStoragePath().toString());
                 dn.setRootPrefix(virtualStoragePath);
                 dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
+                        .path(AgentStorageResource.class)
                         .path(AgentStorageResource.class, "getEntryContent")
                         .build(dataBundle.getId(), dn.getNodeRelativePath())
                         .toString()
@@ -263,6 +264,7 @@ public class AgentStorageResource {
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
+                .path(AgentStorageResource.class)
                 .path(AgentStorageResource.class, "getEntryContent")
                 .build(dataBundleId, dataEntryPath);
         if (CollectionUtils.isNotEmpty(existingEntries)) {
@@ -350,6 +352,7 @@ public class AgentStorageResource {
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
+                .path(AgentStorageResource.class)
                 .path(AgentStorageResource.class, "getEntryContent")
                 .build(dataBundleId, dataEntryPath)
                 ;
