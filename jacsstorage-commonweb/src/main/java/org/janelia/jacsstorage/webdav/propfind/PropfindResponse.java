@@ -1,10 +1,12 @@
 package org.janelia.jacsstorage.webdav.propfind;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class PropfindResponse {
+    @JsonInclude
     @JacksonXmlProperty(localName = "D:href")
     private String href;
 
