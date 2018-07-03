@@ -33,10 +33,12 @@ public class WebdavUtils {
         }
     }
 
-    public static Multistatus convertStorageVolumes(List<JacsStorageVolume> storageVolumes, Function<JacsStorageVolume, Optional<String>> storageToUriMapper) {
+    public static Multistatus convertStorageVolumes(List<JacsStorageVolume> storageVolumes, String defaultPropResourceURL) {
         Multistatus ms = new Multistatus();
         ms.getResponse().addAll(storageVolumes.stream()
                 .map(storageVolume -> {
+                    String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
+
                     Prop prop = new Prop();
                     prop.setDisplayname(storageVolume.getName());
                     prop.setEtag(storageVolume.getStoragePathPrefix());
@@ -47,18 +49,16 @@ public class WebdavUtils {
                     Propstat propstat = new Propstat();
                     propstat.setProp(prop);
 
-                    String storageURL = storageToUriMapper.apply(storageVolume)
-                            .map(href -> {
-                                propstat.setStatus("HTTP/1.1 200 OK");
-                                return href;
-                            })
-                            .orElseGet(() -> {
-                                propstat.setStatus("HTTP/1.1 404 Not Found");
-                                return "";
-                            });
                     PropfindResponse propfindResponse = new PropfindResponse();
                     propfindResponse.setPropstat(propstat);
-                    propfindResponse.setHref(storageURL);
+
+                    if (StringUtils.isNotBlank(storageServiceURL)) {
+                        propstat.setStatus("HTTP/1.1 200 OK");
+                        propfindResponse.setHref(storageServiceURL + Constants.AGENTSTORAGE_URI_PATH);
+                    } else {
+                        propstat.setStatus("HTTP/1.1 404 Not Found");
+                        propfindResponse.setHref(defaultPropResourceURL);
+                    }
                     return propfindResponse;
                 })
                 .collect(Collectors.toList()));

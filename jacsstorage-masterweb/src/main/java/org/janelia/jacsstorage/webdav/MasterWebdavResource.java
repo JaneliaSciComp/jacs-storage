@@ -83,10 +83,10 @@ public class MasterWebdavResource {
                     .entity(statusResponse)
                     .build();
         }
-        Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes, (storageVolume) ->{
-            String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
-            return StringUtils.isNotBlank(storageServiceURL)? Optional.of(storageServiceURL + Constants.AGENTSTORAGE_URI_PATH) : Optional.empty();
-        });
+        Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(
+                managedVolumes,
+                resourceURI.getAbsolutePath().toString()
+        );
         return Response.status(207)
                 .entity(propfindResponse)
                 .build();
@@ -121,10 +121,10 @@ public class MasterWebdavResource {
                     .entity(statusResponse)
                     .build();
         }
-        Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(managedVolumes, (storageVolume) -> {
-            String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
-            return StringUtils.isNotBlank(storageServiceURL)? Optional.of(storageServiceURL + Constants.AGENTSTORAGE_URI_PATH) : Optional.empty();
-        });
+        Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(
+                managedVolumes,
+                resourceURI.getAbsolutePath().toString()
+        );
         return Response.status(207)
                 .entity(propfindResponse)
                 .build();
