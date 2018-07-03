@@ -10,6 +10,7 @@ import org.janelia.jacsstorage.webdav.propfind.PropfindResponse;
 import org.janelia.jacsstorage.webdav.propfind.Propstat;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -32,7 +33,7 @@ public class WebdavUtils {
         }
     }
 
-    public static Multistatus convertStorageVolumes(List<JacsStorageVolume> storageVolumes, Function<JacsStorageVolume, String> storageToUriMapper) {
+    public static Multistatus convertStorageVolumes(List<JacsStorageVolume> storageVolumes, Function<JacsStorageVolume, Optional<String>> storageToUriMapper) {
         Multistatus ms = new Multistatus();
         ms.getResponse().addAll(storageVolumes.stream()
                 .map(storageVolume -> {
@@ -45,16 +46,23 @@ public class WebdavUtils {
 
                     Propstat propstat = new Propstat();
                     propstat.setProp(prop);
-                    propstat.setStatus("HTTP/1.1 200 OK");
 
+                    String storageURL = storageToUriMapper.apply(storageVolume)
+                            .map(href -> {
+                                propstat.setStatus("HTTP/1.1 200 OK");
+                                return href;
+                            })
+                            .orElseGet(() -> {
+                                propstat.setStatus("HTTP/1.1 404 Not Found");
+                                return null;
+                            });
                     PropfindResponse propfindResponse = new PropfindResponse();
-                    propfindResponse.setHref(storageToUriMapper.apply(storageVolume));
                     propfindResponse.setPropstat(propstat);
+                    propfindResponse.setHref(storageURL);
                     return propfindResponse;
                 })
                 .collect(Collectors.toList()));
         return ms;
-
     }
 
     public static Multistatus convertNodeList(List<DataNodeInfo> nodeInfoList, Function<DataNodeInfo, String> nodeInfoToUriMapper) {
