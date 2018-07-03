@@ -5,8 +5,10 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import javax.xml.bind.annotation.XmlElement;
+
 public class PropfindResponse {
-    @JsonInclude
+    @XmlElement(required = true)
     @JacksonXmlProperty(localName = "D:href")
     private String href;
 
