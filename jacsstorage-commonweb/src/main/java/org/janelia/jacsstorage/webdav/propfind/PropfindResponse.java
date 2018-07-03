@@ -8,7 +8,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import javax.xml.bind.annotation.XmlElement;
 
 public class PropfindResponse {
-    @XmlElement(required = true)
+    @JsonInclude
     @JacksonXmlProperty(localName = "D:href")
     private String href;
 
