@@ -11,6 +11,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.rest.Constants;
+import org.janelia.jacsstorage.rest.ContentStorageResource;
 import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
@@ -85,7 +86,11 @@ public class MasterWebdavResource {
         }
         Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(
                 managedVolumes,
-                resourceURI.getAbsolutePath().toString()
+                resourceURI.getBaseUriBuilder()
+                        .path(ContentStorageResource.class)
+                        .path(ContentStorageResource.class, "redirectForContentCheck")
+                        .build(storagePrefix)
+                        .toString()
         );
         return Response.status(207)
                 .entity(propfindResponse)
@@ -123,7 +128,11 @@ public class MasterWebdavResource {
         }
         Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(
                 managedVolumes,
-                resourceURI.getAbsolutePath().toString()
+                resourceURI.getBaseUriBuilder()
+                        .path(ContentStorageResource.class)
+                        .path(ContentStorageResource.class, "redirectForContentCheck")
+                        .build(dataStoragePath)
+                        .toString()
         );
         return Response.status(207)
                 .entity(propfindResponse)
