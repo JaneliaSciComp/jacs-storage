@@ -54,7 +54,7 @@ public class WebdavUtils {
                             })
                             .orElseGet(() -> {
                                 propstat.setStatus("HTTP/1.1 404 Not Found");
-                                return null;
+                                return "";
                             });
                     PropfindResponse propfindResponse = new PropfindResponse();
                     propfindResponse.setPropstat(propstat);
