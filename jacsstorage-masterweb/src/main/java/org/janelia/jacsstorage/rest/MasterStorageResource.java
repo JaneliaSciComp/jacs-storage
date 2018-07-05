@@ -235,7 +235,6 @@ public class MasterStorageResource {
         LOG.info("List storage records filtered with: {} / {}", dataBundle, pageRequest);
         PageResult<JacsBundle> dataBundleResults = storageLookupService.findMatchingDataBundles(dataBundle, pageRequest);
         PageResult<DataStorageInfo> results = new PageResult<>();
-        results.setPageOffset(dataBundleResults.getPageOffset());
         results.setSortCriteria(dataBundleResults.getSortCriteria());
         results.setPageOffset(dataBundleResults.getPageOffset());
         results.setPageSize(dataBundleResults.getResultList().size());
