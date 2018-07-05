@@ -108,6 +108,12 @@ subprojects {
     integrationTest.mustRunAfter test
 }
 
+task installOSService(type: Exec, dependsOn: 'ospackage') {
+    commandLine "yum", "-y", "remove", "${project.name}"
+    commandLine "yum", "-y", "install", "${buildDir}/distributions/${project.name}-${version}-1.i386.rpm"
+    commandLine "systemctl", "daemon-reload"
+}
+
 task updateWrapper(type: Wrapper) {
     gradleVersion = "4.8"
 }
