@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.cdi.ObjectMapperFactory;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
+import org.janelia.jacsstorage.datarequest.NumberSerializerModule;
 import org.janelia.jacsstorage.filter.JWTAuthFilter;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
@@ -62,7 +63,7 @@ public class TestAgentStorageDependenciesProducer {
 
     @Produces
     public ObjectMapper getObjectMapper() {
-        return getObjectMapperFactory().newObjectMapper();
+        return getObjectMapperFactory().newObjectMapper().registerModule(new NumberSerializerModule());
     }
 
     @Produces
