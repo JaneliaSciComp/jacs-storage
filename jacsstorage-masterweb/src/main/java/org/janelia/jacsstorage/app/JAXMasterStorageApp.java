@@ -21,6 +21,7 @@ public class JAXMasterStorageApp extends AbstractJAXApp {
                 MasterStatusResource.class,
                 StorageAgentsResource.class,
                 StorageVolumesResource.class,
-                MasterWebdavResource.class);
+                MasterWebdavResource.class
+        );
     }
 }
