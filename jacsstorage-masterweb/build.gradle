@@ -108,6 +108,12 @@ project(":jacsstorage-masterweb") {
 
         link("${systemServiceDir}/multi-user.target.wants/${project.name}.service", "${systemServiceDir}/${project.name}.service")
     }
+
+    task installOSService(type: Exec, dependsOn: ospackage) {
+        commandLine "yum", "-y", "remove", "${project.name}"
+        commandLine "yum", "-y", "install", "${buildDir}/distributions/${project.name}-${version}-1.i386.rpm"
+        commandLine "systemctl", "daemon-reload"
+    }
 }
 
 ext.moduleName = 'org.janelia.jacsstorage.masterweb'
