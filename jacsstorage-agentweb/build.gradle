@@ -54,6 +54,16 @@ project(":jacsstorage-agentweb") {
         }
         main {
             contents {
+                into('bin') {
+                    from(new File(project(':jacsstorage-commonweb').projectDir, 'src/main/install/scripts')) {
+                        include '*.sh'
+                        filter(org.apache.tools.ant.filters.ExpandProperties,
+                                project: filteringProperties([
+                                        "jacs.runtime.env.serviceName": "${project.name}",
+                                        "jacs.runtime.env.serviceVersion": "${version}"
+                                ]))
+                    }
+                }
                 into('swagger-webapp') {
                     from(new File(project(':jacsstorage-commonweb').projectDir, 'src/main/swagger-webapp')) {
                         include '**'
@@ -109,12 +119,6 @@ project(":jacsstorage-agentweb") {
         }
 
         link("${systemServiceDir}/multi-user.target.wants/${project.name}.service", "${systemServiceDir}/${project.name}.service")
-    }
-
-    task installOSService(type: Exec, dependsOn: ospackage) {
-        commandLine "yum", "-y", "remove", "${project.name}"
-        commandLine "yum", "-y", "install", "${buildDir}/distributions/${project.name}-${version}-1.i386.rpm"
-        commandLine "systemctl", "daemon-reload"
     }
 }
 
