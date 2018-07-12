@@ -62,6 +62,7 @@ project(":jacsstorage-agentweb") {
                                         "jacs.runtime.env.serviceName": "${project.name}",
                                         "jacs.runtime.env.serviceVersion": "${version}"
                                 ]))
+                        fileMode = 0755
                     }
                 }
                 into('swagger-webapp') {
