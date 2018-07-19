@@ -3,7 +3,6 @@ package org.janelia.jacsstorage.io;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.lang3.StringUtils;
@@ -99,7 +98,7 @@ public class ExpandedArchiveBundleWriter implements BundleWriter {
         Path entryPath = rootDataPath.resolve(entryName);
         Path parentEntry = entryPath.getParent();
         if (Files.notExists(parentEntry)) {
-            throw new IllegalArgumentException("No parent entry found for " + entryPath);
+            createDirIfMissing(parentEntry);
         }
         if (!Files.isDirectory(parentEntry)) {
             throw new IllegalArgumentException("Parent entry found for " + entryPath + " but it is not a directory");
@@ -114,13 +113,18 @@ public class ExpandedArchiveBundleWriter implements BundleWriter {
 
     private Path getRootPath(String rootDir) {
         Path rootPath = Paths.get(rootDir);
-        if (Files.notExists(rootPath)) {
-            try {
-                Files.createDirectories(rootPath);
-            } catch (IOException e) {
-                throw new SecurityException("Could not create missing directory - " + rootDir, e);
-            }
-        }
+        createDirIfMissing(rootPath);
         return rootPath;
     }
+
+    private void createDirIfMissing(Path dir) {
+        if (Files.notExists(dir)) {
+            try {
+                Files.createDirectories(dir);
+            } catch (IOException e) {
+                throw new SecurityException("Could not create missing directory - " + dir, e);
+            }
+        }
+    }
+
 }

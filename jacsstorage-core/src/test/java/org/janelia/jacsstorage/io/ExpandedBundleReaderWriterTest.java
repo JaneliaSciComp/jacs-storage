@@ -3,8 +3,8 @@ package org.janelia.jacsstorage.io;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.compress.utils.IOUtils;
 import org.hamcrest.Matchers;
-import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.coreutils.PathUtils;
+import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +31,6 @@ import static org.hamcrest.collection.IsIn.in;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -240,11 +239,21 @@ public class ExpandedBundleReaderWriterTest {
     }
 
     @Test
-    public void tryToCreateDirectoryEntryWhenNoParentEntryExist() throws IOException {
-        String testData = "d_1_5/d_1_5_2";
-        assertThatThrownBy(() -> expandedArchiveBundleWriter.createDirectoryEntry(testDataDir.toString(), testData))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("No parent entry found for " + testDataDir.resolve(testData));
+    public void tryToCreateDirectoryEntryWhenParentEntriesNotFound() {
+        List<String> testData = ImmutableList.of(
+                "d_1_5/d_1_5_2",
+                "d_1_6/d_1_6_1/d_1_6_1_1"
+        );
+        for (String td : testData) {
+            long size = expandedArchiveBundleWriter.createDirectoryEntry(testDataDir.toString(), td);
+            assertTrue(size > 0);
+        }
+        List<String> tarEntryNames = expandedBundleReader.listBundleContent(testDataDir.toString(), "", 10).stream()
+                .map(ni -> ni.getNodeRelativePath())
+                .collect(Collectors.toList());
+        testData.forEach(td -> {
+            assertThat(td, is(in(tarEntryNames)));
+        });
     }
 
     @Test

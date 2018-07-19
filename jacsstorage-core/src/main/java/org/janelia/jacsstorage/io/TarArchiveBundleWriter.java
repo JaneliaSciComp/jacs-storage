@@ -24,17 +24,32 @@ import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class TarArchiveBundleWriter implements BundleWriter {
 
-    private static final int PARENT_ENTRY_NOT_DIR_ERRORCODE = -1;
-    private static final int PARENT_ENTRY_NOT_FOUND_ERRORCODE = -2;
-    private static final int DIR_ENTRY_ALREADY_EXISTS_ERRORCODE = -3;
-    private static final int FILE_ENTRY_ALREADY_EXISTS_ERRORCODE = -4;
-    private static final int UNKNOWN_ERRORCODE = -4;
+    private static class NewEntrySearchPosResult {
+        private static final int OK_FOR_NEW_ENTRY_POS = 0;
+        private static final int PARENT_ENTRY_NOT_DIR_ERRORCODE = -1;
+        private static final int DIR_ENTRY_ALREADY_EXISTS_ERRORCODE = -2;
+        private static final int FILE_ENTRY_ALREADY_EXISTS_ERRORCODE = -3;
+
+        private final int searchResult;
+        private final List<String> missingDirs;
+        private final long newEntryPos;
+
+        public NewEntrySearchPosResult(int searchResult, List<String> missingDirs, long newEntryPos) {
+            this.searchResult = searchResult;
+            this.missingDirs = missingDirs;
+            this.newEntryPos = newEntryPos;
+        }
+    }
 
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
@@ -66,15 +81,19 @@ public class TarArchiveBundleWriter implements BundleWriter {
     public long createDirectoryEntry(String dataPath, String entryName) {
         return createNewEntry(dataPath, entryName, 0L,
                 (String en) -> {
-                    String newEntryName = StringUtils.appendIfMissing(
-                            StringUtils.prependIfMissing(
-                                    StringUtils.prependIfMissing(en, "/"), "."
-                            ),
-                            "/" // append '/' since this is a directory entry
-                    );
+                    String newEntryName = createDirectoryEntryName(en);
                     return new TarArchiveEntry(newEntryName, false);
                 },
                 (OutputStream os) -> 0L
+        );
+    }
+
+    private String createDirectoryEntryName(String entryName) {
+        return StringUtils.appendIfMissing(
+                StringUtils.prependIfMissing(
+                        StringUtils.prependIfMissing(entryName, "/"), "."
+                ),
+                "/" // append '/' since this is a directory entry
         );
     }
 
@@ -133,10 +152,17 @@ public class TarArchiveBundleWriter implements BundleWriter {
             String normalizedEntryName = normalizeEntryName(entryName);
             Path relativeEntryPath = Paths.get(normalizedEntryName);
             Path relativeEntryParentPath = relativeEntryPath.getParent();
-            long newEntryPos = newEntryPosition(normalizedEntryName, relativeEntryParentPath != null ? relativeEntryParentPath.toString() : "", existingTarFile);
-            if (newEntryPos >= 0) {
-                existingTarFile.seek(newEntryPos);
+            NewEntrySearchPosResult newEntryPosResult = newEntryPosition(normalizedEntryName, relativeEntryParentPath, existingTarFile);
+            if (newEntryPosResult.searchResult == NewEntrySearchPosResult.OK_FOR_NEW_ENTRY_POS) {
+                existingTarFile.seek(newEntryPosResult.newEntryPos);
                 TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(Channels.newOutputStream(existingTarFile.getChannel()), TarConstants.DEFAULT_RCDSIZE);
+                for (String missingDir : newEntryPosResult.missingDirs) {
+                    String newEntryName = createDirectoryEntryName(missingDir);
+                    TarArchiveEntry missingDirEntry = new TarArchiveEntry(newEntryName, false);
+                    missingDirEntry.setSize(entrySize);
+                    tarArchiveOutputStream.putArchiveEntry(missingDirEntry);
+                    tarArchiveOutputStream.closeArchiveEntry();
+                }
                 TarArchiveEntry entry = newEntryGenerator.apply(normalizedEntryName);
                 entry.setSize(entrySize);
                 tarArchiveOutputStream.putArchiveEntry(entry);
@@ -145,11 +171,9 @@ public class TarArchiveBundleWriter implements BundleWriter {
                 tarArchiveOutputStream.finish();
                 long newTarSize = existingTarFile.length();
                 return newTarSize - oldTarSize;
-            } else if (newEntryPos == PARENT_ENTRY_NOT_DIR_ERRORCODE) {
+            } else if (newEntryPosResult.searchResult == NewEntrySearchPosResult.PARENT_ENTRY_NOT_DIR_ERRORCODE) {
                 throw new IllegalArgumentException("Parent entry found for " + entryName + " but it is not a directory");
-            } else if (newEntryPos == PARENT_ENTRY_NOT_FOUND_ERRORCODE){
-                throw new IllegalArgumentException("No parent entry found for " + entryName);
-            } else if (newEntryPos == DIR_ENTRY_ALREADY_EXISTS_ERRORCODE || newEntryPos == FILE_ENTRY_ALREADY_EXISTS_ERRORCODE) {
+            } else if (newEntryPosResult.searchResult == NewEntrySearchPosResult.DIR_ENTRY_ALREADY_EXISTS_ERRORCODE || newEntryPosResult.searchResult == NewEntrySearchPosResult.FILE_ENTRY_ALREADY_EXISTS_ERRORCODE) {
                 throw new DataAlreadyExistException("Entry " + entryName + " already exists");
             } else {
                 throw new IllegalStateException("Unknown error condition while trying to create new entry " + entryName);
@@ -209,28 +233,43 @@ public class TarArchiveBundleWriter implements BundleWriter {
         }
     }
 
-    private long newEntryPosition(String entryName, String parentEntryName, RandomAccessFile tarAccessFile) throws IOException {
+    private NewEntrySearchPosResult newEntryPosition(String entryName, Path parentEntryPath, RandomAccessFile tarAccessFile) throws IOException {
         tarAccessFile.seek(0);
         TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new FileInputStream((tarAccessFile.getFD())));
         int recordSize = tarArchiveInputStream.getRecordSize();
         long prevEntryStart;
         long prevEntryEnd = 0;
-        boolean parentEntryNameFound = StringUtils.isBlank(parentEntryName);
+        List<String> entryParentHierarchy;
+        if (parentEntryPath == null) {
+            // (all) parent(s) exist automatically in this case
+            entryParentHierarchy = new ArrayList<>();
+        } else {
+            int nPathComponents = parentEntryPath.getNameCount();
+            entryParentHierarchy = IntStream.rangeClosed(1, nPathComponents)
+                    .mapToObj(i -> parentEntryPath.subpath(0, i))
+                    .map(p -> p.toString())
+                    .collect(Collectors.toList());
+        }
         boolean entryNameFound = false;
-        boolean parentEntryIsDir = parentEntryNameFound;
         boolean entryFoundIsDir = false;
-        for (TarArchiveEntry sourceEntry = tarArchiveInputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = tarArchiveInputStream.getNextTarEntry()) {
+        boolean parentEntryNotDir = false;
+        for (TarArchiveEntry sourceEntry = tarArchiveInputStream.getNextTarEntry();
+             sourceEntry != null;
+             sourceEntry = tarArchiveInputStream.getNextTarEntry()) {
             String currentEntryName = normalizeEntryName(sourceEntry.getName());
-            if (currentEntryName.equals(parentEntryName)) {
-                if (sourceEntry.isDirectory()) {
-                    parentEntryNameFound = true;
-                    parentEntryIsDir = true;
-                } else {
-                    parentEntryNameFound = true;
-                }
-            } else if (currentEntryName.equals(entryName)) {
+            if (currentEntryName.equals(entryName)) {
                 entryNameFound = true;
                 entryFoundIsDir = sourceEntry.isDirectory();
+            } else {
+                if (sourceEntry.isDirectory()) {
+                    entryParentHierarchy.remove(currentEntryName);
+                } else {
+                    if (entryParentHierarchy.contains(currentEntryName)) {
+                        // currentEntry is in the parent hierarchy and is not a directory
+                        entryParentHierarchy.remove(currentEntryName);
+                        parentEntryNotDir = true;
+                    }
+                }
             }
             prevEntryStart = prevEntryEnd;
             long fillingBytes = sourceEntry.getSize() % recordSize;
@@ -239,20 +278,19 @@ public class TarArchiveBundleWriter implements BundleWriter {
             }
             prevEntryEnd = prevEntryStart + recordSize + sourceEntry.getSize() + fillingBytes;
         }
-        if (parentEntryNameFound && parentEntryIsDir && !entryNameFound)
-            return prevEntryEnd;
-        else if (!parentEntryNameFound)
-            return PARENT_ENTRY_NOT_FOUND_ERRORCODE;
-        else if (parentEntryNameFound && !parentEntryIsDir)
-            return PARENT_ENTRY_NOT_DIR_ERRORCODE;
-        else if (entryNameFound) {
+        int errorCode;
+        if (parentEntryNotDir) {
+            errorCode = NewEntrySearchPosResult.PARENT_ENTRY_NOT_DIR_ERRORCODE;
+        } else if (entryNameFound) {
             if (entryFoundIsDir) {
-                return DIR_ENTRY_ALREADY_EXISTS_ERRORCODE;
+                errorCode = NewEntrySearchPosResult.DIR_ENTRY_ALREADY_EXISTS_ERRORCODE;
             } else {
-                return FILE_ENTRY_ALREADY_EXISTS_ERRORCODE;
+                errorCode = NewEntrySearchPosResult.FILE_ENTRY_ALREADY_EXISTS_ERRORCODE;
             }
-        } else
-            return UNKNOWN_ERRORCODE;
+        } else {
+            errorCode = NewEntrySearchPosResult.OK_FOR_NEW_ENTRY_POS;
+        }
+        return new NewEntrySearchPosResult(errorCode, entryParentHierarchy, prevEntryEnd);
     }
 
 }
