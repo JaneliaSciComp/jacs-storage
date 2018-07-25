@@ -18,7 +18,7 @@ public class JacksonCodecProvider implements CodecProvider {
 
     private final ObjectMapper objectMapper;
 
-    public JacksonCodecProvider(ObjectMapperFactory objectMapperFactory) {
+    JacksonCodecProvider(ObjectMapperFactory objectMapperFactory) {
         this.objectMapper = objectMapperFactory.newMongoCompatibleObjectMapper();
     }
 

@@ -9,14 +9,17 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -51,10 +54,20 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
     @Test
     public void saveTestEntity() {
         JacsStorageVolume te = persistEntity(testDao, createTestEntity("127.0.0.1", 100, "testVol", "/tmp", 100L));
-        te.setVolumePermissions(EnumSet.of(JacsStoragePermission.READ, JacsStoragePermission.WRITE));
+        te.setVolumePermissions(new HashSet<>(EnumSet.of(JacsStoragePermission.READ, JacsStoragePermission.WRITE)));
         JacsStorageVolume retrievedTe = testDao.findById(te.getId());
         assertThat(retrievedTe.getName(), equalTo(te.getName()));
         assertNotSame(te, retrievedTe);
+    }
+
+    @Test
+    public void updateTestEntity() {
+        JacsStorageVolume te = persistEntity(testDao, createTestEntity("127.0.0.1", 100, "testVol", "/tmp", 100L));
+        Set<JacsStoragePermission> volumePermissions = EnumSet.of(JacsStoragePermission.READ, JacsStoragePermission.WRITE);
+        testDao.update(te, ImmutableMap.of("volumePermissions", new SetFieldValueHandler<>(volumePermissions)));
+        JacsStorageVolume retrievedTe = testDao.findById(te.getId());
+        assertThat(retrievedTe.getName(), equalTo(te.getName()));
+        assertThat(retrievedTe.getVolumePermissions(), equalTo(volumePermissions));
     }
 
     @Test

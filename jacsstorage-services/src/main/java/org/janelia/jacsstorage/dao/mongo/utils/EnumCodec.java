@@ -13,7 +13,7 @@ public class EnumCodec<E extends Enum<E>> implements Codec<E> {
 
     private final Class<E> encoderClass;
 
-    public EnumCodec(Class<E> encoderClass) {
+    EnumCodec(Class<E> encoderClass) {
         this.encoderClass = encoderClass;
     }
 
