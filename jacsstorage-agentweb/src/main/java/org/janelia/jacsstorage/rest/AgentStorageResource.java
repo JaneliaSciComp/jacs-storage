@@ -401,7 +401,7 @@ public class AgentStorageResource {
         LOG.info("Delete bundle {}", dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         if (dataBundle != null) {
-            dataStorageService.deleteStorage(dataBundle.getRealStoragePath());
+            dataStorageService.deleteStoragePath(dataBundle.getRealStoragePath());
             dataStorageService.cleanupStoragePath(dataBundle.getRealStoragePath().getParent());
         }
         return Response

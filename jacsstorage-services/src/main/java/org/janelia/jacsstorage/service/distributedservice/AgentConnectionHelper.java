@@ -111,13 +111,14 @@ class AgentConnectionHelper {
     }
 
     static boolean deleteStorage(String agentUrl, Number dataBundleId, String subject, String authToken) {
-        String deleteStorageEndpoint = String.format("/agent_storage/%d", dataBundleId);
         Client httpClient = null;
         Response response = null;
         try {
             httpClient = HttpClientUtils.createHttpClient();
             WebTarget target = httpClient.target(agentUrl)
-                        .path(deleteStorageEndpoint);
+                    .path("agent_storage")
+                    .path(dataBundleId.toString())
+                    ;
             Invocation.Builder targetRequestBuilder = target.request()
                     .header("Authorization", "Bearer " + authToken)
                     .header("JacsSubject", subject)

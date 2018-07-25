@@ -104,6 +104,12 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
             currentVolumeInfo.setStorageTags(storageVolume.getStorageTags());
             updatedVolumeFieldsBuilder.put("storageTags", new SetFieldValueHandler<>(currentVolumeInfo.getStorageTags()));
         }
+        if (!currentVolumeInfo.hasPermissions() && storageVolume.hasPermissions() ||
+                currentVolumeInfo.hasPermissions() && !storageVolume.hasPermissions() ||
+                currentVolumeInfo.hasPermissions() && storageVolume.hasPermissions() && !currentVolumeInfo.getVolumePermissions().equals(storageVolume.getVolumePermissions())) {
+            currentVolumeInfo.setVolumePermissions(storageVolume.getVolumePermissions());
+            updatedVolumeFieldsBuilder.put("volumePermissions", new SetFieldValueHandler<>(currentVolumeInfo.getVolumePermissions()));
+        }
         if (storageVolume.getQuotaFailPercent() != null && !storageVolume.getQuotaFailPercent().equals(currentVolumeInfo.getQuotaFailPercent())) {
             currentVolumeInfo.setQuotaFailPercent(storageVolume.getQuotaFailPercent());
             updatedVolumeFieldsBuilder.put("quotaFailPercent", new SetFieldValueHandler<>(currentVolumeInfo.getQuotaFailPercent()));

@@ -6,8 +6,11 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +24,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ExpandedArchiveBundleWriter implements BundleWriter {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ExpandedArchiveBundleWriter.class);
 
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
@@ -108,6 +113,28 @@ public class ExpandedArchiveBundleWriter implements BundleWriter {
             return 0L;
         } else {
             return entryCreator.apply(entryPath);
+        }
+    }
+
+    @TimedMethod(
+            argList = {0, 1},
+            logResult = true
+    )
+    @Override
+    public long deleteEntry(String dataPath, String entryName) {
+        Path fullEntryPath = Paths.get(dataPath, entryName);
+        if (Files.notExists(fullEntryPath)) {
+            LOG.info("No file path found for {}, {} ({}) to be deleted", dataPath, entryName, fullEntryPath);
+            return 0L;
+        }
+        long entrySize = PathUtils.getSize(fullEntryPath);
+        try {
+            PathUtils.deletePath(fullEntryPath);
+            LOG.info("Deleted file path {}, {} ({})", dataPath, entryName, fullEntryPath);
+            return entrySize;
+        } catch (Exception e) {
+            LOG.warn("Error deleting file path {}, {} ({})", dataPath, entryName, fullEntryPath, e);
+            return 0;
         }
     }
 

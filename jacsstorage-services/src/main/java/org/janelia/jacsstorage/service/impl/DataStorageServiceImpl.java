@@ -84,9 +84,15 @@ public class DataStorageServiceImpl implements DataStorageService {
         return bundleReader.readDataEntry(dataPath.toString(), entryName, outputStream);
     }
 
+    @Override
+    public long deleteStorageEntry(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat) {
+        BundleWriter bundleWriter = dataIOProvider.getBundleWriter(dataStorageFormat);
+        return bundleWriter.deleteEntry(dataPath.toString(), entryName);
+    }
+
     @TimedMethod
     @Override
-    public void deleteStorage(Path dataPath) throws IOException {
+    public void deleteStoragePath(Path dataPath) throws IOException {
         PathUtils.deletePath(dataPath);
     }
 

@@ -6,11 +6,14 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.AbstractEntity;
 import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 
+import javax.annotation.Nonnull;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @PersistenceInfo(storeName ="jacsStorageVolume", label="JacsStorageVolume")
 public class JacsStorageVolume extends AbstractEntity {
@@ -28,6 +31,7 @@ public class JacsStorageVolume extends AbstractEntity {
     private Double quotaFailPercent;
     private String systemUsageFile;
     private boolean shared;
+    private Set<JacsStoragePermission> volumePermissions;
     private Date created = new Date();
     private Date modified = new Date();
 
@@ -147,6 +151,22 @@ public class JacsStorageVolume extends AbstractEntity {
 
     public void setShared(boolean shared) {
         this.shared = shared;
+    }
+
+    public Set<JacsStoragePermission> getVolumePermissions() {
+        return volumePermissions;
+    }
+
+    public void setVolumePermissions(Set<JacsStoragePermission> volumePermissions) {
+        this.volumePermissions = volumePermissions;
+    }
+
+    public boolean hasPermissions() {
+        return volumePermissions != null && !volumePermissions.isEmpty();
+    }
+
+    public boolean hasPermission(JacsStoragePermission permission) {
+        return permission != null && volumePermissions != null && volumePermissions.contains(permission);
     }
 
     public Date getCreated() {

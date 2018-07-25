@@ -15,7 +15,7 @@ import java.nio.file.Path;
 
 public class FileUtils {
 
-    private static final int BUFFER_SIZE = 16 * 1024;
+    public static final int BUFFER_SIZE = 16 * 1024;
 
     /**
      * Copies from a source path to a stream. The only reason for this is a larger buffer.

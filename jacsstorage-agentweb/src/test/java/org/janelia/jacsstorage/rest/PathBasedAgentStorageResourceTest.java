@@ -8,6 +8,7 @@ import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.service.StorageContentReader;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -28,6 +29,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.EnumSet;
 import java.util.Set;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -81,6 +83,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                         new JacsStorageVolumeBuilder()
                                 .storagePathPrefix("/volPrefix")
                                 .storageRootDir("/volRoot")
+                                .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
                                 .build()
                         )
                 );
@@ -113,6 +116,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                         new JacsStorageVolumeBuilder()
                                 .storagePathPrefix("/volPrefix")
                                 .storageRootDir("/volRoot")
+                                .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
                                 .build()
                         )
                 );

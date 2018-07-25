@@ -9,6 +9,7 @@ import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.security.RequireAuthentication;
@@ -17,10 +18,12 @@ import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.PUT;
@@ -96,6 +99,42 @@ public class PathBasedAgentStorageResource {
         ).build();
     }
 
+    @LogStorageEvent(
+            eventName = "DELETE_STORAGE_ENTRY",
+            argList = {0, 1}
+    )
+    @RequireAuthentication
+    @Produces({MediaType.APPLICATION_JSON})
+    @DELETE
+    @Path("storage_path/{dataPath:.*}")
+    @ApiOperation(value = "Retrieve the content of the specified data path.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The stream was successfull"),
+            @ApiResponse(code = 404, message = "Invalid data bundle identifier"),
+            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
+    public Response removeData(@PathParam("dataPath") String fullDataPathNameParam, @Context SecurityContext securityContext) {
+        LOG.info("Remove data from {}", fullDataPathNameParam);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        return storageResourceHelper.handleResponseForFullDataPathParam(
+                fullDataPathNameParam,
+                (dataBundle, dataEntryPath) -> storageResourceHelper.removeContentFromDataBundle(dataBundle,
+                        dataEntryPath,
+                        (Long freedEntrySize) -> storageAllocatorService.updateStorage(
+                                new JacsBundleBuilder()
+                                        .dataBundleId(dataBundle.getId())
+                                        .usedSpaceInBytes(-freedEntrySize)
+                                        .build(),
+                                SecurityUtils.getUserPrincipal(securityContext))),
+                (storageVolume, dataEntryPath) -> storageResourceHelper.removeFileContentFromVolume(storageVolume, dataEntryPath)
+        ).build();
+    }
+
+    @LogStorageEvent(
+            eventName = "CREATE_STORAGE_FILE",
+            argList = {0, 1}
+    )
     @RequireAuthentication
     @Produces({MediaType.APPLICATION_JSON})
     @PUT
@@ -178,6 +217,11 @@ public class PathBasedAgentStorageResource {
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
                     .build();
+        } else if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
+            return Response
+                    .status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
+                    .build();
         }
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.checkContentFromFile(storageVolume, storageRelativeFilePath).build();
@@ -202,7 +246,14 @@ public class PathBasedAgentStorageResource {
                     .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
                     .build();
         }
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-        return storageResourceHelper.retrieveContentFromFile(storageVolume, storageRelativeFilePath).build();
+        if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
+            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+            return storageResourceHelper.retrieveContentFromFile(storageVolume, storageRelativeFilePath).build();
+        } else {
+            return Response
+                    .status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
+                    .build();
+        }
     }
 }

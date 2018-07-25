@@ -33,4 +33,12 @@ public interface BundleWriter {
      * @return the additional space required by the new file entry
      */
     long createFileEntry(String dataPath, String entryName, InputStream contentStream);
+
+    /**
+     * Delete an entry name.
+     * @param dataPath
+     * @param entryName
+     * @return the space released by the removed entry
+     */
+    long deleteEntry(String dataPath, String entryName);
 }

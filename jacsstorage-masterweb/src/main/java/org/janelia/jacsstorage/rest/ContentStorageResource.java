@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.rest;
 
-import com.google.common.io.ByteStreams;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -9,34 +8,25 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.security.JacsCredentials;
-import org.janelia.jacsstorage.security.JacsSubjectHelper;
-import org.janelia.jacsstorage.security.SecurityUtils;
+import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.jacsstorage.serviceutils.HttpClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
-import java.io.InputStream;
 import java.net.URI;
 
 @Timed
@@ -50,125 +40,6 @@ public class ContentStorageResource {
     private StorageLookupService storageLookupService;
     @Inject @RemoteInstance
     private StorageVolumeManager storageVolumeManager;
-
-    /**
-     * Retrieve the content of a file using the file path.
-     *
-     * @param fullFileNameParam
-     * @param securityContext
-     * @return
-     */
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-    @GET
-    @Path("storage_path/{filePath:.+}")
-    @ApiOperation(value = "Get file content",
-            notes = "Retrieve the content using the file path.")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Success", response = StreamingOutput.class),
-            @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
-    })
-    public Response getContentStream(@PathParam("filePath") String fullFileNameParam, @Context SecurityContext securityContext) {
-        LOG.info("Stream content of {}", fullFileNameParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
-        return storageResourceHelper.handleResponseForFullDataPathParam(
-                fullFileNameParam,
-                (dataBundle, dataEntryPath) -> retrieveFileFromBundle(dataBundle, dataEntryPath, SecurityUtils.getUserPrincipal(securityContext)),
-                (storageVolume, dataEntryPath) -> retrieveFileFromVolume(storageVolume, dataEntryPath, SecurityUtils.getUserPrincipal(securityContext))
-        ).build();
-    }
-
-    private Response.ResponseBuilder retrieveFileFromBundle(JacsBundle dataBundle, String dataEntryPath, JacsCredentials jacsCredentials) {
-        LOG.info("Retrieve file {} from storage {}", dataEntryPath, dataBundle);
-        return dataBundle.getStorageVolume()
-                .map(storageVolume -> {
-                    StreamingOutput stream = streamFromURL(
-                            storageVolume.getStorageServiceURL() + "/agent_api/agent_storage/" + dataBundle.getId() + "/entry_content/" + dataEntryPath,
-                            jacsCredentials);
-                    return Response
-                            .ok(stream, MediaType.APPLICATION_OCTET_STREAM)
-                            .header("content-disposition","attachment; filename = " + JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()) + "-" + dataBundle.getName() + "/" + dataEntryPath)
-                            ;
-                })
-                .orElseGet(() -> Response
-                        .status(Response.Status.BAD_REQUEST.getStatusCode())
-                        .entity(new ErrorResponse("No volume associated with databundle " + dataBundle.getId()))
-                )
-        ;
-    }
-
-    private Response.ResponseBuilder retrieveFileFromVolume(JacsStorageVolume storageVolume, String dataEntryPath, JacsCredentials jacsCredentials) {
-        LOG.info("Retrieve file {} from volume {}", dataEntryPath, storageVolume);
-        String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
-        if (StringUtils.isNotBlank(storageServiceURL)) {
-            StreamingOutput stream = streamFromURL(
-                    storageServiceURL + "agent_storage/storage_volume/" + storageVolume.getId() + "/" + dataEntryPath,
-                    jacsCredentials);
-            return Response
-                    .ok(stream, MediaType.APPLICATION_OCTET_STREAM)
-                    .header("content-disposition", "attachment; filename = " + storageVolume.getId() + "/" + dataEntryPath)
-                    ;
-        } else {
-            return Response.status(Response.Status.BAD_GATEWAY)
-                    .entity(new ErrorResponse("No storage service URL found to serve " + dataEntryPath))
-                    ;
-        }
-    }
-
-    private StreamingOutput streamFromURL(String url, JacsCredentials jacsCredentials) {
-        return output -> {
-            Client httpClient = null;
-            Response response = null;
-            try {
-                httpClient = HttpClientUtils.createHttpClient();
-                WebTarget target = httpClient.target(url);
-                target.request(MediaType.APPLICATION_OCTET_STREAM);
-
-                response =
-                        createRequestWithCredentials(target.request(
-                                MediaType.APPLICATION_OCTET_STREAM_TYPE),
-                                jacsCredentials)
-                        .get();
-                int responseStatus = response.getStatus();
-                if (responseStatus == Response.Status.OK.getStatusCode()) {
-                    InputStream stream = response.readEntity(InputStream.class);
-                    ByteStreams.copy(stream, output);
-                    stream.close();
-                } else {
-                    LOG.warn("{} returned {} status", url, responseStatus);
-                    throw new WebApplicationException(responseStatus);
-                }
-            } catch (WebApplicationException e) {
-                throw e;
-            } catch (Exception e) {
-                LOG.error("Error streaming data from {}", url, e);
-                throw new WebApplicationException(e);
-            } finally {
-                if (response != null) {
-                    response.close();
-                }
-                if (httpClient != null) {
-                    httpClient.close();
-                }
-            }
-        };
-    }
-
-    private Invocation.Builder createRequestWithCredentials(Invocation.Builder requestBuilder, JacsCredentials jacsCredentials) {
-        Invocation.Builder requestWithCredentialsBuilder = requestBuilder;
-        if (jacsCredentials != null) {
-            if (jacsCredentials.hasAuthToken()) {
-                requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
-                        "Authorization",
-                        "Bearer " + jacsCredentials.getAuthToken());
-            }
-            if (jacsCredentials.hasAuthSubject()) {
-                requestWithCredentialsBuilder = requestWithCredentialsBuilder.header(
-                        "JacsSubject",
-                        jacsCredentials.getAuthSubject());
-            }
-        }
-        return requestWithCredentialsBuilder;
-    }
 
     /**
      * Redirect to the agent URL for checking the content using the file path.
@@ -241,7 +112,7 @@ public class ContentStorageResource {
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
     })
     public Response redirectForContent(@PathParam("filePath") String fullFileNameParam, @Context SecurityContext securityContext) {
-        LOG.info("Stream content of {}", fullFileNameParam);
+        LOG.info("Redirecting to agent for getting content of {}", fullFileNameParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 fullFileNameParam,
@@ -274,6 +145,40 @@ public class ContentStorageResource {
                     }
                 }
         ).build();
+    }
+
+    /**
+     * Redirect to the agent URL for deleting the content using the file path.
+     *
+     * @param fullFileNameParam
+     * @return an HTTP Redirect response if a storage volume is found for the given path or BAD_GATEWAY otherwise
+     */
+    @RequireAuthentication
+    @Produces({MediaType.APPLICATION_JSON})
+    @DELETE
+    @Path("storage_path_redirect/{filePath:.+}")
+    @ApiOperation(value = "Delete file content",
+            notes = "Return the redirect URL to for deleting the content based on the file path")
+    @ApiResponses(value = {
+            @ApiResponse(code = 307, message = "Success", response = StreamingOutput.class),
+            @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
+            @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
+    })
+    public Response redirectForDeleteContent(@PathParam("filePath") String fullFileNameParam) {
+        LOG.info("Redirect to agent for deleting content of {}", fullFileNameParam);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
+        return storageResourceHelper.getStorageVolumeForDir(fullFileNameParam)
+                .map(storageVolume -> Response.temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
+                        .path("/agent_api/agent_storage/")
+                        .path("storage_path")
+                        .path(fullFileNameParam)
+                        .build())
+                        .build())
+                .orElseGet(() -> Response
+                        .status(Response.Status.BAD_GATEWAY)
+                        .entity(new ErrorResponse("No storage service URL found to serve " + fullFileNameParam))
+                        .build())
+                ;
     }
 
 }

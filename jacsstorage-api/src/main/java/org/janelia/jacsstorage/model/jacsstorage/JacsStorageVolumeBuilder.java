@@ -1,5 +1,7 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
+import java.util.Set;
+
 public class JacsStorageVolumeBuilder {
 
     private JacsStorageVolume jacsStorageVolume = new JacsStorageVolume();
@@ -59,4 +61,10 @@ public class JacsStorageVolumeBuilder {
         jacsStorageVolume.setShared(flag);
         return this;
     }
+
+    public JacsStorageVolumeBuilder volumePermissions(Set<JacsStoragePermission> permissions) {
+        jacsStorageVolume.setVolumePermissions(permissions);
+        return this;
+    }
+
 }

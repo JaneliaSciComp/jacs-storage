@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.io;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Streams;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -9,7 +10,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.FileUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
+import org.janelia.jacsstorage.model.DataInterval;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -17,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -31,8 +36,11 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class TarArchiveBundleWriter implements BundleWriter {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TarArchiveBundleWriter.class);
 
     private static class NewEntrySearchPosResult {
         private static final int OK_FOR_NEW_ENTRY_POS = 0;
@@ -44,10 +52,20 @@ public class TarArchiveBundleWriter implements BundleWriter {
         private final List<String> missingDirs;
         private final long newEntryPos;
 
-        public NewEntrySearchPosResult(int searchResult, List<String> missingDirs, long newEntryPos) {
+        private NewEntrySearchPosResult(int searchResult, List<String> missingDirs, long newEntryPos) {
             this.searchResult = searchResult;
             this.missingDirs = missingDirs;
             this.newEntryPos = newEntryPos;
+        }
+    }
+
+    private static class StreamChunk {
+        private final long startPos;
+        private final long size;
+
+        private StreamChunk(long startPos, long size) {
+            this.startPos = startPos;
+            this.size = size;
         }
     }
 
@@ -189,6 +207,90 @@ public class TarArchiveBundleWriter implements BundleWriter {
                 }
             }
         }
+    }
+
+    @Override
+    public long deleteEntry(String dataPath, String entryName) {
+        Preconditions.checkArgument(StringUtils.isNotBlank(entryName));
+        Path rootPath = getRootPath(dataPath);
+        if (Files.notExists(rootPath)) {
+            LOG.info("Delete {}, {} - no file path found for {}", dataPath, entryName, rootPath);
+            return 0;
+        } else if (Files.isDirectory(rootPath)) {
+            LOG.info("Delete {}, {} - Root {} is a directory", dataPath, entryName, rootPath);
+            return 0;
+        }
+        FileLock tarLock = null;
+        try (RandomAccessFile existingTarFile = new RandomAccessFile(rootPath.toFile(), "rw")) {
+            tarLock = lockTarFile(existingTarFile.getChannel());
+            List<StreamChunk> entriesToBeDeleted = getEntriesToDelete(existingTarFile, entryName);
+            if (entriesToBeDeleted.isEmpty()) {
+                return 0L;
+            } else {
+                long oldTarSize = existingTarFile.length();
+                List<StreamChunk> copiedIntervals = Streams.zip(
+                        Stream.concat(Stream.of(new StreamChunk(0L, 0L)), entriesToBeDeleted.stream()),
+                        Stream.concat(entriesToBeDeleted.stream(), Stream.of(new StreamChunk(oldTarSize, 0L))),
+                        (de1, de2) -> new StreamChunk(de1.startPos + de1.size, de2.startPos - de1.startPos - de1.size))
+                        .collect(Collectors.toList());
+                FileChannel tarChannel = existingTarFile.getChannel();
+                long writePos = 0L;
+                final ByteBuffer buffer = ByteBuffer.allocateDirect(FileUtils.BUFFER_SIZE);
+                for (StreamChunk toCopy : copiedIntervals) {
+                    StreamChunk currentChunk = new StreamChunk(toCopy.startPos, toCopy.size);
+                    while (currentChunk.size > 0) {
+                        if (currentChunk.size < buffer.remaining()) {
+                            buffer.limit((int) currentChunk.size);
+                        }
+                        int nbytesRead = tarChannel.read(buffer, currentChunk.startPos);
+                        currentChunk = new StreamChunk(currentChunk.startPos + nbytesRead, currentChunk.size - nbytesRead);
+                        buffer.flip();
+                        while (buffer.hasRemaining()) {
+                            int nbytesWritten = tarChannel.write(buffer, writePos);
+                            writePos += nbytesWritten;
+                        }
+                        buffer.compact();
+                    }
+                }
+                tarChannel.truncate(writePos);
+                return oldTarSize - writePos;
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (tarLock != null) {
+                try {
+                    tarLock.release();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+        }
+    }
+
+    private List<StreamChunk> getEntriesToDelete(RandomAccessFile tarFile, String entryName) throws IOException {
+        String normalizedEntryName = normalizeEntryName(entryName);
+        FileChannel tarChannel = tarFile.getChannel();
+        tarChannel.position(0L); // go to the beginning of the file just in case the FP was moved
+        TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(Channels.newInputStream(tarChannel));
+        List<StreamChunk> deletedEntriesPos = new ArrayList<>();
+        for (TarArchiveEntry sourceEntry = tarArchiveInputStream.getNextTarEntry();
+             sourceEntry != null;
+             sourceEntry = tarArchiveInputStream.getNextTarEntry()) {
+            long currentEntryPos = tarChannel.position();
+            String currentEntryName = normalizeEntryName(sourceEntry.getName());
+            if (currentEntryName.equals(normalizedEntryName) ||
+                    currentEntryName.startsWith(normalizedEntryName + "/")) {
+                long entryPos = currentEntryPos - TarConstants.DEFAULT_RCDSIZE;
+                long entrySize = sourceEntry.getSize() + TarConstants.DEFAULT_RCDSIZE;
+                if (entrySize % TarConstants.DEFAULT_RCDSIZE != 0) {
+                    // tar entry size should be an exact multiple of the record size
+                    entrySize = ((entrySize + TarConstants.DEFAULT_RCDSIZE) / TarConstants.DEFAULT_RCDSIZE) * TarConstants.DEFAULT_RCDSIZE;
+                }
+                deletedEntriesPos.add(new StreamChunk(entryPos, entrySize));
+            }
+        }
+        return deletedEntriesPos;
     }
 
     private Path getRootPath(String rootDir) {

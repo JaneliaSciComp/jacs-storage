@@ -4,22 +4,18 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.coreutils.FileUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
-import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ErrorResponse;
-import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.security.JacsSubjectHelper;
-import org.janelia.jacsstorage.security.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
-import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
@@ -37,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -67,17 +64,25 @@ public class StorageResourceHelper {
                                                                        BiFunction<JacsBundle, String, Response.ResponseBuilder> bundleBasedResponseHandler,
                                                                        BiFunction<JacsStorageVolume, String, Response.ResponseBuilder> fileBasedResponseHandler) {
         String fullDataPathName = StringUtils.prependIfMissing(fullDataPathParam, "/");
-        JacsStorageVolume storageVolume = getStorageVolumeForDir(fullDataPathName);
-        if (storageVolume == null) {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No managed volume found for " + fullDataPathParam))
-                    ;
-        }
+        return getStorageVolumeForDir(fullDataPathName)
+                .map(storageVolume -> handleResponseForFullDataPathParam(storageVolume,
+                        fullDataPathName,
+                        bundleBasedResponseHandler,
+                        fileBasedResponseHandler))
+                .orElseGet(() -> Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No managed volume found for " + fullDataPathParam)))
+                ;
+    }
+
+    private Response.ResponseBuilder handleResponseForFullDataPathParam(JacsStorageVolume storageVolume,
+                                                                        String fullDataPathName,
+                                                                        BiFunction<JacsBundle, String, Response.ResponseBuilder> bundleBasedResponseHandler,
+                                                                        BiFunction<JacsStorageVolume, String, Response.ResponseBuilder> fileBasedResponseHandler) {
         // check if the first path component after the storage prefix is a bundle ID
         java.nio.file.Path storageRelativeFileDataPath = storageVolume.getStorageRelativePath(fullDataPathName);
         if (storageRelativeFileDataPath == null) {
-            LOG.warn("Path {} is not a relative path to {} ", fullDataPathName, storageVolume);
+            LOG.debug("Path {} is not a relative path to {} ", fullDataPathName, storageVolume);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No relative path found for " + fullDataPathName))
@@ -104,13 +109,14 @@ public class StorageResourceHelper {
         }
     }
 
-    private JacsStorageVolume getStorageVolumeForDir(String dirName) {
+    public Optional<JacsStorageVolume> getStorageVolumeForDir(String dirName1) {
+        String fullDirName = StringUtils.prependIfMissing(dirName1, "/");
         try {
-            Path dir = Paths.get(dirName);
+            Path dir = Paths.get(fullDirName);
             int dirComponents = dir.getNameCount();
             String dirKey;
             if (dirComponents < N_VOL_DIR_COMPONENTS) {
-                dirKey = dirName;
+                dirKey = fullDirName;
             } else {
                 if (dir.getRoot() == null) {
                     dirKey = dir.subpath(0, N_VOL_DIR_COMPONENTS).toString();
@@ -119,15 +125,16 @@ public class StorageResourceHelper {
                 }
             }
             String cachedDirKey = dirKey;
-            return VOLUMES_BY_PATH_CACHE.get(cachedDirKey, new Callable<JacsStorageVolume>() {
+            JacsStorageVolume storageVolume = VOLUMES_BY_PATH_CACHE.get(cachedDirKey, new Callable<JacsStorageVolume>() {
                 @Override
                 public JacsStorageVolume call() {
                     return retrieveStorageVolumeForDir(cachedDirKey);
                 }
             });
+            return Optional.of(storageVolume);
         } catch (Exception e) {
-            LOG.error("Error retrieving volumen for {}", dirName, e);
-            return null;
+            LOG.error("Error retrieving volume for {}", fullDirName, e);
+            return Optional.empty();
         }
     }
 
@@ -160,7 +167,12 @@ public class StorageResourceHelper {
     }
 
     public Response.ResponseBuilder retrieveContentFromFile(JacsStorageVolume storageVolume, String dataEntryPath) {
-        if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath))) {
+        if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
+            return Response
+                    .status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to read " + dataEntryPath))
+                    ;
+        } else if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath))) {
             return retrieveContentFromFile(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath));
         } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath))) {
             return retrieveContentFromFile(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath));
@@ -233,10 +245,15 @@ public class StorageResourceHelper {
     }
 
     public Response.ResponseBuilder listContentFromPath(JacsStorageVolume storageVolume, URI baseURI, String dataEntryPath, int depth) {
-        if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath))) {
-            return listContentFromPath(storageVolume, baseURI, Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath), depth);
-        } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath))) {
-            return listContentFromPath(storageVolume, baseURI, Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath), depth);
+        if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
+            return Response
+                    .status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to list " + dataEntryPath))
+                    ;
+        } else if (Files.exists(Paths.get(storageVolume.getStorageRootDir(), dataEntryPath))) {
+            return listContentFromPath(storageVolume, baseURI, Paths.get(storageVolume.getStorageRootDir(), dataEntryPath), depth);
+        } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix(), dataEntryPath))) {
+            return listContentFromPath(storageVolume, baseURI, Paths.get(storageVolume.getStoragePathPrefix(), dataEntryPath), depth);
         } else {
             return Response
                     .status(Response.Status.NOT_FOUND)
@@ -299,10 +316,15 @@ public class StorageResourceHelper {
     }
 
     public Response.ResponseBuilder storeFileContent(JacsStorageVolume storageVolume, URI baseURI, String dataEntryPath, InputStream contentStream) {
-        if (Files.exists(Paths.get(storageVolume.getStorageRootDir()))) {
-            return storeFileContent(storageVolume, baseURI, Paths.get(storageVolume.getStorageRootDir()).resolve(dataEntryPath), contentStream);
-        } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath).getParent())) {
-            return storeFileContent(storageVolume, baseURI, Paths.get(storageVolume.getStoragePathPrefix()).resolve(dataEntryPath), contentStream);
+        if (!storageVolume.hasPermission(JacsStoragePermission.WRITE)) {
+            return Response
+                    .status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to list " + dataEntryPath))
+                    ;
+        } else if (Files.exists(Paths.get(storageVolume.getStorageRootDir()))) {
+            return storeFileContent(storageVolume, baseURI, Paths.get(storageVolume.getStorageRootDir(), dataEntryPath), contentStream);
+        } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()))) {
+            return storeFileContent(storageVolume, baseURI, Paths.get(storageVolume.getStoragePathPrefix(), dataEntryPath), contentStream);
         } else {
             return Response
                     .status(Response.Status.NOT_FOUND)
@@ -329,5 +351,50 @@ public class StorageResourceHelper {
         return Response
                 .created(newContentURI)
                 .entity(newDataNode);
+    }
+
+    public Response.ResponseBuilder removeContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath, Consumer<Long> dataBundleUpdater) {
+        try {
+            long freedEntrySize = dataStorageService.deleteStorageEntry(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat());
+            dataBundleUpdater.accept(freedEntrySize);
+            return Response.noContent();
+        } catch (Exception e) {
+            LOG.warn("Error while trying to delete {} from {}", dataEntryPath, dataBundle, e);
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Delete bundle entry error: " + dataBundle.getId() + "/" + dataEntryPath))
+                    ;
+        }
+    }
+
+    public Response.ResponseBuilder removeFileContentFromVolume(JacsStorageVolume storageVolume, String dataEntryPath) {
+        if (!storageVolume.hasPermission(JacsStoragePermission.DELETE)) {
+            return Response
+                    .status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("No delete permission for volume " + storageVolume.getName() + " to delete " + dataEntryPath))
+                    ;
+        } else if (Files.exists(Paths.get(storageVolume.getStorageRootDir(), dataEntryPath))) {
+            return removeFileFromVolume(storageVolume, Paths.get(storageVolume.getStorageRootDir(), dataEntryPath));
+        } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix(), dataEntryPath))) {
+            return removeFileFromVolume(storageVolume, Paths.get(storageVolume.getStorageRootDir(), dataEntryPath));
+        } else {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("Invalid storage volume " + storageVolume.getName() + " for deleting " + dataEntryPath))
+                    ;
+        }
+    }
+
+    private Response.ResponseBuilder removeFileFromVolume(JacsStorageVolume storageVolume, Path filePath) {
+        try {
+            dataStorageService.deleteStoragePath(filePath);
+            return Response.noContent();
+        } catch (Exception e) {
+            LOG.warn("File error while trying to delete {} from {}", filePath, storageVolume);
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("Internal error while trying to delete " + filePath + " from " + storageVolume))
+                    ;
+        }
     }
 }

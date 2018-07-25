@@ -1,10 +1,12 @@
 package org.janelia.jacsstorage.io;
 
+import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.hamcrest.core.IsNot;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.junit.After;
 import org.junit.Before;
@@ -283,6 +285,25 @@ public class TarBundleReaderWriterTest {
         assertThatThrownBy(() -> tarBundleWriter.createFileEntry(testTarFile.toString(), testData, new FileInputStream(Paths.get(TEST_DATA_DIRECTORY, "d_1_1/f_1_1_1").toFile())))
                 .isInstanceOf(DataAlreadyExistException.class)
                 .hasMessage("Entry " + testData + " already exists");
+    }
+
+    @Test
+    public void deleteDataEntry() throws IOException {
+        List<String> testData = ImmutableList.of(
+                "f_1_1",
+                "f_1_2",
+                "f_1_3",
+                "d_1_1/",
+                "d_1_2/d_1_2_1/"
+        );
+        for (String td : testData) {
+            long length = tarBundleWriter.deleteEntry(testTarFile.toString(), td);
+            assertTrue("Expected deleted length to be gt 0 for " + td, length > 0);
+            List<String> tarEntryNames = tarBundleReader.listBundleContent(testTarFile.toString(), null, 10).stream()
+                    .map(ni -> ni.getNodeRelativePath())
+                    .collect(Collectors.toList());
+            assertThat(td, IsNot.not(in(tarEntryNames)));
+        }
     }
 
 }

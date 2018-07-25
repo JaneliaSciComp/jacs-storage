@@ -1,7 +1,10 @@
 package org.janelia.jacsstorage.io;
 
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +18,8 @@ import java.util.EnumSet;
 import java.util.Set;
 
 public class SingleFileBundleWriter implements BundleWriter {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SingleFileBundleWriter.class);
 
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
@@ -65,4 +70,21 @@ public class SingleFileBundleWriter implements BundleWriter {
         }
     }
 
+    @Override
+    public long deleteEntry(String dataPath, String entryName) {
+        Path fullEntryPath = Paths.get(dataPath);
+        if (Files.notExists(fullEntryPath)) {
+            LOG.info("No file path found for {}, ({}) to be deleted", dataPath, fullEntryPath);
+            return 0L;
+        }
+        long entrySize = PathUtils.getSize(fullEntryPath);
+        try {
+            PathUtils.deletePath(fullEntryPath);
+            LOG.info("Deleted file path {}, ({})", dataPath, fullEntryPath);
+            return entrySize;
+        } catch (Exception e) {
+            LOG.warn("Error deleting file path {}, ({})", dataPath, fullEntryPath, e);
+            return 0;
+        }
+    }
 }

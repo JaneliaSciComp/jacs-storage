@@ -8,6 +8,7 @@ import java.nio.file.Path;
 
 public interface DataStorageService extends StorageContentReader, StorageContentWriter {
     long createDirectoryEntry(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat);
-    void deleteStorage(Path dataPath) throws IOException;
+    long deleteStorageEntry(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat);
+    void deleteStoragePath(Path dataPath) throws IOException;
     void cleanupStoragePath(Path dataPath) throws IOException;
 }

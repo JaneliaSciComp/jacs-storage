@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service.localservice;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
@@ -9,6 +10,7 @@ import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.config.ApplicationConfigValueResolver;
 import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -67,13 +70,14 @@ public class StorageVolumeBootstrapper {
         storageVolume.setStorageRootDir(applicationConfig.getStringPropertyValue(
                 getVolumeConfigPropertyName(volumeName, "RootDir")));
         storageVolume.setStoragePathPrefix(getStoragePathPrefix(volumeName));
-        storageVolume.setStorageTags(getStorageVolumeTags(volumeName));
         storageVolume.setQuotaFailPercent(applicationConfig.getDoublePropertyValue(
                 getVolumeConfigPropertyName(volumeName, "QuotaFailPercent")));
         storageVolume.setQuotaWarnPercent(applicationConfig.getDoublePropertyValue(
                 getVolumeConfigPropertyName(volumeName, "QuotaWarnPercent")));
         storageVolume.setSystemUsageFile(applicationConfig.getStringPropertyValue(
                 getVolumeConfigPropertyName(volumeName, "SystemUsageFile")));
+        storageVolume.setStorageTags(getStorageVolumeTags(volumeName));
+        storageVolume.setVolumePermissions(getStorageVolumePermissions(volumeName));
         return storageVolume;
     }
 
@@ -96,6 +100,15 @@ public class StorageVolumeBootstrapper {
         List<String> tags = applicationConfig.getStringListPropertyValue(
                 getVolumeConfigPropertyName(volumeName, "Tags"));
         return tags.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+    }
+
+    private Set<JacsStoragePermission> getStorageVolumePermissions(String volumeName) {
+        List<String> permissions = applicationConfig.getStringListPropertyValue(
+                getVolumeConfigPropertyName(volumeName, "VolumePermissions"));
+        return permissions.stream()
+                .filter(StringUtils::isNotBlank)
+                .map(JacsStoragePermission::valueOf)
+                .collect(Collectors.toSet());
     }
 
 }
