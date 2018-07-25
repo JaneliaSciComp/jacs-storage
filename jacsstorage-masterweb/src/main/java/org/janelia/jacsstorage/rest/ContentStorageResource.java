@@ -66,7 +66,7 @@ public class ContentStorageResource {
                 (dataBundle, dataEntryPath) -> dataBundle.getStorageVolume()
                         .map(storageVolume -> Response
                                 .temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
-                                        .path("/agent_api/agent_storage/")
+                                        .path("agent_storage")
                                         .path(dataBundle.getId().toString())
                                         .path("entry_content")
                                         .path(dataEntryPath)
@@ -80,7 +80,8 @@ public class ContentStorageResource {
                     if (StringUtils.isNotBlank(storageVolume.getStorageServiceURL())) {
                         return Response
                                 .temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
-                                        .path("agent_storage/storage_volume")
+                                        .path("agent_storage")
+                                        .path("storage_volume")
                                         .path(storageVolume.getId().toString())
                                         .path(dataEntryPath)
                                         .build())
@@ -119,7 +120,7 @@ public class ContentStorageResource {
                 (dataBundle, dataEntryPath) -> dataBundle.getStorageVolume()
                             .map(storageVolume -> Response
                                         .temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
-                                                .path("/agent_api/agent_storage/")
+                                                .path("agent_storage")
                                                 .path(dataBundle.getId().toString())
                                                 .path("entry_content")
                                                 .path(dataEntryPath)
@@ -133,7 +134,8 @@ public class ContentStorageResource {
                     if (StringUtils.isNotBlank(storageVolume.getStorageServiceURL())) {
                         return Response
                                 .temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
-                                        .path("agent_storage/storage_volume")
+                                        .path("agent_storage")
+                                        .path("storage_volume")
                                         .path(storageVolume.getId().toString())
                                         .path(dataEntryPath)
                                         .build())
@@ -169,7 +171,7 @@ public class ContentStorageResource {
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
         return storageResourceHelper.getStorageVolumeForDir(fullFileNameParam)
                 .map(storageVolume -> Response.temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
-                        .path("/agent_api/agent_storage/")
+                        .path("agent_storage")
                         .path("storage_path")
                         .path(fullFileNameParam)
                         .build())
