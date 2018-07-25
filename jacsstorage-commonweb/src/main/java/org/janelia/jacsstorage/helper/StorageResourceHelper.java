@@ -295,7 +295,9 @@ public class StorageResourceHelper {
     }
 
     public Response.ResponseBuilder storeDataBundleContent(JacsBundle dataBundle, URI baseURI, String dataEntryPath, Consumer<Long> dataBundleUpdater, InputStream contentStream) {
-        long newFileEntrySize = dataStorageService.writeDataEntryStream(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), contentStream);
+        Path storagePath = dataBundle.getRealStoragePath();
+        LOG.info("Create {} on {}", dataEntryPath, storagePath);
+        long newFileEntrySize = dataStorageService.writeDataEntryStream(storagePath, dataEntryPath, dataBundle.getStorageFormat(), contentStream);
         dataBundleUpdater.accept(newFileEntrySize);
         URI newContentURI = UriBuilder.fromUri(baseURI)
                 .path(Constants.AGENTSTORAGE_URI_PATH)
@@ -334,6 +336,7 @@ public class StorageResourceHelper {
     }
 
     private Response.ResponseBuilder storeFileContent(JacsStorageVolume storageVolume, URI baseURI, Path filePath, InputStream contentStream) {
+        LOG.info("Create {} on {}", filePath, storageVolume);
         dataStorageService.writeDataEntryStream(filePath, "", JacsStorageFormat.SINGLE_DATA_FILE, contentStream);
         String pathRelativeToVolRoot = Paths.get(storageVolume.getStorageRootDir()).relativize(filePath).toString();
         URI newContentURI = UriBuilder.fromUri(baseURI)
@@ -355,7 +358,9 @@ public class StorageResourceHelper {
 
     public Response.ResponseBuilder removeContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath, Consumer<Long> dataBundleUpdater) {
         try {
-            long freedEntrySize = dataStorageService.deleteStorageEntry(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat());
+            Path storagePath = dataBundle.getRealStoragePath();
+            LOG.info("Delete {} from {}", dataEntryPath, storagePath);
+            long freedEntrySize = dataStorageService.deleteStorageEntry(storagePath, dataEntryPath, dataBundle.getStorageFormat());
             dataBundleUpdater.accept(freedEntrySize);
             return Response.noContent();
         } catch (Exception e) {
@@ -387,6 +392,7 @@ public class StorageResourceHelper {
 
     private Response.ResponseBuilder removeFileFromVolume(JacsStorageVolume storageVolume, Path filePath) {
         try {
+            LOG.info("Delete {} from {}", filePath, storageVolume);
             dataStorageService.deleteStoragePath(filePath);
             return Response.noContent();
         } catch (Exception e) {
