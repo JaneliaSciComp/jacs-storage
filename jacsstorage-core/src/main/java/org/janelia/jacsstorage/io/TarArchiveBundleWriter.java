@@ -253,6 +253,7 @@ public class TarArchiveBundleWriter implements BundleWriter {
                     }
                 }
                 tarChannel.truncate(writePos);
+                LOG.info("Deleted {} from {}", entryName, dataPath);
                 return oldTarSize - writePos;
             }
         } catch (Exception e) {

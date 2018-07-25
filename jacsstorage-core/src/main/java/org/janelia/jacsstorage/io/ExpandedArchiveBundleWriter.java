@@ -130,7 +130,7 @@ public class ExpandedArchiveBundleWriter implements BundleWriter {
         long entrySize = PathUtils.getSize(fullEntryPath);
         try {
             PathUtils.deletePath(fullEntryPath);
-            LOG.info("Deleted file path {}, {} ({})", dataPath, entryName, fullEntryPath);
+            LOG.info("Deleted {} from {} ({})", entryName, dataPath, fullEntryPath);
             return entrySize;
         } catch (Exception e) {
             LOG.warn("Error deleting file path {}, {} ({})", dataPath, entryName, fullEntryPath, e);

@@ -80,7 +80,7 @@ public class SingleFileBundleWriter implements BundleWriter {
         long entrySize = PathUtils.getSize(fullEntryPath);
         try {
             PathUtils.deletePath(fullEntryPath);
-            LOG.info("Deleted file path {}, ({})", dataPath, fullEntryPath);
+            LOG.info("Deleted {} ({})", dataPath, fullEntryPath);
             return entrySize;
         } catch (Exception e) {
             LOG.warn("Error deleting file path {}, ({})", dataPath, fullEntryPath, e);
