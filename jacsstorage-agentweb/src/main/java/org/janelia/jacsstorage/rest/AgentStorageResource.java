@@ -180,7 +180,7 @@ public class AgentStorageResource {
         if (CollectionUtils.isNotEmpty(dataBundleContent)) {
             dataBundleContent.forEach(dn -> {
                 dn.setNumericStorageId(dataBundle.getId());
-                dn.setRootLocation(dataBundle.getRealStoragePath().toString());
+                dn.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
                 dn.setStorageRootPathURI(dataBundle.getStorageURI());
                 dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
                         .path(AgentStorageResource.class)
@@ -285,7 +285,7 @@ public class AgentStorageResource {
         );
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundleId);
-        newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
+        newDataNode.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
         newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeRelativePath(dataEntryPath);
@@ -373,7 +373,7 @@ public class AgentStorageResource {
         );
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundleId);
-        newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
+        newDataNode.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
         newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeRelativePath(dataEntryPath);

@@ -284,7 +284,7 @@ public class StorageResourceHelper {
                                             .build();
                                     DataNodeInfo newDataNode = new DataNodeInfo();
                                     newDataNode.setStorageId(dn.getStorageId());
-                                    newDataNode.setRootLocation(storageVolume.getStorageRootDir());
+                                    newDataNode.setStorageRootLocation(storageVolume.getStorageRootDir());
                                     newDataNode.setStorageRootPathURI(storageVolume.getStorageURI());
                                     newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
                                     newDataNode.setNodeRelativePath(dataNodePathRelativeToVolRoot);
@@ -313,7 +313,7 @@ public class StorageResourceHelper {
                 .build();
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundle.getId());
-        newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
+        newDataNode.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
         newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(newContentURI.toString());
         newDataNode.setNodeRelativePath(dataEntryPath);
@@ -352,7 +352,7 @@ public class StorageResourceHelper {
                 .path(pathRelativeToVolRoot)
                 .build();
         DataNodeInfo newDataNode = new DataNodeInfo();
-        newDataNode.setRootLocation(storageVolume.getStorageRootDir());
+        newDataNode.setStorageRootLocation(storageVolume.getStorageRootDir());
         newDataNode.setStorageRootPathURI(storageVolume.getStorageURI());
         newDataNode.setNodeAccessURL(newContentURI.toString());
         newDataNode.setNodeRelativePath(pathRelativeToVolRoot);

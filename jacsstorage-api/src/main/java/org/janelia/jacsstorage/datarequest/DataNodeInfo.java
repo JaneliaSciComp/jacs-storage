@@ -36,12 +36,12 @@ public class DataNodeInfo {
         this.storageId = storageId.toString();
     }
 
-    public String getRootLocation() {
-        return rootLocation;
+    public String getStorageRootLocation() {
+        return storageRootLocation;
     }
 
-    public void setRootLocation(String rootLocation) {
-        this.rootLocation = rootLocation;
+    public void setStorageRootLocation(String storageRootLocation) {
+        this.storageRootLocation = storageRootLocation;
     }
 
     public StoragePathURI getStorageRootPathURI() {
@@ -111,7 +111,7 @@ public class DataNodeInfo {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("rootLocation", rootLocation)
+                .append("storageRootLocation", storageRootLocation)
                 .append("storageRootPathURI", storageRootPathURI)
                 .append("nodeRelativePath", nodeRelativePath)
                 .append("size", size)

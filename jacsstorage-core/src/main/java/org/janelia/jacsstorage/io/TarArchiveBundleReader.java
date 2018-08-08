@@ -68,7 +68,7 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                 if (currentEntryName.equals(normalizedEntryName)) {
                     if (!sourceEntry.isDirectory()) {
                         DataNodeInfo dataNodeInfo = new DataNodeInfo();
-                        dataNodeInfo.setRootLocation(sourcePath.toString());
+                        dataNodeInfo.setStorageRootLocation(sourcePath.toString());
                         dataNodeInfo.setCollectionFlag(false);
                         dataNodeInfo.setNodeRelativePath(currentEntryName);
                         dataNodeInfo.setSize(sourceEntry.getSize());

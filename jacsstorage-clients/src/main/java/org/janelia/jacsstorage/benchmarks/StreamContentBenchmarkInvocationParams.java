@@ -41,7 +41,7 @@ public class StreamContentBenchmarkInvocationParams {
                             .stream()
                             .peek((DataNodeInfo contentInfo) -> {
                                 storageInfoMap.put(contentInfo.getStorageId(), storageInfo);
-                                contentInfo.setRootLocation(storageInfo.getConnectionURL());
+                                contentInfo.setStorageRootLocation(storageInfo.getConnectionURL());
                             }))
                     .filter(contentInfo -> !contentInfo.isCollectionFlag())
                     .filter(contentInfo -> StringUtils.isBlank(params.storageEntry) || contentInfo.getNodeRelativePath().equals(params.storageEntry))
