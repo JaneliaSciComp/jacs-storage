@@ -330,7 +330,7 @@ public class MasterStorageResource {
                                      @Context SecurityContext securityContext) {
         LOG.info("Create storage: {} with credentials {}", dataStorageInfo, securityContext.getUserPrincipal());
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
-        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(dataStorageInfo.getStorageRootPrefixDir(), dataBundle, SecurityUtils.getUserPrincipal(securityContext)
+        Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(dataStorageInfo.getPath(), dataBundle, SecurityUtils.getUserPrincipal(securityContext)
         );
         return dataBundleInfo
                 .map(bi -> Response

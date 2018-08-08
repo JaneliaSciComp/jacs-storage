@@ -59,6 +59,11 @@ public class JacsStorageVolume extends AbstractEntity {
         this.storagePathPrefix = storagePathPrefix;
     }
 
+    @JsonIgnore
+    public StoragePathURI getStorageURI() {
+        return StoragePathURI.createPathURI(storagePathPrefix);
+    }
+
     public String getStorageRootDir() {
         return storageRootDir;
     }

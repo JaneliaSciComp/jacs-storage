@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -44,7 +45,7 @@ public class ContentStorageResource {
     /**
      * Redirect to the agent URL for checking the content using the file path.
      *
-     * @param fullFileNameParam
+     * @param filePathParam
      * @param securityContext
      * @return
      */
@@ -58,11 +59,11 @@ public class ContentStorageResource {
             @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
     })
-    public Response redirectForContentCheck(@PathParam("filePath") String fullFileNameParam, @Context SecurityContext securityContext) {
-        LOG.info("Check {}", fullFileNameParam);
+    public Response redirectForContentCheck(@PathParam("filePath") String filePathParam, @Context SecurityContext securityContext) {
+        LOG.info("Check {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                fullFileNameParam,
+                StoragePathURI.createAbsolutePathURI(filePathParam),
                 (dataBundle, dataEntryPath) -> dataBundle.getStorageVolume()
                         .map(storageVolume -> Response
                                 .temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
@@ -98,7 +99,7 @@ public class ContentStorageResource {
     /**
      * Redirect to the agent URL for retrieving the content using the file path.
      *
-     * @param fullFileNameParam
+     * @param filePathParam
      * @param securityContext
      * @return
      */
@@ -112,11 +113,11 @@ public class ContentStorageResource {
             @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
     })
-    public Response redirectForContent(@PathParam("filePath") String fullFileNameParam, @Context SecurityContext securityContext) {
-        LOG.info("Redirecting to agent for getting content of {}", fullFileNameParam);
+    public Response redirectForContent(@PathParam("filePath") String filePathParam, @Context SecurityContext securityContext) {
+        LOG.info("Redirecting to agent for getting content of {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                fullFileNameParam,
+                StoragePathURI.createAbsolutePathURI(filePathParam),
                 (dataBundle, dataEntryPath) -> dataBundle.getStorageVolume()
                             .map(storageVolume -> Response
                                         .temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
@@ -152,7 +153,7 @@ public class ContentStorageResource {
     /**
      * Redirect to the agent URL for deleting the content using the file path.
      *
-     * @param fullFileNameParam
+     * @param filePathParam
      * @return an HTTP Redirect response if a storage volume is found for the given path or BAD_GATEWAY otherwise
      */
     @RequireAuthentication
@@ -166,19 +167,20 @@ public class ContentStorageResource {
             @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
     })
-    public Response redirectForDeleteContent(@PathParam("filePath") String fullFileNameParam) {
-        LOG.info("Redirect to agent for deleting content of {}", fullFileNameParam);
+    public Response redirectForDeleteContent(@PathParam("filePath") String filePathParam) {
+        LOG.info("Redirect to agent for deleting content of {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
-        return storageResourceHelper.getStorageVolumeForDir(fullFileNameParam)
+        StoragePathURI storagePathURI = StoragePathURI.createAbsolutePathURI(filePathParam);
+        return storageResourceHelper.getStorageVolumeForURI(storagePathURI)
                 .map(storageVolume -> Response.temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
                         .path("agent_storage")
                         .path("storage_path")
-                        .path(fullFileNameParam)
+                        .path(storagePathURI.asURIString())
                         .build())
                         .build())
                 .orElseGet(() -> Response
                         .status(Response.Status.BAD_GATEWAY)
-                        .entity(new ErrorResponse("No storage service URL found to serve " + fullFileNameParam))
+                        .entity(new ErrorResponse("No storage service URL found to serve " + filePathParam))
                         .build())
                 ;
     }

@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
+import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
@@ -176,12 +177,11 @@ public class AgentStorageResource {
 
     private List<DataNodeInfo> listDataEntries(JacsBundle dataBundle, String entryName, int depth) {
         List<DataNodeInfo> dataBundleContent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depth);
-        if (CollectionUtils.isNotEmpty(dataBundleContent) && dataBundle.getVirtualRoot() != null) {
-            String virtualStoragePath = dataBundle.getVirtualRoot();
+        if (CollectionUtils.isNotEmpty(dataBundleContent)) {
             dataBundleContent.forEach(dn -> {
                 dn.setNumericStorageId(dataBundle.getId());
                 dn.setRootLocation(dataBundle.getRealStoragePath().toString());
-                dn.setRootPrefix(virtualStoragePath);
+                dn.setRootPathURI(dataBundle.getStorageURI());
                 dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
                         .path(AgentStorageResource.class)
                         .path(AgentStorageResource.class, "getEntryContent")
@@ -286,7 +286,7 @@ public class AgentStorageResource {
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundleId);
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
-        newDataNode.setRootPrefix(dataBundle.getVirtualRoot());
+        newDataNode.setRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(true);
@@ -374,7 +374,7 @@ public class AgentStorageResource {
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundleId);
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
-        newDataNode.setRootPrefix(dataBundle.getVirtualRoot());
+        newDataNode.setRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(false);

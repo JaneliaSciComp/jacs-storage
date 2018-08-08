@@ -11,6 +11,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.security.RequireAuthentication;
 import org.janelia.jacsstorage.security.SecurityUtils;
@@ -68,11 +69,11 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response checkPath(@PathParam("dataPath") String fullDataPathNameParam) {
-        LOG.info("Check path {}", fullDataPathNameParam);
+    public Response checkPath(@PathParam("dataPath") String dataPathParam) {
+        LOG.info("Check path {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                fullDataPathNameParam,
+                StoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryPath) -> Response
                         .ok(),
                 (storageVolume, dataEntryPath) -> storageResourceHelper.checkContentFromFile(storageVolume, dataEntryPath)
@@ -89,11 +90,11 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response retrieveData(@PathParam("dataPath") String fullDataPathNameParam) {
-        LOG.info("Retrieve data from {}", fullDataPathNameParam);
+    public Response retrieveData(@PathParam("dataPath") String dataPathParam) {
+        LOG.info("Retrieve data from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                fullDataPathNameParam,
+                StoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath),
                 (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, dataEntryPath)
         ).build();
@@ -114,11 +115,11 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response removeData(@PathParam("dataPath") String fullDataPathNameParam, @Context SecurityContext securityContext) {
-        LOG.info("Remove data from {}", fullDataPathNameParam);
+    public Response removeData(@PathParam("dataPath") String dataPathParam, @Context SecurityContext securityContext) {
+        LOG.info("Remove data from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                fullDataPathNameParam,
+                StoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryPath) -> storageResourceHelper.removeContentFromDataBundle(dataBundle,
                         dataEntryPath,
                         (Long freedEntrySize) -> storageAllocatorService.updateStorage(
@@ -146,11 +147,11 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data write error")
     })
-    public Response storeData(@PathParam("dataPath") String fullDataPathNameParam, @Context SecurityContext securityContext, InputStream contentStream) {
-        LOG.info("Retrieve data from {}", fullDataPathNameParam);
+    public Response storeData(@PathParam("dataPath") String dataPathParam, @Context SecurityContext securityContext, InputStream contentStream) {
+        LOG.info("Retrieve data from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                fullDataPathNameParam,
+                StoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryPath) ->
                         storageResourceHelper.storeDataBundleContent(dataBundle,
                                 resourceURI.getBaseUri(),
@@ -183,15 +184,15 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 404, message = "Invalid data bundle ID"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response listContent(@PathParam("dataPath") String fullDataPathNameParam,
+    public Response listContent(@PathParam("dataPath") String dataPathParam,
                                 @QueryParam("depth") Integer depthParam,
                                 @Context SecurityContext securityContext) {
-        LOG.info("List content from location {} with a depthParameter {}", fullDataPathNameParam, depthParam);
+        LOG.info("List content from location {} with a depthParameter {}", dataPathParam, depthParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
         URI baseURI = resourceURI.getBaseUri();
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                fullDataPathNameParam,
+                StoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryPath) -> storageResourceHelper.listContentFromDataBundle(dataBundle, baseURI, dataEntryPath, depth),
                 (storageVolume, dataEntryPath) -> storageResourceHelper.listContentFromPath(storageVolume, baseURI, dataEntryPath, depth)
         ).build();

@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.datarequest;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 
 import java.math.BigInteger;
 import java.util.Date;
@@ -9,7 +10,7 @@ import java.util.Date;
 public class DataNodeInfo {
     private String storageId;
     private String rootLocation;
-    private String rootPrefix;
+    private StoragePathURI rootPathURI;
     private String nodeAccessURL;
     private String nodeRelativePath; // node path relative to the root
     private long size;
@@ -43,12 +44,12 @@ public class DataNodeInfo {
         this.rootLocation = rootLocation;
     }
 
-    public String getRootPrefix() {
-        return rootPrefix;
+    public StoragePathURI getRootPathURI() {
+        return rootPathURI;
     }
 
-    public void setRootPrefix(String rootPrefix) {
-        this.rootPrefix = rootPrefix;
+    public void setRootPathURI(StoragePathURI rootPathURI) {
+        this.rootPathURI = rootPathURI;
     }
 
     public String getNodeAccessURL() {
@@ -111,7 +112,7 @@ public class DataNodeInfo {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("rootLocation", rootLocation)
-                .append("rootPrefix", rootPrefix)
+                .append("rootPathURI", rootPathURI)
                 .append("nodeRelativePath", nodeRelativePath)
                 .append("size", size)
                 .append("mimeType", mimeType)

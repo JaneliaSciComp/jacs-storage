@@ -12,6 +12,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.security.JacsSubjectHelper;
@@ -35,6 +36,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -60,32 +62,33 @@ public class StorageResourceHelper {
         this.storageVolumeManager = storageVolumeManager;
     }
 
-    public Response.ResponseBuilder handleResponseForFullDataPathParam(String fullDataPathParam,
+    public Response.ResponseBuilder handleResponseForFullDataPathParam(StoragePathURI storagePathURI,
                                                                        BiFunction<JacsBundle, String, Response.ResponseBuilder> bundleBasedResponseHandler,
                                                                        BiFunction<JacsStorageVolume, String, Response.ResponseBuilder> fileBasedResponseHandler) {
-        String fullDataPathName = StringUtils.prependIfMissing(fullDataPathParam, "/");
-        return getStorageVolumeForDir(fullDataPathName)
+        return getStorageVolumeForURI(storagePathURI)
                 .map(storageVolume -> handleResponseForFullDataPathParam(storageVolume,
-                        fullDataPathName,
+                        storagePathURI,
                         bundleBasedResponseHandler,
                         fileBasedResponseHandler))
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("No managed volume found for " + fullDataPathParam)))
+                        .entity(new ErrorResponse("No managed volume found for " + storagePathURI)))
                 ;
     }
 
     private Response.ResponseBuilder handleResponseForFullDataPathParam(JacsStorageVolume storageVolume,
-                                                                        String fullDataPathName,
+                                                                        StoragePathURI storagePathURI,
                                                                         BiFunction<JacsBundle, String, Response.ResponseBuilder> bundleBasedResponseHandler,
                                                                         BiFunction<JacsStorageVolume, String, Response.ResponseBuilder> fileBasedResponseHandler) {
         // check if the first path component after the storage prefix is a bundle ID
-        java.nio.file.Path storageRelativeFileDataPath = storageVolume.getStorageRelativePath(fullDataPathName);
+        java.nio.file.Path storageRelativeFileDataPath = storagePathURI.asPath()
+                .map(p -> storageVolume.getStorageRelativePath(p.toString()))
+                .orElse(null);
         if (storageRelativeFileDataPath == null) {
-            LOG.debug("Path {} is not a relative path to {} ", fullDataPathName, storageVolume);
+            LOG.debug("Path {} is not a relative path to {} ", storagePathURI, storageVolume);
             return Response
                     .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No relative path found for " + fullDataPathName))
+                    .entity(new ErrorResponse("No path found for " + storagePathURI))
                     ;
         }
         int fileDataPathComponents = storageRelativeFileDataPath.getNameCount();
@@ -109,31 +112,35 @@ public class StorageResourceHelper {
         }
     }
 
-    public Optional<JacsStorageVolume> getStorageVolumeForDir(String dirName1) {
-        String fullDirName = StringUtils.prependIfMissing(dirName1, "/");
+    public Optional<JacsStorageVolume> getStorageVolumeForURI(StoragePathURI dirStorageURI) {
+        return dirStorageURI.asPath()
+                .flatMap(dir -> {
+                    int dirComponents = dir.getNameCount();
+                    String dirKey;
+                    if (dirComponents < N_VOL_DIR_COMPONENTS) {
+                        dirKey = dir.toString();
+                    } else {
+                        if (dir.getRoot() == null) {
+                            dirKey = dir.subpath(0, N_VOL_DIR_COMPONENTS).toString();
+                        } else {
+                            dirKey = dir.getRoot().resolve(dir.subpath(0, N_VOL_DIR_COMPONENTS)).toString();
+                        }
+                    }
+                    return getCachedStorageVolumeForDir(dirKey);
+                });
+    }
+
+    private Optional<JacsStorageVolume> getCachedStorageVolumeForDir(String dirName) {
         try {
-            Path dir = Paths.get(fullDirName);
-            int dirComponents = dir.getNameCount();
-            String dirKey;
-            if (dirComponents < N_VOL_DIR_COMPONENTS) {
-                dirKey = fullDirName;
-            } else {
-                if (dir.getRoot() == null) {
-                    dirKey = dir.subpath(0, N_VOL_DIR_COMPONENTS).toString();
-                } else {
-                    dirKey = dir.getRoot().resolve(dir.subpath(0, N_VOL_DIR_COMPONENTS)).toString();
-                }
-            }
-            String cachedDirKey = dirKey;
-            JacsStorageVolume storageVolume = VOLUMES_BY_PATH_CACHE.get(cachedDirKey, new Callable<JacsStorageVolume>() {
+            JacsStorageVolume storageVolume = VOLUMES_BY_PATH_CACHE.get(dirName, new Callable<JacsStorageVolume>() {
                 @Override
                 public JacsStorageVolume call() {
-                    return retrieveStorageVolumeForDir(cachedDirKey);
+                    return retrieveStorageVolumeForDir(dirName);
                 }
             });
             return Optional.of(storageVolume);
         } catch (Exception e) {
-            LOG.error("Error retrieving volume for {}", fullDirName, e);
+            LOG.error("Error retrieving volume for {}", dirName, e);
             return Optional.empty();
         }
     }
@@ -225,11 +232,10 @@ public class StorageResourceHelper {
 
     public Response.ResponseBuilder listContentFromDataBundle(JacsBundle dataBundle, URI baseURI, String dataEntryPath, int depth) {
         List<DataNodeInfo> dataBundleContent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), depth);
-        if (CollectionUtils.isNotEmpty(dataBundleContent) && dataBundle.getVirtualRoot() != null) {
-            String virtualStoragePath = dataBundle.getVirtualRoot();
+        if (CollectionUtils.isNotEmpty(dataBundleContent)) {
             dataBundleContent.forEach(dn -> {
                 dn.setNumericStorageId(dataBundle.getId());
-                dn.setRootPrefix(virtualStoragePath);
+                dn.setRootPathURI(dataBundle.getStorageURI());
                 dn.setNodeAccessURL(UriBuilder.fromUri(baseURI)
                         .path(Constants.AGENTSTORAGE_URI_PATH)
                         .path(dataBundle.getId().toString())
@@ -279,7 +285,7 @@ public class StorageResourceHelper {
                                     DataNodeInfo newDataNode = new DataNodeInfo();
                                     newDataNode.setStorageId(dn.getStorageId());
                                     newDataNode.setRootLocation(storageVolume.getStorageRootDir());
-                                    newDataNode.setRootPrefix(storageVolume.getStoragePathPrefix());
+                                    newDataNode.setRootPathURI(storageVolume.getStorageURI());
                                     newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
                                     newDataNode.setNodeRelativePath(dataNodePathRelativeToVolRoot);
                                     newDataNode.setSize(dn.getSize());
@@ -308,7 +314,7 @@ public class StorageResourceHelper {
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundle.getId());
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
-        newDataNode.setRootPrefix(dataBundle.getVirtualRoot());
+        newDataNode.setRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(newContentURI.toString());
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(false);
@@ -347,7 +353,7 @@ public class StorageResourceHelper {
                 .build();
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setRootLocation(storageVolume.getStorageRootDir());
-        newDataNode.setRootPrefix(storageVolume.getStoragePathPrefix());
+        newDataNode.setRootPathURI(storageVolume.getStorageURI());
         newDataNode.setNodeAccessURL(newContentURI.toString());
         newDataNode.setNodeRelativePath(pathRelativeToVolRoot);
         newDataNode.setCollectionFlag(false);

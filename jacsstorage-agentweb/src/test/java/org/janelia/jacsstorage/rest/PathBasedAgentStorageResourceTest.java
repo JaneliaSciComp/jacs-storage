@@ -10,6 +10,7 @@ import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
+import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.service.StorageContentReader;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
@@ -75,10 +76,10 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
 
     @Test
     public void retrieveDataStreamUsingDataPathRelativeToVolumeRoot() throws IOException {
-        String testPath = "volPrefix/testPath";
+        String testPath = "/volPrefix/testPath";
         StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
+        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
                                 .storagePathPrefix("/volPrefix")
@@ -101,17 +102,17 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                     out.write(testData.getBytes());
                     return (long) testData.length();
                 });
-        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(testPath).request().get();
+        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(StoragePathURI.createAbsolutePathURI(testPath).asURIString()).request().get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
     }
 
     @Test
     public void retrieveDataStreamUsingDataPathRelativeToVolumePrefix() throws IOException {
-        String testPath = "volPrefix/testPath";
+        String testPath = "/volPrefix/testPath";
         StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
+        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
                                 .storagePathPrefix("/volPrefix")

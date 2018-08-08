@@ -8,6 +8,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 
 import java.nio.file.Paths;
 import java.util.HashSet;
@@ -26,7 +27,7 @@ public class DataStorageInfo {
     private String path;
     private Set<String> readersKeys = new HashSet<>();
     private Set<String> writersKeys = new HashSet<>();
-    private String storageRootPrefixDir;
+    private StoragePathURI storageRootURI;
     private String storageRootRealDir;
     private String storageHost;
     private List<String> storageTags;
@@ -54,7 +55,7 @@ public class DataStorageInfo {
                     dsi.setStorageHost(sv.getStorageHost());
                     dsi.setStorageTags(sv.getStorageTags());
                     dsi.setStorageRootRealDir(sv.getStorageRootDir());
-                    dsi.setStorageRootPrefixDir(sv.getStoragePathPrefix());
+                    dsi.setStorageRootURI(sv.getStorageURI());
                     dsi.setConnectionURL(sv.getStorageServiceURL());
                 });
         return dsi;
@@ -156,12 +157,12 @@ public class DataStorageInfo {
         return this;
     }
 
-    public String getStorageRootPrefixDir() {
-        return storageRootPrefixDir;
+    public StoragePathURI getStorageRootURI() {
+        return storageRootURI;
     }
 
-    public DataStorageInfo setStorageRootPrefixDir(String storageRootPrefixDir) {
-        this.storageRootPrefixDir = storageRootPrefixDir;
+    public DataStorageInfo setStorageRootURI(StoragePathURI storageRootURI) {
+        this.storageRootURI = storageRootURI;
         return this;
     }
 
