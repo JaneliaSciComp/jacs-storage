@@ -9,7 +9,7 @@ import java.util.Date;
 
 public class DataNodeInfo {
     private String storageId;
-    private String rootLocation;
+    private String storageRootLocation;
     private StoragePathURI storageRootPathURI;
     private String nodeAccessURL;
     private String nodeRelativePath; // node path relative to the root
