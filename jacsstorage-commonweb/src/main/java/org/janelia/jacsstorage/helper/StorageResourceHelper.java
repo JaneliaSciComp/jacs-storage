@@ -235,7 +235,7 @@ public class StorageResourceHelper {
         if (CollectionUtils.isNotEmpty(dataBundleContent)) {
             dataBundleContent.forEach(dn -> {
                 dn.setNumericStorageId(dataBundle.getId());
-                dn.setRootPathURI(dataBundle.getStorageURI());
+                dn.setStorageRootPathURI(dataBundle.getStorageURI());
                 dn.setNodeAccessURL(UriBuilder.fromUri(baseURI)
                         .path(Constants.AGENTSTORAGE_URI_PATH)
                         .path(dataBundle.getId().toString())
@@ -285,7 +285,7 @@ public class StorageResourceHelper {
                                     DataNodeInfo newDataNode = new DataNodeInfo();
                                     newDataNode.setStorageId(dn.getStorageId());
                                     newDataNode.setRootLocation(storageVolume.getStorageRootDir());
-                                    newDataNode.setRootPathURI(storageVolume.getStorageURI());
+                                    newDataNode.setStorageRootPathURI(storageVolume.getStorageURI());
                                     newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
                                     newDataNode.setNodeRelativePath(dataNodePathRelativeToVolRoot);
                                     newDataNode.setSize(dn.getSize());
@@ -314,7 +314,7 @@ public class StorageResourceHelper {
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundle.getId());
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
-        newDataNode.setRootPathURI(dataBundle.getStorageURI());
+        newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(newContentURI.toString());
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(false);
@@ -353,7 +353,7 @@ public class StorageResourceHelper {
                 .build();
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setRootLocation(storageVolume.getStorageRootDir());
-        newDataNode.setRootPathURI(storageVolume.getStorageURI());
+        newDataNode.setStorageRootPathURI(storageVolume.getStorageURI());
         newDataNode.setNodeAccessURL(newContentURI.toString());
         newDataNode.setNodeRelativePath(pathRelativeToVolRoot);
         newDataNode.setCollectionFlag(false);

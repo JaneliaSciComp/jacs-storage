@@ -27,8 +27,8 @@ public class DataStorageInfo {
     private String path;
     private Set<String> readersKeys = new HashSet<>();
     private Set<String> writersKeys = new HashSet<>();
-    private StoragePathURI storageRootURI;
-    private String storageRootRealDir;
+    private StoragePathURI storageRootPathURI;
+    private String storageRootDir;
     private String storageHost;
     private List<String> storageTags;
     private String connectionURL;
@@ -54,8 +54,8 @@ public class DataStorageInfo {
                 .ifPresent(sv -> {
                     dsi.setStorageHost(sv.getStorageHost());
                     dsi.setStorageTags(sv.getStorageTags());
-                    dsi.setStorageRootRealDir(sv.getStorageRootDir());
-                    dsi.setStorageRootURI(sv.getStorageURI());
+                    dsi.setStorageRootDir(sv.getStorageRootDir());
+                    dsi.setStorageRootPathURI(sv.getStorageURI());
                     dsi.setConnectionURL(sv.getStorageServiceURL());
                 });
         return dsi;
@@ -126,8 +126,8 @@ public class DataStorageInfo {
 
     @JsonIgnore
     public String getDataStoragePath() {
-        return StringUtils.isNotBlank(storageRootRealDir)
-                ? Paths.get(storageRootRealDir, StringUtils.defaultIfBlank(path, "")).toString()
+        return StringUtils.isNotBlank(storageRootDir)
+                ? Paths.get(storageRootDir, StringUtils.defaultIfBlank(path, "")).toString()
                 : (StringUtils.isBlank(path) ? "" : Paths.get(path).toString());
     }
 
@@ -157,24 +157,24 @@ public class DataStorageInfo {
         return this;
     }
 
-    public StoragePathURI getStorageRootURI() {
-        return storageRootURI;
+    public StoragePathURI getStorageRootPathURI() {
+        return storageRootPathURI;
     }
 
-    public DataStorageInfo setStorageRootURI(StoragePathURI storageRootURI) {
-        this.storageRootURI = storageRootURI;
+    public DataStorageInfo setStorageRootPathURI(StoragePathURI storageRootPathURI) {
+        this.storageRootPathURI = storageRootPathURI;
         return this;
     }
 
     @ApiModelProperty(
             value = "real directory path for this storage on the storage server"
     )
-    public String getStorageRootRealDir() {
-        return storageRootRealDir;
+    public String getStorageRootDir() {
+        return storageRootDir;
     }
 
-    public DataStorageInfo setStorageRootRealDir(String storageRootRealDir) {
-        this.storageRootRealDir = storageRootRealDir;
+    public DataStorageInfo setStorageRootDir(String storageRootDir) {
+        this.storageRootDir = storageRootDir;
         return this;
     }
 

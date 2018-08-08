@@ -10,7 +10,7 @@ import java.util.Date;
 public class DataNodeInfo {
     private String storageId;
     private String rootLocation;
-    private StoragePathURI rootPathURI;
+    private StoragePathURI storageRootPathURI;
     private String nodeAccessURL;
     private String nodeRelativePath; // node path relative to the root
     private long size;
@@ -44,12 +44,12 @@ public class DataNodeInfo {
         this.rootLocation = rootLocation;
     }
 
-    public StoragePathURI getRootPathURI() {
-        return rootPathURI;
+    public StoragePathURI getStorageRootPathURI() {
+        return storageRootPathURI;
     }
 
-    public void setRootPathURI(StoragePathURI rootPathURI) {
-        this.rootPathURI = rootPathURI;
+    public void setStorageRootPathURI(StoragePathURI storageRootPathURI) {
+        this.storageRootPathURI = storageRootPathURI;
     }
 
     public String getNodeAccessURL() {
@@ -112,7 +112,7 @@ public class DataNodeInfo {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("rootLocation", rootLocation)
-                .append("rootPathURI", rootPathURI)
+                .append("storageRootPathURI", storageRootPathURI)
                 .append("nodeRelativePath", nodeRelativePath)
                 .append("size", size)
                 .append("mimeType", mimeType)

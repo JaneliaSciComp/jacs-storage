@@ -169,9 +169,9 @@ public class AgentStorageResource {
                 ? entry.trim()
                 : null;
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
-        List<DataNodeInfo> dataBundleCotent = listDataEntries(dataBundle, entryName, depth);
+        List<DataNodeInfo> dataBundleContent = listDataEntries(dataBundle, entryName, depth);
         return Response
-                .ok(dataBundleCotent, MediaType.APPLICATION_JSON)
+                .ok(dataBundleContent, MediaType.APPLICATION_JSON)
                 .build();
     }
 
@@ -181,7 +181,7 @@ public class AgentStorageResource {
             dataBundleContent.forEach(dn -> {
                 dn.setNumericStorageId(dataBundle.getId());
                 dn.setRootLocation(dataBundle.getRealStoragePath().toString());
-                dn.setRootPathURI(dataBundle.getStorageURI());
+                dn.setStorageRootPathURI(dataBundle.getStorageURI());
                 dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
                         .path(AgentStorageResource.class)
                         .path(AgentStorageResource.class, "getEntryContent")
@@ -286,7 +286,7 @@ public class AgentStorageResource {
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundleId);
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
-        newDataNode.setRootPathURI(dataBundle.getStorageURI());
+        newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(true);
@@ -374,7 +374,7 @@ public class AgentStorageResource {
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundleId);
         newDataNode.setRootLocation(dataBundle.getRealStoragePath().toString());
-        newDataNode.setRootPathURI(dataBundle.getStorageURI());
+        newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(false);
