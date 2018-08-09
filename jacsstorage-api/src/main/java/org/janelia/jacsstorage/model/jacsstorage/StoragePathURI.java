@@ -28,13 +28,13 @@ public class StoragePathURI {
      * @return
      */
     public static StoragePathURI createAbsolutePathURI(String storagePathValue) {
-        return new StoragePathURI(new StoragePathURI(storagePathValue).asStringPath().map(sp -> StringUtils.prependIfMissing(sp, "/")).orElse(""));
+        return new StoragePathURI(StringUtils.prependIfMissing(new StoragePathURI(storagePathValue).getStoragePath(), "/"));
     }
 
-    private final String storagePath;
+    private final String storagePathURI;
 
     StoragePathURI(String storagePath) {
-        this.storagePath = toStoragePathURI(storagePath);
+        this.storagePathURI = toStoragePathURI(storagePath);
     }
 
     private String toStoragePathURI(String storagePathValue) {
@@ -48,32 +48,19 @@ public class StoragePathURI {
     }
 
     public String getStoragePath() {
-        return storagePath;
-    }
-
-    public Optional<Path> asPath() {
-        return asStringPath()
-                .map(sp -> Paths.get(sp));
-    }
-
-    private Optional<String> asStringPath() {
         if (isEmpty()) {
-            return Optional.empty();
+            return "";
         } else {
-            return Optional.of(storagePath.substring(STORAGE_URI_SCHEME.length()));
+            return storagePathURI.substring(STORAGE_URI_SCHEME.length());
         }
     }
 
     public boolean isEmpty() {
-        return storagePath == null;
-    }
-
-    public String asURIString() {
-        return storagePath;
+        return storagePathURI == null;
     }
 
     @Override
     public String toString() {
-        return storagePath;
+        return storagePathURI;
     }
 }

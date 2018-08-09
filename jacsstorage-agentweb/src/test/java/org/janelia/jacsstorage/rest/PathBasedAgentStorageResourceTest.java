@@ -102,7 +102,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                     out.write(testData.getBytes());
                     return (long) testData.length();
                 });
-        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(StoragePathURI.createAbsolutePathURI(testPath).asURIString()).request().get();
+        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(StoragePathURI.createAbsolutePathURI(testPath).toString()).request().get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
     }
@@ -139,6 +139,45 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(testPath).request().get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
+    }
+
+    @Test
+    public void retrieveDataStreamUsingDataPathURIRelativeToVolumePrefix() throws IOException {
+        String[] testPaths = new String[] {
+                "jade://volPrefix/testPath",
+                "jade:///volPrefix/testPath"
+        };
+        StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
+        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/volPrefix/testPath"))))
+                .thenReturn(ImmutableList.of(
+                        new JacsStorageVolumeBuilder()
+                                .storagePathPrefix("/volPrefix")
+                                .storageRootDir("/volRoot")
+                                .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
+                                .build()
+                        )
+                );
+        PowerMockito.mockStatic(Files.class);
+        PowerMockito.mockStatic(PathUtils.class);
+        String testData = "Test data";
+        Path expectedDataPath = Paths.get("/volPrefix/testPath");
+        Mockito.when(Files.exists(eq(Paths.get("/volRoot", "testPath")))).thenReturn(false);
+        Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
+        Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
+        Mockito.when(PathUtils.getSize(eq(expectedDataPath))).thenReturn((long) testData.getBytes().length);
+        JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
+        when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(OutputStream.class)))
+                .then(invocation -> {
+                    OutputStream out = invocation.getArgument(2);
+                    out.write(testData.getBytes());
+                    return (long) testData.length();
+                });
+        for (String testPath : testPaths) {
+            Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(testPath).request().get();
+            assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
+            assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
+        }
     }
 
 }

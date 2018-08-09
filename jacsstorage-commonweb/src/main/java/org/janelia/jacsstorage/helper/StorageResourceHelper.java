@@ -35,8 +35,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -80,17 +78,15 @@ public class StorageResourceHelper {
                                                                         StoragePathURI storagePathURI,
                                                                         BiFunction<JacsBundle, String, Response.ResponseBuilder> bundleBasedResponseHandler,
                                                                         BiFunction<JacsStorageVolume, String, Response.ResponseBuilder> fileBasedResponseHandler) {
-        // check if the first path component after the storage prefix is a bundle ID
-        java.nio.file.Path storageRelativeFileDataPath = storagePathURI.asPath()
-                .map(p -> storageVolume.getStorageRelativePath(p.toString()))
-                .orElse(null);
-        if (storageRelativeFileDataPath == null) {
-            LOG.debug("Path {} is not a relative path to {} ", storagePathURI, storageVolume);
+        if (storagePathURI.isEmpty()) {
+            LOG.warn("No storage path {} has been specified for {}", storagePathURI, storageVolume);
             return Response
                     .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No path found for " + storagePathURI))
+                    .entity(new ErrorResponse("Empty storage path: " + storagePathURI))
                     ;
         }
+        // check if the first path component after the storage prefix is a bundle ID
+        java.nio.file.Path storageRelativeFileDataPath = storageVolume.getStorageRelativePath(storagePathURI.getStoragePath());
         int fileDataPathComponents = storageRelativeFileDataPath.getNameCount();
         JacsBundle dataBundle = null;
         try {
@@ -113,31 +109,28 @@ public class StorageResourceHelper {
     }
 
     public Optional<JacsStorageVolume> getStorageVolumeForURI(StoragePathURI dirStorageURI) {
-        return dirStorageURI.asPath()
-                .flatMap(dir -> {
-                    int dirComponents = dir.getNameCount();
-                    String dirKey;
-                    if (dirComponents < N_VOL_DIR_COMPONENTS) {
-                        dirKey = dir.toString();
-                    } else {
-                        if (dir.getRoot() == null) {
-                            dirKey = dir.subpath(0, N_VOL_DIR_COMPONENTS).toString();
-                        } else {
-                            dirKey = dir.getRoot().resolve(dir.subpath(0, N_VOL_DIR_COMPONENTS)).toString();
-                        }
-                    }
-                    return getCachedStorageVolumeForDir(dirKey);
-                });
+        if (dirStorageURI.isEmpty()) {
+            return Optional.empty();
+        } else {
+            Path storagePath = Paths.get(dirStorageURI.getStoragePath());
+            int storagePathComponents = storagePath.getNameCount();
+            String storagePathDirName;
+            if (storagePathComponents < N_VOL_DIR_COMPONENTS) {
+                storagePathDirName = storagePath.toString();
+            } else {
+                if (storagePath.getRoot() == null) {
+                    storagePathDirName = storagePath.subpath(0, N_VOL_DIR_COMPONENTS).toString();
+                } else {
+                    storagePathDirName = storagePath.getRoot().resolve(storagePath.subpath(0, N_VOL_DIR_COMPONENTS)).toString();
+                }
+            }
+            return getCachedStorageVolumeForDir(storagePathDirName);
+        }
     }
 
     private Optional<JacsStorageVolume> getCachedStorageVolumeForDir(String dirName) {
         try {
-            JacsStorageVolume storageVolume = VOLUMES_BY_PATH_CACHE.get(dirName, new Callable<JacsStorageVolume>() {
-                @Override
-                public JacsStorageVolume call() {
-                    return retrieveStorageVolumeForDir(dirName);
-                }
-            });
+            JacsStorageVolume storageVolume = VOLUMES_BY_PATH_CACHE.get(dirName, () -> retrieveStorageVolumeForDir(dirName));
             return Optional.of(storageVolume);
         } catch (Exception e) {
             LOG.error("Error retrieving volume for {}", dirName, e);

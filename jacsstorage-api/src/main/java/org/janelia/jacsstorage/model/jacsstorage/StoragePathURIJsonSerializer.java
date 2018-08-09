@@ -13,7 +13,7 @@ public class StoragePathURIJsonSerializer extends JsonSerializer<StoragePathURI>
         if (value == null || value.isEmpty()) {
             gen.writeNull();
         } else {
-            gen.writeString(value.getStoragePath());
+            gen.writeString(value.toString());
         }
     }
 }

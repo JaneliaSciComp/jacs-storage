@@ -175,7 +175,7 @@ public class ContentStorageResource {
                 .map(storageVolume -> Response.temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
                         .path("agent_storage")
                         .path("storage_path")
-                        .path(storagePathURI.asURIString())
+                        .path(storagePathURI.toString())
                         .build())
                         .build())
                 .orElseGet(() -> Response

@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.datarequest;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 
@@ -44,12 +45,31 @@ public class DataNodeInfo {
         this.storageRootLocation = storageRootLocation;
     }
 
+    /**
+     * @deprecated use {@link #getStorageRootLocation()}
+     * @return
+     */
+    @Deprecated
+    String getRootLocation() {
+        return this.storageRootLocation;
+    }
+
     public StoragePathURI getStorageRootPathURI() {
         return storageRootPathURI;
     }
 
     public void setStorageRootPathURI(StoragePathURI storageRootPathURI) {
         this.storageRootPathURI = storageRootPathURI;
+    }
+
+    /**
+     * @deprecated use {@link #getStorageRootPathURI()}
+     * @return
+     */
+    @Deprecated
+    @JsonProperty("rootPrefix")
+    public String getStorageRootVirtualDir() {
+        return this.storageRootPathURI.getStoragePath();
     }
 
     public String getNodeAccessURL() {
