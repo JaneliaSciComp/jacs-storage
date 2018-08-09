@@ -62,8 +62,11 @@ public class TimedInterceptor {
         if (logLevel.equalsIgnoreCase("info")) {
             logger.info("Accessed method: {}.{} with {}  - {} ms",
                     mDeclaringClass.getSimpleName(), method.getName(), logData, accessTimeInMillis);
-        } else {
+        } else if (logLevel.equalsIgnoreCase("debug")) {
             logger.debug("Accessed method: {}.{} with {}  - {} ms",
+                    mDeclaringClass.getSimpleName(), method.getName(), logData, accessTimeInMillis);
+        } else {
+            logger.trace("Accessed method: {}.{} with {}  - {} ms",
                     mDeclaringClass.getSimpleName(), method.getName(), logData, accessTimeInMillis);
         }
     }
