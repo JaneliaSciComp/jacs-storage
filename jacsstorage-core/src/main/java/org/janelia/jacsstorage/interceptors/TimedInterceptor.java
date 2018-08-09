@@ -41,6 +41,9 @@ public class TimedInterceptor {
         try {
             m = invocationContext.getMethod();
             TimedMethod timedMethodAnnotation = m.getAnnotation(TimedMethod.class);
+            if (timedMethodAnnotation != null) {
+                logLevel = timedMethodAnnotation.logLevel();
+            }
             Parameter[] parameters = m.getParameters();
             Object[] parameterValues = invocationContext.getParameters();
             populateLogData(m, parameters, parameterValues, invocationResult, timedMethodAnnotation, logData);
