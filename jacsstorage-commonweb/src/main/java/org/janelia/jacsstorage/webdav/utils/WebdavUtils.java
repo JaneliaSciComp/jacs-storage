@@ -41,7 +41,7 @@ public class WebdavUtils {
 
                     Prop prop = new Prop();
                     prop.setDisplayname(storageVolume.getName());
-                    prop.setEtag(storageVolume.getStoragePathPrefix());
+                    prop.setEtag(storageVolume.getStorageURI().toString());
                     prop.setCreationDate(storageVolume.getCreated());
                     prop.setLastmodified(storageVolume.getModified());
                     prop.setResourceType("collection");
