@@ -42,7 +42,9 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
         return storageVolumeDao.findById(volumeId);
     }
 
-    @TimedMethod
+    @TimedMethod(
+            logLevel = "trace"
+    )
     @Override
     public JacsStorageVolume updateVolumeInfo(JacsStorageVolume storageVolume) {
         JacsStorageVolume currentVolumeInfo;
