@@ -50,6 +50,7 @@ public class DataNodeInfo {
      * @return
      */
     @Deprecated
+    @JsonProperty("rootLocation")
     String getRootLocation() {
         return this.storageRootLocation;
     }
