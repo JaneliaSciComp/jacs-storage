@@ -70,7 +70,7 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
         if (storageVolume.isNotShared()) {
             storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getStorageRootDir()));
             if (!storageVolume.getAvailableSpaceInBytes().equals(currentVolumeInfo.getAvailableSpaceInBytes())) {
-                LOG.debug("Update availableSpace for volume {} to {} bytes", currentVolumeInfo.getName(), storageVolume.getAvailableSpaceInBytes());
+                LOG.trace("Update availableSpace for volume {} to {} bytes", currentVolumeInfo.getName(), storageVolume.getAvailableSpaceInBytes());
                 currentVolumeInfo.setAvailableSpaceInBytes(storageVolume.getAvailableSpaceInBytes());
                 updatedVolumeFieldsBuilder.put("availableSpaceInBytes", new SetFieldValueHandler<>(currentVolumeInfo.getAvailableSpaceInBytes()));
                 if (storageVolume.hasPercentageAvailable()) {
