@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.datarequest;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import org.apache.commons.lang3.StringUtils;
@@ -166,6 +167,16 @@ public class DataStorageInfo {
         return this;
     }
 
+    /**
+     * @deprecated by {@link #getStorageRootPathURI())
+     * @return
+     */
+    @Deprecated
+    @JsonProperty("storageRootPrefixDir")
+    public String getStorageVirtualRootDir() {
+        return this.storageRootPathURI != null ? this.storageRootPathURI.getStoragePath() : null;
+    }
+
     @ApiModelProperty(
             value = "real directory path for this storage on the storage server"
     )
@@ -176,6 +187,16 @@ public class DataStorageInfo {
     public DataStorageInfo setStorageRootDir(String storageRootDir) {
         this.storageRootDir = storageRootDir;
         return this;
+    }
+
+    /**
+     * @deprecated by {@link getStorageRootDir()}
+     * @return
+     */
+    @Deprecated
+    @JsonProperty("storageRootRealDir")
+    public String getStorageRootRealDir() {
+        return storageRootDir;
     }
 
     @ApiModelProperty(
