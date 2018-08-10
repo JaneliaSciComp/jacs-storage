@@ -113,7 +113,7 @@ public class MasterWebdavResource {
         StorageQuery storageQuery = new StorageQuery().setDataStoragePath(dataStoragePathURI.getStoragePath());
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
         if (CollectionUtils.isEmpty(managedVolumes)) {
-            LOG.warn("No storage found for path {}", dataStoragePathParam);
+            LOG.warn("No storage found for path {} - {}", dataStoragePathParam, dataStoragePathURI);
             Multistatus statusResponse = new Multistatus();
             Propstat propstat = new Propstat();
             propstat.setStatus("HTTP/1.1 404 Not Found");
