@@ -6,6 +6,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.security.Principal;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class JacsCredentials implements Principal {
@@ -13,68 +14,69 @@ public class JacsCredentials implements Principal {
 
     private static final String UNAUTHENTICATED = "Unauthenticated";
 
-    private String authSubject;
-    private String subjectProxy;
+    public static JacsCredentials fromTokenAndSubject(TokenCredentials tokenCredentials, String subjectName) {
+        JacsCredentials credentials = new JacsCredentials();
+        credentials.setAuthName(tokenCredentials.getAuthName().orElse(subjectName));
+        credentials.setSubjectName(subjectName);
+        credentials.setAuthToken(StringUtils.defaultIfBlank(tokenCredentials.getAuthToken(), ""));
+        credentials.setClaims(tokenCredentials.getClaims());
+        return credentials;
+    }
+
+    private String authName; // authenticated username
+    private String subjectName; // subject principal on behalf of whom the action is performed
     private String authToken;
-    private JWTClaimsSet claims;
+    private Map<String, Object> claims;
 
-    public String getSubjectProxy() {
-        return subjectProxy;
+    public String getAuthName() {
+        return authName;
     }
 
-    public String getAuthSubject() {
-        return authSubject;
+    private void setAuthName(String authName) {
+        this.authName = authName;
     }
 
-    public JacsCredentials setAuthSubject(String authSubject) {
-        this.authSubject = authSubject;
-        return this;
+    public String getSubjectName() {
+        return subjectName;
     }
 
-    public boolean hasAuthSubject() {
-        return StringUtils.isNotBlank(authSubject);
-    }
-
-    public JacsCredentials setSubjectProxy(String subjectProxy) {
-        this.subjectProxy = subjectProxy;
-        return this;
+    private void setSubjectName(String subjectName) {
+        this.subjectName = subjectName;
     }
 
     public String getAuthToken() {
-        return authToken == null ? "" : authToken;
+        return authToken;
     }
 
-    public JacsCredentials setAuthToken(String authToken) {
+    private void setAuthToken(String authToken) {
         this.authToken = authToken;
-        return this;
     }
 
-    public boolean hasAuthToken() {
-        return StringUtils.isNotBlank(authToken);
-    }
-
-    public JWTClaimsSet getClaims() {
-        return claims;
-    }
-
-    public JacsCredentials setClaims(JWTClaimsSet claims) {
+    private void setClaims(Map<String, Object> claims) {
         this.claims = claims;
-        return this;
     }
 
     @Override
     public String getName() {
-        if (StringUtils.isNotBlank(subjectProxy)) {
-            return subjectProxy;
-        } else if (StringUtils.isNotBlank(authSubject)) {
-            return authSubject;
+        return getSubjectKey();
+    }
+
+    private String getPrincipalSubject() {
+        if (StringUtils.isNotBlank(subjectName)) {
+            return subjectName;
+        } else if (StringUtils.isNotBlank(authName)) {
+            return authName;
         } else {
             return UNAUTHENTICATED;
         }
     }
 
     public String getSubjectKey() {
-        return JacsSubjectHelper.getTypeFromSubjectKey(getName()) + ":" + JacsSubjectHelper.getNameFromSubjectKey(getName());
+        return JacsSubjectHelper.nameAsSubjectKey(getPrincipalSubject());
+    }
+
+    public String getAuthKey() {
+        return JacsSubjectHelper.nameAsSubjectKey(authName);
     }
 
     public boolean hasRole(String role) {
@@ -84,8 +86,8 @@ public class JacsCredentials implements Principal {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("authSubject", authSubject)
-                .append("subjectProxy", subjectProxy)
+                .append("authName", authName)
+                .append("subjectName", subjectName)
                 .append("authToken", authToken)
                 .append("claims", claims)
                 .toString();

@@ -1,4 +1,6 @@
-package org.janelia.jacsstorage.security;
+package org.janelia.jacsstorage.securitycontext;
+
+import org.janelia.jacsstorage.security.JacsCredentials;
 
 import javax.ws.rs.core.SecurityContext;
 

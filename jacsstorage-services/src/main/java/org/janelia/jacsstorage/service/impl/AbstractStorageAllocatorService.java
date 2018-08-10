@@ -39,7 +39,7 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
             dataBundle.setOwnerKey(credentials.getSubjectKey());
             dataBundle.setStorageVolumeId(storageVolume.getId());
             dataBundle.setStorageVolume(storageVolume);
-            dataBundle.setCreatedBy(credentials.getAuthSubject());
+            dataBundle.setCreatedBy(credentials.getAuthKey());
             bundleDao.save(dataBundle);
             List<String> dataSubpath = PathUtils.getTreePathComponentsForId(dataBundle.getId());
             Path dataPath = Paths.get(StringUtils.defaultIfBlank(dataBundlePathPrefix, ""), dataSubpath.toArray(new String[dataSubpath.size()]));
@@ -85,13 +85,13 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
 
     private void checkStorageWriteAccess(JacsCredentials credentials, JacsBundle dataBundle) {
         if (!dataBundle.hasWritePermissions(credentials.getSubjectKey())) {
-            throw new SecurityException("Access not allowed to " + dataBundle.getName() + " for " + credentials.getAuthSubject() + " as " + credentials.getName());
+            throw new SecurityException("Access not allowed to " + dataBundle.getName() + " for " + credentials.getAuthKey() + " as " + credentials.getName());
         }
     }
 
     protected void checkStorageDeletePermission(JacsCredentials credentials, JacsBundle dataBundle) {
         if (!credentials.getSubjectKey().equals(dataBundle.getOwnerKey())) {
-            throw new SecurityException("Access not allowed to " + dataBundle.getName() + " for " + credentials.getAuthSubject() + " as " + credentials.getName());
+            throw new SecurityException("Access not allowed to " + dataBundle.getName() + " for " + credentials.getAuthKey() + " as " + credentials.getName());
         }
     }
 }

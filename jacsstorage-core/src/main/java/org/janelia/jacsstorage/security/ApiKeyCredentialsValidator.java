@@ -29,12 +29,10 @@ public class ApiKeyCredentialsValidator implements TokenCredentialsValidator {
     }
 
     @Override
-    public Optional<JacsCredentials> validateToken(String token, String subject) {
+    public Optional<TokenCredentials> validateToken(String token) {
         String tokenKey = getTokenKey(token);
         if (tokenKey.equals(apiKey)) {
-            return Optional.of(new JacsCredentials()
-                    .setAuthSubject(subject)
-                    .setSubjectProxy(subject)
+            return Optional.of(new TokenCredentials()
                     .setAuthToken(tokenKey)
             );
         } else {

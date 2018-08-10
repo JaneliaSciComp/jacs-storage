@@ -126,6 +126,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         RequestPathAttribute.INSTANCE, // <RequestPath>
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
+                        new NameValueAttribute("requestHeaders", new RequestHeadersAttribute()),
                         new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location"))), // location=<ResponseLocation>
                         new NameValueAttribute("status", ResponseCodeAttribute.INSTANCE), // status=<ResponseStatus>
                         new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>

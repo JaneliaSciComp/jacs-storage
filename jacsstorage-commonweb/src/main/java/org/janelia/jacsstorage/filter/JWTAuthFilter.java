@@ -6,11 +6,11 @@ import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.security.AggregatedTokenCredentialsValidator;
 import org.janelia.jacsstorage.security.ApiKeyCredentialsValidator;
-import org.janelia.jacsstorage.security.CachedTokenCredentialsValidator;
-import org.janelia.jacsstorage.security.JacsSecurityContext;
+import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.security.JwtTokenCredentialsValidator;
-import org.janelia.jacsstorage.security.RequireAuthentication;
+import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.security.TokenCredentialsValidator;
+import org.janelia.jacsstorage.securitycontext.JacsSecurityContext;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;
@@ -54,11 +54,11 @@ public class JWTAuthFilter implements ContainerRequestFilter {
 
         try {
             TokenCredentialsValidator tokenValidator = getTokenValidator();
-            JacsSecurityContext securityContext = tokenValidator.validateToken(authToken, subject)
-                    .map(jacsCredentials -> new JacsSecurityContext(
-                                jacsCredentials,
-                                "https".equals(requestContext.getUriInfo().getRequestUri().getScheme()),
-                                "JWT"))
+            JacsSecurityContext securityContext = tokenValidator.validateToken(authToken)
+                    .map(tokenCredentials -> new JacsSecurityContext(
+                            JacsCredentials.fromTokenAndSubject(tokenCredentials, subject),
+                            "https".equals(requestContext.getUriInfo().getRequestUri().getScheme()),
+                            "JWT"))
                     .orElseThrow(() -> new SecurityException("Invalid authentication token " + authToken));
             requestContext.setSecurityContext(securityContext);
         } catch (Exception e) {
@@ -73,7 +73,7 @@ public class JWTAuthFilter implements ContainerRequestFilter {
     private TokenCredentialsValidator getTokenValidator() {
         return new AggregatedTokenCredentialsValidator(ImmutableList.of(
                 new ApiKeyCredentialsValidator(apiKey),
-                new CachedTokenCredentialsValidator(new JwtTokenCredentialsValidator(jwtSecretKey))
+                new JwtTokenCredentialsValidator(jwtSecretKey)
         ));
     }
 

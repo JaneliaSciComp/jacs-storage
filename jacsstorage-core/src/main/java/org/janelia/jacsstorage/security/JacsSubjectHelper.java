@@ -17,7 +17,7 @@ public class JacsSubjectHelper {
         }
     }
 
-    public static String getTypeFromSubjectKey(String subjectKey) {
+    static String getTypeFromSubjectKey(String subjectKey) {
         if (StringUtils.isBlank(subjectKey)) {
             return null;
         }
@@ -29,4 +29,11 @@ public class JacsSubjectHelper {
         }
     }
 
+    static String nameAsSubjectKey(String name) {
+        if (StringUtils.isBlank(name)) {
+            return null;
+        } else {
+            return getTypeFromSubjectKey(name) + ":" + getNameFromSubjectKey(name);
+        }
+    }
 }

@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.security;
+package org.janelia.jacsstorage.securitycontext;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

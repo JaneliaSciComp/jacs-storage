@@ -40,7 +40,7 @@ public class JwtTokenCredentialsValidator implements TokenCredentialsValidator {
         return jwt;
     }
 
-    public Optional<JacsCredentials> validateToken(String token, String subject) {
+    public Optional<TokenCredentials> validateToken(String token) {
         String jwt = getJwt(token);
         try {
             ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
@@ -51,11 +51,10 @@ public class JwtTokenCredentialsValidator implements TokenCredentialsValidator {
 
             JWTClaimsSet claimsSet = jwtProcessor.process(jwt, null);
 
-            return Optional.of(new JacsCredentials()
-                    .setAuthSubject(StringUtils.defaultIfBlank(claimsSet.getSubject(), claimsSet.getStringClaim(USERNAME_CLAIM)))
-                    .setSubjectProxy(subject)
+            return Optional.of(new TokenCredentials()
+                    .setAuthName(StringUtils.defaultIfBlank(claimsSet.getSubject(), claimsSet.getStringClaim(USERNAME_CLAIM)))
                     .setAuthToken(jwt)
-                    .setClaims(claimsSet)
+                    .setClaims(claimsSet.getClaims())
             );
         } catch (Exception e) {
             LOG.error("Error while validating {}", jwt, e);
