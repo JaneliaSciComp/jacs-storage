@@ -33,6 +33,8 @@ public class ApiKeyCredentialsValidator implements TokenCredentialsValidator {
         String tokenKey = getTokenKey(token);
         if (tokenKey.equals(apiKey)) {
             return Optional.of(new TokenCredentials()
+                    .setAuthName(JacsCredentials.SYSTEM_APP)
+                    .addRole(JacsCredentials.ADMIN)
                     .setAuthToken(tokenKey)
             );
         } else {

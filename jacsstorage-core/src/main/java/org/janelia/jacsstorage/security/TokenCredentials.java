@@ -1,15 +1,19 @@
 package org.janelia.jacsstorage.security;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public class TokenCredentials {
     private String authName;
     private boolean supportsAuthName;
     private String authToken;
     private Map<String, Object> claims;
+    private Set<String> roles = new LinkedHashSet<>();
 
     Optional<String> getAuthName() {
         return supportsAuthName ? Optional.of(authName) : Optional.empty();
@@ -36,6 +40,17 @@ public class TokenCredentials {
 
     TokenCredentials setClaims(Map<String, Object> claims) {
         this.claims = claims;
+        return this;
+    }
+
+    Set<String> getRoles() {
+        return roles;
+    }
+
+    TokenCredentials addRole(String role) {
+        if (StringUtils.isNotBlank(role)) {
+            this.roles.add(role);
+        }
         return this;
     }
 

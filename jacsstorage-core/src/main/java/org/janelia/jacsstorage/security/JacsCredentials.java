@@ -5,11 +5,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class JacsCredentials implements Principal {
+    public static final String SYSTEM_APP = "system:app";
     public static final String ADMIN = "admin";
 
     private static final String UNAUTHENTICATED = "Unauthenticated";
@@ -20,6 +25,7 @@ public class JacsCredentials implements Principal {
         credentials.setSubjectName(subjectName);
         credentials.setAuthToken(StringUtils.defaultIfBlank(tokenCredentials.getAuthToken(), ""));
         credentials.setClaims(tokenCredentials.getClaims());
+        credentials.addRoles(tokenCredentials.getRoles());
         return credentials;
     }
 
@@ -27,6 +33,7 @@ public class JacsCredentials implements Principal {
     private String subjectName; // subject principal on behalf of whom the action is performed
     private String authToken;
     private Map<String, Object> claims;
+    private Set<String> roles = new LinkedHashSet<>();
 
     public String getAuthName() {
         return authName;
@@ -79,8 +86,12 @@ public class JacsCredentials implements Principal {
         return JacsSubjectHelper.nameAsSubjectKey(authName);
     }
 
+    private void addRoles(Collection<String> roles) {
+        this.roles.addAll(roles);
+    }
+
     public boolean hasRole(String role) {
-        return true; // ignore the roles for now
+        return roles.contains(role);
     }
 
     @Override
