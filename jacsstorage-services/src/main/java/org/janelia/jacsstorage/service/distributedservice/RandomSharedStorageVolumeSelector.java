@@ -7,11 +7,14 @@ import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.StorageVolumeSelector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Random;
 
 public class RandomSharedStorageVolumeSelector implements StorageVolumeSelector {
+    private static final Logger LOG = LoggerFactory.getLogger(RandomSharedStorageVolumeSelector.class);
     private static final Random RANDOM_SELECTOR = new Random(System.currentTimeMillis());
 
     private final JacsStorageVolumeDao storageVolumeDao;
@@ -39,10 +42,17 @@ public class RandomSharedStorageVolumeSelector implements StorageVolumeSelector 
         }
         long storageVolumeResultsCount = storageVolumeDao.countMatchingVolumes(storageQuery);
         if (storageVolumeResultsCount == 0) {
+            LOG.info("Found no volumes using query {}", storageQuery);
             return null;
         } else {
+            int randomVolumeIndex = RANDOM_SELECTOR.nextInt((int) storageVolumeResultsCount);
+            LOG.info("Found {} volumes using query {} - will try to get volume at {}",
+                    storageVolumeResultsCount,
+                    storageQuery,
+                    randomVolumeIndex);
             PageRequest pageRequest = new PageRequest();
-            pageRequest.setFirstPageOffset(RANDOM_SELECTOR.nextInt((int) storageVolumeResultsCount));
+            pageRequest.setFirstPageOffset(randomVolumeIndex);
+            pageRequest.setPageSize(1);
             PageResult<JacsStorageVolume> storageVolumeResults = storageVolumeDao.findMatchingVolumes(storageQuery, pageRequest);
             if (storageVolumeResults.getResultList().isEmpty()) {
                 return null;
