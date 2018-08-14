@@ -17,7 +17,7 @@ public class RandomSharedStorageVolumeSelector implements StorageVolumeSelector 
     private final JacsStorageVolumeDao storageVolumeDao;
     private final List<String> availableServicesURLs;
 
-    public RandomSharedStorageVolumeSelector(JacsStorageVolumeDao storageVolumeDao, List<String> availableServicesURLs) {
+    RandomSharedStorageVolumeSelector(JacsStorageVolumeDao storageVolumeDao, List<String> availableServicesURLs) {
         this.storageVolumeDao = storageVolumeDao;
         this.availableServicesURLs = availableServicesURLs;
     }

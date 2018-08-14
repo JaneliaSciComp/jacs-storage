@@ -69,7 +69,6 @@ public class JacsBundleBuilder {
     private JacsBundleBuilder addStorageTags(List<String> tags) {
         updateBundleStorageVolume(sv -> {
             tags.stream()
-                    .filter(StringUtils::isNotBlank)
                     .map(String::trim)
                     .forEach(sv::addStorageTag);
         });

@@ -80,7 +80,7 @@ public class JacsStorageVolume extends AbstractEntity {
         this.storageTags = storageTags;
     }
 
-    public void addStorageTag(String tag) {
+    void addStorageTag(String tag) {
         if (storageTags == null) {
             storageTags = new ArrayList<>();
         }

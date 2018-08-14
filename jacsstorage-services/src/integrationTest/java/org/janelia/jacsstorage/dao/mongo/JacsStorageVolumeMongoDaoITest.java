@@ -130,16 +130,14 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
 
     @Test
     public void searchForMatchingVolumes() {
-        List<JacsStorageVolume> sharedVolumes = ImmutableList.of(
-                persistEntity(testDao, createTestEntity(null, 0, "sv1", "/sv1", 10L)),
-                persistEntity(testDao, createTestEntity(null, 0, "sv2", "/sv2", 20L)),
-                persistEntity(testDao, createTestEntity(null, 0, "sv3", "/sv3", 30L))
-        );
-        List<JacsStorageVolume> localVolumes = ImmutableList.of(
-                persistEntity(testDao, createTestEntity("h1", 10, "v1", "/v1", 10L)),
-                persistEntity(testDao, createTestEntity("h2", 10, "v2", "/v2", 20L)),
-                persistEntity(testDao, createTestEntity("h3", 10, "v3", "/v3", 30L))
-        );
+        // shared volumes
+        persistEntity(testDao, createTestEntity(null, 0, "sv1", "/sv1", 10L));
+        persistEntity(testDao, createTestEntity(null, 0, "sv2", "/sv2", 20L));
+        persistEntity(testDao, createTestEntity(null, 0, "sv3", "/sv3", 30L));
+        // local volumes
+        persistEntity(testDao, createTestEntity("h1", 10, "v1", "/v1", 10L));
+        persistEntity(testDao, createTestEntity("h2", 10, "v2", "/v2", 20L));
+        persistEntity(testDao, createTestEntity("h3", 10, "v3", "/v3", 30L));
         Map<StorageQuery, String[]> queriesWithExpectedResults =
                 ImmutableMap.of(
                         new StorageQuery().setShared(true), // local doesn't matter if shared is true
@@ -153,6 +151,30 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
             long count = testDao.countMatchingVolumes(q);
             List<JacsStorageVolume> volumes = testDao.findMatchingVolumes(q, new PageRequest()).getResultList();
             assertThat(count, equalTo((long) volumeNames.length));
+            assertThat(volumes.stream().map(sv -> sv.getName()).collect(Collectors.toList()), containsInAnyOrder(volumeNames));
+        });
+    }
+
+    @Test
+    public void searchForMatchingVolumesWithPageOffset() {
+        persistEntity(testDao, createTestEntity("h1", 10, "v1", "/v1", 10L));
+        persistEntity(testDao, createTestEntity("h2", 10, "v2", "/v2", 20L));
+        persistEntity(testDao, createTestEntity("h3", 10, "v3", "/v3", 30L));
+        StorageQuery storageQuery = new StorageQuery().setLocalToAnyHost(true);
+        Map<Integer, String[]> offsetsWithExpectedResults =
+                ImmutableMap.of(
+                        0, new String[]{"v1"},
+                        1, new String[]{"v2"},
+                        2, new String[]{"v3"},
+                        3, new String[]{}
+                );
+        offsetsWithExpectedResults.forEach((offset, volumeNames) -> {
+            PageRequest pageRequest = new PageRequest();
+            pageRequest.setFirstPageOffset(offset);
+            pageRequest.setPageSize(1);
+            List<JacsStorageVolume> volumes = testDao.findMatchingVolumes(
+                    storageQuery,
+                    pageRequest).getResultList();
             assertThat(volumes.stream().map(sv -> sv.getName()).collect(Collectors.toList()), containsInAnyOrder(volumeNames));
         });
     }
