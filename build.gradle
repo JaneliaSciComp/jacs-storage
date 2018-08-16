@@ -2,7 +2,7 @@ allprojects {
     apply plugin: 'java-library'
     apply plugin: 'idea'
     group = 'org.janelia.jacsstorage'
-    version = '1.5.0.Dev'
+    version = '1.5.0.RELEASE'
 }
 
 subprojects {
@@ -54,7 +54,7 @@ subprojects {
             doFirst {
                 options.compilerArgs = [
                         '-Xlint:deprecation',
-			'-Xlint:unchecked'
+                        '-Xlint:unchecked'
                 ]
             }
         }
@@ -63,7 +63,7 @@ subprojects {
             doFirst {
                 options.compilerArgs = [
                         '-Xlint:deprecation',
-			'-Xlint:unchecked'
+                        '-Xlint:unchecked'
                 ]
             }
         }
@@ -72,7 +72,7 @@ subprojects {
             doFirst {
                 options.compilerArgs = [
                         '-Xlint:deprecation',
-			'-Xlint:unchecked'
+                        '-Xlint:unchecked'
                 ]
             }
         }
@@ -81,7 +81,7 @@ subprojects {
             doFirst {
                 options.compilerArgs = [
                         '-Xlint:deprecation',
-			'-Xlint:unchecked'
+                        '-Xlint:unchecked'
                 ]
             }
         }
