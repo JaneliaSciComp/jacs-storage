@@ -185,11 +185,11 @@ public class LocalStorageUsageManager implements StorageUsageManager {
     }
 
     private List<UsageData> getVolumeUsage(JacsStorageVolume storageVolume) {
+        List<UsageData> usageDataReport = new ArrayList<>();
         if (StringUtils.isBlank(storageVolume.getSystemUsageFile())) {
             LOG.warn("No system usage report was configured for {}", storageVolume);
-            return null;
+            return usageDataReport;
         }
-        List<UsageData> usageDataReport = new ArrayList<>();
         Scanner scanner = null;
         try {
             scanner = new Scanner(new File(storageVolume.getSystemUsageFile()));
