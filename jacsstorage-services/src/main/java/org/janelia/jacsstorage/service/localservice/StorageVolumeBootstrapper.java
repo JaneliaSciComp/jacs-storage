@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.service.localservice;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
@@ -67,9 +66,9 @@ public class StorageVolumeBootstrapper {
         storageVolume.setName(volumeName);
         storageVolume.setShared(shared);
         storageVolume.setStorageHost(shared ? null : storageHost);
-        storageVolume.setStorageRootDir(applicationConfig.getStringPropertyValue(
+        storageVolume.setStorageRootTemplate(applicationConfig.getStringPropertyValue(
                 getVolumeConfigPropertyName(volumeName, "RootDir")));
-        storageVolume.setStoragePathPrefix(getStoragePathPrefix(volumeName));
+        storageVolume.setStorageVirtualPath(getStorageVirtualPath(volumeName));
         storageVolume.setQuotaFailPercent(applicationConfig.getDoublePropertyValue(
                 getVolumeConfigPropertyName(volumeName, "QuotaFailPercent")));
         storageVolume.setQuotaWarnPercent(applicationConfig.getDoublePropertyValue(
@@ -85,9 +84,9 @@ public class StorageVolumeBootstrapper {
         return "StorageVolume." + volumeName + "." + configProperty;
     }
 
-    private String getStoragePathPrefix(String volumeName) {
+    private String getStorageVirtualPath(String volumeName) {
         String storagePathPrefix = applicationConfig.getStringPropertyValue(
-                getVolumeConfigPropertyName(volumeName, "PathPrefix"));
+                getVolumeConfigPropertyName(volumeName, "VirtualPath"));
         String resolvedStoragePathPrefix = configValueResolver.resolve(
                 storagePathPrefix,
                 ImmutableMap.<String, String>builder()

@@ -142,8 +142,8 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
             if (CollectionUtils.isNotEmpty(sv.getStorageTags())) {
                 bundleAggregationOpsBuilder.add(Aggregates.match(Filters.all("referencedVolumes.storageTags", sv.getStorageTags())));
             }
-            if (StringUtils.isNotBlank(sv.getStoragePathPrefix())) {
-                bundleAggregationOpsBuilder.add(Aggregates.match(Filters.eq("referencedVolumes.storagePathPrefix", sv.getStoragePathPrefix())));
+            if (StringUtils.isNotBlank(sv.getStorageVirtualPath())) {
+                bundleAggregationOpsBuilder.add(Aggregates.match(Filters.eq("referencedVolumes.storageVirtualPath", sv.getStorageVirtualPath())));
             }
         });
         return bundleAggregationOpsBuilder.build();

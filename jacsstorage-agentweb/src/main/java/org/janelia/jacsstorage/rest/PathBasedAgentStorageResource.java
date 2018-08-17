@@ -118,15 +118,15 @@ public class PathBasedAgentStorageResource {
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
-                (dataBundle, dataEntryPath) -> storageResourceHelper.removeContentFromDataBundle(dataBundle,
-                        dataEntryPath,
+                (dataBundle, dataEntryName) -> storageResourceHelper.removeContentFromDataBundle(dataBundle,
+                        dataEntryName,
                         (Long freedEntrySize) -> storageAllocatorService.updateStorage(
                                 new JacsBundleBuilder()
                                         .dataBundleId(dataBundle.getId())
                                         .usedSpaceInBytes(-freedEntrySize)
                                         .build(),
                                 SecurityUtils.getUserPrincipal(securityContext))),
-                (storageVolume, dataEntryPath) -> storageResourceHelper.removeFileContentFromVolume(storageVolume, dataEntryPath)
+                (storageVolume, dataEntryName) -> storageResourceHelper.removeFileContentFromVolume(storageVolume, dataEntryName)
         ).build();
     }
 
@@ -150,10 +150,10 @@ public class PathBasedAgentStorageResource {
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
-                (dataBundle, dataEntryPath) ->
+                (dataBundle, dataEntryName) ->
                         storageResourceHelper.storeDataBundleContent(dataBundle,
                                 resourceURI.getBaseUri(),
-                                dataEntryPath,
+                                dataEntryName,
                                 (Long newEntrySize) -> storageAllocatorService.updateStorage(
                                             new JacsBundleBuilder()
                                                     .dataBundleId(dataBundle.getId())
@@ -161,10 +161,10 @@ public class PathBasedAgentStorageResource {
                                                     .build(),
                                             SecurityUtils.getUserPrincipal(securityContext)),
                                 contentStream),
-                (storageVolume, dataEntryPath) ->
+                (storageVolume, dataEntryName) ->
                         storageResourceHelper.storeFileContent(storageVolume,
                                 resourceURI.getBaseUri(),
-                                dataEntryPath,
+                                dataEntryName,
                                 contentStream)
         ).build();
     }
@@ -191,8 +191,8 @@ public class PathBasedAgentStorageResource {
         URI baseURI = resourceURI.getBaseUri();
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
-                (dataBundle, dataEntryPath) -> storageResourceHelper.listContentFromDataBundle(dataBundle, baseURI, dataEntryPath, depth),
-                (storageVolume, dataEntryPath) -> storageResourceHelper.listContentFromPath(storageVolume, baseURI, dataEntryPath, depth)
+                (dataBundle, dataEntryName) -> storageResourceHelper.listContentFromDataBundle(dataBundle, baseURI, dataEntryName, depth),
+                (storageVolume, dataEntryName) -> storageResourceHelper.listContentFromPath(storageVolume, baseURI, dataEntryName, depth)
         ).build();
 
     }

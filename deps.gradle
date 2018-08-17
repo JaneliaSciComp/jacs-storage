@@ -75,6 +75,9 @@ dependencies {
         JACKSON_JAXRS_JSON_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${JACKSON_VERSION}"
         JACKSON_JAXRS_XML_PROVIDER = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-xml-provider:${JACKSON_VERSION}"
 
+        // Expressions
+        JAVA_EXP_IMPL = "org.glassfish:javax.el:3.0.0"
+
         // auth
         JWT_LIB = "com.nimbusds:nimbus-jose-jwt:5.4"
 

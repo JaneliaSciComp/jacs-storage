@@ -27,13 +27,13 @@ public class JacsStorageVolumeBuilder {
         return this;
     }
 
-    public JacsStorageVolumeBuilder storagePathPrefix(String v) {
-        jacsStorageVolume.setStoragePathPrefix(v);
+    public JacsStorageVolumeBuilder storageVirtualPath(String v) {
+        jacsStorageVolume.setStorageVirtualPath(v);
         return this;
     }
 
-    public JacsStorageVolumeBuilder storageRootDir(String v) {
-        jacsStorageVolume.setStorageRootDir(v);
+    public JacsStorageVolumeBuilder storageRootTemplate(String v) {
+        jacsStorageVolume.setStorageRootTemplate(v);
         return this;
     }
 

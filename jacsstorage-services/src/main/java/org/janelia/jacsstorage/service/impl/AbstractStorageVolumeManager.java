@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -15,7 +14,6 @@ import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -59,18 +57,20 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
                     storageVolume.getName()
             );
         }
-        if (currentVolumeInfo.getStorageRootDir() == null ||
-                (StringUtils.isNotBlank(storageVolume.getStorageRootDir()) && !storageVolume.getStorageRootDir().equals(currentVolumeInfo.getStorageRootDir()))) {
-            currentVolumeInfo.setStorageRootDir(storageVolume.getStorageRootDir());
-            updatedVolumeFieldsBuilder.put("storageRootDir", new SetFieldValueHandler<>(currentVolumeInfo.getStorageRootDir()));
+        if (currentVolumeInfo.getStorageRootTemplate() == null ||
+                (StringUtils.isNotBlank(storageVolume.getStorageRootTemplate()) &&
+                        !storageVolume.getStorageRootTemplate().equals(currentVolumeInfo.getStorageRootTemplate()))) {
+            currentVolumeInfo.setStorageRootTemplate(storageVolume.getStorageRootTemplate());
+            updatedVolumeFieldsBuilder.put("storageRootTemplate", new SetFieldValueHandler<>(currentVolumeInfo.getStorageRootTemplate()));
         }
-        if (currentVolumeInfo.getStoragePathPrefix() == null ||
-                (StringUtils.isNotBlank(storageVolume.getStoragePathPrefix()) && !storageVolume.getStoragePathPrefix().equals(currentVolumeInfo.getStoragePathPrefix()))) {
-            currentVolumeInfo.setStoragePathPrefix(storageVolume.getStoragePathPrefix());
-            updatedVolumeFieldsBuilder.put("storagePathPrefix", new SetFieldValueHandler<>(currentVolumeInfo.getStoragePathPrefix()));
+        if (currentVolumeInfo.getStorageVirtualPath() == null ||
+                (StringUtils.isNotBlank(storageVolume.getStorageVirtualPath()) &&
+                        !storageVolume.getStorageVirtualPath().equals(currentVolumeInfo.getStorageVirtualPath()))) {
+            currentVolumeInfo.setStorageVirtualPath(storageVolume.getStorageVirtualPath());
+            updatedVolumeFieldsBuilder.put("storageVirtualPath", new SetFieldValueHandler<>(currentVolumeInfo.getStorageVirtualPath()));
         }
         if (storageVolume.isNotShared()) {
-            storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getStorageRootDir()));
+            storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getBaseStorageRootDir()));
             if (!storageVolume.getAvailableSpaceInBytes().equals(currentVolumeInfo.getAvailableSpaceInBytes())) {
                 LOG.trace("Update availableSpace for volume {} to {} bytes", currentVolumeInfo.getName(), storageVolume.getAvailableSpaceInBytes());
                 currentVolumeInfo.setAvailableSpaceInBytes(storageVolume.getAvailableSpaceInBytes());

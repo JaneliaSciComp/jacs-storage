@@ -55,7 +55,7 @@ public class DataStorageInfo {
                 .ifPresent(sv -> {
                     dsi.setStorageHost(sv.getStorageHost());
                     dsi.setStorageTags(sv.getStorageTags());
-                    dsi.setStorageRootDir(sv.getStorageRootDir());
+                    dsi.setStorageRootDir(sv.evalStorageRootDir(dataBundle.asStorageContext()));
                     dsi.setStorageRootPathURI(sv.getStorageURI());
                     dsi.setConnectionURL(sv.getStorageServiceURL());
                 });
@@ -167,16 +167,6 @@ public class DataStorageInfo {
         return this;
     }
 
-    /**
-     * @deprecated by {@link #getStorageRootPathURI())
-     * @return
-     */
-    @Deprecated
-    @JsonProperty("storageRootPrefixDir")
-    public String getStorageVirtualRootDir() {
-        return this.storageRootPathURI != null ? this.storageRootPathURI.getStoragePath() : null;
-    }
-
     @ApiModelProperty(
             value = "real directory path for this storage on the storage server"
     )
@@ -187,16 +177,6 @@ public class DataStorageInfo {
     public DataStorageInfo setStorageRootDir(String storageRootDir) {
         this.storageRootDir = storageRootDir;
         return this;
-    }
-
-    /**
-     * @deprecated by {@link getStorageRootDir()}
-     * @return
-     */
-    @Deprecated
-    @JsonProperty("storageRootRealDir")
-    public String getStorageRootRealDir() {
-        return storageRootDir;
     }
 
     @ApiModelProperty(

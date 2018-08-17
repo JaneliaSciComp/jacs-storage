@@ -7,6 +7,7 @@ import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.expr.ExprHelper;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.NotificationService;
@@ -46,8 +47,13 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     }
 
     private void fillVolumeSpaceInfo(JacsStorageVolume storageVolume) {
-        storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getStorageRootDir()));
-        long totalSpace = getTotalStorageSpaceInBytes(storageVolume.getStorageRootDir());
+        String storageRootDir = ExprHelper.getConstPrefix(storageVolume.getStorageRootTemplate());
+        if (StringUtils.isBlank(storageRootDir)) {
+            LOG.warn("Don't know how to get the total available space for {}", storageVolume);
+            return;
+        }
+        storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageRootDir));
+        long totalSpace = getTotalStorageSpaceInBytes(storageRootDir);
         if (totalSpace != 0) {
             storageVolume.setPercentageFull((int) ((totalSpace - storageVolume.getAvailableSpaceInBytes()) * 100 / totalSpace));
         } else {

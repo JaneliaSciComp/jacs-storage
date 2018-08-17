@@ -3,16 +3,18 @@ package org.janelia.jacsstorage.model.jacsstorage;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacsstorage.expr.ExprHelper;
+import org.janelia.jacsstorage.expr.MatchingResult;
 import org.janelia.jacsstorage.model.AbstractEntity;
 import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 
-import javax.annotation.Nonnull;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @PersistenceInfo(storeName ="jacsStorageVolume", label="JacsStorageVolume")
@@ -21,8 +23,8 @@ public class JacsStorageVolume extends AbstractEntity {
 
     private String storageHost; // storage host
     private String name; // volume name
-    private String storagePathPrefix; // storage path prefix
-    private String storageRootDir; // storage real root directory path
+    private String storageVirtualPath; // storage virtual path
+    private String storageRootTemplate; // template for storage real root directory
     private List<String> storageTags; // storage tags - identify certain features of the physical storage
     private String storageServiceURL;
     private Long availableSpaceInBytes;
@@ -51,25 +53,33 @@ public class JacsStorageVolume extends AbstractEntity {
         this.name = name;
     }
 
-    public String getStoragePathPrefix() {
-        return storagePathPrefix;
+    public String getStorageVirtualPath() {
+        return storageVirtualPath;
     }
 
-    public void setStoragePathPrefix(String storagePathPrefix) {
-        this.storagePathPrefix = storagePathPrefix;
+    public void setStorageVirtualPath(String storageVirtualPath) {
+        this.storageVirtualPath = storageVirtualPath;
     }
 
     @JsonIgnore
     public StoragePathURI getStorageURI() {
-        return StoragePathURI.createPathURI(storagePathPrefix);
+        return StoragePathURI.createPathURI(storageVirtualPath);
     }
 
-    public String getStorageRootDir() {
-        return storageRootDir;
+    public String getStorageRootTemplate() {
+        return storageRootTemplate;
     }
 
-    public void setStorageRootDir(String storageRootDir) {
-        this.storageRootDir = storageRootDir;
+    public void setStorageRootTemplate(String storageRootTemplate) {
+        this.storageRootTemplate = storageRootTemplate;
+    }
+
+    public String evalStorageRootDir(Map<String, Object> evalContext) {
+        return ExprHelper.eval(storageRootTemplate, evalContext);
+    }
+
+    public String getBaseStorageRootDir() {
+        return ExprHelper.getConstPrefix(storageRootTemplate);
     }
 
     public List<String> getStorageTags() {
@@ -191,31 +201,28 @@ public class JacsStorageVolume extends AbstractEntity {
     }
 
     @JsonIgnore
-    public Path getStorageRelativePath(String dataPath) {
-        Path relativePath = null;
-        if (storageRootDir.length() > storagePathPrefix.length()) {
-            relativePath = relativizeToStorageDir(dataPath, storageRootDir);
-            if (relativePath != null) {
-                return relativePath;
-            } else {
-                return relativizeToStorageDir(dataPath, storagePathPrefix);
-            }
+    public Optional<Path> getRelativePathToBaseStorageRoot(String dataPath) {
+        // !!!!!!!!!!!!!!!!!!!!!!!! CHANGE THE RETURN TYPE
+        if (ExprHelper.match(storageRootTemplate, dataPath).isMatchFound()) {
+            return relativizeToStorageDir(getBaseStorageRootDir(), dataPath);
+        } else if (ExprHelper.match(storageVirtualPath, dataPath).isMatchFound()) {
+            return relativizeToStorageDir(storageVirtualPath, dataPath);
         } else {
-            relativePath = relativizeToStorageDir(dataPath, storagePathPrefix);
-            if (relativePath != null) {
-                return relativePath;
-            } else {
-                return relativizeToStorageDir(dataPath, storageRootDir);
-            }
+            return Optional.empty();
         }
     }
 
-    private Path relativizeToStorageDir(String dataDirName, String storageDirName) {
+    @JsonIgnore
+    public Path getFullDataPathFromBaseStorageRoot(String dataPathRelativeToBaseStorageRoot) {
+        return Paths.get(getBaseStorageRootDir(), dataPathRelativeToBaseStorageRoot);
+    }
+
+    private Optional<Path> relativizeToStorageDir(String storageDirName, String dataDirName) {
         if (dataDirName.startsWith(storageDirName)) {
             Path storagePath = Paths.get(storageDirName);
-            return storagePath.relativize(Paths.get(dataDirName));
+            return Optional.of(storagePath.relativize(Paths.get(dataDirName)));
         } else {
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -226,7 +233,7 @@ public class JacsStorageVolume extends AbstractEntity {
                 .append("storageHost", storageHost)
                 .append("name", name)
                 .append("storageTags", storageTags)
-                .append("storageRootDir", storageRootDir)
+                .append("storageRootTemplate", storageRootTemplate)
                 .append("storageServiceURL", storageServiceURL)
                 .append("systemUsageFile", systemUsageFile)
                 .toString();

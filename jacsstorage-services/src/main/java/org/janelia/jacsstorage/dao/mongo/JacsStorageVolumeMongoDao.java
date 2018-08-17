@@ -19,7 +19,7 @@ import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.SortCriteria;
 import org.janelia.jacsstorage.datarequest.SortDirection;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
-import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
+import org.janelia.jacsstorage.expr.ExprHelper;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
@@ -30,7 +30,6 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -76,7 +75,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
                 CollectionUtils.isNotEmpty(storageFilters)
                         ? Filters.and(storageFilters)
                         : null,
-                createBsonSortCriteria(ImmutableList.of(new SortCriteria("storagePathPrefix", SortDirection.DESC)), pageRequest.getSortCriteria()),
+                createBsonSortCriteria(ImmutableList.of(new SortCriteria("storageVirtualPath", SortDirection.DESC)), pageRequest.getSortCriteria()),
                 pageRequest.getOffset(),
                 pageRequest.getPageSize(),
                 getEntityType());
@@ -84,7 +83,9 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             storageVolumesItr.forEach(results::add);
         } else {
             StreamSupport.stream(storageVolumesItr.spliterator(), false)
-                    .filter(sv -> StringUtils.startsWith(storageQuery.getDataStoragePath(), sv.getStoragePathPrefix()) || StringUtils.startsWith(storageQuery.getDataStoragePath(), sv.getStorageRootDir()))
+                    .filter(sv -> ExprHelper.match(sv.getStorageVirtualPath(), storageQuery.getDataStoragePath()).isMatchFound() ||
+                                    ExprHelper.match(sv.getStorageRootTemplate(), storageQuery.getDataStoragePath()).isMatchFound()
+                            )
                     .forEach(results::add);
         }
         return new PageResult<>(pageRequest, results);
@@ -123,8 +124,8 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         if (StringUtils.isNotBlank(storageQuery.getStorageName())) {
             filtersBuilder.add(Filters.eq("name", storageQuery.getStorageName()));
         }
-        if (StringUtils.isNotBlank(storageQuery.getStoragePathPrefix())) {
-            filtersBuilder.add(Filters.eq("storagePathPrefix", storageQuery.getStoragePathPrefix()));
+        if (StringUtils.isNotBlank(storageQuery.getStorageVirtualPath())) {
+            filtersBuilder.add(Filters.eq("storageVirtualPath", storageQuery.getStorageVirtualPath()));
         }
         if (CollectionUtils.isNotEmpty(storageQuery.getStorageAgents())) {
             if (storageQuery.isShared()) {

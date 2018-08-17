@@ -35,7 +35,7 @@ public class ApplicationConfigValueResolver {
             } else {
                 resolvedValueBuilder.append(resolve(keyValue, context, newResolveHistory));
             }
-            startIndex = m.end();
+            startIndex = endRegion;
         }
         resolvedValueBuilder.append(v.substring(startIndex));
         return resolvedValueBuilder.toString();

@@ -21,7 +21,7 @@ import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
-import org.janelia.jacsstorage.security.JacsSubjectHelper;
+import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;

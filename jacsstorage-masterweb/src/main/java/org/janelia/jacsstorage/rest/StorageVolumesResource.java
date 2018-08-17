@@ -128,7 +128,7 @@ public class StorageVolumesResource {
                                        @QueryParam("shared") boolean shared,
                                        @QueryParam("storageHost") String storageHost,
                                        @QueryParam("storageTags") List<String> storageTags,
-                                       @QueryParam("storagePathPrefix") String storagePathPrefix,
+                                       @QueryParam("storageVirtualPath") String storagePathPrefix,
                                        @Context SecurityContext securityContext) {
         StorageQuery storageQuery = new StorageQuery()
                 .setId(storageVolumeId)
@@ -136,7 +136,7 @@ public class StorageVolumesResource {
                 .setShared(shared)
                 .setAccessibleOnHost(storageHost)
                 .setStorageTags(storageTags)
-                .setStoragePathPrefix(storagePathPrefix);
+                .setStorageVirtualPath(storagePathPrefix);
         LOG.info("List storage volumes filtered with: {}", storageQuery);
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
         PageResult<JacsStorageVolume> results = new PageResult<>();

@@ -5,11 +5,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
@@ -44,6 +46,7 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.function.Supplier;
 
 @Timed
 @RequireAuthentication
@@ -104,102 +107,76 @@ public class AgentWebdavResource {
             MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
     })
     @PROPFIND
-    @Path("data_storage_path/{dataStoragePath:.+}")
-    public Response dataStoragePropFindByPath(@PathParam("dataStoragePath") String dataStoragePath,
-                                              @HeaderParam("Depth") String depth,
+    @Path("data_storage_path/{dataPath:.+}")
+    public Response dataStoragePropFindByPath(@PathParam("dataPath") String dataPathParam,
+                                              @HeaderParam("Depth") String depthParam,
                                               Propfind propfindRequest,
                                               @Context SecurityContext securityContext) {
-        LOG.info("PROPFIND data storage by path: {}, Depth: {} for {}", dataStoragePath, depth, securityContext.getUserPrincipal());
-        String fullDataStoragePathName = StringUtils.prependIfMissing(dataStoragePath, "/");
-        List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(fullDataStoragePathName));
-        if (localVolumes.isEmpty()) {
-            LOG.warn("No storage volume found for {}", dataStoragePath);
+        LOG.info("PROPFIND data storage by path: {}, Depth: {} for {}", dataPathParam, depthParam, securityContext.getUserPrincipal());
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        int depth = WebdavUtils.getDepth(depthParam);
+        Supplier<Response.ResponseBuilder> storageNotFoundHandler = () -> {
+            // no storage volume was found
+            LOG.warn("No storage volume found for {}", dataPathParam);
             Multistatus statusResponse = new Multistatus();
             Propstat propstat = new Propstat();
             propstat.setStatus("HTTP/1.1 404 Not Found");
 
             PropfindResponse propfindResponse = new PropfindResponse();
-            propfindResponse.setResponseDescription("No managed volume found for " + fullDataStoragePathName);
+            propfindResponse.setResponseDescription("No managed volume found for " + dataPathParam);
             propfindResponse.setPropstat(propstat);
             statusResponse.getResponse().add(propfindResponse);
 
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(statusResponse)
-                    .build();
-        } else if (localVolumes.size() > 1) {
-            LOG.warn("More than one storage volumes found for {} -> {}", dataStoragePath, localVolumes);
-        }
-        JacsStorageVolume storageVolume = localVolumes.get(0); // even if there are more volumes pick the first one - this assumes that the first one has the longest match
-        int depthValue = WebdavUtils.getDepth(depth);
-        java.nio.file.Path storageRelativeFileDataPath = storageVolume.getStorageRelativePath(fullDataStoragePathName);
-        int fileDataPathComponents = storageRelativeFileDataPath.getNameCount();
-        JacsBundle dataBundle = null;
-        try {
-            if (fileDataPathComponents > 0) {
-                String bundleIdComponent = storageRelativeFileDataPath.getName(0).toString();
-                Number bundleId = new BigInteger(bundleIdComponent);
-                dataBundle = storageLookupService.getDataBundleById(bundleId);
-            }
-        } catch (NumberFormatException e) {
-            LOG.debug("Path {} is not a data bundle - first component is not numeric", storageRelativeFileDataPath);
-        }
-        if (dataBundle == null) {
-            if (Files.exists(Paths.get(storageVolume.getStorageRootDir()).resolve(storageRelativeFileDataPath))) {
-                return listStorageEntriesForPath(Paths.get(storageVolume.getStorageRootDir()).resolve(storageRelativeFileDataPath), depthValue);
-            } else if (Files.exists(Paths.get(storageVolume.getStoragePathPrefix()).resolve(storageRelativeFileDataPath))) {
-                return listStorageEntriesForPath(Paths.get(storageVolume.getStoragePathPrefix()).resolve(storageRelativeFileDataPath), depthValue);
-            } else {
-                LOG.warn("No path found for {} relative to {}", fullDataStoragePathName, storageVolume);
-                return Response
-                        .status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("No path found for " + fullDataStoragePathName))
-                        .build();
-            }
-        } else {
-            String dataEntryPath = fileDataPathComponents > 1
-                    ? storageRelativeFileDataPath.subpath(1, fileDataPathComponents).toString()
-                    : "";
-            return listStorageEntriesForBundle(dataBundle, dataEntryPath, depthValue);
-        }
-    }
-
-    private Response listStorageEntriesForPath(java.nio.file.Path storagePath, int depth) {
-        JacsStorageFormat storageFormat = Files.isRegularFile(storagePath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
-        List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(storagePath, null, storageFormat, depth);
-        Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeInfo) -> {
-            String nodeInfoRelPath = nodeInfo.isCollectionFlag()
-                    ?  StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
-                    : nodeInfo.getNodeRelativePath();
-            return resourceURI.getBaseUriBuilder()
-                    .path(Constants.AGENTSTORAGE_URI_PATH)
-                    .path("storage_path")
-                    .path(nodeInfoRelPath)
-                    .build()
-                    .toString();
-        });
-        return Response.status(207)
-                .entity(propfindResponse)
-                .build();
-    }
-
-    private Response listStorageEntriesForBundle(JacsBundle storageBundle, String dataEntryPath, int depth) {
-        List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(storageBundle.getRealStoragePath(), dataEntryPath, storageBundle.getStorageFormat(), depth);
-        Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeInfo) -> {
-            String nodeInfoRelPath = nodeInfo.isCollectionFlag()
-                    ?  StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
-                    : nodeInfo.getNodeRelativePath();
-            return resourceURI.getBaseUriBuilder()
-                    .path(Constants.AGENTSTORAGE_URI_PATH)
-                    .path(storageBundle.getId().toString())
-                    .path("entry_content")
-                    .path(nodeInfoRelPath)
-                    .build()
-                    .toString();
-        });
-        return Response.status(207)
-                .entity(propfindResponse)
-                .build();
+                    ;
+        };
+        return storageResourceHelper.handleResponseForFullDataPathParam(
+                StoragePathURI.createAbsolutePathURI(dataPathParam),
+                (dataBundle, dataEntryName) -> {
+                    List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataEntryName, dataBundle.getStorageFormat(), depth);
+                    Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeInfo) -> {
+                        String nodeInfoRelPath = nodeInfo.isCollectionFlag()
+                                ?  StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
+                                : nodeInfo.getNodeRelativePath();
+                        return resourceURI.getBaseUriBuilder()
+                                .path(Constants.AGENTSTORAGE_URI_PATH)
+                                .path(dataBundle.getId().toString())
+                                .path("entry_content")
+                                .path(nodeInfoRelPath)
+                                .build()
+                                .toString();
+                    });
+                    return Response.status(207)
+                            .entity(propfindResponse)
+                            ;
+                },
+                (storageVolume, dataEntryName) -> {
+                    java.nio.file.Path dataPath = storageVolume.getFullDataPathFromBaseStorageRoot(dataEntryName);
+                    if (Files.exists(dataPath)) {
+                        JacsStorageFormat storageFormat = Files.isRegularFile(dataPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
+                        List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataPath, null, storageFormat, depth);
+                        Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeInfo) -> {
+                            String nodeInfoRelPath = nodeInfo.isCollectionFlag()
+                                    ? StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
+                                    : nodeInfo.getNodeRelativePath();
+                            return resourceURI.getBaseUriBuilder()
+                                    .path(Constants.AGENTSTORAGE_URI_PATH)
+                                    .path("storage_path")
+                                    .path(nodeInfoRelPath)
+                                    .build()
+                                    .toString();
+                        });
+                        return Response.status(207)
+                                .entity(propfindResponse)
+                                ;
+                    } else {
+                        return storageNotFoundHandler.get();
+                    }
+                },
+                storageNotFoundHandler
+        ).build();
     }
 
     @LogStorageEvent(

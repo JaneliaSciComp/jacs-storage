@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.security;
+package org.janelia.jacsstorage.model.support;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -29,7 +29,7 @@ public class JacsSubjectHelper {
         }
     }
 
-    static String nameAsSubjectKey(String name) {
+    public static String nameAsSubjectKey(String name) {
         if (StringUtils.isBlank(name)) {
             return null;
         } else {

@@ -45,9 +45,9 @@ public class JacsBundleBuilder {
         return this;
     }
 
-    public JacsBundleBuilder storagePathPrefix(String v) {
+    public JacsBundleBuilder storageVirtualPath(String v) {
         updateBundleStorageVolume(sv -> {
-            sv.setStoragePathPrefix(v);
+            sv.setStorageVirtualPath(v);
         });
         return this;
     }

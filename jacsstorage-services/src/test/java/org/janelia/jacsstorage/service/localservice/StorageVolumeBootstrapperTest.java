@@ -49,31 +49,33 @@ public class StorageVolumeBootstrapperTest {
                         new ApplicationConfigProvider()
                                 .fromMap(ImmutableMap.<String, String>builder()
                                         .put("StorageVolume.v1.RootDir", "/data/jadestorage")
-                                        .put("StorageVolume.v1.PathPrefix", "${storageHost}/jadestorage/${otherKey}/storage/${andAnother}")
+                                        .put("StorageVolume.v1.VirtualPath", "${storageHost}/jadestorage/${otherKey}/storage/${andAnother}")
                                         .put("StorageVolume.v1.Shared", "false")
                                         .put("StorageVolume.v1.Tags", "local")
                                         .put("StorageVolume.v2.RootDir", "/data/jadestorage")
-                                        .put("StorageVolume.v2.PathPrefix", "/shared/jadestorage")
+                                        .put("StorageVolume.v2.VirtualPath", "/shared/jadestorage")
                                         .put("StorageVolume.v2.Shared", "true")
                                         .put("StorageVolume.v2.Tags", "shared")
                                         .put("StorageAgent.StorageHost", "")
+                                        .put("otherKey", "otherKeyValue")
+                                        .put("andAnother", "andAnotherValue")
                                         .put("StorageVolume.OVERFLOW_VOLUME.RootDir", "/overflow")
                                         .build()
                                 )
                                 .build(),
                         hasItems(
                                 allOf(new HasPropertyWithValue<>("name", equalTo("v1")),
-                                        new HasPropertyWithValue<>("storageRootDir", equalTo("/data/jadestorage")),
-                                        new HasPropertyWithValue<>("storagePathPrefix", equalTo("/" + NetUtils.getCurrentHostName() + "/jadestorage/${otherKey}/storage/${andAnother}")),
+                                        new HasPropertyWithValue<>("storageRootTemplate", equalTo("/data/jadestorage")),
+                                        new HasPropertyWithValue<>("storageVirtualPath", equalTo("/" + NetUtils.getCurrentHostName() + "/jadestorage/otherKeyValue/storage/andAnotherValue")),
                                         new HasPropertyWithValue<>("shared", equalTo(false))
                                 ),
                                 allOf(new HasPropertyWithValue<>("name", equalTo("v2")),
-                                        new HasPropertyWithValue<>("storageRootDir", equalTo("/data/jadestorage")),
-                                        new HasPropertyWithValue<>("storagePathPrefix", equalTo("/shared/jadestorage")),
+                                        new HasPropertyWithValue<>("storageRootTemplate", equalTo("/data/jadestorage")),
+                                        new HasPropertyWithValue<>("storageVirtualPath", equalTo("/shared/jadestorage")),
                                         new HasPropertyWithValue<>("shared", equalTo(true))
                                 ),
                                 allOf(new HasPropertyWithValue<>("name", equalTo("OVERFLOW_VOLUME")),
-                                        new HasPropertyWithValue<>("storageRootDir", equalTo("/overflow")),
+                                        new HasPropertyWithValue<>("storageRootTemplate", equalTo("/overflow")),
                                         new HasPropertyWithValue<>("shared", equalTo(true))
                                 )
                         )
@@ -82,11 +84,11 @@ public class StorageVolumeBootstrapperTest {
                         new ApplicationConfigProvider()
                                 .fromMap(ImmutableMap.<String, String>builder()
                                         .put("StorageVolume.v1.RootDir", "/data/jadestorage")
-                                        .put("StorageVolume.v1.PathPrefix", "${StorageAgent.StorageHost}/jadestorage/${otherKey}/storage")
+                                        .put("StorageVolume.v1.VirtualPath", "${StorageAgent.StorageHost}/jadestorage/${otherKey}/storage")
                                         .put("StorageVolume.v1.Shared", "false")
                                         .put("StorageVolume.v1.Tags", "local")
                                         .put("StorageVolume.v2.RootDir", "/data/jadestorage")
-                                        .put("StorageVolume.v2.PathPrefix", "/shared/jadestorage")
+                                        .put("StorageVolume.v2.VirtualPath", "/shared/jadestorage")
                                         .put("StorageVolume.v2.Shared", "true")
                                         .put("StorageVolume.v2.Tags", "shared")
                                         .put("StorageAgent.StorageHost", "TheHost")
@@ -96,20 +98,21 @@ public class StorageVolumeBootstrapperTest {
                                 .build(),
                         hasItems(
                                 allOf(new HasPropertyWithValue<>("name", equalTo("v1")),
-                                        new HasPropertyWithValue<>("storageRootDir", equalTo("/data/jadestorage")),
-                                        new HasPropertyWithValue<>("storagePathPrefix", equalTo("/TheHost/jadestorage/${otherKey}/storage"))
+                                        new HasPropertyWithValue<>("storageRootTemplate", equalTo("/data/jadestorage")),
+                                        new HasPropertyWithValue<>("storageVirtualPath", equalTo("/TheHost/jadestorage/${otherKey}/storage"))
                                 ),
                                 allOf(new HasPropertyWithValue<>("name", equalTo("v2")),
-                                        new HasPropertyWithValue<>("storageRootDir", equalTo("/data/jadestorage")),
-                                        new HasPropertyWithValue<>("storagePathPrefix", equalTo("/shared/jadestorage"))
+                                        new HasPropertyWithValue<>("storageRootTemplate", equalTo("/data/jadestorage")),
+                                        new HasPropertyWithValue<>("storageVirtualPath", equalTo("/shared/jadestorage"))
                                 ),
                                 allOf(new HasPropertyWithValue<>("name", equalTo("OVERFLOW_VOLUME")),
-                                        new HasPropertyWithValue<>("storageRootDir", equalTo("/overflow"))
+                                        new HasPropertyWithValue<>("storageRootTemplate", equalTo("/overflow"))
                                 )
                         )
                 )
         };
-        for (TestData td : testData) {
+        for (int ti = 0; ti < testData.length; ti++) {
+            TestData td = testData[ti];
             StorageVolumeBootstrapper storageVolumeBootstrapper = new StorageVolumeBootstrapper(
                     storageVolumeManager,
                     td.applicationConfig,
@@ -117,7 +120,7 @@ public class StorageVolumeBootstrapperTest {
                     ImmutableList.of("v1", "v2")
             );
             List<JacsStorageVolume> storageVolumes = storageVolumeBootstrapper.initializeStorageVolumes();
-            assertThat(storageVolumes, td.matcher);
+            assertThat("Test "+ ti, storageVolumes, td.matcher);
         }
     }
 

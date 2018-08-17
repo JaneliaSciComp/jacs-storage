@@ -6,10 +6,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.AbstractEntity;
 import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
+import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -64,8 +65,12 @@ public class JacsBundle extends AbstractEntity {
 
     @JsonIgnore
     public Path getRealStoragePath() {
-        if (storageVolume != null && StringUtils.isNotBlank(storageVolume.getStorageRootDir())) {
-            return Paths.get(storageVolume.getStorageRootDir(), path);
+        String storageRootDir = null;
+        if (storageVolume != null) {
+            storageRootDir = storageVolume.evalStorageRootDir(asStorageContext());
+        }
+        if (StringUtils.isNotBlank(storageRootDir)) {
+            return Paths.get(storageRootDir, path);
         } else {
             return Paths.get(path);
         }
@@ -75,8 +80,8 @@ public class JacsBundle extends AbstractEntity {
     public StoragePathURI getStorageURI() {
         if (storageVolume == null) {
             return null;
-        } else if (StringUtils.isNotBlank(storageVolume.getStoragePathPrefix())) {
-            return StoragePathURI.createPathURI(Paths.get(storageVolume.getStoragePathPrefix(), getId().toString()).toString());
+        } else if (StringUtils.isNotBlank(storageVolume.getStorageVirtualPath())) {
+            return StoragePathURI.createPathURI(Paths.get(storageVolume.getStorageVirtualPath(), getId().toString()).toString());
         } else {
             // otherwise cannot build the storage path URI
             return StoragePathURI.createPathURI(null);
@@ -223,6 +228,22 @@ public class JacsBundle extends AbstractEntity {
     public void referencedVolumes(List<JacsStorageVolume> referencedVolumes) {
         if (referencedVolumes != null && referencedVolumes.size() > 0) {
             this.storageVolume = referencedVolumes.get(0);
+        }
+    }
+
+    public Map<String, Object> asStorageContext() {
+        Map<String, Object> storageContext = new LinkedHashMap<>();
+        addToContext("name", name, storageContext);
+        addToContext("username", JacsSubjectHelper.getNameFromSubjectKey(ownerKey), storageContext);
+        addToContext("createdBy", JacsSubjectHelper.getNameFromSubjectKey(createdBy), storageContext);
+        addToContext("createDate", new SimpleDateFormat("yyyyMMddHHmmss").format(created), storageContext);
+        metadata.forEach((k, v) -> addToContext(k, v, storageContext));
+        return storageContext;
+    }
+
+    private void addToContext(String key, Object value, Map<String, Object> context) {
+        if (value != null) {
+            context.put(key, value);
         }
     }
 

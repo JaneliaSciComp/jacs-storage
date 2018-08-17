@@ -88,8 +88,8 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
         when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
-                                .storagePathPrefix("/volPrefix")
-                                .storageRootDir("/volRoot")
+                                .storageVirtualPath("/volPrefix")
+                                .storageRootTemplate("/volRoot/${owner}")
                                 .build()
                         )
                 );

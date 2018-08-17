@@ -17,7 +17,7 @@ public class StorageQuery {
     private List<String> storageHosts;
     private List<String> storageAgents;
     private String storageName;
-    private String storagePathPrefix;
+    private String storageVirtualPath;
     private List<String> storageTags;
     private Long minAvailableSpaceInBytes;
 
@@ -109,12 +109,12 @@ public class StorageQuery {
         return this;
     }
 
-    public String getStoragePathPrefix() {
-        return storagePathPrefix;
+    public String getStorageVirtualPath() {
+        return storageVirtualPath;
     }
 
-    public StorageQuery setStoragePathPrefix(String storagePathPrefix) {
-        this.storagePathPrefix = storagePathPrefix;
+    public StorageQuery setStorageVirtualPath(String storageVirtualPath) {
+        this.storageVirtualPath = storageVirtualPath;
         return this;
     }
 
@@ -156,7 +156,7 @@ public class StorageQuery {
                 .append(storageHosts, that.storageHosts)
                 .append(storageAgents, that.storageAgents)
                 .append(storageName, that.storageName)
-                .append(storagePathPrefix, that.storagePathPrefix)
+                .append(storageVirtualPath, that.storageVirtualPath)
                 .append(storageTags, that.storageTags)
                 .append(minAvailableSpaceInBytes, that.minAvailableSpaceInBytes)
                 .isEquals();
@@ -172,7 +172,7 @@ public class StorageQuery {
                 .append(storageHosts)
                 .append(storageAgents)
                 .append(storageName)
-                .append(storagePathPrefix)
+                .append(storageVirtualPath)
                 .append(storageTags)
                 .append(minAvailableSpaceInBytes)
                 .toHashCode();
@@ -188,7 +188,7 @@ public class StorageQuery {
                 .append("storageHosts", storageHosts)
                 .append("storageAgents", storageAgents)
                 .append("storageName", storageName)
-                .append("storagePathPrefix", storagePathPrefix)
+                .append("storageVirtualPath", storageVirtualPath)
                 .append("storageTags", storageTags)
                 .append("minAvailableSpaceInBytes", minAvailableSpaceInBytes)
                 .toString();

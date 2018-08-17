@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
-import org.janelia.jacsstorage.security.JacsSubjectHelper;
+import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.serviceutils.HttpClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -59,14 +59,14 @@ public class LocalStorageVolumeManagerTest {
                 .then(invocation -> new PageResult<>(invocation.getArgument(1), ImmutableList.of(
                         new JacsStorageVolumeBuilder()
                                 .storageHost(TEST_HOST)
-                                .storageRootDir("/root/testDir")
+                                .storageRootTemplate("/root/testDir")
                                 .addTag("t1").addTag("t2")
                                 .storageServiceURL("http://storageURL")
                                 .percentageFull(20)
                                 .build(),
                         new JacsStorageVolumeBuilder()
                                 .shared(true)
-                                .storageRootDir("/root/testSharedDir")
+                                .storageRootTemplate("/root/testSharedDir")
                                 .addTag("t1").addTag("t2")
                                 .storageServiceURL("http://storageURL")
                                 .percentageFull(20)
@@ -88,7 +88,7 @@ public class LocalStorageVolumeManagerTest {
                         new JacsStorageVolumeBuilder()
                                 .name(testVolumeName)
                                 .storageHost(TEST_HOST)
-                                .storageRootDir("/root/testDir")
+                                .storageRootTemplate("/root/testDir")
                                 .addTag("t1").addTag("t2")
                                 .storageServiceURL("http://storageURL")
                                 .percentageFull(20)
@@ -128,7 +128,7 @@ public class LocalStorageVolumeManagerTest {
         final String testHost = "TheTestHost";
         JacsStorageVolume testVolume = new JacsStorageVolumeBuilder()
                 .storageHost(testHost)
-                .storageRootDir("/root/testDir")
+                .storageRootTemplate("/root/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
                 .percentageFull(20)
@@ -147,8 +147,8 @@ public class LocalStorageVolumeManagerTest {
 
         Mockito.verify(storageVolumeDao).getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName());
         Mockito.verify(storageVolumeDao).update(newlyCreatedTestVolume, ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
-                .put("storageRootDir", new SetFieldValueHandler<>(testVolume.getStorageRootDir()))
-                .put("storagePathPrefix", new SetFieldValueHandler<>(testVolume.getStoragePathPrefix()))
+                .put("storageRootTemplate", new SetFieldValueHandler<>(testVolume.getStorageRootTemplate()))
+                .put("storageVirtualPath", new SetFieldValueHandler<>(testVolume.getStorageVirtualPath()))
                 .put("availableSpaceInBytes", new SetFieldValueHandler<>(testVolume.getAvailableSpaceInBytes()))
                 .put("storageServiceURL", new SetFieldValueHandler<>(testVolume.getStorageServiceURL()))
                 .put("percentageFull", new SetFieldValueHandler<>(testVolume.getPercentageFull()))
@@ -164,8 +164,8 @@ public class LocalStorageVolumeManagerTest {
         JacsStorageVolume testVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
                 .storageHost(testHost)
-                .storageRootDir("/root/testDir")
-                .storagePathPrefix("/testDir")
+                .storageRootTemplate("/root/testDir")
+                .storageVirtualPath("/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
                 .availableSpace(200L)
@@ -175,8 +175,8 @@ public class LocalStorageVolumeManagerTest {
         JacsStorageVolume updatedTestVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
                 .storageHost(testHost)
-                .storageRootDir("/root/testDir")
-                .storagePathPrefix("/testDir")
+                .storageRootTemplate("/root/testDir")
+                .storageVirtualPath("/testDir")
                 .addTag("t1").addTag("t2").addTag("t3")
                 .storageServiceURL("http://storageURL")
                 .availableSpace(100L)
@@ -203,7 +203,7 @@ public class LocalStorageVolumeManagerTest {
         final String testHost = "TheTestHost";
         JacsStorageVolume testVolume = new JacsStorageVolumeBuilder()
                 .storageHost(testHost)
-                .storageRootDir("/root/testDir")
+                .storageRootTemplate("/root/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
                 .build();
@@ -223,8 +223,8 @@ public class LocalStorageVolumeManagerTest {
 
         Mockito.verify(storageVolumeDao).getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName());
         Mockito.verify(storageVolumeDao).update(newlyCreatedTestVolume, ImmutableMap.of(
-                "storageRootDir", new SetFieldValueHandler<>(testVolume.getStorageRootDir()),
-                "storagePathPrefix", new SetFieldValueHandler<>(testVolume.getStoragePathPrefix()),
+                "storageRootTemplate", new SetFieldValueHandler<>(testVolume.getStorageRootTemplate()),
+                "storageVirtualPath", new SetFieldValueHandler<>(testVolume.getStorageVirtualPath()),
                 "storageTags", new SetFieldValueHandler<>(testVolume.getStorageTags())
         ));
         Mockito.verifyNoMoreInteractions(storageVolumeDao);
@@ -236,8 +236,8 @@ public class LocalStorageVolumeManagerTest {
         JacsStorageVolume testVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
                 .storageHost(testHost)
-                .storageRootDir("/root/testDir")
-                .storagePathPrefix("/testDir")
+                .storageRootTemplate("/root/testDir")
+                .storageVirtualPath("/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
                 .build();

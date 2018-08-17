@@ -68,7 +68,7 @@ public class MasterWebdavResource {
                                                        @Context SecurityContext securityContext) {
         LOG.info("Find storage by prefix {} for {}", storagePrefixParam, securityContext.getUserPrincipal());
         StoragePathURI storagePrefixURI = StoragePathURI.createAbsolutePathURI(storagePrefixParam);
-        StorageQuery storageQuery = new StorageQuery().setStoragePathPrefix(storagePrefixURI.getStoragePath());
+        StorageQuery storageQuery = new StorageQuery().setStorageVirtualPath(storagePrefixURI.getStoragePath());
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
         if (CollectionUtils.isEmpty(managedVolumes)) {
             LOG.warn("No storage found for prefix {}", storagePrefixParam);

@@ -55,7 +55,8 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
                     }
                     List<String> dataSubpath = PathUtils.getTreePathComponentsForId(existingBundle.getId());
                     if (CollectionUtils.isNotEmpty(dataSubpath)) {
-                        Path parentPath = Paths.get(storageVolume.getStorageRootDir(), dataSubpath.get(0));
+                        String storageRootDir = storageVolume.evalStorageRootDir(existingBundle.asStorageContext());
+                        Path parentPath = Paths.get(storageRootDir, dataSubpath.get(0));
                         if (dataPath.startsWith(parentPath)) {
                             try {
                                 PathUtils.deletePathIfEmpty(parentPath);

@@ -28,7 +28,7 @@ public class LocalStorageVolumeSelector implements StorageVolumeSelector {
                 .ifPresent(sv -> {
                     storageQuery.setId(sv.getId());
                     storageQuery.setStorageName(sv.getName());
-                    storageQuery.setStoragePathPrefix(sv.getStoragePathPrefix());
+                    storageQuery.setStorageVirtualPath(sv.getStorageVirtualPath());
                     storageQuery.setStorageTags(sv.getStorageTags());
                 });
         if (storageRequest.hasUsedSpaceSet()) {

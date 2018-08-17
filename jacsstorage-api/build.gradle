@@ -5,8 +5,10 @@ project(":jacsstorage-api") {
             JACKSON_DATATYPE_JODA_LIB,
             SWAGGER_ANNOTATIONS_LIB
 
-        implementation JACKSON_CORE_LIB,
+        implementation JAVA_EXP_IMPL,
+                       JACKSON_CORE_LIB,
                        JACKSON_DATABIND_LIB
+
     }
 }
 

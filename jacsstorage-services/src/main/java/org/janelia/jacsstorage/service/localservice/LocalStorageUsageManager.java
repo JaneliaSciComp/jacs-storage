@@ -1,10 +1,12 @@
 package org.janelia.jacsstorage.service.localservice;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.expr.ExprHelper;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
@@ -20,8 +22,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -159,7 +163,17 @@ public class LocalStorageUsageManager implements StorageUsageManager {
      * @return
      */
     private String getGroupNameForUserUsingDirHierarchy(JacsStorageVolume storageVolume, String username) {
-        Path storagePath = Paths.get(storageVolume.getStorageRootDir(), username);
+        Path storagePath;
+        Set<String> varsFromStorageRootDefn = ExprHelper.extractVarNames(storageVolume.getStorageRootTemplate());
+        // !!!! FIXME - this is really hacky - I don't like this at all
+        if (varsFromStorageRootDefn.contains("username")) {
+            storagePath = Paths.get(
+                    ExprHelper.getConstPrefix(ExprHelper.eval(storageVolume.getStorageRootTemplate(),
+                            ImmutableMap.of("username", username)))
+                    );
+        } else {
+            storagePath = Paths.get(storageVolume.getStorageRootTemplate(), username);
+        }
         try {
             storagePath = storagePath.toRealPath().toAbsolutePath();
         } catch (IOException e) {

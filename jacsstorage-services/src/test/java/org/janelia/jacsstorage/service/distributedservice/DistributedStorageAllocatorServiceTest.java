@@ -92,7 +92,7 @@ public class DistributedStorageAllocatorServiceTest {
                         new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .storageHost("testHost")
-                                .storageRootDir("/storage")
+                                .storageRootTemplate("/storage/${owner}")
                                 .storageServiceURL("http://agentURL")
                                 .build()
                 ),
@@ -106,7 +106,7 @@ public class DistributedStorageAllocatorServiceTest {
                         new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .name(JacsStorageVolume.OVERFLOW_VOLUME)
-                                .storageRootDir("/overflowStorage")
+                                .storageRootTemplate("/overflowStorage")
                                 .build()
                 ),
                 new TestAllocateData(10L,
@@ -119,7 +119,7 @@ public class DistributedStorageAllocatorServiceTest {
                         new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .storageHost("testHost")
-                                .storageRootDir("/storage")
+                                .storageRootTemplate("/storage")
                                 .storageServiceURL("http://agentURL")
                                 .build()
                 )
@@ -171,7 +171,7 @@ public class DistributedStorageAllocatorServiceTest {
             Mockito.verify(bundleDao).save(dataBundle);
             assertThat(dataBundle.getId(), equalTo(testData.testBundleId));
             assertThat(dataBundle.getPath(), equalTo((StringUtils.isBlank(testData.testBundlePrefix) ? "" : testData.testBundlePrefix + "/") + testData.testBundleId.toString()));
-            assertThat(dataBundle.getRealStoragePath(), equalTo(Paths.get(testData.testVolume.getStorageRootDir(), StringUtils.defaultIfBlank(testData.testBundlePrefix, ""), testData.testBundleId.toString())));
+            assertThat(dataBundle.getRealStoragePath(), equalTo(Paths.get(testData.testVolume.getStorageRootTemplate(), StringUtils.defaultIfBlank(testData.testBundlePrefix, ""), testData.testBundleId.toString())));
             Mockito.verify(bundleDao).update(dataBundle, ImmutableMap.of(
                     "path", new SetFieldValueHandler<>(dataBundle.getPath())
             ));

@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.security;
+package org.janelia.jacsstorage.model.support;
 
 import org.junit.Test;
 
