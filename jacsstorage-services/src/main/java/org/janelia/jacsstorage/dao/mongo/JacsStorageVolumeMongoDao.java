@@ -51,7 +51,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
                         .unique(true)
                         .sparse(true));
         mongoCollection.createIndex(Indexes.ascending("storagePathPrefix"),
-                new IndexOptions().unique(true).sparse(true));
+                new IndexOptions().sparse(true));
         mongoCollection.createIndex(Indexes.ascending("storageServiceURL"));
     }
 
