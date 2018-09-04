@@ -201,28 +201,36 @@ public class JacsStorageVolume extends AbstractEntity {
     }
 
     @JsonIgnore
-    public Optional<Path> getRelativePathToBaseStorageRoot(String dataPath) {
-        // !!!!!!!!!!!!!!!!!!!!!!!! CHANGE THE RETURN TYPE
+    public Path getPathRelativeToBaseStorageRoot(String dataPath) {
+        return Paths.get(getBaseStorageRootDir()).relativize(Paths.get(dataPath));
+    }
+
+    @JsonIgnore
+    public Optional<StorageRelativePath> getStoragePathRelativeToStorageRoot(String dataPath) {
         if (ExprHelper.match(storageRootTemplate, dataPath).isMatchFound()) {
-            return relativizeToStorageDir(getBaseStorageRootDir(), dataPath);
+            return Optional.of(Paths.get(getBaseStorageRootDir()).relativize(Paths.get(dataPath)))
+                    .map(p -> StorageRelativePath.pathRelativeToBaseRoot(p.toString()));
         } else if (ExprHelper.match(storageVirtualPath, dataPath).isMatchFound()) {
-            return relativizeToStorageDir(storageVirtualPath, dataPath);
+            return Optional.of(Paths.get(storageVirtualPath).relativize(Paths.get(dataPath)))
+                    .map(p -> StorageRelativePath.pathRelativeToVirtualRoot(p.toString()));
         } else {
             return Optional.empty();
         }
     }
 
     @JsonIgnore
-    public Path getFullDataPathFromBaseStorageRoot(String dataPathRelativeToBaseStorageRoot) {
-        return Paths.get(getBaseStorageRootDir(), dataPathRelativeToBaseStorageRoot);
-    }
-
-    private Optional<Path> relativizeToStorageDir(String storageDirName, String dataDirName) {
-        if (dataDirName.startsWith(storageDirName)) {
-            Path storagePath = Paths.get(storageDirName);
-            return Optional.of(storagePath.relativize(Paths.get(dataDirName)));
+    public Optional<Path> getDataStorageAbsolutePath(StorageRelativePath storageRelativePath) {
+        if (storageRelativePath.isRelativeToBaseRoot()) {
+            return Optional.of(Paths.get(getBaseStorageRootDir(), storageRelativePath.getPath()));
         } else {
-            return Optional.empty();
+            // storageRelativePath.isRelativeToVirtualRoot()
+            Set<String> storageRootVars = ExprHelper.extractVarNames(storageRootTemplate);
+            if (storageRootVars.isEmpty()) {
+                return Optional.of(Paths.get(getBaseStorageRootDir(), storageRelativePath.getPath()));
+            } else {
+                // the root directory template contains unresolved variables so I cannot determine the path exactly
+                return Optional.empty();
+            }
         }
     }
 

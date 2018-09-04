@@ -152,29 +152,27 @@ public class AgentWebdavResource {
                             .entity(propfindResponse)
                             ;
                 },
-                (storageVolume, dataEntryName) -> {
-                    java.nio.file.Path dataPath = storageVolume.getFullDataPathFromBaseStorageRoot(dataEntryName);
-                    if (Files.exists(dataPath)) {
-                        JacsStorageFormat storageFormat = Files.isRegularFile(dataPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
-                        List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataPath, null, storageFormat, depth);
-                        Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeInfo) -> {
-                            String nodeInfoRelPath = nodeInfo.isCollectionFlag()
-                                    ? StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
-                                    : nodeInfo.getNodeRelativePath();
-                            return resourceURI.getBaseUriBuilder()
-                                    .path(Constants.AGENTSTORAGE_URI_PATH)
-                                    .path("storage_path")
-                                    .path(nodeInfoRelPath)
-                                    .build()
-                                    .toString();
-                        });
-                        return Response.status(207)
-                                .entity(propfindResponse)
-                                ;
-                    } else {
-                        return storageNotFoundHandler.get();
-                    }
-                },
+                (storageVolume, dataEntryName) -> storageVolume.getDataStorageAbsolutePath(dataEntryName)
+                        .filter(dataEntryPath -> Files.exists(dataEntryPath))
+                        .map(dataEntryPath -> {
+                            JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
+                            List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataEntryPath, null, storageFormat, depth);
+                            Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeInfo) -> {
+                                String nodeInfoRelPath = nodeInfo.isCollectionFlag()
+                                        ? StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
+                                        : nodeInfo.getNodeRelativePath();
+                                return resourceURI.getBaseUriBuilder()
+                                        .path(Constants.AGENTSTORAGE_URI_PATH)
+                                        .path("storage_path")
+                                        .path(nodeInfoRelPath)
+                                        .build()
+                                        .toString();
+                            });
+                            return Response.status(207)
+                                    .entity(propfindResponse)
+                                    ;
+                        })
+                        .orElseGet(storageNotFoundHandler),
                 storageNotFoundHandler
         ).build();
     }

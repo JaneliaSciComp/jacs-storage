@@ -15,6 +15,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.model.jacsstorage.StorageRelativePath;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
@@ -65,7 +66,7 @@ public class StorageResourceHelper {
 
     public Response.ResponseBuilder handleResponseForFullDataPathParam(StoragePathURI storagePathURI,
                                                                        BiFunction<JacsBundle, String, Response.ResponseBuilder> bundleBasedResponseHandler,
-                                                                       BiFunction<JacsStorageVolume, String, Response.ResponseBuilder> volumeBasedResponseHandler) {
+                                                                       BiFunction<JacsStorageVolume, StorageRelativePath, Response.ResponseBuilder> volumeBasedResponseHandler) {
         return handleResponseForFullDataPathParam(
                 storagePathURI,
                 bundleBasedResponseHandler,
@@ -78,23 +79,21 @@ public class StorageResourceHelper {
 
     public Response.ResponseBuilder handleResponseForFullDataPathParam(StoragePathURI storagePathURI,
                                                                        BiFunction<JacsBundle, String, Response.ResponseBuilder> bundleBasedResponseHandler,
-                                                                       BiFunction<JacsStorageVolume, String, Response.ResponseBuilder> volumeBasedResponseHandler,
+                                                                       BiFunction<JacsStorageVolume, StorageRelativePath, Response.ResponseBuilder> volumeBasedResponseHandler,
                                                                        Supplier<Response.ResponseBuilder> storageNotFoundHandler) {
         return getStorageVolumeForURI(storagePathURI)
                 .map(storageVolume -> handleResponseForFullDataPathParam(storageVolume,
                         storagePathURI,
                         bundleBasedResponseHandler,
                         volumeBasedResponseHandler))
-                .orElseGet(() -> Response
-                        .status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("No managed volume found for " + storagePathURI)))
+                .orElseGet(storageNotFoundHandler)
                 ;
     }
 
     private Response.ResponseBuilder handleResponseForFullDataPathParam(JacsStorageVolume storageVolume,
                                                                         StoragePathURI storagePathURI,
                                                                         BiFunction<JacsBundle, String, Response.ResponseBuilder> bundleBasedResponseHandler,
-                                                                        BiFunction<JacsStorageVolume, String, Response.ResponseBuilder> volumeBasedResponseHandler) {
+                                                                        BiFunction<JacsStorageVolume, StorageRelativePath, Response.ResponseBuilder> volumeBasedResponseHandler) {
         if (storagePathURI.isEmpty()) {
             LOG.warn("No storage path {} has been specified for {}", storagePathURI, storageVolume);
             return Response
@@ -102,14 +101,15 @@ public class StorageResourceHelper {
                     .entity(new ErrorResponse("Empty storage path: " + storagePathURI))
                     ;
         }
-        return storageVolume.getRelativePathToBaseStorageRoot(storagePathURI.getStoragePath())
+        return storageVolume.getStoragePathRelativeToStorageRoot(storagePathURI.getStoragePath())
                 .map(storageRelativeFileDataPath -> {
                     // check if the first path component after the storage prefix is a bundle ID
-                    int fileDataPathComponents = storageRelativeFileDataPath.getNameCount();
+                    Path dataPath = Paths.get(storageRelativeFileDataPath.getPath());
+                    int fileDataPathComponents = dataPath.getNameCount();
                     JacsBundle dataBundle = null;
                     try {
                         if (fileDataPathComponents > 0) {
-                            String bundleIdComponent = storageRelativeFileDataPath.getName(0).toString();
+                            String bundleIdComponent = dataPath.getName(0).toString();
                             Number bundleId = new BigInteger(bundleIdComponent);
                             dataBundle = storageLookupService.getDataBundleById(bundleId);
                         }
@@ -117,10 +117,10 @@ public class StorageResourceHelper {
                         LOG.debug("Path {} is not a data bundle - first component is not numeric", storageRelativeFileDataPath);
                     }
                     if (dataBundle == null) {
-                        return volumeBasedResponseHandler.apply(storageVolume, storageRelativeFileDataPath.toString());
+                        return volumeBasedResponseHandler.apply(storageVolume, storageRelativeFileDataPath);
                     } else {
                         String dataEntryPath = fileDataPathComponents > 1
-                                ? storageRelativeFileDataPath.subpath(1, fileDataPathComponents).toString()
+                                ? dataPath.subpath(1, fileDataPathComponents).toString()
                                 : "";
                         return bundleBasedResponseHandler.apply(dataBundle, dataEntryPath);
                     }
@@ -175,58 +175,54 @@ public class StorageResourceHelper {
         return storageVolumes.get(0);
     }
 
-    public Response.ResponseBuilder checkContentFromFile(JacsStorageVolume storageVolume, String dataEntryName) {
+    public Response.ResponseBuilder checkContentFromFile(JacsStorageVolume storageVolume, StorageRelativePath dataEntryName) {
         if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to read " + dataEntryName))
                     ;
         }
-        Path dataEntryPath = storageVolume.getFullDataPathFromBaseStorageRoot(dataEntryName);
-        if (Files.exists(dataEntryPath)) {
-            return Response
-                    .ok()
-                    .header("Content-Length", PathUtils.getSize(Paths.get(storageVolume.getBaseStorageRootDir()).resolve(dataEntryPath)));
-        } else {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName()))
-                    ;
-        }
+        return storageVolume.getDataStorageAbsolutePath(dataEntryName)
+                .filter(dataEntryPath -> Files.exists(dataEntryPath))
+                .map(dataEntryPath -> Response
+                        .ok()
+                        .header("Content-Length", PathUtils.getSize(Paths.get(storageVolume.getBaseStorageRootDir()).resolve(dataEntryPath))))
+                .orElseGet(() -> Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName())))
+                ;
     }
 
-    public Response.ResponseBuilder retrieveContentFromFile(JacsStorageVolume storageVolume, String dataEntryName) {
+    public Response.ResponseBuilder retrieveContentFromFile(JacsStorageVolume storageVolume, StorageRelativePath dataEntryName) {
         if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to read " + dataEntryName))
                     ;
         }
-        Path dataEntryPath = storageVolume.getFullDataPathFromBaseStorageRoot(dataEntryName);
-        if (Files.exists(dataEntryPath)) {
-            JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
-            long fileSize = PathUtils.getSize(dataEntryPath);
-            StreamingOutput fileStream = output -> {
-                try {
-                    dataStorageService.retrieveDataStream(dataEntryPath, storageFormat, output);
-                } catch (Exception e) {
-                    LOG.error("Error streaming data file content for {}", dataEntryPath, e);
-                    throw new WebApplicationException(e);
-                }
-            };
-            return Response
-                    .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-                    .header("Content-Length", fileSize)
-                    .header("Content-Disposition", "attachment; filename = " + dataEntryPath.getFileName())
-                    ;
-
-        } else {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName()))
-                    ;
-        }
-
+        return storageVolume.getDataStorageAbsolutePath(dataEntryName)
+                .filter(dataEntryPath -> Files.exists(dataEntryPath))
+                .map(dataEntryPath -> {
+                    JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
+                    long fileSize = PathUtils.getSize(dataEntryPath);
+                    StreamingOutput fileStream = output -> {
+                        try {
+                            dataStorageService.retrieveDataStream(dataEntryPath, storageFormat, output);
+                        } catch (Exception e) {
+                            LOG.error("Error streaming data file content for {}", dataEntryPath, e);
+                            throw new WebApplicationException(e);
+                        }
+                    };
+                    return Response
+                            .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
+                            .header("Content-Length", fileSize)
+                            .header("Content-Disposition", "attachment; filename = " + dataEntryPath.getFileName())
+                            ;
+                })
+                .orElseGet(() -> Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName())))
+                ;
     }
 
     public Response.ResponseBuilder retrieveContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath) {
@@ -270,50 +266,50 @@ public class StorageResourceHelper {
                 ;
     }
 
-    public Response.ResponseBuilder listContentFromPath(JacsStorageVolume storageVolume, URI baseURI, String dataEntryName, int depth) {
+    public Response.ResponseBuilder listContentFromPath(JacsStorageVolume storageVolume, URI baseURI, StorageRelativePath dataEntryName, int depth) {
         if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to list " + dataEntryName))
                     ;
         }
-        Path dataEntryPath = Paths.get(dataEntryName);
-        Path dataPath = storageVolume.getFullDataPathFromBaseStorageRoot(dataEntryName);
-        if (Files.exists(dataPath)) {
-            JacsStorageFormat storageFormat = Files.isRegularFile(dataPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
-            List<DataNodeInfo> entries = dataStorageService.listDataEntries(dataPath, "", storageFormat, depth);
-            return Response
-                    .ok(entries.stream()
-                                    .map(dn -> {
-                                        String dataNodePathRelativeToVolRoot = dataEntryPath.resolve(dn.getNodeRelativePath()).toString();
-                                        URI dataNodeAccessURI = UriBuilder.fromUri(baseURI)
-                                                .path(Constants.AGENTSTORAGE_URI_PATH)
-                                                .path("storage_volume")
-                                                .path(storageVolume.getId().toString())
-                                                .path(dataNodePathRelativeToVolRoot)
-                                                .build();
-                                        DataNodeInfo newDataNode = new DataNodeInfo();
-                                        newDataNode.setStorageId(dn.getStorageId());
-                                        newDataNode.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
-                                        newDataNode.setStorageRootPathURI(storageVolume.getStorageURI());
-                                        newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
-                                        newDataNode.setNodeRelativePath(dataNodePathRelativeToVolRoot);
-                                        newDataNode.setSize(dn.getSize());
-                                        newDataNode.setMimeType(dn.getMimeType());
-                                        newDataNode.setCollectionFlag(dn.isCollectionFlag());
-                                        newDataNode.setCreationTime(dn.getCreationTime());
-                                        newDataNode.setLastModified(dn.getLastModified());
-                                        return newDataNode;
-                                    })
-                                    .collect(Collectors.toList()),
-                            MediaType.APPLICATION_JSON)
-                    ;
-        } else {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No path found for " + dataEntryPath + " on volume " + storageVolume.getName()))
-                    ;
-        }
+        return storageVolume.getDataStorageAbsolutePath(dataEntryName)
+                .filter(dataEntryPath -> Files.exists(dataEntryPath))
+                .map(dataEntryPath -> {
+                    JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
+                    List<DataNodeInfo> entries = dataStorageService.listDataEntries(dataEntryPath, "", storageFormat, depth);
+                    return Response
+                            .ok(entries.stream()
+                                            .map(dn -> {
+                                                String dataNodeAbsolutePath = dataEntryPath.resolve(dn.getNodeRelativePath()).toString();
+                                                Path dataNodeRelativePath = storageVolume.getPathRelativeToBaseStorageRoot(dataNodeAbsolutePath);
+                                                URI dataNodeAccessURI = UriBuilder.fromUri(baseURI)
+                                                        .path(Constants.AGENTSTORAGE_URI_PATH)
+                                                        .path("storage_volume")
+                                                        .path(storageVolume.getId().toString())
+                                                        .path(dataNodeRelativePath.toString())
+                                                        .build();
+                                                DataNodeInfo newDataNode = new DataNodeInfo();
+                                                newDataNode.setStorageId(dn.getStorageId());
+                                                newDataNode.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
+                                                newDataNode.setStorageRootPathURI(storageVolume.getStorageURI());
+                                                newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
+                                                newDataNode.setNodeRelativePath(dataNodeRelativePath.toString());
+                                                newDataNode.setSize(dn.getSize());
+                                                newDataNode.setMimeType(dn.getMimeType());
+                                                newDataNode.setCollectionFlag(dn.isCollectionFlag());
+                                                newDataNode.setCreationTime(dn.getCreationTime());
+                                                newDataNode.setLastModified(dn.getLastModified());
+                                                return newDataNode;
+                                            })
+                                            .collect(Collectors.toList()),
+                                    MediaType.APPLICATION_JSON)
+                            ;
+                })
+                .orElseGet(() -> Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName())))
+                ;
     }
 
     public Response.ResponseBuilder storeDataBundleContent(JacsBundle dataBundle, URI baseURI, String dataEntryName, Consumer<Long> dataBundleUpdater, InputStream contentStream) {
@@ -339,31 +335,38 @@ public class StorageResourceHelper {
                 .entity(newDataNode);
     }
 
-    public Response.ResponseBuilder storeFileContent(JacsStorageVolume storageVolume, URI baseURI, String dataEntryName, InputStream contentStream) {
+    public Response.ResponseBuilder storeFileContent(JacsStorageVolume storageVolume, URI baseURI, StorageRelativePath dataEntryName, InputStream contentStream) {
         if (!storageVolume.hasPermission(JacsStoragePermission.WRITE)) {
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to list " + dataEntryName))
                     ;
         }
-        Path dataFilePath = storageVolume.getFullDataPathFromBaseStorageRoot(dataEntryName);
-        LOG.info("Create {} on {}", dataFilePath, storageVolume);
-        dataStorageService.writeDataEntryStream(dataFilePath, "", JacsStorageFormat.SINGLE_DATA_FILE, contentStream);
-        URI newContentURI = UriBuilder.fromUri(baseURI)
-                .path(Constants.AGENTSTORAGE_URI_PATH)
-                .path("storage_volume")
-                .path(storageVolume.getId().toString())
-                .path(dataEntryName)
-                .build();
-        DataNodeInfo newDataNode = new DataNodeInfo();
-        newDataNode.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
-        newDataNode.setStorageRootPathURI(storageVolume.getStorageURI());
-        newDataNode.setNodeAccessURL(newContentURI.toString());
-        newDataNode.setNodeRelativePath(dataEntryName);
-        newDataNode.setCollectionFlag(false);
-        return Response
-                .created(newContentURI)
-                .entity(newDataNode);
+        return storageVolume.getDataStorageAbsolutePath(dataEntryName)
+                .map(dataEntryPath -> {
+                    LOG.info("Create {} on {}", dataEntryPath, storageVolume);
+                    dataStorageService.writeDataEntryStream(dataEntryPath, "", JacsStorageFormat.SINGLE_DATA_FILE, contentStream);
+                    Path dataNodeRelativePath = storageVolume.getPathRelativeToBaseStorageRoot(dataEntryPath.toString());
+                    URI newContentURI = UriBuilder.fromUri(baseURI)
+                            .path(Constants.AGENTSTORAGE_URI_PATH)
+                            .path("storage_volume")
+                            .path(storageVolume.getId().toString())
+                            .path(dataNodeRelativePath.toString())
+                            .build();
+                    DataNodeInfo newDataNode = new DataNodeInfo();
+                    newDataNode.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
+                    newDataNode.setStorageRootPathURI(storageVolume.getStorageURI());
+                    newDataNode.setNodeAccessURL(newContentURI.toString());
+                    newDataNode.setNodeRelativePath(dataNodeRelativePath.toString());
+                    newDataNode.setCollectionFlag(false);
+                    return Response
+                            .created(newContentURI)
+                            .entity(newDataNode);
+
+                })
+                .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST)
+                            .entity(new ErrorResponse("Could not create entry " + dataEntryName + " on volume " + storageVolume.getName())))
+                ;
     }
 
     public Response.ResponseBuilder removeContentFromDataBundle(JacsBundle dataBundle, String dataEntryName, Consumer<Long> dataBundleUpdater) {
@@ -382,31 +385,31 @@ public class StorageResourceHelper {
         }
     }
 
-    public Response.ResponseBuilder removeFileContentFromVolume(JacsStorageVolume storageVolume, String dataEntryName) {
+    public Response.ResponseBuilder removeFileContentFromVolume(JacsStorageVolume storageVolume, StorageRelativePath dataEntryName) {
         if (!storageVolume.hasPermission(JacsStoragePermission.DELETE)) {
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse("No delete permission for volume " + storageVolume.getName() + " to delete " + dataEntryName))
                     ;
         }
-        Path dataPath = storageVolume.getFullDataPathFromBaseStorageRoot(dataEntryName);
-        if (Files.exists(dataPath)) {
-            try {
-                LOG.info("Delete {}({}) from {}", dataEntryName, dataPath, storageVolume);
-                dataStorageService.deleteStoragePath(dataPath);
-                return Response.noContent();
-            } catch (Exception e) {
-                LOG.warn("File error while trying to delete {}({}) from {}", dataEntryName, dataPath, storageVolume);
-                return Response
-                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                        .entity(new ErrorResponse("Internal error while trying to delete " + dataEntryName + " from " + storageVolume))
-                        ;
-            }
-        } else {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("Invalid storage volume " + storageVolume.getName() + " for deleting " + dataEntryName))
-                    ;
-        }
+        return storageVolume.getDataStorageAbsolutePath(dataEntryName)
+                .filter(dataEntryPath -> Files.exists(dataEntryPath))
+                .map(dataEntryPath -> {
+                    try {
+                        LOG.info("Delete {}({}) from {}", dataEntryName, dataEntryPath, storageVolume);
+                        dataStorageService.deleteStoragePath(dataEntryPath);
+                        return Response.noContent();
+                    } catch (Exception e) {
+                        LOG.warn("File error while trying to delete {}({}) from {}", dataEntryName, dataEntryPath, storageVolume);
+                        return Response
+                                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity(new ErrorResponse("Internal error while trying to delete " + dataEntryName + " from " + storageVolume))
+                                ;
+                    }
+                })
+                .orElseGet(() -> Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("Invalid storage volume " + storageVolume.getName() + " for deleting " + dataEntryName)))
+                ;
     }
 }

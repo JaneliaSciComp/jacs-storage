@@ -24,7 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
 
-public class AgentVolumeResourceTest extends AbstractCdiInjectedResourceTest {
+public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
 
     private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
 

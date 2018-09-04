@@ -84,7 +84,7 @@ public class ContentStorageResource {
                                         .path("agent_storage")
                                         .path("storage_volume")
                                         .path(storageVolume.getId().toString())
-                                        .path(dataEntryPath)
+                                        .path(dataEntryPath.getPath())
                                         .build())
                                 ;
                     } else {
@@ -138,7 +138,7 @@ public class ContentStorageResource {
                                         .path("agent_storage")
                                         .path("storage_volume")
                                         .path(storageVolume.getId().toString())
-                                        .path(dataEntryPath)
+                                        .path(dataEntryPath.getPath())
                                         .build())
                                 ;
                     } else {

@@ -48,9 +48,9 @@ import java.util.List;
                 @Authorization("jwtBearerToken")
         }
 )
-public class AgentVolumeResource {
+public class VolumeQuotaResource {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AgentVolumeResource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(VolumeQuotaResource.class);
 
     @Inject @LocalInstance
     private StorageUsageManager storageUsageManager;
