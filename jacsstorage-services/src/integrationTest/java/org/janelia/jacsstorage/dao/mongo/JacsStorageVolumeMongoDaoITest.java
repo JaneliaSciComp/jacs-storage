@@ -1,14 +1,13 @@
 package org.janelia.jacsstorage.dao.mongo;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
+import org.janelia.jacsstorage.datarequest.PageRequest;
+import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.datarequest.PageRequest;
-import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.junit.After;
 import org.junit.Before;
@@ -24,7 +23,6 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
@@ -190,6 +188,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
             v.setShared(true);
         }
         v.setAvailableSpaceInBytes(available);
+        v.setActiveFlag(true);
         testData.add(v);
         return v;
     }

@@ -129,6 +129,7 @@ public class StorageVolumesResource {
                                        @QueryParam("storageHost") String storageHost,
                                        @QueryParam("storageTags") List<String> storageTags,
                                        @QueryParam("storageVirtualPath") String storagePathPrefix,
+                                       @QueryParam("includeInactive") boolean includeInactive,
                                        @Context SecurityContext securityContext) {
         StorageQuery storageQuery = new StorageQuery()
                 .setId(storageVolumeId)
@@ -136,7 +137,8 @@ public class StorageVolumesResource {
                 .setShared(shared)
                 .setAccessibleOnHost(storageHost)
                 .setStorageTags(storageTags)
-                .setStorageVirtualPath(storagePathPrefix);
+                .setStorageVirtualPath(storagePathPrefix)
+                .setIncludeInactiveVolumes(includeInactive);
         LOG.info("List storage volumes filtered with: {}", storageQuery);
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
         PageResult<JacsStorageVolume> results = new PageResult<>();

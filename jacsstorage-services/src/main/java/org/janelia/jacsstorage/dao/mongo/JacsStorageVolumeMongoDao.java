@@ -32,8 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.StreamSupport;
 
-import static com.mongodb.client.model.Filters.eq;
-
 /**
  * Mongo based implementation of JacsVolumeDao.
  */
@@ -142,6 +140,9 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         }
         if (storageQuery.hasMinAvailableSpaceInBytes()) {
             filtersBuilder.add(Filters.gte("availableSpaceInBytes", storageQuery.getMinAvailableSpaceInBytes()));
+        }
+        if (!storageQuery.isIncludeInactiveVolumes()) {
+            filtersBuilder.add(Filters.eq("activeFlag", true));
         }
         return filtersBuilder.build();
     }

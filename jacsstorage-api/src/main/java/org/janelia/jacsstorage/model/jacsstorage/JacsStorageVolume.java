@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.expr.ExprHelper;
-import org.janelia.jacsstorage.expr.MatchingResult;
 import org.janelia.jacsstorage.model.AbstractEntity;
 import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 
@@ -34,6 +33,7 @@ public class JacsStorageVolume extends AbstractEntity {
     private String systemUsageFile;
     private boolean shared;
     private Set<JacsStoragePermission> volumePermissions;
+    private boolean activeFlag;
     private Date created = new Date();
     private Date modified = new Date();
 
@@ -232,6 +232,14 @@ public class JacsStorageVolume extends AbstractEntity {
                 return Optional.empty();
             }
         }
+    }
+
+    public boolean isActiveFlag() {
+        return activeFlag;
+    }
+
+    public void setActiveFlag(boolean activeFlag) {
+        this.activeFlag = activeFlag;
     }
 
     @Override

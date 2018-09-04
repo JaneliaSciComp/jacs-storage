@@ -124,6 +124,10 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
             currentVolumeInfo.setSystemUsageFile(storageVolume.getSystemUsageFile());
             updatedVolumeFieldsBuilder.put("systemUsageFile", new SetFieldValueHandler<>(currentVolumeInfo.getSystemUsageFile()));
         }
+        if (currentVolumeInfo.isActiveFlag() != storageVolume.isActiveFlag()) {
+            currentVolumeInfo.setActiveFlag(storageVolume.isActiveFlag());
+            updatedVolumeFieldsBuilder.put("activeFlag", new SetFieldValueHandler<>(currentVolumeInfo.isActiveFlag()));
+        }
         Map<String, EntityFieldValueHandler<?>> updatedVolumeFields = updatedVolumeFieldsBuilder.build();
         if (!updatedVolumeFields.isEmpty()) {
             storageVolumeDao.update(currentVolumeInfo, updatedVolumeFieldsBuilder.build());

@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.dao.mongo;
 
-import com.fasterxml.jackson.databind.ser.Serializers;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
@@ -10,8 +9,8 @@ import org.janelia.jacsstorage.AbstractITest;
 import org.janelia.jacsstorage.cdi.ObjectMapperFactory;
 import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.ReadWriteDao;
-import org.janelia.jacsstorage.dao.mongo.utils.RegistryHelper;
 import org.janelia.jacsstorage.dao.TimebasedIdGenerator;
+import org.janelia.jacsstorage.dao.mongo.utils.RegistryHelper;
 import org.janelia.jacsstorage.model.BaseEntity;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -21,10 +20,10 @@ import java.util.List;
 
 public abstract class AbstractMongoDaoITest extends AbstractITest {
     private static MongoClient testMongoClient;
-    protected static ObjectMapperFactory testObjectMapperFactory = ObjectMapperFactory.instance();
+    static ObjectMapperFactory testObjectMapperFactory = ObjectMapperFactory.instance();
 
-    protected MongoDatabase testMongoDatabase;
-    protected IdGenerator idGenerator;
+    MongoDatabase testMongoDatabase;
+    IdGenerator idGenerator;
 
     @BeforeClass
     public static void setUpMongoClient() throws IOException {

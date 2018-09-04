@@ -77,6 +77,9 @@ public class StorageVolumeBootstrapper {
                 getVolumeConfigPropertyName(volumeName, "SystemUsageFile")));
         storageVolume.setStorageTags(getStorageVolumeTags(volumeName));
         storageVolume.setVolumePermissions(getStorageVolumePermissions(volumeName));
+        storageVolume.setActiveFlag(applicationConfig.getBooleanPropertyValue(
+                getVolumeConfigPropertyName(volumeName, "ActiveFlag"),
+                true));
         return storageVolume;
     }
 

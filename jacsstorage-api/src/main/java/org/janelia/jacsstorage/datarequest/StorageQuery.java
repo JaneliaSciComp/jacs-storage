@@ -20,6 +20,7 @@ public class StorageQuery {
     private String storageVirtualPath;
     private List<String> storageTags;
     private Long minAvailableSpaceInBytes;
+    private boolean includeInactiveVolumes;
 
     public Number getId() {
         return id;
@@ -138,6 +139,15 @@ public class StorageQuery {
 
     public boolean hasMinAvailableSpaceInBytes() {
         return minAvailableSpaceInBytes != null && minAvailableSpaceInBytes > 0;
+    }
+
+    public boolean isIncludeInactiveVolumes() {
+        return includeInactiveVolumes;
+    }
+
+    public StorageQuery setIncludeInactiveVolumes(boolean includeInactiveVolumes) {
+        this.includeInactiveVolumes = includeInactiveVolumes;
+        return this;
     }
 
     @Override
