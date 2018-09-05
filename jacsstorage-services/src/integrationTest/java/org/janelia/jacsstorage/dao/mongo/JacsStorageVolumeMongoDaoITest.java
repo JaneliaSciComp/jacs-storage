@@ -129,27 +129,40 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
     @Test
     public void searchForMatchingVolumes() {
         // shared volumes
-        persistEntity(testDao, createTestEntity(null, 0, "sv1", "/sv1", 10L));
-        persistEntity(testDao, createTestEntity(null, 0, "sv2", "/sv2", 20L));
+        persistEntity(testDao, createTestEntity(null, 0, "sv1", "/sv1/folder", 10L));
+        persistEntity(testDao, createTestEntity(null, 0, "sv2", "/sv2/${username}", 20L));
         persistEntity(testDao, createTestEntity(null, 0, "sv3", "/sv3", 30L));
         // local volumes
         persistEntity(testDao, createTestEntity("h1", 10, "v1", "/v1", 10L));
         persistEntity(testDao, createTestEntity("h2", 10, "v2", "/v2", 20L));
         persistEntity(testDao, createTestEntity("h3", 10, "v3", "/v3", 30L));
         Map<StorageQuery, String[]> queriesWithExpectedResults =
-                ImmutableMap.of(
-                        new StorageQuery().setShared(true), // local doesn't matter if shared is true
-                        new String[]{"sv1", "sv2", "sv3"},
-                        new StorageQuery().setLocalToAnyHost(true),
-                        new String[]{"v1", "v2", "v3"},
-                        new StorageQuery().addStorageHost("h1").addStorageHost("h3"),
-                        new String[]{"v1", "v3"}
-                );
+                ImmutableMap.<StorageQuery, String[]>builder()
+                        .put(new StorageQuery().setShared(true), // local doesn't matter if shared is true
+                                new String[]{"sv1", "sv2", "sv3"})
+                        .put(new StorageQuery().setLocalToAnyHost(true),
+                                new String[]{"v1", "v2", "v3"})
+                        .put(new StorageQuery().addStorageHost("h1").addStorageHost("h3"),
+                                new String[]{"v1", "v3"})
+                        .put(new StorageQuery().setDataStoragePath("/sv1/folder"),
+                                new String[]{"sv1"})
+                        .put(new StorageQuery().setDataStoragePath("/sv1/myfolder/has/this/data"),
+                                new String[]{})
+                        .put(new StorageQuery().setDataStoragePath("/sv2/myusername/has/this/data"),
+                                new String[]{"sv2"})
+                        .put(new StorageQuery().setDataStoragePath("/sv2/myusername"),
+                                new String[]{"sv2"})
+                        .put(new StorageQuery().setDataStoragePath("/sv2"),
+                                new String[]{})
+                        .build()
+                ;
         queriesWithExpectedResults.forEach((q, volumeNames) -> {
             long count = testDao.countMatchingVolumes(q);
             List<JacsStorageVolume> volumes = testDao.findMatchingVolumes(q, new PageRequest()).getResultList();
             assertThat(count, equalTo((long) volumeNames.length));
-            assertThat(volumes.stream().map(sv -> sv.getName()).collect(Collectors.toList()), containsInAnyOrder(volumeNames));
+            if (volumeNames.length > 0) {
+                assertThat(volumes.stream().map(sv -> sv.getName()).collect(Collectors.toList()), containsInAnyOrder(volumeNames));
+            }
         });
     }
 

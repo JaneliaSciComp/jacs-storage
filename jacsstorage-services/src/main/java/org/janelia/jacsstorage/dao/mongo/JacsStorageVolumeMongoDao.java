@@ -122,6 +122,9 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         if (StringUtils.isNotBlank(storageQuery.getStorageName())) {
             filtersBuilder.add(Filters.eq("name", storageQuery.getStorageName()));
         }
+        if (StringUtils.isNotBlank(storageQuery.getDataStoragePath())) {
+            filtersBuilder.add(Filters.where(createMatchRootDirExpr(storageQuery.getDataStoragePath())));
+        }
         if (StringUtils.isNotBlank(storageQuery.getStorageVirtualPath())) {
             filtersBuilder.add(Filters.eq("storageVirtualPath", storageQuery.getStorageVirtualPath()));
         }
@@ -145,6 +148,18 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             filtersBuilder.add(Filters.eq("activeFlag", true));
         }
         return filtersBuilder.build();
+    }
+
+    private String createMatchRootDirExpr(String dataPath) {
+        String expr = "function() {" +
+                "return this.storageRootTemplate && " +
+                "(" +
+                "this.storageRootTemplate.indexOf('$') == -1 " +
+                "? '%1$s'.startsWith(this.storageRootTemplate) " +
+                ": '%1$s'.startsWith(this.storageRootTemplate.slice(0, this.storageRootTemplate.indexOf('$')))" +
+                "); " +
+                "}";
+        return String.format(expr, dataPath);
     }
 
     @Override

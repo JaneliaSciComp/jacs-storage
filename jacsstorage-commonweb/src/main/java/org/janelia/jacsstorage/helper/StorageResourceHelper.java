@@ -1,14 +1,10 @@
 package org.janelia.jacsstorage.helper;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
-import org.janelia.jacsstorage.expr.ExprHelper;
-import org.janelia.jacsstorage.expr.MatchingResult;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -16,9 +12,9 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.model.jacsstorage.StorageRelativePath;
+import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ErrorResponse;
-import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -38,7 +34,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -47,12 +42,6 @@ import java.util.stream.Collectors;
 @Timed
 public class StorageResourceHelper {
     private static final Logger LOG = LoggerFactory.getLogger(StorageResourceHelper.class);
-
-    private static final int N_VOL_DIR_COMPONENTS = 4;
-    private static final Cache<String, JacsStorageVolume> VOLUMES_BY_PATH_CACHE = CacheBuilder.newBuilder()
-            .maximumSize(100)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
-            .build();
 
     private final DataStorageService dataStorageService;
     private final StorageLookupService storageLookupService;
@@ -138,28 +127,19 @@ public class StorageResourceHelper {
         if (dirStorageURI.isEmpty()) {
             return Optional.empty();
         } else {
-            Path storagePath = Paths.get(dirStorageURI.getStoragePath());
-            int storagePathComponents = storagePath.getNameCount();
-            String storagePathDirName;
-            if (storagePathComponents < N_VOL_DIR_COMPONENTS) {
-                storagePathDirName = storagePath.toString();
-            } else {
-                if (storagePath.getRoot() == null) {
-                    storagePathDirName = storagePath.subpath(0, N_VOL_DIR_COMPONENTS).toString();
-                } else {
-                    storagePathDirName = storagePath.getRoot().resolve(storagePath.subpath(0, N_VOL_DIR_COMPONENTS)).toString();
-                }
-            }
-            return getCachedStorageVolumeForDir(storagePathDirName);
+            return getStorageVolumeForDir(dirStorageURI.getStoragePath());
         }
     }
 
-    private Optional<JacsStorageVolume> getCachedStorageVolumeForDir(String dirName) {
+    private Optional<JacsStorageVolume> getStorageVolumeForDir(String dataPath) {
         try {
-            JacsStorageVolume storageVolume = VOLUMES_BY_PATH_CACHE.get(dirName, () -> retrieveStorageVolumeForDir(dirName));
-            return Optional.of(storageVolume);
+            JacsStorageVolume storageVolume = retrieveStorageVolumeForDir(dataPath);
+            if (storageVolume != null)
+                return Optional.of(storageVolume);
+            else
+                return Optional.empty();
         } catch (Exception e) {
-            LOG.error("Error retrieving volume for {}", dirName, e);
+            LOG.error("Error retrieving volume for {}", dataPath, e);
             return Optional.empty();
         }
     }

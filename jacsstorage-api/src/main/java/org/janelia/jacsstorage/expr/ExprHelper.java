@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.expr;
 
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import javax.el.ELContext;
 import javax.el.ELManager;
@@ -67,6 +68,10 @@ public class ExprHelper {
             exprNodes.add(new VarNode(varName));
         }
 
+        @Override
+        public String toString() {
+            return exprNodes.toString();
+        }
     }
 
     public static String eval(String argExpr, Map<String, Object> evalContext) {
@@ -91,7 +96,18 @@ public class ExprHelper {
     }
 
     public static MatchingResult match(String strExpr, String value) {
-        return matchValExp(parse(strExpr), value);
+        if (strExpr == null || value == null) {
+            return new MatchingResult(false,
+                    "Cannot match null expr or null value; " +
+                            "expr=" + strExpr  + "," +
+                            "val=" + value,
+                    "",
+                    value
+            );
+        } else {
+            return matchValExp(parse(strExpr), value);
+        }
+
     }
 
     public static String getConstPrefix(String strExpr) {
