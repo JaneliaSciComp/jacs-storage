@@ -137,7 +137,7 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
         v.setName(volumeName);
         v.setStorageRootTemplate(storageRootDir);
         if (StringUtils.isNotBlank(host)) {
-            v.setStorageServiceURL("http://" + host);
+            v.setStorageServiceURL("http://" + host + (port > 0 ? ":" + port : ""));
         }
         v.setAvailableSpaceInBytes(available);
         testVolumes.add(v);
