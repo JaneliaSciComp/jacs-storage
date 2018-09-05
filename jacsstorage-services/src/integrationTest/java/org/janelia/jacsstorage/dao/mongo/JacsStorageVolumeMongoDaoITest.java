@@ -51,7 +51,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
 
     @Test
     public void saveTestEntity() {
-        JacsStorageVolume te = persistEntity(testDao, createTestEntity("127.0.0.1", 100, "testVol", "/tmp", 100L));
+        JacsStorageVolume te = persistEntity(testDao, createTestEntity("127.0.0.1", 100, "testVol", "/tmp", "/tmp", 100L));
         te.setVolumePermissions(new HashSet<>(EnumSet.of(JacsStoragePermission.READ, JacsStoragePermission.WRITE)));
         JacsStorageVolume retrievedTe = testDao.findById(te.getId());
         assertThat(retrievedTe.getName(), equalTo(te.getName()));
@@ -60,7 +60,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
 
     @Test
     public void updateTestEntity() {
-        JacsStorageVolume te = persistEntity(testDao, createTestEntity("127.0.0.1", 100, "testVol", "/tmp", 100L));
+        JacsStorageVolume te = persistEntity(testDao, createTestEntity("127.0.0.1", 100, "testVol", "/tmp", "/tmp",100L));
         Set<JacsStoragePermission> volumePermissions = EnumSet.of(JacsStoragePermission.READ, JacsStoragePermission.WRITE);
         testDao.update(te, ImmutableMap.of("volumePermissions", new SetFieldValueHandler<>(volumePermissions)));
         JacsStorageVolume retrievedTe = testDao.findById(te.getId());
@@ -70,7 +70,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
 
     @Test
     public void saveTestEntityWithNoHost() {
-        JacsStorageVolume te = persistEntity(testDao, createTestEntity(null, 0, "testVol", "/tmp", 100L));
+        JacsStorageVolume te = persistEntity(testDao, createTestEntity(null, 0, "testVol", "/tmp", "/tmp",100L));
         JacsStorageVolume retrievedTe = testDao.findById(te.getId());
         assertThat(retrievedTe.getName(), equalTo(te.getName()));
         assertNull(retrievedTe.getStorageHost());
@@ -118,7 +118,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
     public void searchExistingVolumeByLocationAndCheckNoNewOneIsCreated() {
         String testHost = "127.0.0.1";
         String testVolumeName = "testVol";
-        JacsStorageVolume te = persistEntity(testDao, createTestEntity(testHost, 100, testVolumeName, "/tmp", 100L));
+        JacsStorageVolume te = persistEntity(testDao, createTestEntity(testHost, 100, testVolumeName, "/tmp", "/tmp", 100L));
         JacsStorageVolume existingVolume = testDao.getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolumeName);
         assertNotNull(existingVolume);
         assertNotSame(te, existingVolume);
@@ -129,13 +129,13 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
     @Test
     public void searchForMatchingVolumes() {
         // shared volumes
-        persistEntity(testDao, createTestEntity(null, 0, "sv1", "/sv1/folder", 10L));
-        persistEntity(testDao, createTestEntity(null, 0, "sv2", "/sv2/${username}", 20L));
-        persistEntity(testDao, createTestEntity(null, 0, "sv3", "/sv3", 30L));
+        persistEntity(testDao, createTestEntity(null, 0, "sv1", "/sv1/folder", "/p1",10L));
+        persistEntity(testDao, createTestEntity(null, 0, "sv2", "/sv2/${username}", "/p2",20L));
+        persistEntity(testDao, createTestEntity(null, 0, "sv3", "/sv3", "/p3",30L));
         // local volumes
-        persistEntity(testDao, createTestEntity("h1", 10, "v1", "/v1", 10L));
-        persistEntity(testDao, createTestEntity("h2", 10, "v2", "/v2", 20L));
-        persistEntity(testDao, createTestEntity("h3", 10, "v3", "/v3", 30L));
+        persistEntity(testDao, createTestEntity("h1", 10, "v1", "/v1", "/lp1",10L));
+        persistEntity(testDao, createTestEntity("h2", 10, "v2", "/v2", "/lp2",20L));
+        persistEntity(testDao, createTestEntity("h3", 10, "v3", "/v3", "/lp3",30L));
         Map<StorageQuery, String[]> queriesWithExpectedResults =
                 ImmutableMap.<StorageQuery, String[]>builder()
                         .put(new StorageQuery().setShared(true), // local doesn't matter if shared is true
@@ -151,6 +151,8 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
                         .put(new StorageQuery().setDataStoragePath("/sv2/myusername/has/this/data"),
                                 new String[]{"sv2"})
                         .put(new StorageQuery().setDataStoragePath("/sv2/myusername"),
+                                new String[]{"sv2"})
+                        .put(new StorageQuery().setDataStoragePath("/p2/mydata"),
                                 new String[]{"sv2"})
                         .put(new StorageQuery().setDataStoragePath("/sv2"),
                                 new String[]{})
@@ -168,15 +170,38 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
 
     @Test
     public void searchForMatchingVolumesWithPageOffset() {
-        persistEntity(testDao, createTestEntity("h1", 10, "v1", "/v1", 10L));
-        persistEntity(testDao, createTestEntity("h2", 10, "v2", "/v2", 20L));
-        persistEntity(testDao, createTestEntity("h3", 10, "v3", "/v3", 30L));
+        persistEntity(testDao,
+                createTestEntity(
+                        "h1",
+                        10,
+                        "v1",
+                        "/v1",
+                        "/p1",
+                        10L));
+        persistEntity(testDao,
+                createTestEntity(
+                        "" +
+                        "h2",
+                        10,
+                        "v2",
+                        "/v2",
+                        "/p2",
+                        20L));
+        persistEntity(testDao,
+                createTestEntity(
+                        "h3",
+                        10,
+                        "v3",
+                        "/v3",
+                        "/p3",
+                        30L));
         StorageQuery storageQuery = new StorageQuery().setLocalToAnyHost(true);
+        // keep in mind the results are ordered by virtual path descending
         Map<Integer, String[]> offsetsWithExpectedResults =
                 ImmutableMap.of(
-                        0, new String[]{"v1"},
+                        0, new String[]{"v3"},
                         1, new String[]{"v2"},
-                        2, new String[]{"v3"},
+                        2, new String[]{"v1"},
                         3, new String[]{}
                 );
         offsetsWithExpectedResults.forEach((offset, volumeNames) -> {
@@ -190,11 +215,15 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
         });
     }
 
-    private JacsStorageVolume createTestEntity(String host, int port, String volumeName, String storageRootTemplate, Long available) {
+    private JacsStorageVolume createTestEntity(String host, int port, String volumeName,
+                                               String storageRootTemplate,
+                                               String storageVirtualPath,
+                                               Long available) {
         JacsStorageVolume v = new JacsStorageVolume();
         v.setStorageHost(host);
         v.setName(volumeName);
         v.setStorageRootTemplate(storageRootTemplate);
+        v.setStorageVirtualPath(storageVirtualPath);
         if (StringUtils.isNotBlank(host)) {
             v.setStorageServiceURL("http://" + host);
         } else {

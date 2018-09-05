@@ -152,11 +152,17 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
 
     private String createMatchRootDirExpr(String dataPath) {
         String expr = "function() {" +
-                "return this.storageRootTemplate && " +
+                "return " +
                 "(" +
-                "this.storageRootTemplate.indexOf('$') == -1 " +
-                "? '%1$s'.startsWith(this.storageRootTemplate) " +
-                ": '%1$s'.startsWith(this.storageRootTemplate.slice(0, this.storageRootTemplate.indexOf('$')))" +
+                "this.storageRootTemplate && " +
+                "   this.storageRootTemplate.indexOf('$') == -1 " +
+                "      ? '%1$s'.startsWith(this.storageRootTemplate) " +
+                "      : '%1$s'.startsWith(this.storageRootTemplate.slice(0, this.storageRootTemplate.indexOf('$')))" +
+                ")" +
+                " || " +
+                "(" +
+                "this.storageVirtualPath && " +
+                "   '%1$s'.startsWith(this.storageVirtualPath)" +
                 "); " +
                 "}";
         return String.format(expr, dataPath);
