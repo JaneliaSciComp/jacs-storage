@@ -2,10 +2,15 @@ package org.janelia.jacsstorage.webdav.propfind;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacsstorage.webdav.propfind.customprops.StorageVolumeProp;
 
 import java.util.Date;
 
-public class Prop {
+public class PropContainer {
+
+    @JacksonXmlProperty(namespace = "xmlns:jade", isAttribute = true)
+    private final String namespace = "JADE:";
+
     @JacksonXmlProperty(localName = "D:resourcetype")
     String resourceType;
 
@@ -26,6 +31,9 @@ public class Prop {
 
     @JacksonXmlProperty(localName = "D:getcontentlength")
     String contentLength;
+
+    @JacksonXmlProperty(localName = "jade:storageVolume")
+    StorageVolumeProp storageVolumeProp;
 
     public String getResourceType() {
         return resourceType;
@@ -81,6 +89,14 @@ public class Prop {
 
     public void setContentLength(String contentLength) {
         this.contentLength = contentLength;
+    }
+
+    public StorageVolumeProp getStorageVolumeProp() {
+        return storageVolumeProp;
+    }
+
+    public void setStorageVolumeProp(StorageVolumeProp storageVolumeProp) {
+        this.storageVolumeProp = storageVolumeProp;
     }
 
     @Override

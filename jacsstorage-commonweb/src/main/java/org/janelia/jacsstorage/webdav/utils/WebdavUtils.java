@@ -5,12 +5,12 @@ import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.webdav.propfind.Multistatus;
-import org.janelia.jacsstorage.webdav.propfind.Prop;
+import org.janelia.jacsstorage.webdav.propfind.PropContainer;
 import org.janelia.jacsstorage.webdav.propfind.PropfindResponse;
 import org.janelia.jacsstorage.webdav.propfind.Propstat;
+import org.janelia.jacsstorage.webdav.propfind.customprops.StorageVolumeProp;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -39,15 +39,20 @@ public class WebdavUtils {
                 .map(storageVolume -> {
                     String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
 
-                    Prop prop = new Prop();
-                    prop.setDisplayname(storageVolume.getName());
-                    prop.setEtag(storageVolume.getStorageURI().toString());
-                    prop.setCreationDate(storageVolume.getCreated());
-                    prop.setLastmodified(storageVolume.getModified());
-                    prop.setResourceType("collection");
+                    PropContainer propContainer = new PropContainer();
+                    propContainer.setDisplayname(storageVolume.getName());
+                    propContainer.setEtag(storageVolume.getStorageURI().toString());
+                    propContainer.setCreationDate(storageVolume.getCreated());
+                    propContainer.setLastmodified(storageVolume.getModified());
+                    propContainer.setResourceType("collection");
+
+                    StorageVolumeProp storageVolumeProp = new StorageVolumeProp();
+                    storageVolumeProp.setBindName(storageVolume.getStorageVirtualPath());
+                    storageVolumeProp.setRootDir(storageVolume.getBaseStorageRootDir());
+                    propContainer.setStorageVolumeProp(storageVolumeProp);
 
                     Propstat propstat = new Propstat();
-                    propstat.setProp(prop);
+                    propstat.setPropContainer(propContainer);
 
                     PropfindResponse propfindResponse = new PropfindResponse();
                     propfindResponse.setPropstat(propstat);
@@ -69,18 +74,23 @@ public class WebdavUtils {
         Multistatus ms = new Multistatus();
         ms.getResponse().addAll(nodeInfoList.stream()
                 .map(nodeInfo -> {
-                    Prop prop = new Prop();
-                    prop.setEtag(nodeInfo.getNodeRelativePath());
-                    prop.setContentType(nodeInfo.getMimeType());
-                    prop.setContentLength(String.valueOf(nodeInfo.getSize()));
-                    prop.setCreationDate(nodeInfo.getCreationTime());
-                    prop.setLastmodified(nodeInfo.getLastModified());
+                    PropContainer propContainer = new PropContainer();
+                    propContainer.setEtag(nodeInfo.getNodeRelativePath());
+                    propContainer.setContentType(nodeInfo.getMimeType());
+                    propContainer.setContentLength(String.valueOf(nodeInfo.getSize()));
+                    propContainer.setCreationDate(nodeInfo.getCreationTime());
+                    propContainer.setLastmodified(nodeInfo.getLastModified());
                     if (nodeInfo.isCollectionFlag()) {
-                        prop.setResourceType("collection");
+                        propContainer.setResourceType("collection");
                     }
 
+                    StorageVolumeProp storageVolumeProp = new StorageVolumeProp();
+                    storageVolumeProp.setBindName(nodeInfo.getStorageRootPathURI().getStoragePath());
+                    storageVolumeProp.setRootDir(nodeInfo.getStorageRootLocation());
+                    propContainer.setStorageVolumeProp(storageVolumeProp);
+
                     Propstat propstat = new Propstat();
-                    propstat.setProp(prop);
+                    propstat.setPropContainer(propContainer);
                     propstat.setStatus("HTTP/1.1 200 OK");
 
                     PropfindResponse propfindResponse = new PropfindResponse();
