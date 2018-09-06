@@ -8,7 +8,6 @@ import org.janelia.jacsstorage.webdav.propfind.Multistatus;
 import org.janelia.jacsstorage.webdav.propfind.PropContainer;
 import org.janelia.jacsstorage.webdav.propfind.PropfindResponse;
 import org.janelia.jacsstorage.webdav.propfind.Propstat;
-import org.janelia.jacsstorage.webdav.propfind.customprops.StorageVolumeProp;
 
 import java.util.List;
 import java.util.function.Function;
@@ -45,11 +44,9 @@ public class WebdavUtils {
                     propContainer.setCreationDate(storageVolume.getCreated());
                     propContainer.setLastmodified(storageVolume.getModified());
                     propContainer.setResourceType("collection");
-
-                    StorageVolumeProp storageVolumeProp = new StorageVolumeProp();
-                    storageVolumeProp.setBindName(storageVolume.getStorageVirtualPath());
-                    storageVolumeProp.setRootDir(storageVolume.getBaseStorageRootDir());
-                    propContainer.setStorageVolumeProp(storageVolumeProp);
+                    // set custom properties
+                    propContainer.setStorageBindName(storageVolume.getStorageVirtualPath());
+                    propContainer.setStorageRootDir(storageVolume.getBaseStorageRootDir());
 
                     Propstat propstat = new Propstat();
                     propstat.setPropContainer(propContainer);
@@ -83,11 +80,10 @@ public class WebdavUtils {
                     if (nodeInfo.isCollectionFlag()) {
                         propContainer.setResourceType("collection");
                     }
-
-                    StorageVolumeProp storageVolumeProp = new StorageVolumeProp();
-                    storageVolumeProp.setBindName(nodeInfo.getStorageRootPathURI().getStoragePath());
-                    storageVolumeProp.setRootDir(nodeInfo.getStorageRootLocation());
-                    propContainer.setStorageVolumeProp(storageVolumeProp);
+                    // set custom properties
+                    propContainer.setStorageEntryName(nodeInfo.getNodeRelativePath());
+                    propContainer.setStorageBindName(nodeInfo.getStorageRootPathURI().getStoragePath());
+                    propContainer.setStorageRootDir(nodeInfo.getStorageRootLocation());
 
                     Propstat propstat = new Propstat();
                     propstat.setPropContainer(propContainer);

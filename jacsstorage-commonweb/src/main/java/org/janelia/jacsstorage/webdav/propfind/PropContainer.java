@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.webdav.propfind;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.jacsstorage.webdav.propfind.customprops.StorageVolumeProp;
 
 import java.util.Date;
 
@@ -32,8 +31,14 @@ public class PropContainer {
     @JacksonXmlProperty(localName = "D:getcontentlength")
     String contentLength;
 
-    @JacksonXmlProperty(localName = "jade:storagevolume")
-    StorageVolumeProp storageVolumeProp;
+    @JacksonXmlProperty(localName = "jade:storageBindName")
+    String storageBindName;
+
+    @JacksonXmlProperty(localName = "jade:storageEntryName")
+    String storageEntryName;
+
+    @JacksonXmlProperty(localName = "jade:storageRootDir")
+    String storageRootDir;
 
     public String getResourceType() {
         return resourceType;
@@ -91,12 +96,28 @@ public class PropContainer {
         this.contentLength = contentLength;
     }
 
-    public StorageVolumeProp getStorageVolumeProp() {
-        return storageVolumeProp;
+    public String getStorageBindName() {
+        return storageBindName;
     }
 
-    public void setStorageVolumeProp(StorageVolumeProp storageVolumeProp) {
-        this.storageVolumeProp = storageVolumeProp;
+    public void setStorageBindName(String storageBindName) {
+        this.storageBindName = storageBindName;
+    }
+
+    public String getStorageEntryName() {
+        return storageEntryName;
+    }
+
+    public void setStorageEntryName(String storageEntryName) {
+        this.storageEntryName = storageEntryName;
+    }
+
+    public String getStorageRootDir() {
+        return storageRootDir;
+    }
+
+    public void setStorageRootDir(String storageRootDir) {
+        this.storageRootDir = storageRootDir;
     }
 
     @Override
