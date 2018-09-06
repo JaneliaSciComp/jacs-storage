@@ -1,14 +1,12 @@
 package org.janelia.jacsstorage.webdav.propfind.customprops;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
-@JacksonXmlRootElement(namespace = "jade", localName = "storageVolume")
 public class StorageVolumeProp {
 
-    @JacksonXmlProperty(namespace = "jade", localName="bindName")
+    @JacksonXmlProperty(localName="jade:bindName")
     private String bindName;
-    @JacksonXmlProperty(namespace = "jade", localName="rootDir")
+    @JacksonXmlProperty(localName="jade:rootDir")
     private String rootDir;
 
     public String getBindName() {

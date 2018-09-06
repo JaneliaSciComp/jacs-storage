@@ -8,7 +8,7 @@ import java.util.Date;
 
 public class PropContainer {
 
-    @JacksonXmlProperty(namespace = "xmlns:jade", isAttribute = true)
+    @JacksonXmlProperty(localName = "xmlns:jade", isAttribute = true)
     private final String namespace = "JADE:";
 
     @JacksonXmlProperty(localName = "D:resourcetype")
