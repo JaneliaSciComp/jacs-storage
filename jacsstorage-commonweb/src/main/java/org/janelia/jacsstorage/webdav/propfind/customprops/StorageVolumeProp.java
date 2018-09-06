@@ -4,9 +4,9 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 public class StorageVolumeProp {
 
-    @JacksonXmlProperty(localName="jade:bindName")
+    @JacksonXmlProperty(localName="jade:bind")
     private String bindName;
-    @JacksonXmlProperty(localName="jade:rootDir")
+    @JacksonXmlProperty(localName="jade:rootdir")
     private String rootDir;
 
     public String getBindName() {

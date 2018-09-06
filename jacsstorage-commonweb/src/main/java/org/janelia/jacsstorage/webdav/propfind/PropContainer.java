@@ -9,7 +9,7 @@ import java.util.Date;
 public class PropContainer {
 
     @JacksonXmlProperty(localName = "xmlns:jade", isAttribute = true)
-    private final String namespace = "JADE:";
+    private final String customPropsNamespace = "http://jade.janelia.hhmi.org/ns";
 
     @JacksonXmlProperty(localName = "D:resourcetype")
     String resourceType;
@@ -32,7 +32,7 @@ public class PropContainer {
     @JacksonXmlProperty(localName = "D:getcontentlength")
     String contentLength;
 
-    @JacksonXmlProperty(localName = "jade:storageVolume")
+    @JacksonXmlProperty(localName = "jade:storagevolume")
     StorageVolumeProp storageVolumeProp;
 
     public String getResourceType() {
