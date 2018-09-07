@@ -10,6 +10,7 @@ import org.janelia.jacsstorage.webdav.propfind.PropfindResponse;
 import org.janelia.jacsstorage.webdav.propfind.Propstat;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -67,9 +68,10 @@ public class WebdavUtils {
         return ms;
     }
 
-    public static Multistatus convertNodeList(List<DataNodeInfo> nodeInfoList, Function<DataNodeInfo, String> nodeInfoToUriMapper) {
+    public static Multistatus convertNodeList(List<DataNodeInfo> nodeInfoList, Function<DataNodeInfo, DataNodeInfo> nodeInfoUpdater, Function<DataNodeInfo, String> nodeInfoToUriMapper) {
         Multistatus ms = new Multistatus();
         ms.getResponse().addAll(nodeInfoList.stream()
+                .map(nodeInfoUpdater)
                 .map(nodeInfo -> {
                     PropContainer propContainer = new PropContainer();
                     propContainer.setEtag(nodeInfo.getNodeRelativePath());

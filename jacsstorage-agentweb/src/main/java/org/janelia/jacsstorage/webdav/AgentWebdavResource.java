@@ -87,21 +87,23 @@ public class AgentWebdavResource {
                 : null;
         int depthValue = WebdavUtils.getDepth(depth);
         List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depthValue);
-        Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeInfo) -> {
-            String nodeInfoRelPath = nodeInfo.isCollectionFlag()
-                    ?  StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
-                    : nodeInfo.getNodeRelativePath();
-            nodeInfo.setNumericStorageId(dataBundle.getId());
-            nodeInfo.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
-            nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
-            nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                    .path(AgentStorageResource.class)
-                    .path(AgentStorageResource.class, "getEntryContent")
-                    .build(dataBundle.getId(), nodeInfoRelPath)
-                    .toString()
-            );
-            return nodeInfo.getNodeAccessURL();
-        });
+        Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree,
+                (nodeInfo) -> {
+                    String nodeInfoRelPath = nodeInfo.isCollectionFlag()
+                            ? StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
+                            : nodeInfo.getNodeRelativePath();
+                    nodeInfo.setNumericStorageId(dataBundle.getId());
+                    nodeInfo.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
+                    nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
+                    nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
+                            .path(AgentStorageResource.class)
+                            .path(AgentStorageResource.class, "getEntryContent")
+                            .build(dataBundle.getId(), nodeInfoRelPath)
+                            .toString()
+                    );
+                    return nodeInfo;
+                },
+                DataNodeInfo::getNodeAccessURL);
         return Response.status(207)
                 .entity(propfindResponse)
                 .build();
@@ -141,21 +143,23 @@ public class AgentWebdavResource {
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryName) -> {
                     List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataEntryName, dataBundle.getStorageFormat(), depth);
-                    Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeInfo) -> {
-                        String nodeInfoRelPath = nodeInfo.isCollectionFlag()
-                                ?  StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
-                                : nodeInfo.getNodeRelativePath();
-                        nodeInfo.setNumericStorageId(dataBundle.getId());
-                        nodeInfo.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
-                        nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
-                        nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                                .path(AgentStorageResource.class)
-                                .path(AgentStorageResource.class, "getEntryContent")
-                                .build(dataBundle.getId(), nodeInfoRelPath)
-                                .toString()
-                        );
-                        return nodeInfo.getNodeAccessURL();
-                    });
+                    Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree,
+                            (nodeInfo) -> {
+                                String nodeInfoRelPath = nodeInfo.isCollectionFlag()
+                                        ? StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
+                                        : nodeInfo.getNodeRelativePath();
+                                nodeInfo.setNumericStorageId(dataBundle.getId());
+                                nodeInfo.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
+                                nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
+                                nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
+                                        .path(AgentStorageResource.class)
+                                        .path(AgentStorageResource.class, "getEntryContent")
+                                        .build(dataBundle.getId(), nodeInfoRelPath)
+                                        .toString()
+                                );
+                                return nodeInfo;
+                            },
+                            DataNodeInfo::getNodeAccessURL);
                     return Response.status(207)
                             .entity(propfindResponse)
                             ;
@@ -165,19 +169,23 @@ public class AgentWebdavResource {
                         .map(dataEntryPath -> {
                             JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
                             List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataEntryPath, null, storageFormat, depth);
-                            Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree, (nodeInfo) -> {
-                                String nodeInfoRelPath = nodeInfo.isCollectionFlag()
-                                        ? StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
-                                        : nodeInfo.getNodeRelativePath();
-                                nodeInfo.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
-                                nodeInfo.setStorageRootPathURI(StoragePathURI.createPathURI(dataEntryPath.toString()));
-                                return resourceURI.getBaseUriBuilder()
-                                        .path(Constants.AGENTSTORAGE_URI_PATH)
-                                        .path("storage_path")
-                                        .path(nodeInfoRelPath)
-                                        .build()
-                                        .toString();
-                            });
+                            Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree,
+                                    (nodeInfo) -> {
+                                        nodeInfo.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
+                                        nodeInfo.setStorageRootPathURI(StoragePathURI.createPathURI(dataEntryPath.toString()));
+                                        return nodeInfo;
+                                    },
+                                    (nodeInfo) -> {
+                                        String nodeInfoRelPath = nodeInfo.isCollectionFlag()
+                                                ? StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
+                                                : nodeInfo.getNodeRelativePath();
+                                        return resourceURI.getBaseUriBuilder()
+                                                .path(Constants.AGENTSTORAGE_URI_PATH)
+                                                .path("storage_path")
+                                                .path(nodeInfoRelPath)
+                                                .build()
+                                                .toString();
+                                    });
                             return Response.status(207)
                                     .entity(propfindResponse)
                                     ;
