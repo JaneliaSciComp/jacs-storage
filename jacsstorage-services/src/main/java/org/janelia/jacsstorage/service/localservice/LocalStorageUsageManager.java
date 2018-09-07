@@ -164,24 +164,15 @@ public class LocalStorageUsageManager implements StorageUsageManager {
      */
     private String getGroupNameForUserUsingDirHierarchy(JacsStorageVolume storageVolume, String username) {
         Path storagePath;
-        Set<String> varsFromStorageRootDefn = ExprHelper.extractVarNames(storageVolume.getStorageRootTemplate());
-        // !!!! FIXME - this is really hacky - I don't like this at all
-        if (varsFromStorageRootDefn.contains("username")) {
-            storagePath = Paths.get(
-                    ExprHelper.getConstPrefix(ExprHelper.eval(storageVolume.getStorageRootTemplate(),
-                            ImmutableMap.of("username", username)))
-                    );
-        } else {
-            storagePath = Paths.get(storageVolume.getStorageRootTemplate(), username);
-        }
         try {
-            storagePath = storagePath.toRealPath().toAbsolutePath();
+            storagePath = Paths.get(
+                    ExprHelper.getConstPrefix(storageVolume.evalStorageRootDir(ImmutableMap.of("username", username)))
+            ).toRealPath().toAbsolutePath();
         } catch (IOException e) {
             LOG.warn("Storage path {} could not be resolved to a real path for user {} on volume {}",
-                    storagePath, username, storageVolume, e);
+                    username, storageVolume, e);
             return null;
         }
-
         Pattern p = Pattern.compile(".*groups/(\\w+)/"+username+".*");
         Matcher m = p.matcher(storagePath.toString());
         if (m.matches()) {

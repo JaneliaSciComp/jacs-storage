@@ -79,7 +79,7 @@ public class JacsStorageVolume extends AbstractEntity {
     }
 
     public String getBaseStorageRootDir() {
-        return ExprHelper.getConstPrefix(storageRootTemplate);
+        return StringUtils.removeEnd(ExprHelper.getConstPrefix(storageRootTemplate), "/");
     }
 
     public List<String> getStorageTags() {
