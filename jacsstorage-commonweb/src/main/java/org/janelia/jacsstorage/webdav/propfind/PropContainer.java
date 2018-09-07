@@ -8,7 +8,7 @@ import java.util.Date;
 public class PropContainer {
 
     @JacksonXmlProperty(localName = "xmlns:jade", isAttribute = true)
-    private final String customPropsNamespace = "http://jade.janelia.hhmi.org/ns";
+    private final String jadePropsNamespace = "JADE:";
 
     @JacksonXmlProperty(localName = "D:resourcetype")
     String resourceType;
@@ -127,6 +127,9 @@ public class PropContainer {
                 .append("etag", etag)
                 .append("contentType", contentType)
                 .append("contentLength", contentLength)
+                .append("storageBindName", storageBindName)
+                .append("storageEntryName", storageEntryName)
+                .append("storageRootDir", storageRootDir)
                 .build();
     }
 }
