@@ -12,6 +12,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.rest.AgentStorageResource;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
@@ -90,12 +91,16 @@ public class AgentWebdavResource {
             String nodeInfoRelPath = nodeInfo.isCollectionFlag()
                     ?  StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
                     : nodeInfo.getNodeRelativePath();
-            return resourceURI.getBaseUriBuilder()
-                    .path(Constants.AGENTSTORAGE_URI_PATH)
-                    .path(dataBundleId.toString())
-                    .path(nodeInfoRelPath)
-                    .build()
-                    .toString();
+            nodeInfo.setNumericStorageId(dataBundle.getId());
+            nodeInfo.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
+            nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
+            nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
+                    .path(AgentStorageResource.class)
+                    .path(AgentStorageResource.class, "getEntryContent")
+                    .build(dataBundle.getId(), nodeInfoRelPath)
+                    .toString()
+            );
+            return nodeInfo.getNodeAccessURL();
         });
         return Response.status(207)
                 .entity(propfindResponse)
@@ -140,13 +145,16 @@ public class AgentWebdavResource {
                         String nodeInfoRelPath = nodeInfo.isCollectionFlag()
                                 ?  StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
                                 : nodeInfo.getNodeRelativePath();
-                        return resourceURI.getBaseUriBuilder()
-                                .path(Constants.AGENTSTORAGE_URI_PATH)
-                                .path(dataBundle.getId().toString())
-                                .path("entry_content")
-                                .path(nodeInfoRelPath)
-                                .build()
-                                .toString();
+                        nodeInfo.setNumericStorageId(dataBundle.getId());
+                        nodeInfo.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
+                        nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
+                        nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
+                                .path(AgentStorageResource.class)
+                                .path(AgentStorageResource.class, "getEntryContent")
+                                .build(dataBundle.getId(), nodeInfoRelPath)
+                                .toString()
+                        );
+                        return nodeInfo.getNodeAccessURL();
                     });
                     return Response.status(207)
                             .entity(propfindResponse)
@@ -161,6 +169,8 @@ public class AgentWebdavResource {
                                 String nodeInfoRelPath = nodeInfo.isCollectionFlag()
                                         ? StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
                                         : nodeInfo.getNodeRelativePath();
+                                nodeInfo.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
+                                nodeInfo.setStorageRootPathURI(StoragePathURI.createPathURI(dataEntryPath.toString()));
                                 return resourceURI.getBaseUriBuilder()
                                         .path(Constants.AGENTSTORAGE_URI_PATH)
                                         .path("storage_path")
