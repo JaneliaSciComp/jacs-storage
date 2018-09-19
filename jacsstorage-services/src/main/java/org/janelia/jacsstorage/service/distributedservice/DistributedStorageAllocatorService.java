@@ -35,7 +35,7 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
     }
 
     @Override
-    public boolean deleteStorage(JacsCredentials credentials, JacsBundle dataBundle) {
+    public boolean deleteStorage(JacsBundle dataBundle, JacsCredentials credentials) {
         JacsBundle existingBundle = bundleDao.findById(dataBundle.getId());
         if (existingBundle == null) {
             return false;

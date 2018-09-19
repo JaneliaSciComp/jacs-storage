@@ -163,7 +163,8 @@ public class MasterStorageResource {
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No storage found for " + id))
                     .build();
-        } else if (jacsBundle.hasReadPermissions(SecurityUtils.getUserPrincipal(securityContext).getSubjectKey())) {
+        } else if (securityContext.isUserInRole(JacsCredentials.ADMIN) ||
+                jacsBundle.hasReadPermissions(SecurityUtils.getUserPrincipal(securityContext).getSubjectKey())) {
             return Response
                     .ok(DataStorageInfo.fromBundle(jacsBundle))
                     .build();
@@ -292,7 +293,8 @@ public class MasterStorageResource {
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No storage found for " + ownerKey + " with name " + name))
                     .build();
-        } else if (jacsBundle.hasReadPermissions(SecurityUtils.getUserPrincipal(securityContext).getSubjectKey())) {
+        } else if (securityContext.isUserInRole(JacsCredentials.ADMIN) ||
+                jacsBundle.hasReadPermissions(SecurityUtils.getUserPrincipal(securityContext).getSubjectKey())) {
             return Response
                     .ok(DataStorageInfo.fromBundle(jacsBundle))
                     .build();
@@ -378,7 +380,7 @@ public class MasterStorageResource {
         LOG.info("Delete storage: {}", id);
         JacsBundle dataBundle = new JacsBundle();
         dataBundle.setId(id);
-        if (storageAllocatorService.deleteStorage(SecurityUtils.getUserPrincipal(securityContext), dataBundle)) {
+        if (storageAllocatorService.deleteStorage(dataBundle, SecurityUtils.getUserPrincipal(securityContext))) {
             LOG.info("Deleted storage: {}", id);
             return Response
                     .status(Response.Status.NO_CONTENT)

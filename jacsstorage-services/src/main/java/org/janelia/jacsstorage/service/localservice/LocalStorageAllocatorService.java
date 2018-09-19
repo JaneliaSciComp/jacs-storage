@@ -40,7 +40,7 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
     }
 
     @Override
-    public boolean deleteStorage(JacsCredentials credentials, JacsBundle dataBundle) {
+    public boolean deleteStorage(JacsBundle dataBundle, JacsCredentials credentials) {
         JacsBundle existingBundle = retrieveExistingStorage(dataBundle);
         checkStorageDeletePermission(credentials, dataBundle);
         LOG.info("Delete {}", existingBundle);

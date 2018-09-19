@@ -9,6 +9,6 @@ import java.util.Optional;
 public interface StorageAllocatorService {
     Optional<JacsBundle> allocateStorage(String dataBundlePathPrefix, JacsBundle dataBundle, JacsCredentials credentials);
     JacsBundle updateStorage(JacsBundle dataBundle, JacsCredentials credentials);
-    boolean deleteStorage(JacsCredentials credentials, JacsBundle dataBundle);
+    boolean deleteStorage(JacsBundle dataBundle, JacsCredentials credentials);
     Optional<JacsStorageVolume> selectStorageVolume(JacsBundle dataBundle);
 }
