@@ -1,4 +1,13 @@
+# 1.6.0.SNAPSHOT
+
 * support for context variables in the volume path, such as ${username}, ${name}, ${createdDate}
+
+# 1.5.1.RELEASE
+
+* fix for unique volume path prefix
+
+# 1.5.0.RELEASE
+
 * support for "jade://" URI scheme - the volume virtual root prefix now is returned as a URI
 * added volume permissions
 * entries can be created even if the parent does not exist; if the parent is missing it simply creates it. 
