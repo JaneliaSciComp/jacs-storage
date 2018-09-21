@@ -4,6 +4,7 @@ import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.Parameter;
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class AppArgs {
@@ -20,9 +21,9 @@ public class AppArgs {
     @Parameter(names = "-nworkers", description = "Number of worker threads", required = false)
     public int nWorkers = 64 * 8;
     @Parameter(names = "-appId", description = "application ID")
-    public String applicationId;
+    String applicationId;
     @Parameter(names = "-h", description = "Display help", arity = 0, required = false)
-    protected boolean displayUsage = false;
+    boolean displayUsage = false;
     @DynamicParameter(names = "-D", description = "Dynamic application parameters that could override application properties")
-    private Map<String, String> applicationArgs = ApplicationConfigProvider.applicationArgs();
+    Map<String, String> appDynamicConfig = new HashMap<>();
 }

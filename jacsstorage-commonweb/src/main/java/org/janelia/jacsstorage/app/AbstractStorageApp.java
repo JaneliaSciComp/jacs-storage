@@ -1,6 +1,8 @@
 package org.janelia.jacsstorage.app;
 
+import com.beust.jcommander.JCommander;
 import org.janelia.jacsstorage.app.undertow.UndertowContainerInitializer;
+import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +14,19 @@ import javax.ws.rs.core.Application;
 public abstract class AbstractStorageApp {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractStorageApp.class);
+
+    static <A extends AppArgs> A parseAppArgs(String[] args, A appArgs) {
+        JCommander cmdline = new JCommander(appArgs);
+        cmdline.parse(args);
+        // update the dynamic config
+        ApplicationConfigProvider.setAppDynamicArgs(appArgs.appDynamicConfig);
+        return appArgs;
+    }
+
+    static <A extends AppArgs> void displayAppUsage(A appArgs) {
+        JCommander cmdline = new JCommander(appArgs);
+        cmdline.usage();
+    }
 
     protected void start(AppArgs appArgs) {
         ContainerInitializer containerInitializer = new UndertowContainerInitializer(

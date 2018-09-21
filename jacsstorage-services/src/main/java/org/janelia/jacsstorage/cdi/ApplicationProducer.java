@@ -102,7 +102,7 @@ public class ApplicationProducer {
         return new ApplicationConfigProvider()
                 .fromDefaultResources()
                 .fromEnvVar("JACSSTORAGE_CONFIG")
-                .fromMap(ApplicationConfigProvider.applicationArgs())
+                .fromMap(ApplicationConfigProvider.getAppDynamicArgs())
                 .build();
     }
 

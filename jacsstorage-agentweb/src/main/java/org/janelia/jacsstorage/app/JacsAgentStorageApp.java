@@ -10,6 +10,7 @@ import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.UriBuilder;
+import java.util.Optional;
 
 /**
  * This is the agent storage application.
@@ -26,13 +27,12 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     }
 
     public static void main(String[] args) {
-        final AgentArgs agentArgs = new AgentArgs();
-        JCommander cmdline = new JCommander(agentArgs);
-        cmdline.parse(args);
+        final AgentArgs agentArgs = parseAppArgs(args, new AgentArgs());
         if (agentArgs.displayUsage) {
-            cmdline.usage();
+            displayAppUsage(agentArgs);
             return;
         }
+
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
         SeContainer container = containerInit
                 .initialize();

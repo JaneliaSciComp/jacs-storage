@@ -15,11 +15,9 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
     private static final String DEFAULT_APP_ID = "JacsStorageMaster";
 
     public static void main(String[] args) {
-        final AppArgs appArgs = new AppArgs();
-        JCommander cmdline = new JCommander(appArgs);
-        cmdline.parse(args);
+        final AppArgs appArgs = parseAppArgs(args, new AppArgs());
         if (appArgs.displayUsage) {
-            cmdline.usage();
+            displayAppUsage(appArgs);
             return;
         }
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();

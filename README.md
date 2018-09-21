@@ -103,6 +103,13 @@ where jadeVersion is the version from the main build.gradle file.
 Note that 'ospackage' task just like 'installDist' will not run any unit tests or integration tests so you don't need 
 access to any MongoDB instance.
 
+### Build the application containers
+
+```
+docker build jacsstorage-masterweb --build-arg SSH_PRIVATE_KEY="`cat ~/.ssh/id_rsa`" -t jacsstorage-masterweb
+docker build jacsstorage-agentweb --build-arg SSH_PRIVATE_KEY="`cat ~/.ssh/id_rsa`" -t jacsstorage-agentweb
+```
+
 ### Run the application
 
 To run the async services with the default settings which assume a Mongo database instance running on the same machine where the web server is running:
