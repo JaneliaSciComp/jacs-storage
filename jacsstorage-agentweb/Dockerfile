@@ -1,7 +1,7 @@
 # Build the jade agent container
 FROM scientificlinux/sl:7
 ARG SSH_PRIVATE_KEY
-ARG TAG_JACS=master
+ARG BUILD_TAG=master
 
 LABEL description="JADE Agent Service"
 
@@ -25,7 +25,7 @@ RUN source /etc/profile.d/java8.sh
 RUN mkdir /tmp/jade
 WORKDIR /tmp/jade
 RUN /bin/git clone git@github.com:JaneliaSciComp/jacs-storage.git .
-RUN /bin/git checkout $TAG_JACS
+RUN /bin/git checkout $BUILD_TAG
 # Build the code
 RUN ./gradlew installDist
 
@@ -56,4 +56,10 @@ USER $UNAME
 EXPOSE 8080
 
 # Command for running the application
-ENTRYPOINT ["/app/jacsstorage-agentweb/bin/jacsstorage-agentweb", "-b", "0.0.0.0", "-p", "8080"]
+ENTRYPOINT [ \
+    "/app/jacsstorage-agentweb/bin/jacsstorage-agentweb", \
+    "-b", "0.0.0.0", \
+    "-p", "8080" \
+]
+
+CMD [ "-DStorageAgent.InitialPingDelayInSeconds=0" ]

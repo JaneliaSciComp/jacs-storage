@@ -1,0 +1,22 @@
+version: '3.7'
+
+services:
+  master:
+    build:
+      context: jacsstorage-masterweb/
+      args:
+        - TAG_JACS=master
+    ports:
+      - '9880:8080'
+    entrypoint: /app/jacsstorage-masterweb/bin/jacsstorage-masterweb -b 0.0.0.0
+
+  agent:
+    build:
+      context: jacsstorage-agentweb/
+      args:
+        - TAG_JACS=master
+    expose:
+      - '8081'
+    depends_on:
+      - master
+    entrypoint: /app/jacsstorage-agentweb/bin/jacsstorage-agentweb -b 0.0.0.0 -p 8081 -masterURL http://jacs-storage_master_1:8080/jacsstorage/master_api/v1 -DStorageAgent.InitialPingDelayInSeconds=10
