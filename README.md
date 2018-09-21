@@ -110,6 +110,10 @@ docker build jacsstorage-masterweb --build-arg SSH_PRIVATE_KEY="`cat ~/.ssh/id_r
 docker build jacsstorage-agentweb --build-arg SSH_PRIVATE_KEY="`cat ~/.ssh/id_rsa`" -t jacsstorage-agentweb
 ```
 
+```
+docker-compose build --build-arg SSH_PRIVATE_KEY="`cat ~/.ssh/id_rsa`"
+```
+
 ### Run the application
 
 To run the async services with the default settings which assume a Mongo database instance running on the same machine where the web server is running:
