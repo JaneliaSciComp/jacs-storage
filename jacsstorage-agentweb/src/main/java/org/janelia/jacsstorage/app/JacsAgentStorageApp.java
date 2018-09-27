@@ -22,6 +22,8 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     private static class AgentArgs extends AppArgs {
         @Parameter(names = "-masterURL", description = "URL of the master datatransfer to which to connect")
         String masterHttpUrl;
+        @Parameter(names = "-publicPort", description = "Exposed or public port", required = false)
+        Integer publicPortNumber;
         @Parameter(names = "-bootstrapStorageVolumes", description = "Bootstrap agent volumes")
         boolean bootstrapStorageVolumes;
     }
@@ -44,6 +46,12 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         }
         AgentState agentState = container.select(AgentState.class).get();
         // update agent info
+        int agentPortNumber;
+        if (agentArgs.publicPortNumber != null && agentArgs.publicPortNumber > 0) {
+            agentPortNumber = agentArgs.publicPortNumber;
+        } else {
+            agentPortNumber = agentArgs.portNumber;
+        }
         agentState.updateAgentInfo(
                 UriBuilder.fromPath(new ContextPathBuilder()
                         .path(agentArgs.baseContextPath)
@@ -52,7 +60,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
                         .build())
                         .scheme("http")
                         .host(agentState.getStorageHost())
-                        .port(agentArgs.portNumber)
+                        .port(agentPortNumber)
                         .build()
                         .toString());
         if (StringUtils.isNotBlank(agentArgs.masterHttpUrl)) {

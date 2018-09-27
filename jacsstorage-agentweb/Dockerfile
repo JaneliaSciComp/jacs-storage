@@ -49,17 +49,18 @@ RUN mkdir /tmp/jade/logs
 
 RUN chown -R $UID:$GID /app
 RUN chown -R $UID:$GID /tmp/jade/logs
- 
+
+VOLUME /etc/jadeconf.d
+
 # Switch to jacs user and configure the app
 USER $UNAME
 
 EXPOSE 8080
 
 # Command for running the application
-ENTRYPOINT [ \
+CMD [ \
     "/app/jacsstorage-agentweb/bin/jacsstorage-agentweb", \
     "-b", "0.0.0.0", \
-    "-p", "8080" \
+    "-p", "8080", \
+    "-DStorageAgent.InitialPingDelayInSeconds=0" \
 ]
-
-CMD [ "-DStorageAgent.InitialPingDelayInSeconds=0" ]

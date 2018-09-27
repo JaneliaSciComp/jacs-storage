@@ -59,6 +59,7 @@ public class AgentState {
 
 
     public void updateAgentInfo(String agentHttpURL) {
+        LOG.info("Agent URL set to {}", agentHttpURL);
         this.agentHttpURL = agentHttpURL;
         updateStorageVolumes(agentManagedVolumes, (JacsStorageVolume sv) -> !sv.isShared());
     }
