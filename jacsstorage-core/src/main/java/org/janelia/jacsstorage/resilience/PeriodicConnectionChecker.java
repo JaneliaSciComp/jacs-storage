@@ -3,13 +3,13 @@ package org.janelia.jacsstorage.resilience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-public class PeriodicConnectionChecker<T> implements ConnectionChecker<T> {
+public class PeriodicConnectionChecker<S extends ConnectionState> implements ConnectionChecker<S> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PeriodicConnectionChecker.class);
     private final ScheduledExecutorService scheduler;
@@ -17,17 +17,11 @@ public class PeriodicConnectionChecker<T> implements ConnectionChecker<T> {
     private final int initialDelayInSeconds;
     private final int tripThreshold;
     private ScheduledFuture<?> updateStateTask;
-    private ConnectionState state;
-    private int numFailures;
 
-    public PeriodicConnectionChecker(ConnectionState initialState,
-                                     ScheduledExecutorService scheduler,
+    public PeriodicConnectionChecker(ScheduledExecutorService scheduler,
                                      int periodInSeconds,
                                      int initialDelayInSeconds,
                                      int tripThreshold) {
-        if (initialState != null) {
-            this.state = initialState;
-        }
         this.scheduler = scheduler;
         this.periodInSeconds = periodInSeconds;
         this.initialDelayInSeconds = initialDelayInSeconds;
@@ -35,42 +29,25 @@ public class PeriodicConnectionChecker<T> implements ConnectionChecker<T> {
     }
 
     @Override
-    public ConnectionState getState() {
-        return state;
-    }
-
-    @Override
-    public void initialize(T connState,
-                           ConnectionTester<T> connectionTester,
-                           Consumer<T> onSuccess,
-                           Consumer<T> onFailure) {
+    public void initialize(Supplier<S> currentStateProvider,
+                           ConnectionTester<S> connectionTester,
+                           Consumer<S> onSuccess,
+                           Consumer<S> onFailure) {
         Runnable scheduleTask = () -> {
+            S prevConnState = currentStateProvider.get();
             try {
-                if (connectionTester.testConnection(connState)) {
-                    if (state != ConnectionState.CLOSED) {
-                        reset();
+                S newConnState = connectionTester.testConnection(prevConnState);
+                if (newConnState.isConnected()) {
+                    if (prevConnState.isNotConnected()) {
                         // only invoke the handler if there was a change in the state of the circuit
-                        if (onSuccess != null) {
-                            onSuccess.accept(connState);
-                        }
+                        onSuccess.accept(newConnState);
                     }
                 } else {
-                    if (state == null || state != ConnectionState.OPEN && ++numFailures >= tripThreshold) {
-                        // only invoke the handler if there was a change in the state of the circuit
-                        state = ConnectionState.OPEN;
-                        if (onFailure != null) {
-                            onFailure.accept(connState);
-                        }
-                    } else if (state == ConnectionState.CLOSED) {
-                        state = ConnectionState.HALF_CLOSED;
-                    }
+                    handleConnectionFailure(prevConnState.getConnectStatus(), newConnState, onFailure);
                 }
             } catch (Exception e) {
                 LOG.error("Error testing connection", e);
-                if (onFailure != null && state != ConnectionState.OPEN) {
-                    onFailure.accept(connState);
-                }
-                state = ConnectionState.OPEN;
+                handleConnectionFailure(prevConnState.getConnectStatus(), prevConnState, onFailure);
             }
         };
         if (initialDelayInSeconds == 0) {
@@ -80,9 +57,14 @@ public class PeriodicConnectionChecker<T> implements ConnectionChecker<T> {
         updateStateTask = scheduler.scheduleAtFixedRate(scheduleTask, initialDelayInSeconds, periodInSeconds, TimeUnit.SECONDS);
     }
 
-    private void reset() {
-        state = ConnectionState.CLOSED;
-        numFailures = 0;
+    private void handleConnectionFailure(ConnectionState.Status prevConnStatus, S newConnState, Consumer<S> onFailure) {
+        int connectionAttempts = newConnState.getConnectionAttempts();
+        if (prevConnStatus != ConnectionState.Status.OPEN && connectionAttempts >= tripThreshold) {
+            newConnState.setConnectStatus(ConnectionState.Status.OPEN);
+            onFailure.accept(newConnState);
+        } else if (prevConnStatus == ConnectionState.Status.CLOSED) {
+            newConnState.setConnectStatus(ConnectionState.Status.HALF_CLOSED);
+        }
     }
 
     @Override

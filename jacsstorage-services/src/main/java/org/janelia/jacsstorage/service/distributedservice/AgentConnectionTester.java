@@ -1,18 +1,23 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
+import org.janelia.jacsstorage.resilience.ConnectionState;
 import org.janelia.jacsstorage.resilience.ConnectionTester;
 
-public class AgentConnectionTester implements ConnectionTester<StorageAgentInfo> {
+public class AgentConnectionTester implements ConnectionTester<StorageAgentConnection> {
 
     @Override
-    public boolean testConnection(StorageAgentInfo agentInfo) {
-        StorageAgentInfo updatedAgentInfo = AgentConnectionHelper.getAgentStatus(agentInfo.getAgentHttpURL());
+    public StorageAgentConnection testConnection(StorageAgentConnection agentConnection) {
+        StorageAgentInfo updatedAgentInfo = AgentConnectionHelper.getAgentStatus(agentConnection.getAgentInfo().getAgentHttpURL());
+        StorageAgentConnection updatedAgentConnection;
         if (updatedAgentInfo != null) {
-            return true;
+            updatedAgentConnection = new StorageAgentConnection(updatedAgentInfo, agentConnection.getConnectionChecker());
+            updatedAgentConnection.setConnectStatus(ConnectionState.Status.CLOSED);
         } else {
-            return false;
+            updatedAgentConnection = new StorageAgentConnection(agentConnection.getAgentInfo(), agentConnection.getConnectionChecker());
+            updatedAgentConnection.setConnectStatus(ConnectionState.Status.OPEN);
         }
+        return updatedAgentConnection;
     }
 
 }

@@ -1,18 +1,12 @@
 package org.janelia.jacsstorage.resilience;
 
-import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-public interface ConnectionChecker<T> {
-    enum ConnectionState {
-        OPEN,
-        CLOSED,
-        HALF_CLOSED
-    }
-    ConnectionState getState();
-    void initialize(T connState,
-                    ConnectionTester<T> connectionTester,
-                    Consumer<T> onSuccess,
-                    Consumer<T> onFailure);
+public interface ConnectionChecker<S extends ConnectionState> {
+    void initialize(Supplier<S> currentStateProvider,
+                    ConnectionTester<S> connectionTester,
+                    Consumer<S> onSuccess,
+                    Consumer<S> onFailure);
     void dispose();
 }

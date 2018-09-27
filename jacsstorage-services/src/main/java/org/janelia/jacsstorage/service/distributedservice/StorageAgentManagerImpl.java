@@ -49,7 +49,7 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
         return ImmutableList.copyOf(registeredAgentConnections.values().stream()
                 .filter(agentConnectionPredicate)
                 .map(agentConnection -> {
-                    agentConnection.updateConnectionStatus();
+                    agentConnection.updateConnectionStatus(agentConnection.getConnectStatus());
                     return agentConnection.getAgentInfo();
                 })
                 .collect(Collectors.toList()));
@@ -57,28 +57,34 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
 
     @Override
     public StorageAgentInfo registerAgent(StorageAgentInfo agentInfo) {
-        ConnectionChecker<StorageAgentInfo> agentConnectionChecker = new PeriodicConnectionChecker<>(
-                ConnectionChecker.ConnectionState.CLOSED,
+        ConnectionChecker<StorageAgentConnection> connectionChecker = new PeriodicConnectionChecker<>(
                 scheduler,
                 periodInSeconds,
                 initialDelayInSeconds,
                 tripThreshold);
-        StorageAgentConnection agentConnection = new StorageAgentConnection(agentInfo, agentConnectionChecker);
-        StorageAgentConnection registeredConnection = registeredAgentConnections.putIfAbsent(agentInfo.getAgentHttpURL(), agentConnection);
+        StorageAgentConnection agentConnection = new StorageAgentConnection(agentInfo, connectionChecker);
+        StorageAgentConnection registeredConnection =
+                registeredAgentConnections.putIfAbsent(agentInfo.getAgentHttpURL(), agentConnection);
         if (registeredConnection == null) {
-            agentConnection.updateConnectionStatus();
+            agentConnection.updateConnectionStatus(null);
             agentInfo.setAgentToken(String.valueOf(AGENT_TOKEN_GENERATOR.nextInt()));
-            agentConnectionChecker.initialize(agentInfo, new AgentConnectionTester(),
-                    storageAgentInfo -> {
-                        LOG.trace("Agent {} is up and running", storageAgentInfo.getAgentHttpURL());
-                        agentConnection.updateConnectionStatus();
+            connectionChecker.initialize(
+                    () -> agentConnection, new AgentConnectionTester(),
+                    newAgentConnection -> {
+                        LOG.trace("Agent {} is up and running", newAgentConnection.getAgentInfo().getAgentHttpURL());
+                        if (agentConnection.getConnectStatus() != null && agentConnection.getConnectStatus() != newAgentConnection.getConnectStatus()) {
+                            connectivityNotifier.sendNotification(
+                                    "Master reconnected to " + newAgentConnection.getAgentInfo().getAgentHttpURL(),
+                                    "Master reconnected to " + newAgentConnection.getAgentInfo().getAgentHttpURL());
+                        }
+                        agentConnection.updateConnectionStatus(newAgentConnection.getConnectStatus());
                     },
-                    storageAgentInfo -> {
-                        LOG.error("Connection lost to {}", storageAgentInfo);
-                        agentConnection.updateConnectionStatus();
+                    newAgentConnection -> {
+                        LOG.error("Connection lost to {}", newAgentConnection.getAgentInfo());
+                        agentConnection.updateConnectionStatus(newAgentConnection.getConnectStatus());
                         connectivityNotifier.sendNotification(
-                                "Master lost connection to " + storageAgentInfo.getAgentHttpURL(),
-                                "Master lost connection to " + storageAgentInfo.getAgentHttpURL());
+                                "Master lost connection to " + newAgentConnection.getAgentInfo().getAgentHttpURL(),
+                                "Master lost connection to " + newAgentConnection.getAgentInfo().getAgentHttpURL());
                     });
             return agentInfo;
         } else {
@@ -94,7 +100,7 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
         } else {
             if (agentConnection.getAgentInfo().getAgentToken().equals(agentToken)) {
                 registeredAgentConnections.remove(agentHttpURL);
-                agentConnection.getAgentConnectionChecker().dispose();
+                agentConnection.getConnectionChecker().dispose();
                 return agentConnection.getAgentInfo();
             } else {
                 throw new IllegalArgumentException("Invalid agent token - deregistration is not allowed with an invalid token");

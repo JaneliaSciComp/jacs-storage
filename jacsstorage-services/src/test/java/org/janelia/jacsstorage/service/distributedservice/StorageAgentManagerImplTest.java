@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.service.distributedservice;
 
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
+import org.janelia.jacsstorage.resilience.ConnectionState;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.distributedservice.AgentConnectionTester;
 import org.janelia.jacsstorage.service.distributedservice.StorageAgentManagerImpl;
@@ -12,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -76,7 +78,14 @@ public class StorageAgentManagerImplTest {
     }
 
     private void prepareConnectionTester(boolean result) {
-        Mockito.when(mockConnectionTester.testConnection(any(StorageAgentInfo.class))).thenReturn(result);
+        Mockito.when(mockConnectionTester.testConnection(any(StorageAgentConnection.class)))
+                .then((Answer<StorageAgentConnection>) invocation -> {
+                    StorageAgentConnection agentConnection = invocation.getArgument(0);
+                    agentConnection.updateConnectionStatus(result
+                            ? ConnectionState.Status.CLOSED
+                            : ConnectionState.Status.OPEN);
+                    return agentConnection;
+                });
     }
 
     @Test
@@ -84,6 +93,7 @@ public class StorageAgentManagerImplTest {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
 
+        prepareConnectionTester(true);
         registerAgent(testAgentHost, testAgentURL);
 
         Mockito.verify(scheduler).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
@@ -99,6 +109,7 @@ public class StorageAgentManagerImplTest {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
 
+        prepareConnectionTester(true);
         StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL);
         StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL);
 
@@ -114,6 +125,7 @@ public class StorageAgentManagerImplTest {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
 
+        prepareConnectionTester(true);
         StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL);
         assertNotNull(firstRegistration);
         assertNotNull(testStorageAgentManager.deregisterAgent(testAgentURL, firstRegistration.getAgentToken()));
@@ -134,6 +146,7 @@ public class StorageAgentManagerImplTest {
 
     @Test
     public void checkAgentRandomizedSelection() {
+        prepareConnectionTester(true);
         Map<StorageAgentInfo, Integer> registeredAgents = registerMultipleAgents().stream().collect(Collectors.toMap(ai -> ai, ai -> 0));
         int nInvocations = registeredAgents.size() * 3;
         for (int i = 0; i < nInvocations; i++) {
@@ -169,6 +182,7 @@ public class StorageAgentManagerImplTest {
 
     @Test
     public void findAgentByLocationOrConnectionInfo() {
+        prepareConnectionTester(true);
         List<StorageAgentInfo> registeredAgents = registerMultipleAgents();
         registeredAgents.forEach(ai -> {
             assertThat(testStorageAgentManager.findRegisteredAgent(ai.getAgentHttpURL()).orElse(null), equalTo(ai));

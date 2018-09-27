@@ -2,38 +2,50 @@ package org.janelia.jacsstorage.agent;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
+import org.janelia.jacsstorage.resilience.ConnectionState;
 import org.janelia.jacsstorage.resilience.ConnectionTester;
 
 import java.util.function.Consumer;
 
-public class AgentConnectionTester implements ConnectionTester<AgentState> {
-
-    private final Consumer<AgentState> action;
-
-    AgentConnectionTester(Consumer<AgentState> action) {
-        this.action = action;
-    }
+public class AgentConnectionTester implements ConnectionTester<AgentConnectionState> {
 
     @Override
-    public boolean testConnection(AgentState agentState) {
-        if (StringUtils.isBlank(agentState.getMasterHttpURL())) {
-            return false;
+    public AgentConnectionState testConnection(AgentConnectionState agentConnectionState) {
+        if (StringUtils.isBlank(agentConnectionState.getMasterHttpURL())) {
+            return new AgentConnectionState(agentConnectionState.getStorageHost(),
+                    agentConnectionState.getMasterHttpURL(),
+                    agentConnectionState.getAgentHttpURL(),
+                    ConnectionState.Status.OPEN,
+                    agentConnectionState.getConnectionAttempts() + 1,
+                    null);
         }
-        action.accept(agentState);
-        if (!agentState.isRegistered()) {
-            StorageAgentInfo registeredAgentInfo = AgentConnectionHelper.registerAgent(agentState.getMasterHttpURL(), agentState.getLocalAgentInfo());
+        if (!agentConnectionState.isConnected()) {
+            StorageAgentInfo registeredAgentInfo = AgentConnectionHelper.registerAgent(agentConnectionState.getMasterHttpURL(), agentConnectionState.toStorageAgentInfo());
             if (registeredAgentInfo == null) {
-                return false;
+                return new AgentConnectionState(agentConnectionState.getStorageHost(),
+                        agentConnectionState.getMasterHttpURL(),
+                        agentConnectionState.getAgentHttpURL(),
+                        ConnectionState.Status.OPEN,
+                        agentConnectionState.getConnectionAttempts() + 1,
+                        agentConnectionState.getRegisteredToken());
             } else {
-                agentState.setRegisteredToken(registeredAgentInfo.getAgentToken());
-                return true;
+                return new AgentConnectionState(agentConnectionState.getStorageHost(),
+                        agentConnectionState.getMasterHttpURL(),
+                        agentConnectionState.getAgentHttpURL(),
+                        ConnectionState.Status.CLOSED,
+                        agentConnectionState.getConnectionAttempts() + 1,
+                        registeredAgentInfo.getAgentToken());
             }
         } else {
-            if (AgentConnectionHelper.findRegisteredAgent(agentState.getMasterHttpURL(), agentState.getAgentHttpURL()) == null) {
-                agentState.setRegisteredToken(null);
-                return false;
+            if (AgentConnectionHelper.findRegisteredAgent(agentConnectionState.getMasterHttpURL(), agentConnectionState.getAgentHttpURL()) == null) {
+                return new AgentConnectionState(agentConnectionState.getStorageHost(),
+                        agentConnectionState.getMasterHttpURL(),
+                        agentConnectionState.getAgentHttpURL(),
+                        ConnectionState.Status.OPEN,
+                        1,
+                        agentConnectionState.getRegisteredToken());
             } else {
-                return true;
+                return agentConnectionState;
             }
         }
     }
