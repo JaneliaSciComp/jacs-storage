@@ -169,7 +169,9 @@ public class StorageResourceHelper {
                         .header("Content-Length", PathUtils.getSize(Paths.get(storageVolume.getBaseStorageRootDir()).resolve(dataEntryPath))))
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName())))
+                        .header("Content-Length", "0")
+//                        .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName()))
+                )
                 ;
     }
 
