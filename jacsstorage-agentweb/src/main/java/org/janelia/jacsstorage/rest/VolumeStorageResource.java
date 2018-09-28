@@ -61,12 +61,11 @@ public class VolumeStorageResource {
         if (storageVolume == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
+                    .header("Content-Length", "0")
                     .build();
         } else if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
             return Response
                     .status(Response.Status.FORBIDDEN)
-                    .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
                     .build();
         }
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);

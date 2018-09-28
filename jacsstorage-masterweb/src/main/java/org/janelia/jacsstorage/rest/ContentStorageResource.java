@@ -73,10 +73,7 @@ public class ContentStorageResource {
                                         .path(dataEntryPath)
                                         .build())
                         )
-                        .orElseGet(() -> Response
-                                .status(Response.Status.BAD_REQUEST.getStatusCode())
-                                .entity(new ErrorResponse("No volume associated with databundle " + dataBundle.getId()))
-                        ),
+                        .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST.getStatusCode())),
                 (storageVolume, dataEntryPath) -> {
                     if (StringUtils.isNotBlank(storageVolume.getStorageServiceURL())) {
                         return Response
@@ -88,9 +85,7 @@ public class ContentStorageResource {
                                         .build())
                                 ;
                     } else {
-                        return Response.status(Response.Status.BAD_GATEWAY)
-                                .entity(new ErrorResponse("No storage service URL found to serve " + dataEntryPath))
-                                ;
+                        return Response.status(Response.Status.BAD_GATEWAY);
                     }
                 }
         ).build();
