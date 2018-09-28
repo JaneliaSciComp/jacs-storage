@@ -5,6 +5,7 @@ import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.ConnectionChecker;
+import org.janelia.jacsstorage.resilience.ConnectionState;
 import org.janelia.jacsstorage.resilience.PeriodicConnectionChecker;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.slf4j.Logger;
@@ -66,13 +67,13 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
         StorageAgentConnection registeredConnection =
                 registeredAgentConnections.putIfAbsent(agentInfo.getAgentHttpURL(), agentConnection);
         if (registeredConnection == null) {
-            agentConnection.updateConnectionStatus(null);
+            agentConnection.updateConnectionStatus(ConnectionState.Status.CLOSED);
             agentInfo.setAgentToken(String.valueOf(AGENT_TOKEN_GENERATOR.nextInt()));
             connectionChecker.initialize(
                     () -> agentConnection, new AgentConnectionTester(),
                     newAgentConnection -> {
                         LOG.trace("Agent {} is up and running", newAgentConnection.getAgentInfo().getAgentHttpURL());
-                        if (agentConnection.getConnectStatus() != null && agentConnection.getConnectStatus() != newAgentConnection.getConnectStatus()) {
+                        if (agentConnection.getConnectStatus() != newAgentConnection.getConnectStatus()) {
                             connectivityNotifier.sendNotification(
                                     "Master reconnected to " + newAgentConnection.getAgentInfo().getAgentHttpURL(),
                                     "Master reconnected to " + newAgentConnection.getAgentInfo().getAgentHttpURL());
