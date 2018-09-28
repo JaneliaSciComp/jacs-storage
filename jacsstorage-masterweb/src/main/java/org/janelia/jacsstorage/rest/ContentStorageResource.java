@@ -49,7 +49,6 @@ public class ContentStorageResource {
      * @param securityContext
      * @return
      */
-//    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
     @HEAD
     @Path("storage_path_redirect/{filePath:.+}")
     @ApiOperation(value = "Get file content",
@@ -73,7 +72,8 @@ public class ContentStorageResource {
                                         .path(dataEntryPath)
                                         .build())
                         )
-                        .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST.getStatusCode())),
+                        .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST)
+                                .header("Content-Length", "0")),
                 (storageVolume, dataEntryPath) -> {
                     if (StringUtils.isNotBlank(storageVolume.getStorageServiceURL())) {
                         return Response
@@ -85,7 +85,8 @@ public class ContentStorageResource {
                                         .build())
                                 ;
                     } else {
-                        return Response.status(Response.Status.BAD_GATEWAY);
+                        return Response.status(Response.Status.BAD_GATEWAY)
+                                .header("Content-Length", "0");
                     }
                 }
         ).build();
