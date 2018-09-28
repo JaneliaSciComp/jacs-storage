@@ -20,13 +20,14 @@ public class NotFoundRequestHandler implements ExceptionMapper<NotFoundException
 
     @Override
     public Response toResponse(NotFoundException exception) {
-        LOG.error("Path not found: {}", request.getRequestURI(), exception);
-        String errorMessage = exception.getMessage();
+        LOG.error("No handler found for path: {}", request.getRequestURI());
         Response.ResponseBuilder responseBuilder = Response
-                .status(Response.Status.NOT_FOUND)
-                .entity(new ErrorResponse(errorMessage));
+                .status(Response.Status.NOT_FOUND);
         if (StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
             responseBuilder.header("Content-Length", 0);
+        } else {
+            String errorMessage = StringUtils.defaultIfBlank(exception.getMessage(), "Invalid request");
+            responseBuilder.entity(new ErrorResponse(errorMessage));
         }
         return responseBuilder.build();
     }

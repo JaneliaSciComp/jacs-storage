@@ -5,6 +5,8 @@ import org.janelia.jacsstorage.io.DataAlreadyExistException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -13,17 +15,21 @@ import javax.ws.rs.ext.Provider;
 public class DataAlreadyExistRequestHandler implements ExceptionMapper<DataAlreadyExistException> {
     private static final Logger LOG = LoggerFactory.getLogger(DataAlreadyExistRequestHandler.class);
 
+    @Context
+    private HttpServletRequest request;
+
     @Override
     public Response toResponse(DataAlreadyExistException exception) {
-        LOG.error("Invalid argument response", exception);
-        String errorMessage = exception.getMessage();
-        if (StringUtils.isBlank(errorMessage)) {
-            errorMessage = "Data entry or file already exists";
+        LOG.error("Invalid argument - data already exist for {}", request.getMethod(), exception);
+        Response.ResponseBuilder responseBuilder = Response
+                .status(Response.Status.CONFLICT);
+        if (StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
+            responseBuilder.header("Content-Length", 0);
+        } else {
+            String errorMessage = StringUtils.defaultIfBlank(exception.getMessage(), "Data entry or file already exists");
+            responseBuilder.entity(new ErrorResponse(errorMessage));
         }
-        return Response
-                .status(Response.Status.CONFLICT)
-                .entity(new ErrorResponse(errorMessage))
-                .build();
+        return responseBuilder.build();
     }
 
 }
