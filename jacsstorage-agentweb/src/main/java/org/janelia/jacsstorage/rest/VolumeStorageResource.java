@@ -44,7 +44,6 @@ public class VolumeStorageResource {
     @Context
     private UriInfo resourceURI;
 
-    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
     @HEAD
     @Path("storage_volume/{storageVolumeId}/{storageRelativePath:.+}")
     @ApiOperation(value = "Check if the specified file path identifies a valid data bundle entry content.")
@@ -61,11 +60,12 @@ public class VolumeStorageResource {
         if (storageVolume == null) {
             return Response
                     .status(Response.Status.NOT_FOUND)
-                    .header("Content-Length", "0")
+                    .header("Content-Length", 0)
                     .build();
         } else if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
             return Response
                     .status(Response.Status.FORBIDDEN)
+                    .header("Content-Length", 0)
                     .build();
         }
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);

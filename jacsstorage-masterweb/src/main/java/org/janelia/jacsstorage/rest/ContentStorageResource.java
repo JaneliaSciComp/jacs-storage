@@ -73,7 +73,7 @@ public class ContentStorageResource {
                                         .build())
                         )
                         .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST)
-                                .header("Content-Length", "0")),
+                                .header("Content-Length", 0)),
                 (storageVolume, dataEntryPath) -> {
                     if (StringUtils.isNotBlank(storageVolume.getStorageServiceURL())) {
                         return Response
@@ -86,7 +86,7 @@ public class ContentStorageResource {
                                 ;
                     } else {
                         return Response.status(Response.Status.BAD_GATEWAY)
-                                .header("Content-Length", "0");
+                                .header("Content-Length", 0);
                     }
                 }
         ).build();

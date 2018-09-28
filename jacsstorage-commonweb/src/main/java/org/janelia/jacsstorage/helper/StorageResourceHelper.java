@@ -157,7 +157,8 @@ public class StorageResourceHelper {
 
     public Response.ResponseBuilder checkContentFromFile(JacsStorageVolume storageVolume, StorageRelativePath dataEntryName) {
         if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
-            return Response.status(Response.Status.FORBIDDEN);
+            return Response.status(Response.Status.FORBIDDEN)
+                    .header("Content-Length", 0);
         }
         return storageVolume.getDataStorageAbsolutePath(dataEntryName)
                 .filter(dataEntryPath -> Files.exists(dataEntryPath))
@@ -166,7 +167,7 @@ public class StorageResourceHelper {
                         .header("Content-Length", PathUtils.getSize(Paths.get(storageVolume.getBaseStorageRootDir()).resolve(dataEntryPath))))
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
-                        .header("Content-Length", "0"))
+                        .header("Content-Length", 0))
                 ;
     }
 
