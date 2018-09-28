@@ -6,6 +6,12 @@ services:
       context: jacsstorage-masterweb/
       args:
         - TAG_JACS=master
+    networks:
+      jade_network:
+        aliases:
+          - master_node
+    expose:
+      - '8080'
     ports:
       - '9880:8080'
     volumes:
@@ -24,23 +30,47 @@ services:
       args:
         - TAG_JACS=master
     depends_on:
-    - master
+      - master
+    networks:
+      jade_network:
+        aliases:
+          - agent_node
     expose:
-      - '8081'
+      - '8080'
+    ports:
+      - '9881:8080'
     volumes:
-    - jadeconf:/etc/jadeconf.d
+      - jadeconf:/etc/jadeconf.d
     environment:
-    - JACSSTORAGE_CONFIG=/etc/jadeconf.d/jadeconf.properties
-    - JACSSTORAGE_LOG_CONFIG=/etc/jadeconf.d/logback-agent.xml
+      - EXPOSED_AGENT_HOST
+      - EXPOSED_AGENT_PORT
+      - JACSSTORAGE_CONFIG=/etc/jadeconf.d/jadeconf.properties
+      - JACSSTORAGE_LOG_CONFIG=/etc/jadeconf.d/logback-agent.xml
     command:
       - '/app/jacsstorage-agentweb/bin/jacsstorage-agentweb'
       - '-b'
       - '0.0.0.0'
-      - '-p'
-      - '8081'
+      - '-publicPort'
+      - '${EXPOSED_AGENT_PORT-0}'
       - '-masterURL'
-      - 'http://jacs-storage_master_1:8080/jacsstorage/master_api/v1'
+      - 'http://master_node:8080/jacsstorage/master_api/v1'
       - '-DStorageAgent.InitialPingDelayInSeconds=10'
+      - '-DStorageAgent.StorageHost=${EXPOSED_AGENT_HOST-agent_node}'
+      - '-bootstrapStorageVolumes'
+
+networks:
+  jade_network:
 
 volumes:
   jadeconf:
+    driver: local
+    driver_opts:
+      type: none
+      device: /DockerSharedVolumes/jadeconf
+      o: bind
+  jadedata:
+    driver: local
+    driver_opts:
+      type: none
+      device: /DockerSharedVolumes/jadedata
+      o: bind
