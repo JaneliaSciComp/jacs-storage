@@ -6,13 +6,7 @@ import io.swagger.jaxrs.listing.ApiListingResource;
 import org.janelia.jacsstorage.filter.CORSResponseFilter;
 import org.janelia.jacsstorage.filter.JWTAuthFilter;
 import org.janelia.jacsstorage.provider.ObjectMapperResolver;
-import org.janelia.jacsstorage.rest.DataAlreadyExistRequestHandler;
-import org.janelia.jacsstorage.rest.IOErrorRequestHandler;
-import org.janelia.jacsstorage.rest.IllegalAccessRequestHandler;
-import org.janelia.jacsstorage.rest.IllegalStateRequestHandler;
-import org.janelia.jacsstorage.rest.InvalidArgumentRequestHandler;
-import org.janelia.jacsstorage.rest.InvalidJsonRequestHandler;
-import org.janelia.jacsstorage.rest.JsonParseErrorRequestHandler;
+import org.janelia.jacsstorage.rest.*;
 
 import javax.ws.rs.core.Application;
 import java.util.Set;
@@ -32,7 +26,8 @@ public abstract class AbstractJAXApp extends Application {
                         IllegalStateRequestHandler.class,
                         InvalidJsonRequestHandler.class,
                         JsonParseErrorRequestHandler.class,
-                        IOErrorRequestHandler.class)
+                        IOErrorRequestHandler.class,
+                        NotFoundRequestHandler.class)
                 .addAll(getAppClasses())
                 .build();
     }
