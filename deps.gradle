@@ -1,6 +1,6 @@
 dependencies {
     project.ext {
-        GUAVA_LIB = "com.google.guava:guava:23.0"
+        GUAVA_LIB = "com.google.guava:guava:26.0-jre"
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
 
         // logging
