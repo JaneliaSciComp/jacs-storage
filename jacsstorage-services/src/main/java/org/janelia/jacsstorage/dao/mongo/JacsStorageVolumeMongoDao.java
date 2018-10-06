@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.stream.StreamSupport;
 
 /**
- * Mongo based implementation of JacsVolumeDao.
+ * Mongo based implementation of JacsStorageVolumeDao.
  */
 public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolume> implements JacsStorageVolumeDao {
     @Inject
@@ -128,6 +128,10 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             filtersBuilder.add(Filters.eq("name", storageQuery.getStorageName()));
         }
         if (StringUtils.isNotBlank(storageQuery.getDataStoragePath())) {
+            // the way this filter works is by checking if the current storage root directory (or virtual path)
+            // are a prefix of the given argument.
+            // If the condition is met then a field with the same value is added to the projection
+            // and the field is matched against the query
             Bson storageRootBase = createStorageRootBaseExpr();
             pipelineBuilder.add(Aggregates.addFields(
                     new Field("storageRootBase",
@@ -172,38 +176,6 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         }
         pipelineBuilder.add(Aggregates.match(Filters.and(filtersBuilder.build())));
         return pipelineBuilder.build();
-    }
-
-    private String createMatchRootDirExpr(String dataPath) {
-        String expr = "function() {" +
-                "return " +
-                "(" +
-                "this.storageRootTemplate && " +
-                "   this.storageRootTemplate.indexOf('$') == -1 " +
-                "      ? '%1$s'.startsWith(this.storageRootTemplate) " +
-                "      : '%1$s'.startsWith(this.storageRootTemplate.slice(0, this.storageRootTemplate.indexOf('$')))" +
-                ")" +
-                " || " +
-                "(" +
-                "this.storageVirtualPath && " +
-                "   '%1$s'.startsWith(this.storageVirtualPath)" +
-                "); " +
-                "}";
-        return String.format(expr, dataPath);
-    }
-
-    private Bson createSearchedDataPathField(String dataPath, Object comparedField) {
-        return createCondExpr(
-                createStartsWithExpr(dataPath, comparedField),
-                dataPath,
-                null
-        );
-    }
-
-    private Bson createMatchRootDirCond(String dataPath) {
-        Bson storageRootMatchExpr = createEqExpr(createStartsWithExpr(dataPath, createStorageRootBaseExpr()));
-        Bson storageBindMatchExpr = createEqExpr(createStartsWithExpr(dataPath, "$storageVirtualPath"));
-        return Filters.or(storageRootMatchExpr, storageBindMatchExpr);
     }
 
     private Bson createStorageRootBaseExpr() {
