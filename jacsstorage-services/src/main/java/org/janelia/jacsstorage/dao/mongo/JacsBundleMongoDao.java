@@ -70,14 +70,12 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
 
     @Override
     public long countMatchingDataBundles(JacsBundle pattern) {
-        Bson bsonFilter = getBsonFilter(pattern);
-        return countAggregate(bsonFilter, getAggregationOps(pattern));
+        return countAggregate(getAggregationOps(pattern));
     }
 
     @Override
     public PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest) {
-        Bson bsonFilter = getBsonFilter(pattern);
-        List<JacsBundle> results = aggregateAsList(bsonFilter,
+        List<JacsBundle> results = aggregateAsList(
                 getAggregationOps(pattern),
                 createBsonSortCriteria(pageRequest.getSortCriteria()),
                 (int) pageRequest.getOffset(),
@@ -115,9 +113,13 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
 
     private List<Bson> getAggregationOps(JacsBundle pattern) {
         ImmutableList.Builder<Bson> bundleAggregationOpsBuilder = ImmutableList.builder();
+        Bson matchFilter = getBsonFilter(pattern);
+        if (matchFilter != null) {
+            bundleAggregationOpsBuilder.add(Aggregates.match(matchFilter));
+        }
         pattern.getStorageVolume().ifPresent(sv -> {
             bundleAggregationOpsBuilder.add(Aggregates.lookup(
-                    EntityUtils.getMongoMapping(JacsStorageVolume.class).storeName(),
+                    EntityUtils.getPersistenceInfo(JacsStorageVolume.class).storeName(),
                     "storageVolumeId",
                     "_id",
                     "referencedVolumes"

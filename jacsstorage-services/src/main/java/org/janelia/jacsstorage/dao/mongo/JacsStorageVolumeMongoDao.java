@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.dao.mongo;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
@@ -11,6 +12,7 @@ import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
@@ -26,6 +28,7 @@ import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -123,6 +126,8 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             filtersBuilder.add(Filters.eq("name", storageQuery.getStorageName()));
         }
         if (StringUtils.isNotBlank(storageQuery.getDataStoragePath())) {
+//            filtersBuilder.add(Filters.expr(createMatchRootDirCond(storageQuery.getDataStoragePath())));
+
             filtersBuilder.add(Filters.where(createMatchRootDirExpr(storageQuery.getDataStoragePath())));
         }
         if (StringUtils.isNotBlank(storageQuery.getStorageVirtualPath())) {
@@ -147,6 +152,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         if (!storageQuery.isIncludeInactiveVolumes()) {
             filtersBuilder.add(Filters.eq("activeFlag", true));
         }
+        System.out.println(" !!!! FILTERS " + filtersBuilder.build());
         return filtersBuilder.build();
     }
 
@@ -166,6 +172,52 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
                 "); " +
                 "}";
         return String.format(expr, dataPath);
+    }
+
+    private Bson createSearchedDataPathField(String dataPath, Object comparedField) {
+        return createCondExpr(
+                createStartsWithExpr(dataPath, comparedField),
+                dataPath,
+                null
+        );
+    }
+
+    private Bson createMatchRootDirCond(String dataPath) {
+        Bson storageRootMatchExpr = createEqExpr(createStartsWithExpr(dataPath, createStorageRootBaseExpr()));
+        Bson storageBindMatchExpr = createEqExpr(createStartsWithExpr(dataPath, "$storageVirtualPath"));
+        return Filters.or(storageRootMatchExpr, storageBindMatchExpr);
+    }
+
+    private Bson createStorageRootBaseExpr() {
+        Bson indexOfVarExpr = new Document("$indexOfCP", Arrays.asList("$storageRootTemplate", new Document("$literal", "$")));
+        return createCondExpr(createEqExpr(indexOfVarExpr, -1),
+                "$storageRootTemplate",
+                createSubstrExpr("$storageRootTemplate", 0, indexOfVarExpr));
+    }
+
+    private Bson createCondExpr(Object cond, Object thenValue, Object elseValue) {
+        return new Document("$cond",
+                Arrays.asList(
+                        cond,
+                        thenValue,
+                        elseValue
+                ));
+    }
+
+    private Bson createStartsWithExpr(Object expr, Object subExpr) {
+        return createEqExpr(createIndexOfExpr(expr, subExpr), 0);
+    }
+
+    private Bson createEqExpr(Object ...argList) {
+        return new Document("$eq", Arrays.asList(argList));
+    }
+
+    private Bson createIndexOfExpr(Object expr, Object subExpr) {
+        return new Document("$indexOfBytes", Arrays.asList(expr, subExpr));
+    }
+
+    private Bson createSubstrExpr(Object strExpr, Object startIndexExpr, Object countExpr) {
+        return new Document("$substrBytes", Arrays.asList(strExpr, startIndexExpr, countExpr));
     }
 
     @Override

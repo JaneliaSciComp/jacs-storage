@@ -7,18 +7,18 @@ import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 
 import java.util.concurrent.ExecutionException;
 
-public class EntityUtils {
+class EntityUtils {
 
     private static LoadingCache<Class<?>, PersistenceInfo> MONGO_MAPPING_CACHE_BUILDER = CacheBuilder.newBuilder()
             .maximumSize(20)
             .build(new CacheLoader<Class<?>, PersistenceInfo>() {
                 @Override
                 public PersistenceInfo load(Class<?> entityClass) throws Exception {
-                    return loadMongoMapping(entityClass);
+                    return loadPersistenceInfo(entityClass);
                 }
             });
 
-    private static PersistenceInfo loadMongoMapping(Class<?> objectClass) {
+    private static PersistenceInfo loadPersistenceInfo(Class<?> objectClass) {
         PersistenceInfo persistenceInfo = null;
         for(Class<?> clazz = objectClass; clazz != null; clazz = clazz.getSuperclass()) {
             if (clazz.isAnnotationPresent(PersistenceInfo.class)) {
@@ -29,7 +29,7 @@ public class EntityUtils {
         return persistenceInfo;
     }
 
-    public static PersistenceInfo getMongoMapping(Class<?> objectClass) {
+    static PersistenceInfo getPersistenceInfo(Class<?> objectClass) {
         try {
             return MONGO_MAPPING_CACHE_BUILDER.get(objectClass);
         } catch (ExecutionException e) {

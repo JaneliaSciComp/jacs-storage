@@ -161,9 +161,9 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
         queriesWithExpectedResults.forEach((q, volumeNames) -> {
             long count = testDao.countMatchingVolumes(q);
             List<JacsStorageVolume> volumes = testDao.findMatchingVolumes(q, new PageRequest()).getResultList();
-            assertThat(count, equalTo((long) volumeNames.length));
+            assertThat(q.toString(), count, equalTo((long) volumeNames.length));
             if (volumeNames.length > 0) {
-                assertThat(volumes.stream().map(sv -> sv.getName()).collect(Collectors.toList()), containsInAnyOrder(volumeNames));
+                assertThat(q.toString(), volumes.stream().map(sv -> sv.getName()).collect(Collectors.toList()), containsInAnyOrder(volumeNames));
             }
         });
     }

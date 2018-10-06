@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.ErrorCategory;
 import com.mongodb.MongoWriteException;
-import com.mongodb.WriteError;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
@@ -34,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -66,7 +66,7 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
 
     private String getEntityCollectionName() {
         Class<T> entityClass = getEntityType();
-        PersistenceInfo persistenceInfo = EntityUtils.getMongoMapping(entityClass);
+        PersistenceInfo persistenceInfo = EntityUtils.getPersistenceInfo(entityClass);
         Preconditions.checkArgument(persistenceInfo != null, "Entity class " + entityClass.getName() + " is not annotated with MongoMapping");
         return persistenceInfo.storeName();
     }
@@ -124,7 +124,7 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
 
     @Override
     public long countAll() {
-        return mongoCollection.count();
+        return mongoCollection.countDocuments();
     }
 
     <R> List<R> findAsList(Bson queryFilter, Bson sortCriteria, long offset, int length, Class<R> resultType) {
@@ -148,12 +148,9 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
                 .sort(sortCriteria);
     }
 
-    <R> List<R> aggregateAsList(Bson queryFilter, List<Bson> aggregationOperators, Bson sortCriteria, int offset, int length, Class<R> resultType) {
+    <R> List<R> aggregateAsList(List<Bson> aggregationOperators, Bson sortCriteria, int offset, int length, Class<R> resultType) {
         List<R> results = new ArrayList<>();
         ImmutableList.Builder<Bson> aggregatePipelineBuilder = ImmutableList.builder();
-        if (queryFilter != null) {
-            aggregatePipelineBuilder.add(Aggregates.match(queryFilter));
-        }
         if (CollectionUtils.isNotEmpty(aggregationOperators)) {
             aggregatePipelineBuilder.addAll(aggregationOperators);
         }
@@ -170,11 +167,8 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
         return resultsItr.into(results);
     }
 
-    Long countAggregate(Bson queryFilter, List<Bson> aggregationOperators) {
+    Long countAggregate(List<Bson> aggregationOperators) {
         ImmutableList.Builder<Bson> aggregatePipelineBuilder = ImmutableList.builder();
-        if (queryFilter != null) {
-            aggregatePipelineBuilder.add(Aggregates.match(queryFilter));
-        }
         if (CollectionUtils.isNotEmpty(aggregationOperators)) {
             aggregatePipelineBuilder.addAll(aggregationOperators);
         }
