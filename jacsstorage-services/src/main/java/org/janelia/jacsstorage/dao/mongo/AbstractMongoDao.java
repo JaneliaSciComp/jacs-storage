@@ -148,8 +148,14 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
                 .sort(sortCriteria);
     }
 
-    <R> List<R> aggregateAsList(List<Bson> aggregationOperators, Bson sortCriteria, int offset, int length, Class<R> resultType) {
+    <R> List<R> aggregateAsList(List<Bson> aggregationOperators, Bson sortCriteria, long offset, int length, Class<R> resultType) {
         List<R> results = new ArrayList<>();
+        Iterable<R> resultsItr = aggregateIterable(aggregationOperators, sortCriteria, offset, length, resultType);
+        resultsItr.forEach(results::add);
+        return results;
+    }
+
+    <R> Iterable<R> aggregateIterable(List<Bson> aggregationOperators, Bson sortCriteria, long offset, int length, Class<R> resultType) {
         ImmutableList.Builder<Bson> aggregatePipelineBuilder = ImmutableList.builder();
         if (CollectionUtils.isNotEmpty(aggregationOperators)) {
             aggregatePipelineBuilder.addAll(aggregationOperators);
@@ -158,13 +164,12 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
             aggregatePipelineBuilder.add(Aggregates.sort(sortCriteria));
         }
         if (offset > 0) {
-            aggregatePipelineBuilder.add(Aggregates.skip(offset));
+            aggregatePipelineBuilder.add(Aggregates.skip((int) offset));
         }
         if (length > 0) {
             aggregatePipelineBuilder.add(Aggregates.limit(length));
         }
-        AggregateIterable<R> resultsItr = mongoCollection.aggregate(aggregatePipelineBuilder.build(), resultType);
-        return resultsItr.into(results);
+        return mongoCollection.aggregate(aggregatePipelineBuilder.build(), resultType);
     }
 
     Long countAggregate(List<Bson> aggregationOperators) {

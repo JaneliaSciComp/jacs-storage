@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
@@ -65,21 +66,21 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
 
     @Override
     public Long countMatchingVolumes(StorageQuery storageQuery) {
-        return mongoCollection.count(Filters.and(createMatchingFilter(storageQuery)));
+        return countAggregate(createMatchingPipeline(storageQuery));
     }
 
     @Override
     public PageResult<JacsStorageVolume> findMatchingVolumes(StorageQuery storageQuery, PageRequest pageRequest) {
         List<JacsStorageVolume> results = new ArrayList<>();
-        List<Bson> storageFilters = createMatchingFilter(storageQuery);
-        Iterable<JacsStorageVolume> storageVolumesItr = findIterable(
-                CollectionUtils.isNotEmpty(storageFilters)
-                        ? Filters.and(storageFilters)
-                        : null,
-                createBsonSortCriteria(ImmutableList.of(new SortCriteria("storageVirtualPath", SortDirection.DESC)), pageRequest.getSortCriteria()),
+        Iterable<JacsStorageVolume> storageVolumesItr = aggregateIterable(
+                createMatchingPipeline(storageQuery),
+                createBsonSortCriteria(ImmutableList.of(
+                        new SortCriteria("storageVirtualPath", SortDirection.DESC)),
+                        pageRequest.getSortCriteria()),
                 pageRequest.getOffset(),
                 pageRequest.getPageSize(),
-                getEntityType());
+                getEntityType()
+        );
         if (StringUtils.isBlank(storageQuery.getDataStoragePath())) {
             storageVolumesItr.forEach(results::add);
         } else {
@@ -92,7 +93,8 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         return new PageResult<>(pageRequest, results);
     }
 
-    private List<Bson> createMatchingFilter(StorageQuery storageQuery) {
+    private List<Bson> createMatchingPipeline(StorageQuery storageQuery) {
+        ImmutableList.Builder<Bson> pipelineBuilder = new ImmutableList.Builder<>();
         ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
         if (storageQuery.getId() != null) {
             filtersBuilder.add(Filters.eq("_id", storageQuery.getId()));
@@ -126,9 +128,25 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             filtersBuilder.add(Filters.eq("name", storageQuery.getStorageName()));
         }
         if (StringUtils.isNotBlank(storageQuery.getDataStoragePath())) {
-//            filtersBuilder.add(Filters.expr(createMatchRootDirCond(storageQuery.getDataStoragePath())));
-
-            filtersBuilder.add(Filters.where(createMatchRootDirExpr(storageQuery.getDataStoragePath())));
+            Bson storageRootBase = createStorageRootBaseExpr();
+            pipelineBuilder.add(Aggregates.addFields(
+                    new Field("storageRootBase",
+                            createStartsWithExpr(storageQuery.getDataStoragePath(), storageRootBase)
+                    ),
+                    new Field(
+                            "dataStoragePath",
+                            createCondExpr(
+                                    createStartsWithExpr(storageQuery.getDataStoragePath(), storageRootBase),
+                                    storageQuery.getDataStoragePath(),
+                                    createCondExpr(
+                                            createStartsWithExpr(storageQuery.getDataStoragePath(), "$storageVirtualPath"),
+                                            storageQuery.getDataStoragePath(),
+                                            ""
+                                    )
+                            )
+                    )
+            ));
+            filtersBuilder.add(Filters.eq("dataStoragePath", storageQuery.getDataStoragePath()));
         }
         if (StringUtils.isNotBlank(storageQuery.getStorageVirtualPath())) {
             filtersBuilder.add(Filters.eq("storageVirtualPath", storageQuery.getStorageVirtualPath()));
@@ -152,8 +170,8 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         if (!storageQuery.isIncludeInactiveVolumes()) {
             filtersBuilder.add(Filters.eq("activeFlag", true));
         }
-        System.out.println(" !!!! FILTERS " + filtersBuilder.build());
-        return filtersBuilder.build();
+        pipelineBuilder.add(Aggregates.match(Filters.and(filtersBuilder.build())));
+        return pipelineBuilder.build();
     }
 
     private String createMatchRootDirExpr(String dataPath) {

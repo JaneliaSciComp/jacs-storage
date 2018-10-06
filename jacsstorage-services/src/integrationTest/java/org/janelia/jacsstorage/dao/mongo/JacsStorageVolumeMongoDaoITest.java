@@ -138,13 +138,17 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
         persistEntity(testDao, createTestEntity("h3", 10, "v3", "/v3", "/lp3",30L));
         Map<StorageQuery, String[]> queriesWithExpectedResults =
                 ImmutableMap.<StorageQuery, String[]>builder()
-                        .put(new StorageQuery().setShared(true), // local doesn't matter if shared is true
-                                new String[]{"sv1", "sv2", "sv3"})
-                        .put(new StorageQuery().setLocalToAnyHost(true),
-                                new String[]{"v1", "v2", "v3"})
-                        .put(new StorageQuery().addStorageHost("h1").addStorageHost("h3"),
-                                new String[]{"v1", "v3"})
+//                        .put(new StorageQuery().setShared(true), // local doesn't matter if shared is true
+//                                new String[]{"sv1", "sv2", "sv3"})
+//                        .put(new StorageQuery().setLocalToAnyHost(true),
+//                                new String[]{"v1", "v2", "v3"})
+//                        .put(new StorageQuery().addStorageHost("h1").addStorageHost("h3"),
+//                                new String[]{"v1", "v3"})
                         .put(new StorageQuery().setDataStoragePath("/sv1/folder"),
+                                new String[]{"sv1"})
+                        .put(new StorageQuery().setDataStoragePath("/sv1/folder/subfolder"),
+                                new String[]{"sv1"})
+                        .put(new StorageQuery().setDataStoragePath("/p1/subfolder"),
                                 new String[]{"sv1"})
                         .put(new StorageQuery().setDataStoragePath("/sv1/myfolder/has/this/data"),
                                 new String[]{})
@@ -155,6 +159,8 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
                         .put(new StorageQuery().setDataStoragePath("/p2/mydata"),
                                 new String[]{"sv2"})
                         .put(new StorageQuery().setDataStoragePath("/sv2"),
+                                new String[]{})
+                        .put(new StorageQuery().setDataStoragePath("/nonmatch"),
                                 new String[]{})
                         .build()
                 ;
