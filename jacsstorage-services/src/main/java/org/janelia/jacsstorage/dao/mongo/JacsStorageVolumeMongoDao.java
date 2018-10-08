@@ -134,10 +134,10 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             // and the field is matched against the query
             Bson storageRootBase = createStorageRootBaseExpr();
             pipelineBuilder.add(Aggregates.addFields(
-                    new Field("storageRootBase",
+                    new Field<>("storageRootBase",
                             createStartsWithExpr(storageQuery.getDataStoragePath(), storageRootBase)
                     ),
-                    new Field(
+                    new Field<>(
                             "dataStoragePath",
                             createCondExpr(
                                     createStartsWithExpr(storageQuery.getDataStoragePath(), storageRootBase),
