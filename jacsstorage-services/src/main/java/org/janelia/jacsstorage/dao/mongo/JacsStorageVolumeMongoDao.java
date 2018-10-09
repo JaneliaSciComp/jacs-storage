@@ -66,21 +66,33 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
 
     @Override
     public Long countMatchingVolumes(StorageQuery storageQuery) {
-        return countAggregate(createMatchingPipeline(storageQuery));
+        return mongoCollection.count(Filters.and(createMatchingFilter(storageQuery)));
+
+        //        return countAggregate(createMatchingPipeline(storageQuery));
     }
 
     @Override
     public PageResult<JacsStorageVolume> findMatchingVolumes(StorageQuery storageQuery, PageRequest pageRequest) {
         List<JacsStorageVolume> results = new ArrayList<>();
-        Iterable<JacsStorageVolume> storageVolumesItr = aggregateIterable(
-                createMatchingPipeline(storageQuery),
-                createBsonSortCriteria(ImmutableList.of(
-                        new SortCriteria("storageVirtualPath", SortDirection.DESC)),
-                        pageRequest.getSortCriteria()),
+        List<Bson> storageFilters = createMatchingFilter(storageQuery);
+        Iterable<JacsStorageVolume> storageVolumesItr = findIterable(
+                CollectionUtils.isNotEmpty(storageFilters)
+                        ? Filters.and(storageFilters)
+                        : null,
+                createBsonSortCriteria(ImmutableList.of(new SortCriteria("storageVirtualPath", SortDirection.DESC)), pageRequest.getSortCriteria()),
                 pageRequest.getOffset(),
                 pageRequest.getPageSize(),
-                getEntityType()
-        );
+                getEntityType());
+
+//        Iterable<JacsStorageVolume> storageVolumesItr = aggregateIterable(
+//                createMatchingPipeline(storageQuery),
+//                createBsonSortCriteria(ImmutableList.of(
+//                        new SortCriteria("storageVirtualPath", SortDirection.DESC)),
+//                        pageRequest.getSortCriteria()),
+//                pageRequest.getOffset(),
+//                pageRequest.getPageSize(),
+//                getEntityType()
+//        );
         if (StringUtils.isBlank(storageQuery.getDataStoragePath())) {
             storageVolumesItr.forEach(results::add);
         } else {
@@ -93,7 +105,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         return new PageResult<>(pageRequest, results);
     }
 
-    private List<Bson> createMatchingPipeline(StorageQuery storageQuery) {
+    private List<Bson> createMatchingFilter(StorageQuery storageQuery) {
         ImmutableList.Builder<Bson> pipelineBuilder = new ImmutableList.Builder<>();
         ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
         if (storageQuery.getId() != null) {
@@ -128,29 +140,31 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             filtersBuilder.add(Filters.eq("name", storageQuery.getStorageName()));
         }
         if (StringUtils.isNotBlank(storageQuery.getDataStoragePath())) {
-            // the way this filter works is by checking if the current storage root directory (or virtual path)
-            // are a prefix of the given argument.
-            // If the condition is met then a field with the same value is added to the projection
-            // and the field is matched against the query
-            Bson storageRootBase = createStorageRootBaseExpr();
-            pipelineBuilder.add(Aggregates.addFields(
-                    new Field<>("storageRootBase",
-                            createStartsWithExpr(storageQuery.getDataStoragePath(), ifNullExp(storageRootBase, literalExp("$$$")))
-                    ),
-                    new Field<>(
-                            "dataStoragePath",
-                            createCondExpr(
-                                    createStartsWithExpr(storageQuery.getDataStoragePath(), ifNullExp(storageRootBase, literalExp("$$$"))),
-                                    storageQuery.getDataStoragePath(),
-                                    createCondExpr(
-                                            createStartsWithExpr(storageQuery.getDataStoragePath(), ifNullExp("$storageVirtualPath", literalExp("$$$"))),
-                                            storageQuery.getDataStoragePath(),
-                                            ""
-                                    )
-                            )
-                    )
-            ));
-            filtersBuilder.add(Filters.eq("dataStoragePath", storageQuery.getDataStoragePath()));
+            filtersBuilder.add(Filters.where(createMatchRootDirExpr(storageQuery.getDataStoragePath())));
+
+//            // the way this filter works is by checking if the current storage root directory (or virtual path)
+//            // are a prefix of the given argument.
+//            // If the condition is met then a field with the same value is added to the projection
+//            // and the field is matched against the query
+//            Bson storageRootBase = createStorageRootBaseExpr();
+//            pipelineBuilder.add(Aggregates.addFields(
+//                    new Field<>("storageRootBase",
+//                            createStartsWithExpr(storageQuery.getDataStoragePath(), ifNullExp(storageRootBase, literalExp("$$$")))
+//                    ),
+//                    new Field<>(
+//                            "dataStoragePath",
+//                            createCondExpr(
+//                                    createStartsWithExpr(storageQuery.getDataStoragePath(), ifNullExp(storageRootBase, literalExp("$$$"))),
+//                                    storageQuery.getDataStoragePath(),
+//                                    createCondExpr(
+//                                            createStartsWithExpr(storageQuery.getDataStoragePath(), ifNullExp("$storageVirtualPath", literalExp("$$$"))),
+//                                            storageQuery.getDataStoragePath(),
+//                                            ""
+//                                    )
+//                            )
+//                    )
+//            ));
+//            filtersBuilder.add(Filters.eq("dataStoragePath", storageQuery.getDataStoragePath()));
         }
         if (StringUtils.isNotBlank(storageQuery.getStorageVirtualPath())) {
             filtersBuilder.add(Filters.eq("storageVirtualPath", storageQuery.getStorageVirtualPath()));
@@ -174,8 +188,26 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         if (!storageQuery.isIncludeInactiveVolumes()) {
             filtersBuilder.add(Filters.eq("activeFlag", true));
         }
-        pipelineBuilder.add(Aggregates.match(Filters.and(filtersBuilder.build())));
-        return pipelineBuilder.build();
+//        pipelineBuilder.add(Aggregates.match(Filters.and(filtersBuilder.build())));
+        return filtersBuilder.build();
+    }
+
+    private String createMatchRootDirExpr(String dataPath) {
+        String expr = "function() {" +
+                "return " +
+                "(" +
+                "this.storageRootTemplate && " +
+                "   this.storageRootTemplate.indexOf('$') == -1 " +
+                "      ? '%1$s'.startsWith(this.storageRootTemplate) " +
+                "      : '%1$s'.startsWith(this.storageRootTemplate.slice(0, this.storageRootTemplate.indexOf('$')))" +
+                ")" +
+                " || " +
+                "(" +
+                "this.storageVirtualPath && " +
+                "   '%1$s'.startsWith(this.storageVirtualPath)" +
+                "); " +
+                "}";
+        return String.format(expr, dataPath);
     }
 
     private Bson createStorageRootBaseExpr() {
