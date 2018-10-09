@@ -1,4 +1,8 @@
-# 1.6.1.SNAPSHOT
+# 1.6.1.RELEASE
+
+* This was a fix build in which we had to roll back the addFields stage
+from search volume because that is not yet supported by the production
+version which still runs 3.2.4
 
 # 1.6.0.RELEASE
 
