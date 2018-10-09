@@ -132,7 +132,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             // are a prefix of the given argument.
             // If the condition is met then a field with the same value is added to the projection
             // and the field is matched against the query
-            Bson storageRootBase = ifNullExp(createStorageRootBaseExpr(), literalExp("$$"));
+            Bson storageRootBase = ifNullExp(createStorageRootBaseExpr(), literalExp("--"));
             pipelineBuilder.add(Aggregates.addFields(
                     new Field<>("storageRootBase",
                             createStartsWithExpr(storageQuery.getDataStoragePath(), storageRootBase)
