@@ -1,3 +1,5 @@
+# 1.6.2.SNAPSHOT
+
 # 1.6.1.RELEASE
 
 * This was a fix build in which we had to roll back the addFields stage
