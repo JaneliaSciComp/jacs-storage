@@ -180,9 +180,14 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
 
     private Bson createStorageRootBaseExpr() {
         Bson indexOfVarExpr = new Document("$indexOfCP", Arrays.asList("$storageRootTemplate", new Document("$literal", "$")));
-        return createCondExpr(createEqExpr(indexOfVarExpr, -1),
+        Bson indexOfVarWithDefaultExpr = ifNullExp(indexOfVarExpr, -1);
+        return createCondExpr(createEqExpr(indexOfVarWithDefaultExpr, -1),
                 "$storageRootTemplate",
                 createSubstrExpr("$storageRootTemplate", 0, indexOfVarExpr));
+    }
+
+    private Bson ifNullExp(Object expr, Object nullDefault) {
+        return new Document("ifNull", Arrays.asList(expr, nullDefault));
     }
 
     private Bson createCondExpr(Object cond, Object thenValue, Object elseValue) {
