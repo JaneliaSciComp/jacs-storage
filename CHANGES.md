@@ -1,4 +1,4 @@
-# 1.6.0.SNAPSHOT
+# 1.6.0.RELEASE
 
 * support for context variables in the volume path, such as ${username}, ${name}, ${createdDate}
 
