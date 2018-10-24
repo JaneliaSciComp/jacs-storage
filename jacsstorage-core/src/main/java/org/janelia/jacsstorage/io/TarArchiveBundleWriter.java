@@ -10,7 +10,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.FileUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
-import org.janelia.jacsstorage.model.DataInterval;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
