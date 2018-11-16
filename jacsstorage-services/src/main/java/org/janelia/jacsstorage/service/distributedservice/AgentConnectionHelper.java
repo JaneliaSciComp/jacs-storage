@@ -57,7 +57,7 @@ class AgentConnectionHelper {
                     .header("JacsSubject", subject)
                     ;
             Response response = targetRequestBuilder.get();
-            if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 LOG.warn("Agent {} retrieve usage returned {} while trying to get usage data for {} on {}",
                         agentUrl, response.getStatus(), subject, storageVolumeId);
                 response.close();
@@ -86,7 +86,7 @@ class AgentConnectionHelper {
                     .header("JacsSubject", subject)
                     ;
             Response response = targetRequestBuilder.get();
-            if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 LOG.warn("Agent {} retrieve usage returned {} while trying to get usage data for {} on {}",
                         agentUrl, response.getStatus(), subject, storagePath);
                 response.close();
