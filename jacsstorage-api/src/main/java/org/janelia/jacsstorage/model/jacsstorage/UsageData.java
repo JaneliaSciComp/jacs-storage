@@ -20,7 +20,9 @@ public class UsageData {
     private final Number spaceUsedTB;
     private final Number totalSpaceTB;
     private final Number totalFiles;
+    @JsonProperty
     private final Double warnPercentage;
+    @JsonProperty
     private final Double failPercentage;
 
     @JsonCreator
