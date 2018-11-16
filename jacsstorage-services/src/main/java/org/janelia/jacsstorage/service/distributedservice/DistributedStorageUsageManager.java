@@ -40,7 +40,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
         return AgentConnectionHelper.retrieveVolumeUsageData(storageVolumes.get(0).getStorageServiceURL(),
                 storageVolumeId,
                 null,
-                jacsCredentials.getAuthToken());
+                jacsCredentials);
     }
 
     @TimedMethod(
@@ -56,7 +56,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
         List<UsageData> usageDataReport = AgentConnectionHelper.retrieveVolumeUsageData(storageVolumes.get(0).getStorageServiceURL(),
                 storageVolumeId,
                 username,
-                jacsCredentials.getAuthToken());
+                jacsCredentials);
         return CollectionUtils.isEmpty(usageDataReport) ? UsageData.EMPTY : usageDataReport.get(0);
     }
 
@@ -73,7 +73,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
         return AgentConnectionHelper.retrieveVolumeUsageData(storageVolumes.get(0).getStorageServiceURL(),
                 storageVolumes.get(0).getId(),
                 null,
-                jacsCredentials.getAuthToken());
+                jacsCredentials);
     }
 
     @TimedMethod(
@@ -89,7 +89,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
         List<UsageData> usageDataReport = AgentConnectionHelper.retrieveVolumeUsageData(storageVolumes.get(0).getStorageServiceURL(),
                 storageVolumes.get(0).getId(),
                 username,
-                jacsCredentials.getAuthToken());
+                jacsCredentials);
         return CollectionUtils.isEmpty(usageDataReport) ? UsageData.EMPTY : usageDataReport.get(0);
     }
 
@@ -106,7 +106,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
         return AgentConnectionHelper.retrieveDataPathUsageData(storageVolumes.get(0).getStorageServiceURL(),
                 storagePath,
                 null,
-                jacsCredentials.getAuthToken());
+                jacsCredentials);
     }
 
     @TimedMethod(
@@ -122,7 +122,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
         List<UsageData> usageDataReport = AgentConnectionHelper.retrieveDataPathUsageData(storageVolumes.get(0).getStorageServiceURL(),
                 storagePath,
                 username,
-                jacsCredentials.getAuthToken());
+                jacsCredentials);
         return CollectionUtils.isEmpty(usageDataReport) ? UsageData.EMPTY : usageDataReport.get(0);
     }
 }

@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
 import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
+import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.serviceutils.HttpClientUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +24,8 @@ class AgentConnectionHelper {
 
     static StorageAgentInfo getAgentStatus(String agentUrl) {
         String agentStatusEndpoint = "/connection/status";
-        Client httpClient = null;
+        Client httpClient = HttpClientUtils.createHttpClient();
         try {
-            httpClient = HttpClientUtils.createHttpClient();
             WebTarget target = httpClient.target(agentUrl).path(agentStatusEndpoint);
             Response response = target.request()
                     .get()
@@ -39,27 +39,24 @@ class AgentConnectionHelper {
         } catch (Exception e) {
             LOG.warn("Error raised during agent getStatus", e);
         } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
+            httpClient.close();
         }
         return null;
     }
 
-    static List<UsageData> retrieveVolumeUsageData(String agentUrl, Number storageVolumeId, String subject, String authToken) {
+    static List<UsageData> retrieveVolumeUsageData(String agentUrl, Number storageVolumeId, String subject, JacsCredentials jacsCredentials) {
         String storageUsageEndpoint = String.format("/agent_storage/volume_quota/%s/report/%s",
                 storageVolumeId,
                 StringUtils.defaultIfBlank(JacsSubjectHelper.getNameFromSubjectKey(subject), ""));
-        Client httpClient = null;
+        Client httpClient = HttpClientUtils.createHttpClient();
         try {
-            httpClient = HttpClientUtils.createHttpClient();
             WebTarget target = httpClient.target(agentUrl)
                     .path(storageUsageEndpoint);
             Invocation.Builder targetRequestBuilder = target.request()
-                    .header("Authorization", "Bearer " + authToken)
+                    .header("Authorization", getAuthorizationHeader(jacsCredentials))
                     .header("JacsSubject", subject)
                     ;
-            Response response = targetRequestBuilder.delete();
+            Response response = targetRequestBuilder.get();
             if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
                 LOG.warn("Agent {} retrieve usage returned {} while trying to get usage data for {} on {}",
                         agentUrl, response.getStatus(), subject, storageVolumeId);
@@ -71,27 +68,24 @@ class AgentConnectionHelper {
         } catch (Exception e) {
             LOG.warn("Error raised during agent retrieve usage for {} on {}", subject, storageVolumeId, e);
         } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
+            httpClient.close();
         }
         return ImmutableList.of();
     }
 
-    static List<UsageData> retrieveDataPathUsageData(String agentUrl, String storagePath, String subject, String authToken) {
+    static List<UsageData> retrieveDataPathUsageData(String agentUrl, String storagePath, String subject, JacsCredentials jacsCredentials) {
         String storageUsageEndpoint = String.format("/agent_storage/path_quota/%s/report/%s",
                 storagePath,
                 StringUtils.defaultIfBlank(JacsSubjectHelper.getNameFromSubjectKey(subject), ""));
-        Client httpClient = null;
+        Client httpClient = HttpClientUtils.createHttpClient();
         try {
-            httpClient = HttpClientUtils.createHttpClient();
             WebTarget target = httpClient.target(agentUrl)
                     .path(storageUsageEndpoint);
             Invocation.Builder targetRequestBuilder = target.request()
-                    .header("Authorization", "Bearer " + authToken)
+                    .header("Authorization", getAuthorizationHeader(jacsCredentials))
                     .header("JacsSubject", subject)
                     ;
-            Response response = targetRequestBuilder.delete();
+            Response response = targetRequestBuilder.get();
             if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
                 LOG.warn("Agent {} retrieve usage returned {} while trying to get usage data for {} on {}",
                         agentUrl, response.getStatus(), subject, storagePath);
@@ -103,24 +97,21 @@ class AgentConnectionHelper {
         } catch (Exception e) {
             LOG.warn("Error raised during agent retrieve usage for {} on {}", subject, storagePath, e);
         } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
+            httpClient.close();
         }
         return ImmutableList.of();
     }
 
-    static boolean deleteStorage(String agentUrl, Number dataBundleId, String subject, String authToken) {
-        Client httpClient = null;
+    static boolean deleteStorage(String agentUrl, Number dataBundleId, String subject, JacsCredentials jacsCredentials) {
+        Client httpClient = HttpClientUtils.createHttpClient();
         Response response = null;
         try {
-            httpClient = HttpClientUtils.createHttpClient();
             WebTarget target = httpClient.target(agentUrl)
                     .path("agent_storage")
                     .path(dataBundleId.toString())
                     ;
             Invocation.Builder targetRequestBuilder = target.request()
-                    .header("Authorization", "Bearer " + authToken)
+                    .header("Authorization", getAuthorizationHeader(jacsCredentials))
                     .header("JacsSubject", subject)
                     ;
             response = targetRequestBuilder.delete();
@@ -136,11 +127,16 @@ class AgentConnectionHelper {
             if (response != null) {
                 response.close();
             }
-            if (httpClient != null) {
-                httpClient.close();
-            }
+            httpClient.close();
         }
         return false;
     }
 
+    private static String getAuthorizationHeader(JacsCredentials jacsCredentials) {
+        if (jacsCredentials == null) {
+            return "";
+        } else {
+            return jacsCredentials.asAuthorizationHeader();
+        }
+    }
 }
