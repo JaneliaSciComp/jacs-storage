@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
+import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
@@ -88,8 +89,9 @@ public class VolumeQuotaResource {
         return retrieveSubjectQuotaStatusForVolumeName(volumeName, subjectName, SecurityUtils.getUserPrincipal(securityContext));
     }
 
-    private Response retrieveSubjectQuotaStatusForVolumeName(String volumeName, String subjectName, JacsCredentials userPrincipal) {
+    private Response retrieveSubjectQuotaStatusForVolumeName(String volumeName, String subjectNameParam, JacsCredentials userPrincipal) {
         List<UsageData> usageData;
+        String subjectName = JacsSubjectHelper.getNameFromSubjectKey(subjectNameParam);
         if (StringUtils.isBlank(subjectName)) {
             usageData = storageUsageManager.getUsageByVolumeName(volumeName, userPrincipal);
         } else {
@@ -111,10 +113,11 @@ public class VolumeQuotaResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response retrieveSubjectQuotaForVolumeId(@PathParam("storageVolumeId") Long storageVolumeId,
-                                                    @QueryParam("subjectName") String subjectName,
+                                                    @QueryParam("subjectName") String subjectNameParam,
                                                     @Context SecurityContext securityContext) {
-        LOG.info("Retrieve user quota for {} on {}", subjectName, storageVolumeId);
+        LOG.info("Retrieve user quota for {} on {}", subjectNameParam, storageVolumeId);
         List<UsageData> usageData;
+        String subjectName = JacsSubjectHelper.getNameFromSubjectKey(subjectNameParam);
         if (StringUtils.isBlank(subjectName)) {
             usageData = storageUsageManager.getUsageByVolumeId(storageVolumeId,
                     SecurityUtils.getUserPrincipal(securityContext));
@@ -139,11 +142,12 @@ public class VolumeQuotaResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response retrieveSubjectQuotaForDataPath(@PathParam("dataPath") String dataPath,
-                                                    @QueryParam("subjectName") String subjectName,
+                                                    @QueryParam("subjectName") String subjectNameParam,
                                                     @Context SecurityContext securityContext) {
         String fullDataPath = StringUtils.prependIfMissing(dataPath, "/");
-        LOG.info("Retrieve user quota for {} on {}", subjectName, fullDataPath);
+        LOG.info("Retrieve user quota for {} on {}", subjectNameParam, fullDataPath);
         List<UsageData> usageData;
+        String subjectName = JacsSubjectHelper.getNameFromSubjectKey(subjectNameParam);
         if (StringUtils.isBlank(subjectName)) {
             usageData = storageUsageManager.getUsageByStoragePath(fullDataPath,
                     SecurityUtils.getUserPrincipal(securityContext));
