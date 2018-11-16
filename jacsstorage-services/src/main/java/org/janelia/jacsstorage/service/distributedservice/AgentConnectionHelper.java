@@ -45,13 +45,16 @@ class AgentConnectionHelper {
     }
 
     static List<UsageData> retrieveVolumeUsageData(String agentUrl, Number storageVolumeId, String subject, JacsCredentials jacsCredentials) {
-        String storageUsageEndpoint = String.format("/agent_storage/volume_quota/%s/report/%s",
-                storageVolumeId,
-                StringUtils.defaultIfBlank(JacsSubjectHelper.getNameFromSubjectKey(subject), ""));
         Client httpClient = HttpClientUtils.createHttpClient();
         try {
             WebTarget target = httpClient.target(agentUrl)
-                    .path(storageUsageEndpoint);
+                    .path("/agent_storage/volume_quota")
+                    .path(storageVolumeId.toString())
+                    .path("report");
+            String subjectName = JacsSubjectHelper.getNameFromSubjectKey(subject);
+            if (StringUtils.isNotBlank(subjectName)) {
+                target = target.queryParam("subjectName", subjectName);
+            }
             Invocation.Builder targetRequestBuilder = target.request()
                     .header("Authorization", getAuthorizationHeader(jacsCredentials))
                     .header("JacsSubject", subject)
@@ -74,13 +77,16 @@ class AgentConnectionHelper {
     }
 
     static List<UsageData> retrieveDataPathUsageData(String agentUrl, String storagePath, String subject, JacsCredentials jacsCredentials) {
-        String storageUsageEndpoint = String.format("/agent_storage/path_quota/%s/report/%s",
-                storagePath,
-                StringUtils.defaultIfBlank(JacsSubjectHelper.getNameFromSubjectKey(subject), ""));
         Client httpClient = HttpClientUtils.createHttpClient();
         try {
             WebTarget target = httpClient.target(agentUrl)
-                    .path(storageUsageEndpoint);
+                    .path("/agent_storage/path_quota")
+                    .path(storagePath)
+                    .path("report");
+            String subjectName = JacsSubjectHelper.getNameFromSubjectKey(subject);
+            if (StringUtils.isNotBlank(subjectName)) {
+                target = target.queryParam("subjectName", subjectName);
+            }
             Invocation.Builder targetRequestBuilder = target.request()
                     .header("Authorization", getAuthorizationHeader(jacsCredentials))
                     .header("JacsSubject", subject)
