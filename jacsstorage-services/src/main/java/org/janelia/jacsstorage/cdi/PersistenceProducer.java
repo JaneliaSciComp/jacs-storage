@@ -1,13 +1,15 @@
 package org.janelia.jacsstorage.cdi;
 
 import com.google.common.base.Splitter;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoClientURI;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
@@ -23,6 +25,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -37,6 +40,9 @@ public class PersistenceProducer {
     @PropertyValue(name = "MongoDB.ServerName")
     private String mongoServer;
     @Inject
+    @PropertyValue(name = "MongoDB.ReplicaSet")
+    private String mongoReplicaSet;
+    @Inject
     @PropertyValue(name = "MongoDB.Database")
     private String mongoDatabase;
     @Inject
@@ -46,43 +52,47 @@ public class PersistenceProducer {
     @ApplicationScoped
     @Produces
     public MongoClient createMongoClient(
-            @PropertyValue(name = "MongoDB.ThreadsAllowedToBlockForConnectionMultiplier") int threadsAllowedToBlockMultiplier,
             @PropertyValue(name = "MongoDB.ConnectionsPerHost") int connectionsPerHost,
-            @PropertyValue(name = "MongoDB.ConnectTimeout") int connectTimeout,
+            @PropertyValue(name = "MongoDB.ConnectTimeoutInMillis") int connectTimeoutInMillis,
+            @PropertyValue(name = "MongoDB.ConnectionWaitQueueSize") int connectionWaitQueueSize,
+            @PropertyValue(name = "MongoDB.ConnectWaitTimeInSec") long connectWaitTimeInSec,
             @PropertyValue(name = "MongoDB.Username") String username,
             @PropertyValue(name = "MongoDB.Password") String password,
             ObjectMapperFactory objectMapperFactory) {
         CodecRegistry codecRegistry = RegistryHelper.createCodecRegistry(objectMapperFactory);
-        MongoClientOptions.Builder optionsBuilder =
-                MongoClientOptions.builder()
-                        .threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockMultiplier)
-                        .connectionsPerHost(connectionsPerHost)
-                        .connectTimeout(connectTimeout)
-                        .codecRegistry(codecRegistry);
+        MongoClientSettings.Builder mongoClientSettingsBuilder = MongoClientSettings.builder()
+                .codecRegistry(CodecRegistries.fromRegistries(
+                        MongoClientSettings.getDefaultCodecRegistry(),
+                        codecRegistry))
+                .applyToConnectionPoolSettings(builder -> builder
+                        .maxSize(connectionsPerHost)
+                        .maxWaitQueueSize(connectionWaitQueueSize)
+                        .maxWaitTime(connectWaitTimeInSec, TimeUnit.SECONDS)
+                )
+                .applyToSocketSettings(builder -> builder.connectTimeout(connectTimeoutInMillis, TimeUnit.MILLISECONDS))
+                ;
         if (StringUtils.isNotBlank(mongoServer)) {
-            // use the server address
-            List<ServerAddress> members = Splitter.on(',').trimResults().omitEmptyStrings().splitToList(mongoServer)
-                    .stream()
+            List<ServerAddress> clusterMembers = Splitter.on(',')
+                    .trimResults().omitEmptyStrings()
+                    .splitToList(mongoServer).stream()
                     .map(ServerAddress::new)
                     .collect(Collectors.toList());
-            if (StringUtils.isNotBlank(username)) {
-                String credentialsDb = StringUtils.defaultIfBlank(authMongoDatabase, mongoDatabase);
-                char[] passwordChars = StringUtils.isBlank(password) ? null : password.toCharArray();
-                MongoCredential credential = MongoCredential.createCredential(username, credentialsDb, passwordChars);
-                MongoClient m = new MongoClient(members, credential, optionsBuilder.build());
-                LOG.info("Connected to MongoDB ({}@{}) as user {}", mongoDatabase, mongoServer, username);
-                return m;
-            } else {
-                MongoClient m = new MongoClient(members, optionsBuilder.build());
-                LOG.info("Connected to MongoDB ({}@{})", mongoDatabase, mongoServer);
-                return m;
-            }
+            mongoClientSettingsBuilder.applyToClusterSettings(builder -> builder.hosts(clusterMembers));
         } else {
-            // use the connection URI
-            MongoClientURI mongoConnectionString = new MongoClientURI(mongoConnectionURL, optionsBuilder);
-            LOG.info("Creating Mongo client {} using database {}", mongoConnectionString, mongoDatabase);
-            return new MongoClient(mongoConnectionString);
+            // use connection URL
+            mongoClientSettingsBuilder.applyConnectionString(new ConnectionString(mongoConnectionURL));
         }
+        if (StringUtils.isNotBlank(mongoReplicaSet)) {
+            mongoClientSettingsBuilder.applyToClusterSettings(builder -> builder.requiredReplicaSetName(mongoReplicaSet));
+        }
+        if (StringUtils.isNotBlank(username)) {
+            LOG.info("Connect to MongoDB ({}@{})", mongoDatabase, StringUtils.defaultIfBlank(mongoServer, mongoConnectionURL),
+                    StringUtils.isBlank(username) ? "" : " as user " + username);
+            String credentialsDb = StringUtils.defaultIfBlank(authMongoDatabase, mongoDatabase);
+            char[] passwordChars = StringUtils.isBlank(password) ? null : password.toCharArray();
+            mongoClientSettingsBuilder.credential(MongoCredential.createCredential(username, credentialsDb, passwordChars));
+        }
+        return MongoClients.create(mongoClientSettingsBuilder.build());
     }
 
     @Produces

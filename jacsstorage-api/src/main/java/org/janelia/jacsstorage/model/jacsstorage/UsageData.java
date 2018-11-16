@@ -64,9 +64,14 @@ public class UsageData {
         return totalFiles;
     }
 
+    @JsonProperty
+    public Double getPercentUsage() {
+        return UsageDataHelper.percentage(spaceUsedTB, totalSpaceTB);
+    }
+
     @JsonProperty("status")
     public String getStatus() {
-        Double usageRatio = UsageDataHelper.percentage(spaceUsedTB, totalSpaceTB);
+        Double usageRatio = getPercentUsage();
         if (usageRatio == null) {
             return "UNKNOWN";
         } else {
