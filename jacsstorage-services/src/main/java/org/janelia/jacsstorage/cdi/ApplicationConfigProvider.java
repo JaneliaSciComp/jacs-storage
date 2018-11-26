@@ -1,8 +1,11 @@
 package org.janelia.jacsstorage.cdi;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.config.ApplicationConfigImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,6 +18,8 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class ApplicationConfigProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(ApplicationConfigProvider.class);
 
     private static final String DEFAULT_APPLICATION_CONFIG_RESOURCES = "/jacsstorage.properties";
 
@@ -55,6 +60,7 @@ public class ApplicationConfigProvider {
         if (StringUtils.isBlank(envVarValue)) {
             return this;
         }
+        log.info("Reading application config from environment {} -> {}", envVarName, envVarValue);
         return fromFile(envVarValue);
     }
 
@@ -65,10 +71,14 @@ public class ApplicationConfigProvider {
         File file = new File(fileName);
         if (file.exists() && file.isFile()) {
             try (InputStream fileInputStream = new FileInputStream(file)) {
+                log.info("Reading application config from file {}", file);
                 return fromInputStream(fileInputStream);
             } catch (IOException e) {
+                log.error("Error reading configuration file {}", fileName, e);
                 throw new UncheckedIOException(e);
             }
+        } else {
+            log.warn("Configuration file {} not found", fileName);
         }
         return this;
     }
@@ -92,7 +102,23 @@ public class ApplicationConfigProvider {
         return this;
     }
 
+    private ApplicationConfigProvider injectEnvProps() {
+
+        String prefix = "env.jade_";
+        for (Object o : Sets.newLinkedHashSet(applicationConfig.asMap().keySet())) {
+            String key = o.toString();
+            if (key.toLowerCase().startsWith(prefix)) {
+                String newKey = key.substring(prefix.length()).replaceAll("_", ".");
+                log.debug("Overriding {} with value from env", newKey);
+                applicationConfig.put(newKey, applicationConfig.asMap().get(key));
+            }
+        }
+
+        return this;
+    }
+
     public ApplicationConfig build() {
+        injectEnvProps();
         return applicationConfig;
     }
 
