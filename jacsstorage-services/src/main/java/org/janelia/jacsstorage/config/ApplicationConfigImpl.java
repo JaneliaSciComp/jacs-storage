@@ -21,8 +21,7 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     @Override
     public String getStringPropertyValue(String name) {
         String value = configProperties.get(name);
-        String resolvedValue = configValueResolver.resolve(value, configProperties);
-        return resolvedValue;
+        return configValueResolver.resolve(value, configProperties);
     }
 
     @Override
@@ -92,7 +91,6 @@ public class ApplicationConfigImpl implements ApplicationConfig {
         } else {
             return Splitter.on(',').trimResults().splitToList(stringValue);
         }
-
     }
 
     @Override

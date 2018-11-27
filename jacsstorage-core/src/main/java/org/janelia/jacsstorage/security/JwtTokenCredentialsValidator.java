@@ -31,11 +31,13 @@ public class JwtTokenCredentialsValidator implements TokenCredentialsValidator {
     }
 
     private String getJwt(String token) {
-        String jwt = "";
+        String jwt;
         if (StringUtils.startsWithIgnoreCase(token, "Bearer ")) {
             jwt = token.substring("Bearer ".length()).trim();
         } else if (StringUtils.startsWithIgnoreCase(token, "JacsToken ")) {
             jwt = token.substring("JacsToken ".length()).trim();
+        } else {
+            jwt = "";
         }
         return jwt;
     }
