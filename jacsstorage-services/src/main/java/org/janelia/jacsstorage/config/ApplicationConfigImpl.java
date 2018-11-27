@@ -33,7 +33,7 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     @Override
     public Boolean getBooleanPropertyValue(String name) {
         String stringValue = getStringPropertyValue(name);
-        return StringUtils.isBlank(stringValue) ? false : Boolean.valueOf(stringValue);
+        return StringUtils.isBlank(stringValue) ? Boolean.FALSE : Boolean.valueOf(stringValue);
     }
 
     @Override
