@@ -5,6 +5,8 @@ import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.service.localservice.StorageVolumeBootstrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
@@ -17,12 +19,14 @@ import java.util.Optional;
  */
 public class JacsAgentStorageApp extends AbstractStorageApp {
 
+    private static final Logger LOG = LoggerFactory.getLogger(JacsAgentStorageApp.class);
+
     private static final String DEFAULT_APP_ID = "JacsStorageWorker";
 
     private static class AgentArgs extends AppArgs {
-        @Parameter(names = "-masterURL", description = "URL of the master datatransfer to which to connect")
+        @Parameter(names = "-masterURL", description = "URL of the master datatransfer to which to connect", required=true)
         String masterHttpUrl;
-        @Parameter(names = "-publicPort", description = "Exposed or public port", required = false)
+        @Parameter(names = "-publicPort", description = "Exposed or public port")
         Integer publicPortNumber;
         @Parameter(names = "-bootstrapStorageVolumes", description = "Bootstrap agent volumes")
         boolean bootstrapStorageVolumes;
@@ -66,6 +70,9 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         if (StringUtils.isNotBlank(agentArgs.masterHttpUrl)) {
             // register agent
             agentState.connectTo(agentArgs.masterHttpUrl);
+        }
+        else {
+            throw new IllegalStateException("The 'masterURL' parameter is required");
         }
         // start the HTTP application
         app.start(agentArgs);
