@@ -102,7 +102,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         .addServlets(restApiServlet, swaggerDocsServlet)
                 ;
 
-        LOG.info("Deploy REST API at {}", basepath);
+        LOG.info("Deploying REST API at {}", basepath);
         DeploymentManager deploymentManager = Servlets.defaultContainer().addDeployment(servletBuilder);
         deploymentManager.deploy();
         HttpHandler restApiHttpHandler = deploymentManager.start();
@@ -136,7 +136,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                 getAccessLogFilter()
         );
 
-        LOG.info("Start JACS storage listener on {}:{}", appArgs.host, appArgs.portNumber);
+        LOG.info("Starting JACS storage listener on {}:{}", appArgs.host, appArgs.portNumber);
         server = Undertow
                 .builder()
                 .addHttpListener(appArgs.portNumber, appArgs.host)

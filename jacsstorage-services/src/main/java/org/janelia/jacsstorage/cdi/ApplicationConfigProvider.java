@@ -3,6 +3,8 @@ package org.janelia.jacsstorage.cdi;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.config.ApplicationConfigImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,6 +17,8 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class ApplicationConfigProvider {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ApplicationConfigProvider.class);
 
     private static final String DEFAULT_APPLICATION_CONFIG_RESOURCES = "/jacsstorage.properties";
 
@@ -55,6 +59,7 @@ public class ApplicationConfigProvider {
         if (StringUtils.isBlank(envVarValue)) {
             return this;
         }
+        LOG.info("Reading application config from environment {} -> {}", envVarName, envVarValue);
         return fromFile(envVarValue);
     }
 
@@ -65,10 +70,14 @@ public class ApplicationConfigProvider {
         File file = new File(fileName);
         if (file.exists() && file.isFile()) {
             try (InputStream fileInputStream = new FileInputStream(file)) {
+                LOG.info("Reading application config from file {}", file);
                 return fromInputStream(fileInputStream);
             } catch (IOException e) {
+                LOG.error("Error reading configuration file {}", fileName, e);
                 throw new UncheckedIOException(e);
             }
+        } else {
+            LOG.warn("Configuration file {} not found", fileName);
         }
         return this;
     }
@@ -92,7 +101,19 @@ public class ApplicationConfigProvider {
         return this;
     }
 
+    private void injectEnvProps() {
+        final String envPrefix = "env.jade_";
+        applicationConfig.asMap().entrySet().stream()
+                .filter(entry -> entry.getKey().toLowerCase().startsWith(envPrefix))
+                .forEach(entry -> {
+                    String newKey = entry.getKey().substring(envPrefix.length()).replaceAll("_", ".");
+                    LOG.debug("Overriding env entry {} with {} -> {}", entry, newKey, entry.getValue());
+                    applicationConfig.put(newKey, entry.getValue());
+                });
+    }
+
     public ApplicationConfig build() {
+        injectEnvProps();
         return applicationConfig;
     }
 

@@ -1,28 +1,30 @@
 package org.janelia.jacsstorage.app;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.service.localservice.StorageVolumeBootstrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.UriBuilder;
-import java.util.Optional;
 
 /**
  * This is the agent storage application.
  */
 public class JacsAgentStorageApp extends AbstractStorageApp {
 
+    private static final Logger LOG = LoggerFactory.getLogger(JacsAgentStorageApp.class);
+
     private static final String DEFAULT_APP_ID = "JacsStorageWorker";
 
     private static class AgentArgs extends AppArgs {
-        @Parameter(names = "-masterURL", description = "URL of the master datatransfer to which to connect")
+        @Parameter(names = "-masterURL", description = "URL of the master datatransfer to which to connect", required = true)
         String masterHttpUrl;
-        @Parameter(names = "-publicPort", description = "Exposed or public port", required = false)
+        @Parameter(names = "-publicPort", description = "Exposed or public port")
         Integer publicPortNumber;
         @Parameter(names = "-bootstrapStorageVolumes", description = "Bootstrap agent volumes")
         boolean bootstrapStorageVolumes;
@@ -30,11 +32,15 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
 
     public static void main(String[] args) {
         final AgentArgs agentArgs = parseAppArgs(args, new AgentArgs());
+        // validate agentArgs
         if (agentArgs.displayUsage) {
             displayAppUsage(agentArgs);
             return;
+        } else if (StringUtils.isNotBlank(agentArgs.masterHttpUrl)) {
+            LOG.error()
+            displayAppUsage(agentArgs, new StringBuilder("'masterURL' parameter is required").append('\n'));
+            throw new IllegalStateException("The 'masterURL' parameter is required");
         }
-
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
         SeContainer container = containerInit
                 .initialize();
@@ -63,10 +69,8 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
                         .port(agentPortNumber)
                         .build()
                         .toString());
-        if (StringUtils.isNotBlank(agentArgs.masterHttpUrl)) {
-            // register agent
-            agentState.connectTo(agentArgs.masterHttpUrl);
-        }
+        // register agent
+        agentState.connectTo(agentArgs.masterHttpUrl);
         // start the HTTP application
         app.start(agentArgs);
     }
