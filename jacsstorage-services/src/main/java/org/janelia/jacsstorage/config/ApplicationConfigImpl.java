@@ -21,7 +21,7 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     @Override
     public String getStringPropertyValue(String name) {
         String value = configProperties.get(name);
-        return configValueResolver.resolve(value, configProperties);
+        return configValueResolver.resolve(value, configProperties::get);
     }
 
     @Override

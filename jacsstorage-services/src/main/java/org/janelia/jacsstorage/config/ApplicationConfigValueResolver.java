@@ -18,15 +18,15 @@ public class ApplicationConfigValueResolver {
         StartPlaceHolder, OutsidePlaceHolder, InsidePlaceHolder, EscapeChar
     }
 
-    public String resolve(String v, Map<String, String> context) {
-        if (MapUtils.isEmpty(context)) {
+    public String resolve(String v, ContextValueGetter contextValueGetter) {
+        if (contextValueGetter == null) {
             // no context so simply return the value as is
             return v;
         }
-        return resolve(v, context, ImmutableSet.of());
+        return resolve(v, contextValueGetter, ImmutableSet.of());
     }
 
-    private String resolve(String v, Map<String, String> context, Set<String> evalHistory) {
+    private String resolve(String v, ContextValueGetter contextValueGetter, Set<String> evalHistory) {
         if (StringUtils.isBlank(v)) return v;
         StringBuilder resolvedValueBuilder = new StringBuilder();
         StringBuilder placeHolderBuilder = new StringBuilder();
@@ -70,12 +70,12 @@ public class ApplicationConfigValueResolver {
                             if (evalHistory.contains(placeHolderKey)) {
                                 throw new IllegalStateException("Circular dependency found while evaluating " + v + " -> " + evalHistory);
                             }
-                            String placeHolderValue = context.get(placeHolderKey);
+                            String placeHolderValue = contextValueGetter.get(placeHolderKey);
                             if (placeHolderValue == null) {
                                 // no value found - put the placeholder as is
                                 resolvedValueBuilder.append(placeHolderString);
                             } else {
-                                resolvedValueBuilder.append(resolve(placeHolderValue, context, ImmutableSet.<String>builder().addAll(evalHistory).add(placeHolderKey).build()));
+                                resolvedValueBuilder.append(resolve(placeHolderValue, contextValueGetter, ImmutableSet.<String>builder().addAll(evalHistory).add(placeHolderKey).build()));
                             }
                             placeHolderBuilder.setLength(0);
                             state = ResolverState.OutsidePlaceHolder;

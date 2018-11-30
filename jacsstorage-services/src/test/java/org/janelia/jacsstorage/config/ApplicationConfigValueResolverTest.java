@@ -73,7 +73,7 @@ public class ApplicationConfigValueResolverTest {
         };
 
         for (TestData td : testData) {
-            assertEquals(td.expectedValue, configValueResolver.resolve(td.toResolve, td.context));
+            assertEquals(td.expectedValue, configValueResolver.resolve(td.toResolve, td.context == null ? null : td.context::get));
         }
     }
 
@@ -133,7 +133,7 @@ public class ApplicationConfigValueResolverTest {
         };
 
         for (TestData td : testData) {
-            Assertions.assertThatThrownBy(() -> configValueResolver.resolve(td.toResolve, td.context))
+            Assertions.assertThatThrownBy(() -> configValueResolver.resolve(td.toResolve, td.context == null ? null : td.context::get))
                     .isInstanceOf(td.expectedExceptionClass)
                     .hasMessage(td.expectedExceptionMessage, td.expectedEvalHistory)
             ;

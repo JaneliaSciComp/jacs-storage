@@ -92,9 +92,9 @@ public class StorageVolumeBootstrapper {
                 getVolumeConfigPropertyName(volumeName, "VirtualPath"));
         String resolvedStoragePathPrefix = configValueResolver.resolve(
                 storagePathPrefix,
-                ImmutableMap.<String, String>builder()
+                (k) -> ImmutableMap.<String, String>builder()
                         .put("storageHost", storageHost)
-                        .build());
+                        .build().get(k));
         return StringUtils.prependIfMissing(resolvedStoragePathPrefix, "/");
     }
 
