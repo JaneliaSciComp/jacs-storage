@@ -17,8 +17,6 @@ import javax.ws.rs.core.UriBuilder;
  */
 public class JacsAgentStorageApp extends AbstractStorageApp {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JacsAgentStorageApp.class);
-
     private static final String DEFAULT_APP_ID = "JacsStorageWorker";
 
     private static class AgentArgs extends AppArgs {
@@ -37,7 +35,6 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
             displayAppUsage(agentArgs);
             return;
         } else if (StringUtils.isNotBlank(agentArgs.masterHttpUrl)) {
-            LOG.error()
             displayAppUsage(agentArgs, new StringBuilder("'masterURL' parameter is required").append('\n'));
             throw new IllegalStateException("The 'masterURL' parameter is required");
         }
