@@ -34,7 +34,8 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
         if (agentArgs.displayUsage) {
             displayAppUsage(agentArgs);
             return;
-        } else if (StringUtils.isNotBlank(agentArgs.masterHttpUrl)) {
+        } else if (StringUtils.isBlank(agentArgs.masterHttpUrl)) {
+            // this is somehow redundant since the parameter is marked as required
             displayAppUsage(agentArgs, new StringBuilder("'masterURL' parameter is required").append('\n'));
             throw new IllegalStateException("The 'masterURL' parameter is required");
         }
