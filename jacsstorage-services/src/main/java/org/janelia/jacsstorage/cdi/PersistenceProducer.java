@@ -83,6 +83,7 @@ public class PersistenceProducer {
             mongoClientSettingsBuilder.applyConnectionString(new ConnectionString(mongoConnectionURL));
         }
         if (StringUtils.isNotBlank(mongoReplicaSet)) {
+            LOG.info("Use replica set: {}", mongoReplicaSet);
             mongoClientSettingsBuilder.applyToClusterSettings(builder -> builder.requiredReplicaSetName(mongoReplicaSet));
         }
         if (StringUtils.isNotBlank(username)) {

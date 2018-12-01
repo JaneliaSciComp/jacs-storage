@@ -107,7 +107,7 @@ public class ApplicationConfigProvider {
                 .filter(entry -> entry.getKey().toLowerCase().startsWith(envPrefix))
                 .forEach(entry -> {
                     String newKey = entry.getKey().substring(envPrefix.length()).replaceAll("_", ".");
-                    LOG.debug("Overriding env entry {} with {} -> {}", entry, newKey, entry.getValue());
+                    LOG.debug("Overriding {} with value from env", newKey);
                     applicationConfig.put(newKey, entry.getValue());
                 });
     }
