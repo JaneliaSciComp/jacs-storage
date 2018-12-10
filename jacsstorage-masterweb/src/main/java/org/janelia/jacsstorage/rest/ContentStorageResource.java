@@ -22,6 +22,7 @@ import javax.ws.rs.HEAD;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -58,7 +59,9 @@ public class ContentStorageResource {
             @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
     })
-    public Response redirectForContentCheck(@PathParam("filePath") String filePathParam, @Context SecurityContext securityContext) {
+    public Response redirectForContentCheck(@PathParam("filePath") String filePathParam,
+                                            @QueryParam("directoryOnly") Boolean directoryOnlyParam,
+                                            @Context SecurityContext securityContext) {
         LOG.info("Check {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
@@ -70,6 +73,7 @@ public class ContentStorageResource {
                                         .path(dataBundle.getId().toString())
                                         .path("entry_content")
                                         .path(dataEntryPath)
+                                        .queryParam("directoryOnly", directoryOnlyParam != null && directoryOnlyParam ? true : false)
                                         .build())
                         )
                         .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST)
@@ -82,6 +86,7 @@ public class ContentStorageResource {
                                         .path("storage_volume")
                                         .path(storageVolume.getId().toString())
                                         .path(dataEntryPath.getPath())
+                                        .queryParam("directoryOnly", directoryOnlyParam != null && directoryOnlyParam ? true : false)
                                         .build())
                                 ;
                     } else {

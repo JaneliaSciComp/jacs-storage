@@ -36,6 +36,7 @@ import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -190,6 +191,30 @@ public class AgentStorageResource {
             });
         }
         return dataBundleContent;
+    }
+
+    @ApiOperation(
+            value = "Retrieve the content of the specified data bundle entry.",
+            notes = "Retrieve the specified entry's content. If the entry is a directory entry it streams the entire subdirectory tree as a tar archive, " +
+                    "otherwise if it is a file it streams the specified file's content."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully read the data bundle entry's content."),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
+    @HEAD
+    @Path("{dataBundleId}/entry_content/{dataEntryPath:.*}")
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    public Response checkEntryContent(@PathParam("dataBundleId") Long dataBundleId,
+                                      @PathParam("dataEntryPath") String dataEntryPath,
+                                      @QueryParam("directoryOnly") Boolean directoryOnlyParam,
+                                      @Context SecurityContext securityContext) {
+        LOG.info("Get entry {} content from bundle {} ", dataEntryPath, dataBundleId);
+        JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
+        Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        return storageResourceHelper.checkContentFromDataBundle(dataBundle, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam).build();
     }
 
     @ApiOperation(
