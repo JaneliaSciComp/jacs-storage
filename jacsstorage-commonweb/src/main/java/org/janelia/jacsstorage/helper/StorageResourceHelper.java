@@ -162,9 +162,16 @@ public class StorageResourceHelper {
         }
         return storageVolume.getDataStorageAbsolutePath(dataEntryName)
                 .filter(dataEntryPath -> Files.exists(dataEntryPath) && (!dirOnly || Files.isDirectory(dataEntryPath)))
-                .map(dataEntryPath -> Response
-                        .ok()
-                        .header("Content-Length", PathUtils.getSize(Paths.get(storageVolume.getBaseStorageRootDir()).resolve(dataEntryPath))))
+                .map(dataEntryPath -> {
+                    long fileSize;
+                    if (Files.isRegularFile(dataEntryPath)) {
+                        fileSize = PathUtils.getSize(dataEntryPath);
+                    } else {
+                        fileSize = 0;
+                    }
+                    return Response.ok()
+                            .header("Content-Length", fileSize);
+                })
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
                         .header("Content-Length", 0))

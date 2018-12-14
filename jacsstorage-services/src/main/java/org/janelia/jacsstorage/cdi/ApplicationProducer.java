@@ -98,7 +98,7 @@ public class ApplicationProducer {
     @ApplicationScoped
     @ApplicationProperties
     @Produces
-    public ApplicationConfig applicationConfig() throws IOException {
+    public ApplicationConfig applicationConfig() {
         return new ApplicationConfigProvider()
                 .fromDefaultResources()
                 .fromEnvVar("JACSSTORAGE_CONFIG")
