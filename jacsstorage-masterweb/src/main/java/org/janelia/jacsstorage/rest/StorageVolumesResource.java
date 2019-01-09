@@ -49,7 +49,12 @@ import java.util.List;
                 }
         )
 )
-@Api(value = "Storage Volumes API.")
+@Api(
+        value = "Storage Volumes API.",
+        authorizations = {
+                @Authorization("jwtBearerToken")
+        }
+)
 public class StorageVolumesResource {
     private static final Logger LOG = LoggerFactory.getLogger(StorageVolumesResource.class);
 

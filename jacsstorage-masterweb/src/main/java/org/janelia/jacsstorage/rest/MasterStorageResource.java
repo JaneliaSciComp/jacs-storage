@@ -56,7 +56,12 @@ import java.util.stream.Collectors;
                 }
         )
 )
-@Api(value = "Master storage API.")
+@Api(
+        value = "Master storage API.",
+        authorizations = {
+                @Authorization("jwtBearerToken")
+        }
+)
 public class MasterStorageResource {
     private static final Logger LOG = LoggerFactory.getLogger(MasterStorageResource.class);
 

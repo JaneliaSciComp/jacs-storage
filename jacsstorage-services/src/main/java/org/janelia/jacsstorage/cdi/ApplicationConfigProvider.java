@@ -24,7 +24,7 @@ public class ApplicationConfigProvider {
 
     private static final Map<String, String> APP_DYNAMIC_ARGS = new HashMap<>();
 
-    public static Map<String, String> getAppDynamicArgs() {
+    static Map<String, String> getAppDynamicArgs() {
         return APP_DYNAMIC_ARGS;
     }
 

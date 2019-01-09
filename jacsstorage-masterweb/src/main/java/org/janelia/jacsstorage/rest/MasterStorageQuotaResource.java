@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
@@ -31,10 +32,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.util.List;
 
-@Timed
-@RequireAuthentication
-@Produces(MediaType.APPLICATION_JSON)
-@Path("storage")
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
                 apiKeyAuthDefinitions = {
@@ -42,7 +39,16 @@ import java.util.List;
                 }
         )
 )
-@Api(value = "Master storage quota API.")
+@Api(
+        value = "Master storage quota API.",
+        authorizations = {
+                @Authorization("jwtBearerToken")
+        }
+)
+@Timed
+@RequireAuthentication
+@Produces(MediaType.APPLICATION_JSON)
+@Path("storage")
 public class MasterStorageQuotaResource {
     private static final Logger LOG = LoggerFactory.getLogger(MasterStorageQuotaResource.class);
 

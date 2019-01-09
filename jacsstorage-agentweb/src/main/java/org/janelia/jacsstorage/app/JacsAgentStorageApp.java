@@ -40,8 +40,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
             throw new IllegalStateException("The 'masterURL' parameter is required");
         }
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
-        SeContainer container = containerInit
-                .initialize();
+        SeContainer container = containerInit.initialize();
         JacsAgentStorageApp app = container.select(JacsAgentStorageApp.class).get();
 
         if (agentArgs.bootstrapStorageVolumes) {

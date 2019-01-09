@@ -21,8 +21,7 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
             return;
         }
         SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
-        SeContainer container = containerInit
-                .initialize();
+        SeContainer container = containerInit.initialize();
         JacsMasterStorageApp app = container.select(JacsMasterStorageApp.class).get();
         app.start(appArgs);
     }
@@ -48,7 +47,7 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
 
     @Override
     String[] getPathsExcludedFromAccessLog() {
-        return new String[]{
+        return new String[] {
                 "/agents/url"
         };
     }
