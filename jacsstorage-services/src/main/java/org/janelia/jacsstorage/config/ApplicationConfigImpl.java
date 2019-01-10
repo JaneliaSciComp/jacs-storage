@@ -21,8 +21,7 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     @Override
     public String getStringPropertyValue(String name) {
         String value = configProperties.get(name);
-        String resolvedValue = configValueResolver.resolve(value, configProperties);
-        return resolvedValue;
+        return configValueResolver.resolve(value, configProperties::get);
     }
 
     @Override
@@ -34,7 +33,7 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     @Override
     public Boolean getBooleanPropertyValue(String name) {
         String stringValue = getStringPropertyValue(name);
-        return StringUtils.isBlank(stringValue) ? false : Boolean.valueOf(stringValue);
+        return StringUtils.isBlank(stringValue) ? Boolean.FALSE : Boolean.valueOf(stringValue);
     }
 
     @Override
@@ -92,7 +91,6 @@ public class ApplicationConfigImpl implements ApplicationConfig {
         } else {
             return Splitter.on(',').trimResults().splitToList(stringValue);
         }
-
     }
 
     @Override

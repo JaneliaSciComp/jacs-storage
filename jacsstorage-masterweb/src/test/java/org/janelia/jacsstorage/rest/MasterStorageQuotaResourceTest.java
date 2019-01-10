@@ -13,6 +13,7 @@ import org.janelia.jacsstorage.testrest.TestResourceBinder;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Set;
@@ -88,26 +89,26 @@ public class MasterStorageQuotaResourceTest extends AbstractCdiInjectedResourceT
                 new TestData("v1", "", 200)
         };
         for (TestData td : testData) {
-            Response testQuotaResponse = target()
-                    .path("storage")
-                    .path("quota")
+            WebTarget reportWt = target()
+                    .path("storage/quota")
                     .path(td.testVolumeName)
-                    .path("report")
-                    .path(StringUtils.defaultIfBlank(td.testSubject,"/"))
-                    .request()
-                    .get();
+                    .path("report");
+            if (StringUtils.isNotBlank(td.testSubject)) {
+                reportWt = reportWt.queryParam("subjectName", td.testSubject);
+            }
+            Response testQuotaResponse = reportWt.request().get();
             assertEquals("Volume: " + td.testVolumeName + ", subject: " + td.testSubject, td.expectedStatus, testQuotaResponse.getStatus());
             String usageDataResponse = testQuotaResponse.readEntity(String.class);
             assertThat(usageDataResponse, equalTo(dependenciesProducer.getObjectMapper().writeValueAsString(ImmutableList.of(testUsageData))));
 
-            Response testStatusResponse = target()
-                    .path("storage")
-                    .path("quota")
+            WebTarget statusWt = target()
+                    .path("storage/quota")
                     .path(td.testVolumeName)
-                    .path("status")
-                    .path(StringUtils.defaultIfBlank(td.testSubject,"/"))
-                    .request()
-                    .get();
+                    .path("status");
+            if (StringUtils.isNotBlank(td.testSubject)) {
+                statusWt = statusWt.queryParam("subjectName", td.testSubject);
+            }
+            Response testStatusResponse = statusWt.request().get();
             assertEquals("Volume: " + td.testVolumeName + ", subject: " + td.testSubject, td.expectedStatus, testStatusResponse.getStatus());
             String usageStatusResponse = testStatusResponse.readEntity(String.class);
             assertThat(usageStatusResponse, equalTo(dependenciesProducer.getObjectMapper().writeValueAsString(ImmutableList.of(testUsageData))));
@@ -145,14 +146,14 @@ public class MasterStorageQuotaResourceTest extends AbstractCdiInjectedResourceT
                 new TestData(1, "", 200)
         };
         for (TestData td : testData) {
-            Response testResponse = target()
-                    .path("storage")
-                    .path("volume_quota")
+            WebTarget reportWt = target()
+                    .path("storage/volume_quota")
                     .path(td.testVolumeId.toString())
-                    .path("report")
-                    .path(StringUtils.defaultIfBlank(td.testSubject,"/"))
-                    .request()
-                    .get();
+                    .path("report");
+            if (StringUtils.isNotBlank(td.testSubject)) {
+                reportWt = reportWt.queryParam("subjectName", td.testSubject);
+            }
+            Response testResponse = reportWt.request().get();
             assertEquals("VolumeID: " + td.testVolumeId + ", subject: " + td.testSubject, td.expectedStatus, testResponse.getStatus());
             String usageDataResponse = testResponse.readEntity(String.class);
             assertThat(usageDataResponse, equalTo(dependenciesProducer.getObjectMapper().writeValueAsString(ImmutableList.of(testUsageData))));
@@ -190,14 +191,14 @@ public class MasterStorageQuotaResourceTest extends AbstractCdiInjectedResourceT
                 new TestData("volPrefix/testPath", "", 200)
         };
         for (TestData td : testData) {
-            Response testResponse = target()
-                    .path("storage")
-                    .path("path_quota")
+            WebTarget reportWt = target()
+                    .path("storage/path_quota")
                     .path(td.testPath)
-                    .path("report")
-                    .path(StringUtils.defaultIfBlank(td.testSubject,"/"))
-                    .request()
-                    .get();
+                    .path("report");
+            if (StringUtils.isNotBlank(td.testSubject)) {
+                reportWt = reportWt.queryParam("subjectName", td.testSubject);
+            }
+            Response testResponse = reportWt.request().get();
             assertEquals("Path: " + td.testPath + ", subject: " + td.testSubject, td.expectedStatus, testResponse.getStatus());
             String usageDataResponse = testResponse.readEntity(String.class);
             assertThat(usageDataResponse, equalTo(dependenciesProducer.getObjectMapper().writeValueAsString(ImmutableList.of(testUsageData))));

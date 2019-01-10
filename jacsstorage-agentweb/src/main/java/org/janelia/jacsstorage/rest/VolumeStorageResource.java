@@ -22,6 +22,7 @@ import javax.ws.rs.HEAD;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -54,7 +55,8 @@ public class VolumeStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response checkPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
-                                               @PathParam("storageRelativePath") String storageRelativeFilePath) {
+                                               @PathParam("storageRelativePath") String storageRelativeFilePath,
+                                               @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
         LOG.info("Check data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
@@ -69,7 +71,7 @@ public class VolumeStorageResource {
                     .build();
         }
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-        return storageResourceHelper.checkContentFromFile(storageVolume, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).build();
+        return storageResourceHelper.checkContentFromFile(storageVolume, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath), directoryOnlyParam != null && directoryOnlyParam).build();
     }
 
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})

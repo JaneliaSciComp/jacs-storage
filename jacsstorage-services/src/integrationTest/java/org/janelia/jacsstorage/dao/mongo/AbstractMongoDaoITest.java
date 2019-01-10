@@ -1,9 +1,11 @@
 package org.janelia.jacsstorage.dao.mongo;
 
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoClientURI;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.jacsstorage.AbstractITest;
 import org.janelia.jacsstorage.cdi.ObjectMapperFactory;
@@ -17,6 +19,7 @@ import org.junit.BeforeClass;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractMongoDaoITest extends AbstractITest {
     private static MongoClient testMongoClient;
@@ -28,9 +31,14 @@ public abstract class AbstractMongoDaoITest extends AbstractITest {
     @BeforeClass
     public static void setUpMongoClient() throws IOException {
         CodecRegistry codecRegistry = RegistryHelper.createCodecRegistry(testObjectMapperFactory);
-        MongoClientOptions.Builder optionsBuilder = MongoClientOptions.builder().codecRegistry(codecRegistry).maxConnectionIdleTime(60000);
-        MongoClientURI mongoConnectionString = new MongoClientURI(integrationTestsConfig.getStringPropertyValue("MongoDB.ConnectionURL"), optionsBuilder);
-        testMongoClient = new MongoClient(mongoConnectionString);
+        MongoClientSettings.Builder mongoClientSettingsBuilder = MongoClientSettings.builder()
+                .codecRegistry(CodecRegistries.fromRegistries(
+                        MongoClientSettings.getDefaultCodecRegistry(),
+                        codecRegistry))
+                .applyToConnectionPoolSettings(builder -> builder.maxConnectionIdleTime(60, TimeUnit.SECONDS))
+                .applyConnectionString(new ConnectionString(integrationTestsConfig.getStringPropertyValue("MongoDB.ConnectionURL")))
+                ;
+        testMongoClient = MongoClients.create(mongoClientSettingsBuilder.build());
     }
 
     @Before

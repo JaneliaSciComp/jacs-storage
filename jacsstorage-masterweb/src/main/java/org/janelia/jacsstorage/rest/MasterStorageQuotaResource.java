@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
@@ -13,6 +14,7 @@ import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
 import org.janelia.jacsstorage.security.JacsCredentials;
+import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
 import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.slf4j.Logger;
@@ -23,15 +25,13 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.util.List;
 
-@Timed
-@Produces(MediaType.APPLICATION_JSON)
-@Path("storage")
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
                 apiKeyAuthDefinitions = {
@@ -39,7 +39,16 @@ import java.util.List;
                 }
         )
 )
-@Api(value = "Master storage quota API.")
+@Api(
+        value = "Master storage quota API.",
+        authorizations = {
+                @Authorization("jwtBearerToken")
+        }
+)
+@Timed
+@RequireAuthentication
+@Produces(MediaType.APPLICATION_JSON)
+@Path("storage")
 public class MasterStorageQuotaResource {
     private static final Logger LOG = LoggerFactory.getLogger(MasterStorageQuotaResource.class);
 
@@ -48,7 +57,7 @@ public class MasterStorageQuotaResource {
 
     @Produces({MediaType.APPLICATION_JSON})
     @GET
-    @Path("quota/{volumeName}/status/{subjectName:\\w*}")
+    @Path("quota/{volumeName}/status")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
@@ -56,7 +65,7 @@ public class MasterStorageQuotaResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response retrieveSubjectQuotaStatusForVolumeName(@PathParam("volumeName") String volumeName,
-                                                            @PathParam("subjectName") String subjectName,
+                                                            @QueryParam("subjectName") String subjectName,
                                                             @Context SecurityContext securityContext) {
         LOG.info("Retrieve usage status for {} on {}", subjectName, volumeName);
         return retrieveSubjectQuotaStatusForVolumeName(volumeName, subjectName, SecurityUtils.getUserPrincipal(securityContext));
@@ -64,7 +73,7 @@ public class MasterStorageQuotaResource {
 
     @Produces({MediaType.APPLICATION_JSON})
     @GET
-    @Path("quota/{volumeName}/report/{subjectName:\\w*}")
+    @Path("quota/{volumeName}/report")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
@@ -72,7 +81,7 @@ public class MasterStorageQuotaResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response retrieveSubjectQuotaForVolumeName(@PathParam("volumeName") String volumeName,
-                                                      @PathParam("subjectName") String subjectName,
+                                                      @QueryParam("subjectName") String subjectName,
                                                       @Context SecurityContext securityContext) {
         LOG.info("Retrieve quota(s) for {} on {}", subjectName, volumeName);
         return retrieveSubjectQuotaStatusForVolumeName(volumeName, subjectName, SecurityUtils.getUserPrincipal(securityContext));
@@ -93,7 +102,7 @@ public class MasterStorageQuotaResource {
 
     @Produces({MediaType.APPLICATION_JSON})
     @GET
-    @Path("volume_quota/{storageVolumeId}/report/{subjectName:\\w*}")
+    @Path("volume_quota/{storageVolumeId}/report")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
@@ -101,7 +110,7 @@ public class MasterStorageQuotaResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response retrieveSubjectQuotaForVolumeId(@PathParam("storageVolumeId") Long storageVolumeId,
-                                                    @PathParam("subjectName") String subjectName,
+                                                    @QueryParam("subjectName") String subjectName,
                                                     @Context SecurityContext securityContext) {
         LOG.info("Retrieve user quota for {} on {}", subjectName, storageVolumeId);
         List<UsageData> usageData;
@@ -121,7 +130,7 @@ public class MasterStorageQuotaResource {
 
     @Produces({MediaType.APPLICATION_JSON})
     @GET
-    @Path("path_quota/{dataPath:.+}/report/{subjectName:\\w*}")
+    @Path("path_quota/{dataPath:.+}/report")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
@@ -129,7 +138,7 @@ public class MasterStorageQuotaResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response retrieveSubjectQuotaForDataPath(@PathParam("dataPath") String dataPath,
-                                                    @PathParam("subjectName") String subjectName,
+                                                    @QueryParam("subjectName") String subjectName,
                                                     @Context SecurityContext securityContext) {
         String fullDataPath = StringUtils.prependIfMissing(dataPath, "/");
         LOG.info("Retrieve user quota for {} on {}", subjectName, fullDataPath);

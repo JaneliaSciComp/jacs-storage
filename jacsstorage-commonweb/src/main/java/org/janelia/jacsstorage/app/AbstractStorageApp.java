@@ -24,8 +24,12 @@ public abstract class AbstractStorageApp {
     }
 
     static <A extends AppArgs> void displayAppUsage(A appArgs) {
+        displayAppUsage(appArgs, new StringBuilder());
+    }
+
+    static <A extends AppArgs> void displayAppUsage(A appArgs, StringBuilder output) {
         JCommander cmdline = new JCommander(appArgs);
-        cmdline.usage();
+        cmdline.usage(output);
     }
 
     protected void start(AppArgs appArgs) {

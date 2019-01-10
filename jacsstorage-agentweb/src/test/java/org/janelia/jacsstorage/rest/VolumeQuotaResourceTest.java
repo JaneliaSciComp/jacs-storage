@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.rest;
 
+import com.ctc.wstx.util.StringUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
@@ -13,6 +14,7 @@ import org.janelia.jacsstorage.testrest.TestResourceBinder;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Set;
@@ -88,26 +90,28 @@ public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
                 new TestData("v1", "", 200)
         };
         for (TestData td : testData) {
-            Response testQuotaResponse = target()
+            WebTarget wt = target()
                     .path(Constants.AGENTSTORAGE_URI_PATH)
                     .path("quota")
                     .path(td.testVolumeName)
-                    .path("report")
-                    .path(StringUtils.defaultIfBlank(td.testSubject,"/"))
-                    .request()
-                    .get();
+                    .path("report");
+            if (StringUtils.isNotBlank(td.testSubject)) {
+                wt = wt.queryParam("subjectName", td.testSubject);
+            }
+            Response testQuotaResponse = wt.request().get();
             assertEquals("Volume: " + td.testVolumeName + ", subject: " + td.testSubject, td.expectedStatus, testQuotaResponse.getStatus());
             String usageDataResponse = testQuotaResponse.readEntity(String.class);
             assertThat(usageDataResponse, equalTo(dependenciesProducer.getObjectMapper().writeValueAsString(ImmutableList.of(testUsageData))));
 
-            Response testStatusResponse = target()
+            WebTarget statusWt = target()
                     .path(Constants.AGENTSTORAGE_URI_PATH)
                     .path("quota")
                     .path(td.testVolumeName)
-                    .path("status")
-                    .path(StringUtils.defaultIfBlank(td.testSubject,"/"))
-                    .request()
-                    .get();
+                    .path("status");
+            if (StringUtils.isNotBlank(td.testSubject)) {
+                statusWt = statusWt.queryParam("subjectName", td.testSubject);
+            }
+            Response testStatusResponse = statusWt.request().get();
             assertEquals("Volume: " + td.testVolumeName + ", subject: " + td.testSubject, td.expectedStatus, testStatusResponse.getStatus());
             String usageStatusResponse = testStatusResponse.readEntity(String.class);
             assertThat(usageStatusResponse, equalTo(dependenciesProducer.getObjectMapper().writeValueAsString(ImmutableList.of(testUsageData))));
@@ -145,14 +149,15 @@ public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
                 new TestData(1, "", 200)
         };
         for (TestData td : testData) {
-            Response testResponse = target()
+            WebTarget wt = target()
                     .path(Constants.AGENTSTORAGE_URI_PATH)
                     .path("volume_quota")
                     .path(td.testVolumeId.toString())
-                    .path("report")
-                    .path(StringUtils.defaultIfBlank(td.testSubject,"/"))
-                    .request()
-                    .get();
+                    .path("report");
+            if (StringUtils.isNotBlank(td.testSubject)) {
+                wt = wt.queryParam("subjectName", td.testSubject);
+            }
+            Response testResponse = wt.request().get();
             assertEquals("VolumeID: " + td.testVolumeId + ", subject: " + td.testSubject, td.expectedStatus, testResponse.getStatus());
             String usageDataResponse = testResponse.readEntity(String.class);
             assertThat(usageDataResponse, equalTo(dependenciesProducer.getObjectMapper().writeValueAsString(ImmutableList.of(testUsageData))));
@@ -190,14 +195,15 @@ public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
                 new TestData("volPrefix/testPath", "", 200)
         };
         for (TestData td : testData) {
-            Response testResponse = target()
+            WebTarget wt = target()
                     .path(Constants.AGENTSTORAGE_URI_PATH)
                     .path("path_quota")
                     .path(td.testPath)
-                    .path("report")
-                    .path(StringUtils.defaultIfBlank(td.testSubject,"/"))
-                    .request()
-                    .get();
+                    .path("report");
+            if (StringUtils.isNotBlank(td.testSubject)) {
+                wt = wt.queryParam("subjectName", td.testSubject);
+            }
+            Response testResponse = wt.request().get();
             assertEquals("Path: " + td.testPath + ", subject: " + td.testSubject, td.expectedStatus, testResponse.getStatus());
             String usageDataResponse = testResponse.readEntity(String.class);
             assertThat(usageDataResponse, equalTo(dependenciesProducer.getObjectMapper().writeValueAsString(ImmutableList.of(testUsageData))));

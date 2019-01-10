@@ -28,7 +28,9 @@ public class StoragePathURI {
      * @return
      */
     public static StoragePathURI createAbsolutePathURI(String storagePathValue) {
-        return new StoragePathURI(StringUtils.prependIfMissing(new StoragePathURI(storagePathValue).getStoragePath(), "/"));
+        return StringUtils.isBlank(storagePathValue)
+                ? new StoragePathURI(null)
+                : new StoragePathURI(StringUtils.prependIfMissing(new StoragePathURI(storagePathValue).getStoragePath(), "/"));
     }
 
     private final String storagePathURI;

@@ -1,43 +1,99 @@
 package org.janelia.jacsstorage.config;
 
 import com.google.common.collect.ImmutableSet;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ApplicationConfigValueResolver {
 
-    public String resolve(String v, Map<String, String> context) {
-        return resolve(v, context, ImmutableSet.of());
+    private final static String START_PLACEHOLDER = "${";
+    private final static char END_PLACEHOLDER_CHAR = '}';
+    private final static char START_PLACEHOLDER_CHAR = '$';
+    private final static char ESCAPE_CHAR = '\\';
+
+    private enum ResolverState {
+        StartPlaceHolder, OutsidePlaceHolder, InsidePlaceHolder, EscapeChar
     }
 
-    private String resolve(String v, Map<String, String> context, Set<String> resolveHistory) {
-        if (StringUtils.isBlank(v)) return v;
-        Set<String> newResolveHistory = ImmutableSet.<String>builder().addAll(resolveHistory).add(v).build();
-        Pattern placeholderPattern = Pattern.compile("\\$\\{(.+?)\\}");
-        Matcher m = placeholderPattern.matcher(v);
-        int startIndex = 0;
-        StringBuilder resolvedValueBuilder = new StringBuilder();
-        while (m.find(startIndex)) {
-            int startRegion = m.start();
-            int endRegion = m.end();
-            String key = v.substring(m.start() + 2, m.end() - 1);
-            resolvedValueBuilder.append(v.substring(startIndex, startRegion));
-            if (newResolveHistory.contains(key)) {
-                throw new IllegalStateException("Circular dependency found while evaluating " + v + " -> " + newResolveHistory);
-            }
-            String keyValue = context.get(key);
-            if (keyValue == null) {
-                resolvedValueBuilder.append(v.substring(startRegion, endRegion));
-            } else {
-                resolvedValueBuilder.append(resolve(keyValue, context, newResolveHistory));
-            }
-            startIndex = endRegion;
+    public String resolve(String v, ContextValueGetter contextValueGetter) {
+        if (contextValueGetter == null) {
+            // no context so simply return the value as is
+            return v;
         }
-        resolvedValueBuilder.append(v.substring(startIndex));
+        return resolve(v, contextValueGetter, ImmutableSet.of());
+    }
+
+    private String resolve(String v, ContextValueGetter contextValueGetter, Set<String> evalHistory) {
+        if (StringUtils.isBlank(v)) return v;
+        StringBuilder resolvedValueBuilder = new StringBuilder();
+        StringBuilder placeHolderBuilder = new StringBuilder();
+        ResolverState state = ResolverState.OutsidePlaceHolder;
+        for (char currentChar : v.toCharArray()) {
+            switch (state) {
+                case StartPlaceHolder:
+                    placeHolderBuilder.append(currentChar);
+                    if (START_PLACEHOLDER.equals(placeHolderBuilder.toString())) {
+                        state = ResolverState.InsidePlaceHolder;
+                    } else if (!START_PLACEHOLDER.startsWith(placeHolderBuilder.toString())) {
+                        resolvedValueBuilder.append(placeHolderBuilder);
+                        placeHolderBuilder.setLength(0);
+                        state = ResolverState.OutsidePlaceHolder;
+                    }
+                    break;
+                case OutsidePlaceHolder:
+                    switch (currentChar) {
+                        case ESCAPE_CHAR:
+                            state = ResolverState.EscapeChar;
+                            break;
+                        case START_PLACEHOLDER_CHAR:
+                            placeHolderBuilder.append(currentChar);
+                            if (START_PLACEHOLDER.equals(placeHolderBuilder.toString())) {
+                                state = ResolverState.InsidePlaceHolder;
+                            } else {
+                                state = ResolverState.StartPlaceHolder;
+                            }
+                            break;
+                        default:
+                            resolvedValueBuilder.append(currentChar);
+                            break;
+                    }
+                    break;
+                case InsidePlaceHolder:
+                    switch (currentChar) {
+                        case END_PLACEHOLDER_CHAR:
+                            placeHolderBuilder.append(currentChar);
+                            String placeHolderString = placeHolderBuilder.toString();
+                            String placeHolderKey = placeHolderBuilder.substring(START_PLACEHOLDER.length(), placeHolderBuilder.length() - 1);
+                            if (evalHistory.contains(placeHolderKey)) {
+                                throw new IllegalStateException("Circular dependency found while evaluating " + v + " -> " + evalHistory);
+                            }
+                            String placeHolderValue = contextValueGetter.get(placeHolderKey);
+                            if (placeHolderValue == null) {
+                                // no value found - put the placeholder as is
+                                resolvedValueBuilder.append(placeHolderString);
+                            } else {
+                                resolvedValueBuilder.append(resolve(placeHolderValue, contextValueGetter, ImmutableSet.<String>builder().addAll(evalHistory).add(placeHolderKey).build()));
+                            }
+                            placeHolderBuilder.setLength(0);
+                            state = ResolverState.OutsidePlaceHolder;
+                            break;
+                        default:
+                            placeHolderBuilder.append(currentChar);
+                            break;
+                    }
+                    break;
+                case EscapeChar:
+                    resolvedValueBuilder.append(currentChar);
+                    state = ResolverState.OutsidePlaceHolder;
+                    break;
+            }
+        }
+        if (state != ResolverState.OutsidePlaceHolder) {
+            throw new IllegalStateException("Unclosed placeholder found while trying to resolve " + v + " -> " + evalHistory);
+        }
         return resolvedValueBuilder.toString();
     }
 

@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
+import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
@@ -25,6 +26,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -57,7 +59,7 @@ public class VolumeQuotaResource {
 
     @Produces({MediaType.APPLICATION_JSON})
     @GET
-    @Path("quota/{volumeName}/status/{subjectName:\\w*}")
+    @Path("quota/{volumeName}/status")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
@@ -65,7 +67,7 @@ public class VolumeQuotaResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response retrieveSubjectQuotaStatusForVolumeName(@PathParam("volumeName") String volumeName,
-                                                            @PathParam("subjectName") String subjectName,
+                                                            @QueryParam("subjectName") String subjectName,
                                                             @Context SecurityContext securityContext) {
         LOG.info("Retrieve usage status for {} on {}", subjectName, volumeName);
         return retrieveSubjectQuotaStatusForVolumeName(volumeName, subjectName, SecurityUtils.getUserPrincipal(securityContext));
@@ -73,7 +75,7 @@ public class VolumeQuotaResource {
 
     @Produces({MediaType.APPLICATION_JSON})
     @GET
-    @Path("quota/{volumeName}/report/{subjectName:\\w*}")
+    @Path("quota/{volumeName}/report")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
@@ -81,14 +83,15 @@ public class VolumeQuotaResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response retrieveSubjectQuotaForVolumeName(@PathParam("volumeName") String volumeName,
-                                                      @PathParam("subjectName") String subjectName,
+                                                      @QueryParam("subjectName") String subjectName,
                                                       @Context SecurityContext securityContext) {
         LOG.info("Retrieve quota(s) for {} on {}", subjectName, volumeName);
         return retrieveSubjectQuotaStatusForVolumeName(volumeName, subjectName, SecurityUtils.getUserPrincipal(securityContext));
     }
 
-    private Response retrieveSubjectQuotaStatusForVolumeName(String volumeName, String subjectName, JacsCredentials userPrincipal) {
+    private Response retrieveSubjectQuotaStatusForVolumeName(String volumeName, String subjectNameParam, JacsCredentials userPrincipal) {
         List<UsageData> usageData;
+        String subjectName = JacsSubjectHelper.getNameFromSubjectKey(subjectNameParam);
         if (StringUtils.isBlank(subjectName)) {
             usageData = storageUsageManager.getUsageByVolumeName(volumeName, userPrincipal);
         } else {
@@ -102,7 +105,7 @@ public class VolumeQuotaResource {
 
     @Produces({MediaType.APPLICATION_JSON})
     @GET
-    @Path("volume_quota/{storageVolumeId}/report/{subjectName:\\w*}")
+    @Path("volume_quota/{storageVolumeId}/report")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
@@ -110,10 +113,11 @@ public class VolumeQuotaResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response retrieveSubjectQuotaForVolumeId(@PathParam("storageVolumeId") Long storageVolumeId,
-                                                    @PathParam("subjectName") String subjectName,
+                                                    @QueryParam("subjectName") String subjectNameParam,
                                                     @Context SecurityContext securityContext) {
-        LOG.info("Retrieve user quota for {} on {}", subjectName, storageVolumeId);
+        LOG.info("Retrieve user quota for {} on {}", subjectNameParam, storageVolumeId);
         List<UsageData> usageData;
+        String subjectName = JacsSubjectHelper.getNameFromSubjectKey(subjectNameParam);
         if (StringUtils.isBlank(subjectName)) {
             usageData = storageUsageManager.getUsageByVolumeId(storageVolumeId,
                     SecurityUtils.getUserPrincipal(securityContext));
@@ -130,7 +134,7 @@ public class VolumeQuotaResource {
 
     @Produces({MediaType.APPLICATION_JSON})
     @GET
-    @Path("path_quota/{dataPath:.+}/report/{subjectName:\\w*}")
+    @Path("path_quota/{dataPath:.+}/report")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
@@ -138,11 +142,12 @@ public class VolumeQuotaResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response retrieveSubjectQuotaForDataPath(@PathParam("dataPath") String dataPath,
-                                                    @PathParam("subjectName") String subjectName,
+                                                    @QueryParam("subjectName") String subjectNameParam,
                                                     @Context SecurityContext securityContext) {
         String fullDataPath = StringUtils.prependIfMissing(dataPath, "/");
-        LOG.info("Retrieve user quota for {} on {}", subjectName, fullDataPath);
+        LOG.info("Retrieve user quota for {} on {}", subjectNameParam, fullDataPath);
         List<UsageData> usageData;
+        String subjectName = JacsSubjectHelper.getNameFromSubjectKey(subjectNameParam);
         if (StringUtils.isBlank(subjectName)) {
             usageData = storageUsageManager.getUsageByStoragePath(fullDataPath,
                     SecurityUtils.getUserPrincipal(securityContext));

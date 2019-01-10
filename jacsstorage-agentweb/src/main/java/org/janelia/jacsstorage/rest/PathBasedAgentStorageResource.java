@@ -65,13 +65,13 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response checkPath(@PathParam("dataPath") String dataPathParam) {
+    public Response checkPath(@PathParam("dataPath") String dataPathParam, @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
         LOG.info("Check path {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryPath) -> Response.ok(),
-                (storageVolume, dataEntryPath) -> storageResourceHelper.checkContentFromFile(storageVolume, dataEntryPath)
+                (storageVolume, dataEntryPath) -> storageResourceHelper.checkContentFromFile(storageVolume, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam)
         ).build();
     }
 

@@ -155,16 +155,23 @@ public class StorageResourceHelper {
         return storageVolumes.get(0);
     }
 
-    public Response.ResponseBuilder checkContentFromFile(JacsStorageVolume storageVolume, StorageRelativePath dataEntryName) {
+    public Response.ResponseBuilder checkContentFromFile(JacsStorageVolume storageVolume, StorageRelativePath dataEntryName, boolean dirOnly) {
         if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
             return Response.status(Response.Status.FORBIDDEN)
                     .header("Content-Length", 0);
         }
         return storageVolume.getDataStorageAbsolutePath(dataEntryName)
-                .filter(dataEntryPath -> Files.exists(dataEntryPath))
-                .map(dataEntryPath -> Response
-                        .ok()
-                        .header("Content-Length", PathUtils.getSize(Paths.get(storageVolume.getBaseStorageRootDir()).resolve(dataEntryPath))))
+                .filter(dataEntryPath -> Files.exists(dataEntryPath) && (!dirOnly || Files.isDirectory(dataEntryPath)))
+                .map(dataEntryPath -> {
+                    long fileSize;
+                    if (Files.isRegularFile(dataEntryPath)) {
+                        fileSize = PathUtils.getSize(dataEntryPath);
+                    } else {
+                        fileSize = 0;
+                    }
+                    return Response.ok()
+                            .header("Content-Length", fileSize);
+                })
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
                         .header("Content-Length", 0))
@@ -200,6 +207,16 @@ public class StorageResourceHelper {
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName())))
+                ;
+    }
+
+    public Response.ResponseBuilder checkContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath, boolean collectionOnly) {
+        List<DataNodeInfo> dataBundleContent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), 1);
+        return dataBundleContent.stream()
+                .findFirst()
+                .filter(dn -> !collectionOnly || dn.isCollectionFlag())
+                .map(dn -> Response.ok().header("Content-Length", dn.getSize()))
+                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).header("Content-Length", 0))
                 ;
     }
 

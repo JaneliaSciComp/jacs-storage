@@ -15,6 +15,7 @@ import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
@@ -48,7 +49,12 @@ import java.util.List;
                 }
         )
 )
-@Api(value = "Storage Volumes API.")
+@Api(
+        value = "Storage Volumes API.",
+        authorizations = {
+                @Authorization("jwtBearerToken")
+        }
+)
 public class StorageVolumesResource {
     private static final Logger LOG = LoggerFactory.getLogger(StorageVolumesResource.class);
 
@@ -128,7 +134,8 @@ public class StorageVolumesResource {
                                        @QueryParam("shared") boolean shared,
                                        @QueryParam("storageHost") String storageHost,
                                        @QueryParam("storageTags") List<String> storageTags,
-                                       @QueryParam("storageVirtualPath") String storagePathPrefix,
+                                       @QueryParam("storageVirtualPath") String storageVirtualPath,
+                                       @QueryParam("dataStoragePath") String dataStoragePathParam,
                                        @QueryParam("includeInactive") boolean includeInactive,
                                        @Context SecurityContext securityContext) {
         StorageQuery storageQuery = new StorageQuery()
@@ -137,7 +144,8 @@ public class StorageVolumesResource {
                 .setShared(shared)
                 .setAccessibleOnHost(storageHost)
                 .setStorageTags(storageTags)
-                .setStorageVirtualPath(storagePathPrefix)
+                .setStorageVirtualPath(storageVirtualPath)
+                .setDataStoragePath(StoragePathURI.createAbsolutePathURI(dataStoragePathParam).getStoragePath())
                 .setIncludeInactiveVolumes(includeInactive);
         LOG.info("List storage volumes filtered with: {}", storageQuery);
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(storageQuery);

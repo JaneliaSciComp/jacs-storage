@@ -91,6 +91,16 @@ public class JacsCredentials implements Principal {
         return roles.contains(role);
     }
 
+    public String asAuthorizationHeader() {
+        if (UNAUTHENTICATED.equals(getPrincipalSubject())) {
+            return "";
+        } else if (SYSTEM_APP.equals(authName)) {
+            return "APIKEY " + authToken;
+        } else {
+            return "Bearer " + authToken;
+        }
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)

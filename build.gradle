@@ -2,7 +2,7 @@ allprojects {
     apply plugin: 'java-library'
     apply plugin: 'idea'
     group = 'org.janelia.jacsstorage'
-    version = '1.6.1.RELEASE'
+    version = '1.6.2.SNAPSHOT'
 }
 
 subprojects {
@@ -121,7 +121,7 @@ subprojects {
 }
 
 task updateWrapper(type: Wrapper) {
-    gradleVersion = "4.10.2"
+    gradleVersion = "5.0"
 }
 
 def filteringProperties(otherProperties) {

@@ -8,21 +8,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AppArgs {
-    @Parameter(names = "-b", description = "Binding IP", required = false)
+    @Parameter(names = "-b", description = "Binding IP")
     public String host = "localhost";
-    @Parameter(names = "-p", description = "Listener port number", required = false)
+    @Parameter(names = "-p", description = "Listener port number")
     public int portNumber = 8080;
-    @Parameter(names = "-name", description = "Deployment name", required = false)
+    @Parameter(names = "-name", description = "Deployment name")
     public String deployment = "jacsstorage";
-    @Parameter(names = "-context-path", description = "Base context path", required = false)
+    @Parameter(names = "-context-path", description = "Base context path")
     public String baseContextPath = "/jacsstorage";
-    @Parameter(names = "-nio", description = "Number of IO threads", required = false)
+    @Parameter(names = "-nio", description = "Number of IO threads")
     public int nIOThreads = 64;
-    @Parameter(names = "-nworkers", description = "Number of worker threads", required = false)
+    @Parameter(names = "-nworkers", description = "Number of worker threads")
     public int nWorkers = 64 * 8;
     @Parameter(names = "-appId", description = "application ID")
     String applicationId;
-    @Parameter(names = "-h", description = "Display help", arity = 0, required = false)
+    @Parameter(names = "-h", description = "Display help", arity = 0)
     boolean displayUsage = false;
     @DynamicParameter(names = "-D", description = "Dynamic application parameters that could override application properties")
     Map<String, String> appDynamicConfig = new HashMap<>();
