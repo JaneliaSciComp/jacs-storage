@@ -36,12 +36,15 @@ public class LocalStorageUsageManager implements StorageUsageManager {
 
     private final String storageHost;
     private final StorageVolumeManager storageVolumeManager;
+    private final String quotaProxyUser;
 
     @Inject
     public LocalStorageUsageManager(@LocalInstance StorageVolumeManager storageVolumeManager,
-                                    @PropertyValue(name = "StorageAgent.StorageHost") String storageHost) {
+                                    @PropertyValue(name = "StorageAgent.StorageHost") String storageHost,
+                                    @PropertyValue(name = "Storage.QuotaProxyUser", defaultValue = "jacs") String quotaProxyUser) {
         this.storageVolumeManager = storageVolumeManager;
         this.storageHost = StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());;
+        this.quotaProxyUser = quotaProxyUser;
     }
 
     @TimedMethod(
@@ -150,6 +153,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
         List<UsageData> usageReport = getVolumeUsage(storageVolume);
         return usageReport.stream()
                 .filter(usageData -> userGroupId.equalsIgnoreCase(usageData.getGroupId()))
+                .filter(usageData -> StringUtils.isBlank(quotaProxyUser) || quotaProxyUser.equals(usageData.getUserProxy()))
                 .reduce((ud1, ud2) -> ud1.add(ud2))
                 .orElse(UsageData.EMPTY);
     }
@@ -202,17 +206,18 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 String[] cols = line.split(",");
-                int c = 0;
-                String groupName = c < cols.length ? cols[c++].trim() : null;
+                String groupName = cols.length > 0 ? cols[0].trim() : null;
                 if (StringUtils.equalsIgnoreCase(groupName, "Lab") || StringUtils.equalsIgnoreCase(groupName, "FREE")) {
                     // Omit the header and the free space information
                     continue;
                 }
-                String spaceUsed = c < cols.length ? cols[c++].trim() : null;
-                String totalSpace = c < cols.length ? cols[c++].trim() : null;
-                String totalFiles = c < cols.length ? cols[c++].trim() : null;
+                String spaceUsed = cols.length > 1 ? cols[1].trim() : null;
+                String totalSpace = cols.length > 2 ? cols[2].trim() : null;
+                String totalFiles = cols.length > 3 ? cols[3].trim() : null;
+                String userProxy = cols.length > 4 ? cols[4].trim() : null;
                 usageDataReport.add(new UsageData(groupName, spaceUsed, totalSpace, totalFiles,
-                        storageVolume.getQuotaWarnPercent(), storageVolume.getQuotaFailPercent()));
+                        storageVolume.getQuotaWarnPercent(), storageVolume.getQuotaFailPercent(),
+                        userProxy));
             }
         } catch (Exception e) {
             LOG.error("Error reading system usage report from {} for {}", storageVolume.getSystemUsageFile(), storageVolume, e);

@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class UsageData {
 
-    public static final UsageData EMPTY = new UsageData(null, (Number)null, (Number)null, (Number)null, null, null);
+    public static final UsageData EMPTY = new UsageData(null, (Number)null, (Number)null, (Number)null, null, null, null);
 
     @JsonProperty("lab")
     private final String groupId;
@@ -24,6 +24,9 @@ public class UsageData {
     private final Double warnPercentage;
     @JsonProperty
     private final Double failPercentage;
+    @JsonProperty
+    private final String userProxy;
+
 
     @JsonCreator
     public UsageData(@JsonProperty("lab") String groupId,
@@ -31,23 +34,26 @@ public class UsageData {
                      @JsonProperty("totalSpaceTB") String totalSpaceTB,
                      @JsonProperty("totalFiles") String totalFiles,
                      @JsonProperty("warnPercentage") Double warnPercentage,
-                     @JsonProperty("failPercentage") Double failPercentage) {
+                     @JsonProperty("failPercentage") Double failPercentage,
+                     @JsonProperty("userProxy") String userProxy) {
         this(groupId,
                 UsageDataHelper.parseValue("spaceUsedTB", spaceUsedTB, BigDecimal::new),
                 UsageDataHelper.parseValue("totalSpaceTB", totalSpaceTB, BigDecimal::new),
                 UsageDataHelper.parseValue("totalFiles", totalFiles, Long::new),
                 warnPercentage,
-                failPercentage);
+                failPercentage,
+                userProxy);
     }
 
     private UsageData(String groupId, Number spaceUsedTB, Number totalSpaceTB, Number totalFiles,
-                      Double warnPercentage, Double failPercentage) {
+                      Double warnPercentage, Double failPercentage, String userProxy) {
         this.groupId = groupId;
         this.spaceUsedTB = spaceUsedTB;
         this.totalSpaceTB = totalSpaceTB;
         this.totalFiles = totalFiles;
         this.warnPercentage = warnPercentage;
         this.failPercentage = failPercentage;
+        this.userProxy = userProxy;
     }
 
     public String getGroupId() {
@@ -64,6 +70,10 @@ public class UsageData {
 
     public Number getTotalFiles() {
         return totalFiles;
+    }
+
+    public String getUserProxy() {
+        return userProxy;
     }
 
     @JsonProperty
@@ -143,7 +153,8 @@ public class UsageData {
         Number newTotalFiles = UsageDataHelper.addValues(totalFiles, other.totalFiles, v -> v.longValue());
         return new UsageData(newGroupId, newSpaceUsed, newTotalSpace, newTotalFiles,
                 UsageDataHelper.minValue(warnPercentage, other.warnPercentage),
-                UsageDataHelper.minValue(failPercentage, other.failPercentage));
+                UsageDataHelper.minValue(failPercentage, other.failPercentage),
+                other.userProxy);
     }
 
     @Override
@@ -153,6 +164,7 @@ public class UsageData {
                 .append("spaceUsedTB", spaceUsedTB)
                 .append("totalSpaceTB", totalSpaceTB)
                 .append("totalFiles", totalFiles)
+                .append("userProxy", userProxy)
                 .toString();
     }
 }

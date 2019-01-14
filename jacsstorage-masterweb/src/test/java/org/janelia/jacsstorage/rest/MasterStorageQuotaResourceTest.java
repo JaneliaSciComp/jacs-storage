@@ -61,7 +61,7 @@ public class MasterStorageQuotaResourceTest extends AbstractCdiInjectedResourceT
     @Test
     public void retrieveSubjectQuotaForVolumeName() throws IOException {
         StorageUsageManager storageUsageManager = dependenciesProducer.getStorageUsageManager();
-        UsageData testUsageData = new UsageData("test", "200", "400", "100", .7, .9);
+        UsageData testUsageData = new UsageData("test", "200", "400", "100", .7, .9, null);
         Mockito.when(storageUsageManager.getUsageByVolumeName(anyString(), nullable(JacsCredentials.class)))
                 .then(invocation -> {
                     return ImmutableList.of(testUsageData);
@@ -118,7 +118,7 @@ public class MasterStorageQuotaResourceTest extends AbstractCdiInjectedResourceT
     @Test
     public void retrieveSubjectQuotaForVolumeId() throws IOException {
         StorageUsageManager storageUsageManager = dependenciesProducer.getStorageUsageManager();
-        UsageData testUsageData = new UsageData("test", "200", "400", "100", .7, .9);
+        UsageData testUsageData = new UsageData("test", "200", "400", "100", .7, .9, null);
         Mockito.when(storageUsageManager.getUsageByVolumeId(any(Number.class), nullable(JacsCredentials.class)))
                 .then(invocation -> {
                     return ImmutableList.of(testUsageData);
@@ -163,7 +163,7 @@ public class MasterStorageQuotaResourceTest extends AbstractCdiInjectedResourceT
     @Test
     public void retrieveSubjectQuotaForDataPath() throws IOException {
         StorageUsageManager storageUsageManager = dependenciesProducer.getStorageUsageManager();
-        UsageData testUsageData = new UsageData("test", "200", "400", "100", .7, .9);
+        UsageData testUsageData = new UsageData("test", "200", "400", "100", .7, .9, "jacs");
         Mockito.when(storageUsageManager.getUsageByStoragePath(anyString(), nullable(JacsCredentials.class)))
                 .then(invocation -> {
                     return ImmutableList.of(testUsageData);
