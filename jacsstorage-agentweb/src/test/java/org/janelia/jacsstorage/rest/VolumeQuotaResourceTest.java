@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.rest;
 
-import com.ctc.wstx.util.StringUtil;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
