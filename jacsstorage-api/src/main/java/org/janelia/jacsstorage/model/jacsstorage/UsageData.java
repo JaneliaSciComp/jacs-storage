@@ -60,8 +60,16 @@ public class UsageData {
         return groupId;
     }
 
+    public Number getSpaceUsedInBytes() {
+        return spaceUsedInBytes;
+    }
+
     public Number getSpaceUsedTB() {
         return spaceUsedInBytes != null ? spaceUsedInBytes.doubleValue() / 1024 / 1024 / 1024 / 1024 : 0;
+    }
+
+    public Number getTotalSpaceInBytes() {
+        return totalSpaceInBytes;
     }
 
     public Number getTotalSpaceTB() {
