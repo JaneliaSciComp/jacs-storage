@@ -17,8 +17,8 @@ public class UsageData {
 
     @JsonProperty("lab")
     private final String groupId;
-    private final Number spaceUsedTB;
-    private final Number totalSpaceTB;
+    private final Number spaceUsedInBytes;
+    private final Number totalSpaceInBytes;
     private final Number totalFiles;
     @JsonProperty
     private final Double warnPercentage;
@@ -30,26 +30,26 @@ public class UsageData {
 
     @JsonCreator
     public UsageData(@JsonProperty("lab") String groupId,
-                     @JsonProperty("spaceUsedTB") String spaceUsedTB,
-                     @JsonProperty("totalSpaceTB") String totalSpaceTB,
+                     @JsonProperty("spaceUsedInBytes") String spaceUsedInBytes,
+                     @JsonProperty("totalSpaceInBytes") String totalSpaceInBytes,
                      @JsonProperty("totalFiles") String totalFiles,
                      @JsonProperty("warnPercentage") Double warnPercentage,
                      @JsonProperty("failPercentage") Double failPercentage,
                      @JsonProperty("userProxy") String userProxy) {
         this(groupId,
-                UsageDataHelper.parseValue("spaceUsedTB", spaceUsedTB, BigDecimal::new),
-                UsageDataHelper.parseValue("totalSpaceTB", totalSpaceTB, BigDecimal::new),
+                UsageDataHelper.parseValue("spaceUsedInBytes", spaceUsedInBytes, BigDecimal::new),
+                UsageDataHelper.parseValue("totalSpaceInBytes", totalSpaceInBytes, BigDecimal::new),
                 UsageDataHelper.parseValue("totalFiles", totalFiles, Long::new),
                 warnPercentage,
                 failPercentage,
                 userProxy);
     }
 
-    private UsageData(String groupId, Number spaceUsedTB, Number totalSpaceTB, Number totalFiles,
+    private UsageData(String groupId, Number spaceUsedInBytes, Number totalSpaceInBytes, Number totalFiles,
                       Double warnPercentage, Double failPercentage, String userProxy) {
         this.groupId = groupId;
-        this.spaceUsedTB = spaceUsedTB;
-        this.totalSpaceTB = totalSpaceTB;
+        this.spaceUsedInBytes = spaceUsedInBytes;
+        this.totalSpaceInBytes = totalSpaceInBytes;
         this.totalFiles = totalFiles;
         this.warnPercentage = warnPercentage;
         this.failPercentage = failPercentage;
@@ -61,11 +61,11 @@ public class UsageData {
     }
 
     public Number getSpaceUsedTB() {
-        return spaceUsedTB;
+        return spaceUsedInBytes != null ? spaceUsedInBytes.doubleValue() / 1024 / 1024 / 1024 / 1024 : 0;
     }
 
     public Number getTotalSpaceTB() {
-        return totalSpaceTB;
+        return totalSpaceInBytes != null ? totalSpaceInBytes.doubleValue() / 1024 / 1024 / 1024 / 1024 : 0;
     }
 
     public Number getTotalFiles() {
@@ -78,7 +78,7 @@ public class UsageData {
 
     @JsonProperty
     public Double getPercentUsage() {
-        return UsageDataHelper.percentage(spaceUsedTB, totalSpaceTB);
+        return UsageDataHelper.percentage(spaceUsedInBytes, totalSpaceInBytes);
     }
 
     @JsonProperty("status")
@@ -108,7 +108,7 @@ public class UsageData {
 
     @JsonProperty("details")
     public String getDetails() {
-        Double usageRatio = UsageDataHelper.percentage(spaceUsedTB, totalSpaceTB);
+        Double usageRatio = UsageDataHelper.percentage(spaceUsedInBytes, totalSpaceInBytes);
         if (usageRatio == null) {
             return "Not available";
         } else {
@@ -148,8 +148,8 @@ public class UsageData {
         } else {
             newGroupId = groupId + "," + other.groupId;
         }
-        Number newSpaceUsed = UsageDataHelper.addValues(spaceUsedTB, other.spaceUsedTB, v -> v);
-        Number newTotalSpace = UsageDataHelper.addValues(totalSpaceTB, other.totalSpaceTB, v -> v);
+        Number newSpaceUsed = UsageDataHelper.addValues(spaceUsedInBytes, other.spaceUsedInBytes, v -> v);
+        Number newTotalSpace = UsageDataHelper.addValues(totalSpaceInBytes, other.totalSpaceInBytes, v -> v);
         Number newTotalFiles = UsageDataHelper.addValues(totalFiles, other.totalFiles, v -> v.longValue());
         return new UsageData(newGroupId, newSpaceUsed, newTotalSpace, newTotalFiles,
                 UsageDataHelper.minValue(warnPercentage, other.warnPercentage),
@@ -161,8 +161,8 @@ public class UsageData {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("groupId", groupId)
-                .append("spaceUsedTB", spaceUsedTB)
-                .append("totalSpaceTB", totalSpaceTB)
+                .append("spaceUsedInBytes", spaceUsedInBytes)
+                .append("totalSpaceInBytes", totalSpaceInBytes)
                 .append("totalFiles", totalFiles)
                 .append("userProxy", userProxy)
                 .toString();
