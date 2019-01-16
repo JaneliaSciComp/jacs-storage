@@ -7,12 +7,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class UsageData {
 
+    private static final BigDecimal TERA = new BigDecimal(1024).pow(4);
     public static final UsageData EMPTY = new UsageData(null, (Number)null, (Number)null, (Number)null, null, null, null);
 
     @JsonProperty("lab")
@@ -65,7 +67,7 @@ public class UsageData {
     }
 
     public Number getSpaceUsedTB() {
-        return spaceUsedInBytes != null ? spaceUsedInBytes.doubleValue() / 1024 / 1024 / 1024 / 1024 : 0;
+        return spaceUsedInBytes != null ? new BigDecimal(spaceUsedInBytes.toString()).divide(TERA, 2, RoundingMode.HALF_UP).doubleValue() : 0;
     }
 
     public Number getTotalSpaceInBytes() {
@@ -73,7 +75,7 @@ public class UsageData {
     }
 
     public Number getTotalSpaceTB() {
-        return totalSpaceInBytes != null ? totalSpaceInBytes.doubleValue() / 1024 / 1024 / 1024 / 1024 : 0;
+        return totalSpaceInBytes != null ? new BigDecimal(totalSpaceInBytes.toString()).divide(TERA, 2, RoundingMode.HALF_UP).doubleValue() : 0;
     }
 
     public Number getTotalFiles() {
