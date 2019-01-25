@@ -13,6 +13,10 @@ public class ContentInputStream extends InputStream {
         this.inputStream = inputStream;
     }
 
+    public String getContentEntryName() {
+        return contentEntryName;
+    }
+
     @Override
     public int read() throws IOException {
         if (inputStream == null) {
