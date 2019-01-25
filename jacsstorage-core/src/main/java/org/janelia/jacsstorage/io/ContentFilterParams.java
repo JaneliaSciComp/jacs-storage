@@ -42,4 +42,21 @@ public class ContentFilterParams {
             filterTypeSpecificParams.put(name, value);
         }
     }
+
+    public String getAsString(String filterParam, String defaultValue) {
+        return StringUtils.defaultIfBlank(filterTypeSpecificParams.get(filterParam), defaultValue);
+    }
+
+    public Integer getAsInt(String filterParam, Integer defaultValue) {
+        String filterValue = getAsString(filterParam, "");
+        if (StringUtils.isNotBlank(filterValue)) {
+            try {
+                return Integer.valueOf(filterValue.trim());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Expected numeric value for " + filterParam + " but '" + filterValue + "' is not");
+            }
+        } else {
+            return defaultValue;
+        }
+    }
 }
