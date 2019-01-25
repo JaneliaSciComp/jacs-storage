@@ -23,9 +23,9 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class ExpandedArchiveBundleWriter implements BundleWriter {
+public class DataDirectoryBundleWriter implements BundleWriter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ExpandedArchiveBundleWriter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DataDirectoryBundleWriter.class);
 
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {

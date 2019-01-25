@@ -5,6 +5,7 @@ import com.google.common.hash.HashingInputStream;
 import com.google.common.hash.HashingOutputStream;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
+import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.model.jacsstorage.JacsDataLocation;
 import org.janelia.jacsstorage.datatransfer.DataTransferService;
@@ -39,21 +40,21 @@ public class DataTransferServiceImpl implements DataTransferService {
     }
 
     @Override
-    public void beginDataTransfer(TransferState<StorageMessageHeader> transferState) throws IOException {
+    public void beginDataTransfer(ContentFilterParams filterParams, TransferState<StorageMessageHeader> transferState) throws IOException {
         StorageMessageHeader messageHeader = transferState.getMessageType();
         switch (messageHeader.getOperation()) {
             case PERSIST_DATA:
                 beginWritingData(new JacsDataLocation(messageHeader.getLocationOrDefault(), messageHeader.getFormat()), transferState);
                 break;
             case RETRIEVE_DATA:
-                beginReadingData(new JacsDataLocation(messageHeader.getLocationOrDefault(), messageHeader.getFormat()), transferState);
+                beginReadingData(new JacsDataLocation(messageHeader.getLocationOrDefault(), messageHeader.getFormat()), filterParams, transferState);
                 break;
             default:
                 throw new UnsupportedOperationException("Operation " + messageHeader.getOperation() + " is not supported");
         }
     }
 
-    private void beginReadingData(JacsDataLocation dataLocation, TransferState<?> transferState) throws IOException {
+    private void beginReadingData(JacsDataLocation dataLocation, ContentFilterParams filterParams, TransferState<?> transferState) throws IOException {
         LOG.info("Begin reading data from: {}", dataLocation);
         BundleReader bundleReader;
         try {
@@ -77,7 +78,7 @@ public class DataTransferServiceImpl implements DataTransferService {
         backgroundTransferExecutor.execute(() -> {
             try {
                 transferState.setState(State.READ_DATA);
-                long nbytes = bundleReader.readBundle(dataLocation.getPath(), senderStream);
+                long nbytes = bundleReader.readBundle(dataLocation.getPath(), filterParams, senderStream);
                 transferState.setTransferredBytes(nbytes);
                 transferState.setChecksum(senderStream.hash().asBytes());
                 transferState.setState(State.READ_DATA_COMPLETE);

@@ -1,15 +1,32 @@
 package org.janelia.jacsstorage.io;
 
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 
 import javax.activation.MimetypesFileTypeMap;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.function.BiFunction;
 
-public abstract class AbstractBundleReader implements BundleReader {
+abstract class AbstractBundleReader implements BundleReader {
+
+    final ContentStreamFilterProvider contentStreamFilterProvider;
+
+    AbstractBundleReader(ContentStreamFilterProvider contentStreamFilterProvider) {
+        this.contentStreamFilterProvider = contentStreamFilterProvider;
+    }
+
+    @TimedMethod(
+            argList = {0, 1},
+            logResult = true
+    )
+    @Override
+    public long readBundle(String source, ContentFilterParams filterParams, OutputStream stream) {
+        return readDataEntry(source, "", filterParams, stream);
+    }
 
     DataNodeInfo pathToDataNodeInfo(Path rootPath, Path nodePath, BiFunction<Path, Path, String> nodePathMapper) {
         try {

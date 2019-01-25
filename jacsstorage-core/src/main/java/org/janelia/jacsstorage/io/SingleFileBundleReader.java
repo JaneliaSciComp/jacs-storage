@@ -7,7 +7,10 @@ import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.msgpack.core.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
@@ -21,24 +24,16 @@ import java.util.Set;
 
 public class SingleFileBundleReader extends AbstractBundleReader {
 
+    private final static Logger LOG = LoggerFactory.getLogger(SingleFileBundleReader.class);
+
+    @Inject
+    public SingleFileBundleReader(ContentStreamFilterProvider contentStreamFilterProvider) {
+        super(contentStreamFilterProvider);
+    }
+
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
         return EnumSet.of(JacsStorageFormat.SINGLE_DATA_FILE);
-    }
-
-    @TimedMethod(
-            argList = {0},
-            logResult = true
-    )
-    @Override
-    public long readBundle(String source, OutputStream stream) {
-        Path sourcePath = getSourcePath(source);
-        checkSourcePath(sourcePath);
-        try {
-            return FileUtils.copyFrom(sourcePath, stream);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     @TimedMethod(
@@ -59,11 +54,16 @@ public class SingleFileBundleReader extends AbstractBundleReader {
             logResult = true
     )
     @Override
-    public long readDataEntry(String source, String entryName, OutputStream outputStream) throws IOException {
+    public long readDataEntry(String source, String entryName, ContentFilterParams filterParams, OutputStream outputStream) {
         Path sourcePath = getSourcePath(source);
         checkSourcePath(sourcePath);
         Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
-        return FileUtils.copyFrom(sourcePath, outputStream);
+        try {
+            return FileUtils.copyFrom(sourcePath, outputStream);
+        } catch (IOException e) {
+            LOG.error("Error copying data from {}", source, e);
+            throw new IllegalStateException(e);
+        }
     }
 
     private Path getSourcePath(String source) {
