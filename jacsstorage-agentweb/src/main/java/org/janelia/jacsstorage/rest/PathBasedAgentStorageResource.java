@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiResponses;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
@@ -28,6 +29,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -70,7 +72,7 @@ public class PathBasedAgentStorageResource {
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
-                (dataBundle, dataEntryPath) -> Response.ok(),
+                (dataBundle, dataEntryPath) -> storageResourceHelper.checkContentFromDataBundle(dataBundle, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam),
                 (storageVolume, dataEntryPath) -> storageResourceHelper.checkContentFromFile(storageVolume, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam)
         ).build();
     }
@@ -85,13 +87,15 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response retrieveData(@PathParam("dataPath") String dataPathParam) {
+    public Response retrieveData(@PathParam("dataPath") String dataPathParam,
+                                 @Context UriInfo requestURI) {
         LOG.info("Retrieve data from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
-                (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath),
-                (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, dataEntryPath)
+                (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, filterParams, dataEntryPath),
+                (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, dataEntryPath)
         ).build();
     }
 

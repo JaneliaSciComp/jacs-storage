@@ -10,6 +10,8 @@ import org.janelia.jacsstorage.datatransfer.StorageMessageHeaderCodec;
 import org.janelia.jacsstorage.datatransfer.TransferState;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
+import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentStreamFilterProvider;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.io.SingleFileBundleReader;
 import org.janelia.jacsstorage.io.SingleFileBundleWriter;
@@ -54,7 +56,8 @@ public class DataTransferServiceImplTest {
     public void setUp() throws IOException {
         Instance<BundleReader> bundleReaderSource = mock(Instance.class);
         Instance<BundleWriter> bundleWriterSource = mock(Instance.class);
-        when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader()).iterator());
+        ContentStreamFilterProvider contentStreamFilterProvider = mock(ContentStreamFilterProvider.class);
+        when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader(contentStreamFilterProvider)).iterator());
         when(bundleWriterSource.iterator()).thenReturn(ImmutableList.<BundleWriter>of(new SingleFileBundleWriter()).iterator());
         storageService = new DataTransferServiceImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource));
         testDirectory = Files.createTempDirectory("StorageAgentTest");
@@ -84,7 +87,7 @@ public class DataTransferServiceImplTest {
         FileInputStream testInput = new FileInputStream(testDataPath.toFile());
         try {
             TransferState<StorageMessageHeader> transferState = createMessageHeaderTransferState(DataTransferService.Operation.PERSIST_DATA, JacsStorageFormat.SINGLE_DATA_FILE, testTargetPath.toString());
-            storageService.beginDataTransfer(transferState);
+            storageService.beginDataTransfer(new ContentFilterParams(), transferState);
 
             ByteBuffer buffer = ByteBuffer.allocate(2048);
             FileChannel channel = testInput.getChannel();
@@ -115,7 +118,7 @@ public class DataTransferServiceImplTest {
     public void readData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
         TransferState<StorageMessageHeader> transferState = createMessageHeaderTransferState(DataTransferService.Operation.RETRIEVE_DATA, JacsStorageFormat.SINGLE_DATA_FILE, testDataPath.toString());
-        storageService.beginDataTransfer(transferState);
+        storageService.beginDataTransfer(new ContentFilterParams(), transferState);
 
         ByteBuffer buffer = ByteBuffer.allocate(2048);
         byte[] expectedResult = Files.readAllBytes(testDataPath);

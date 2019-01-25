@@ -9,13 +9,14 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 @Provider
-public class IOExceptionRequestHandler implements ExceptionMapper<IOException> {
-    private static final Logger LOG = LoggerFactory.getLogger(IOExceptionRequestHandler.class);
+public class UncheckedIOExceptionRequestHandler implements ExceptionMapper<UncheckedIOException> {
+    private static final Logger LOG = LoggerFactory.getLogger(UncheckedIOExceptionRequestHandler.class);
 
     @Override
-    public Response toResponse(IOException exception) {
+    public Response toResponse(UncheckedIOException exception) {
         LOG.error("Illegal state response", exception);
         String errorMessage;
         if (StringUtils.isBlank(exception.getMessage())) {

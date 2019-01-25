@@ -6,6 +6,8 @@ import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentStreamFilter;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
@@ -178,7 +180,7 @@ public class StorageResourceHelper {
                 ;
     }
 
-    public Response.ResponseBuilder retrieveContentFromFile(JacsStorageVolume storageVolume, StorageRelativePath dataEntryName) {
+    public Response.ResponseBuilder retrieveContentFromFile(JacsStorageVolume storageVolume, ContentFilterParams filterParams, StorageRelativePath dataEntryName) {
         if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
             return Response
                     .status(Response.Status.FORBIDDEN)
@@ -192,7 +194,7 @@ public class StorageResourceHelper {
                     long fileSize = PathUtils.getSize(dataEntryPath);
                     StreamingOutput fileStream = output -> {
                         try {
-                            dataStorageService.retrieveDataStream(dataEntryPath, storageFormat, output);
+                            dataStorageService.retrieveDataStream(dataEntryPath, storageFormat, filterParams, output);
                         } catch (Exception e) {
                             LOG.error("Error streaming data file content for {}", dataEntryPath, e);
                             throw new WebApplicationException(e);
@@ -220,7 +222,7 @@ public class StorageResourceHelper {
                 ;
     }
 
-    public Response.ResponseBuilder retrieveContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath) {
+    public Response.ResponseBuilder retrieveContentFromDataBundle(JacsBundle dataBundle, ContentFilterParams filterParams, String dataEntryPath) {
         long fileSize = PathUtils.getSize(dataBundle.getRealStoragePath().resolve(StringUtils.defaultIfBlank(dataEntryPath, "")));
         StreamingOutput bundleStream = output -> {
             try {
@@ -228,6 +230,7 @@ public class StorageResourceHelper {
                         dataBundle.getRealStoragePath(),
                         dataEntryPath,
                         dataBundle.getStorageFormat(),
+                        filterParams,
                         output);
             } catch (Exception e) {
                 LOG.error("Error streaming data file content for {}:{}", dataBundle, dataEntryPath, e);

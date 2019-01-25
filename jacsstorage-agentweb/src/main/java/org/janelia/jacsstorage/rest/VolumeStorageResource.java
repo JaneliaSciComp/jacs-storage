@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiResponses;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.StorageRelativePath;
@@ -23,6 +24,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -84,7 +86,8 @@ public class VolumeStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     public Response retrieveDataFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
-                                                  @PathParam("storageRelativePath") String storageRelativeFilePath) {
+                                                  @PathParam("storageRelativePath") String storageRelativeFilePath,
+                                                  @Context UriInfo requestURI) {
         LOG.info("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
@@ -93,9 +96,10 @@ public class VolumeStorageResource {
                     .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
                     .build();
         }
+        ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-            return storageResourceHelper.retrieveContentFromFile(storageVolume, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).build();
+            return storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).build();
         } else {
             return Response
                     .status(Response.Status.FORBIDDEN)

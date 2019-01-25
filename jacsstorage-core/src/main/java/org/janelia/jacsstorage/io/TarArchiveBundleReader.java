@@ -8,13 +8,16 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.coreutils.FileUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
@@ -29,24 +32,16 @@ import java.util.Set;
 
 public class TarArchiveBundleReader extends AbstractBundleReader {
 
+    private final static Logger LOG = LoggerFactory.getLogger(TarArchiveBundleReader.class);
+
+    @Inject
+    TarArchiveBundleReader(ContentStreamFilterProvider contentStreamFilterProvider) {
+        super(contentStreamFilterProvider);
+    }
+
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
         return EnumSet.of(JacsStorageFormat.ARCHIVE_DATA_FILE);
-    }
-
-    @TimedMethod(
-            argList = {0},
-            logResult = true
-    )
-    @Override
-    public long readBundle(String source, OutputStream stream) {
-        Path sourcePath = getSourcePath(source);
-        checkSourcePath(sourcePath);
-        try {
-            return FileUtils.copyFrom(sourcePath, stream);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     @TimedMethod(
@@ -103,19 +98,16 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     }
 
     @TimedMethod(
-            argList = {0, 1},
+            argList = {0, 1, 2},
             logResult = true
     )
     @Override
-    public long readDataEntry(String source, String entryName, OutputStream outputStream) throws IOException {
+    public long readDataEntry(String source, String entryName, ContentFilterParams filterParams, OutputStream outputStream) {
         Path sourcePath = getSourcePath(source);
         checkSourcePath(sourcePath);
-        if (StringUtils.isBlank(entryName)) {
-            return readBundle(source, outputStream);
-        }
         TarArchiveOutputStream tarOutputStream = null;
         long nbytes = 0L;
-        TarArchiveInputStream inputStream = new TarArchiveInputStream(new BufferedInputStream(new FileInputStream(sourcePath.toFile())));
+        TarArchiveInputStream inputStream = openSourceAsArchiveStream(sourcePath);
         try {
             String normalizedEntryName = normalizeEntryName(entryName);
             for (TarArchiveEntry sourceEntry = inputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = inputStream.getNextTarEntry()) {
@@ -152,6 +144,8 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                 tarOutputStream.finish();
                 return nbytes;
             }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         } finally {
             try {
                 inputStream.close();
@@ -169,6 +163,15 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
             throw new IllegalArgumentException("No file found for " + sourcePath);
         } else if (!Files.isRegularFile(sourcePath)) {
             throw new IllegalArgumentException("Path " + sourcePath + " expected to be a file");
+        }
+    }
+
+    private TarArchiveInputStream openSourceAsArchiveStream(Path sourcePath) {
+        try {
+            return new TarArchiveInputStream(new BufferedInputStream(new FileInputStream(sourcePath.toFile())));
+        } catch (IOException e) {
+            LOG.error("Error opening tar archive {}", sourcePath, e);
+            throw new IllegalArgumentException(e);
         }
     }
 

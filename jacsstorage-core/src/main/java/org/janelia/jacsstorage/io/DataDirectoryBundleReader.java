@@ -10,7 +10,10 @@ import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.msgpack.core.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
@@ -26,7 +29,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ExpandedArchiveBundleReader extends AbstractBundleReader {
+public class DataDirectoryBundleReader extends AbstractBundleReader {
+
+    private final static Logger LOG = LoggerFactory.getLogger(SingleFileBundleReader.class);
 
     private static class ArchiveFileVisitor extends SimpleFileVisitor<Path> {
         private final Path parentDir;
@@ -63,34 +68,14 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
         }
     }
 
+    @Inject
+    DataDirectoryBundleReader(ContentStreamFilterProvider contentStreamFilterProvider) {
+        super(contentStreamFilterProvider);
+    }
+
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
         return EnumSet.of(JacsStorageFormat.DATA_DIRECTORY);
-    }
-
-    @TimedMethod(
-            argList = {0},
-            logResult = true
-    )
-    @Override
-    public long readBundle(String source, OutputStream stream) {
-        try {
-            TarArchiveOutputStream outputStream = new TarArchiveOutputStream(stream, TarConstants.DEFAULT_RCDSIZE);
-            Path sourcePath = getSourcePath(source);
-            Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
-            Path archiverRootDir;
-            if (Files.isRegularFile(sourcePath)) {
-                archiverRootDir = sourcePath.getParent();
-            } else {
-                archiverRootDir = sourcePath;
-            }
-            ArchiveFileVisitor archiver = new ArchiveFileVisitor(archiverRootDir, outputStream);
-            Files.walkFileTree(sourcePath, archiver);
-            outputStream.finish();
-            return archiver.nBytes;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     @TimedMethod(
@@ -120,28 +105,30 @@ public class ExpandedArchiveBundleReader extends AbstractBundleReader {
     }
 
     @TimedMethod(
-            argList = {0, 1},
+            argList = {0, 1, 2},
             logResult = true
     )
     @Override
-    public long readDataEntry(String source, String entryName, OutputStream outputStream) throws IOException {
+    public long readDataEntry(String source, String entryName, ContentFilterParams filterParams, OutputStream outputStream) {
         Path sourcePath = getSourcePath(source);
         Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
-        if (StringUtils.isBlank(entryName)) {
-            return readBundle(source, outputStream);
-        }
-        Path entryPath = sourcePath.resolve(entryName);
+        Path entryPath = StringUtils.isBlank(entryName) ? sourcePath : sourcePath.resolve(entryName);
         if (Files.notExists(entryPath)) {
             throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
         }
-        if (Files.isDirectory(entryPath)) {
-            TarArchiveOutputStream tarOutputStream = new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE);
-            ArchiveFileVisitor archiver = new ArchiveFileVisitor(entryPath, tarOutputStream);
-            Files.walkFileTree(entryPath, archiver);
-            tarOutputStream.finish();
-            return archiver.nBytes;
-        } else {
-            return FileUtils.copyFrom(entryPath, outputStream);
+        try {
+            if (Files.isDirectory(entryPath)) {
+                TarArchiveOutputStream tarOutputStream = new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE);
+                ArchiveFileVisitor archiver = new ArchiveFileVisitor(entryPath, tarOutputStream);
+                Files.walkFileTree(entryPath, archiver);
+                tarOutputStream.finish();
+                return archiver.nBytes;
+            } else {
+                return FileUtils.copyFrom(entryPath, outputStream);
+            }
+        } catch (Exception e) {
+            LOG.error("Error copying data from {}:{}", source, entryName, e);
+            throw new IllegalStateException(e);
         }
     }
 

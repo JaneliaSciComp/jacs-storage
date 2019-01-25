@@ -44,6 +44,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -129,13 +130,17 @@ public class AgentStorageResource {
     @Path("{dataBundleId}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     public Response retrieveStream(@PathParam("dataBundleId") Long dataBundleId,
-                                   @Context SecurityContext securityContext) {
+                                   @Context UriInfo requestURI) {
         LOG.info("Retrieve the entire stored bundle {}", dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StreamingOutput bundleStream = output -> {
             try {
-                dataStorageService.retrieveDataStream(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), output);
+                dataStorageService.retrieveDataStream(
+                        dataBundle.getRealStoragePath(),
+                        dataBundle.getStorageFormat(),
+                        ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters()),
+                        output);
             } catch (Exception e) {
                 throw new WebApplicationException(e);
             }
@@ -232,12 +237,12 @@ public class AgentStorageResource {
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     public Response getEntryContent(@PathParam("dataBundleId") Long dataBundleId,
                                     @PathParam("dataEntryPath") String dataEntryPath,
-                                    @Context SecurityContext securityContext) {
+                                    @Context UriInfo requestURI) {
         LOG.info("Get entry {} content from bundle {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-        return storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath).build();
+        return storageResourceHelper.retrieveContentFromDataBundle(dataBundle, ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters()), dataEntryPath).build();
     }
 
     @ApiOperation(value = "Create a new folder in the specified data bundle.")
