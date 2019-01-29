@@ -3,9 +3,8 @@ package org.janelia.jacsstorage.io.contentfilters.tiff;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.io.ContentInputStream;
 import org.janelia.jacsstorage.io.ContentStreamFilter;
-import org.janelia.model.util.ImageUtils;
+import org.janelia.rendering.utils.ImageUtils;
 
-import javax.enterprise.inject.Vetoed;
 import java.io.ByteArrayInputStream;
 
 public class TiffImageContentStreamFilter implements ContentStreamFilter {
