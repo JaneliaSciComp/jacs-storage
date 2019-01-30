@@ -96,6 +96,7 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
         if (StringUtils.isNotBlank(pattern.getOwnerKey())) {
             filtersBuilder.add(Filters.or(
                     Filters.eq("ownerKey", pattern.getOwnerKey()),
+                    Filters.all("readersKeys", "*"), // everybody can read it
                     Filters.all("readersKeys", pattern.getOwnerKey())
             ));
         }
