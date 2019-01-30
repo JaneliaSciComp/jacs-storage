@@ -159,8 +159,14 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
                     if (StringUtils.isNotBlank(pattern.getPath())) {
                         localPipelineBuilder.add(
                                 Aggregates.addFields(new Field<>(
+                                        "dbId",
+                                        createToLowerExpr("$_id")
+                                ))
+                        );
+                        localPipelineBuilder.add(
+                                Aggregates.addFields(new Field<>(
                                         "dataStoragePath",
-                                        createConcatExpr("$storageVolume.storageVirtualPath", "/", createToStringExpr("$_id"))
+                                        createConcatExpr("$storageVolume.storageVirtualPath", "/", "$dbId")
                                 ))
                         );
                         localPipelineBuilder.add(Aggregates.match(Filters.eq("dataStoragePath", pattern.getPath())));
@@ -182,8 +188,14 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
                         );
                         localPipelineBuilder.add(
                                 Aggregates.addFields(new Field<>(
+                                        "dbId",
+                                        createToLowerExpr("$_id")
+                                ))
+                        );
+                        localPipelineBuilder.add(
+                                Aggregates.addFields(new Field<>(
                                         "dataStoragePath",
-                                        createConcatExpr("$storageVolume.storageVirtualPath", "/", createToStringExpr("$_id"))
+                                        createConcatExpr("$storageVolume.storageVirtualPath", "/", "$dbId")
                                 ))
                         );
                         localPipelineBuilder.add(Aggregates.match(Filters.eq("dataStoragePath", pattern.getPath())));

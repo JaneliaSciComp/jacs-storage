@@ -311,8 +311,8 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
         return new Document("$substrBytes", Arrays.asList(strExpr, startIndexExpr, countExpr));
     }
 
-    Bson createToStringExpr(Object expr) {
-        return new Document("$toString", expr);
+    Bson createToLowerExpr(Object expr) {
+        return new Document("$toLower", expr);
     }
 
     Bson ifNullExp(Object expr, Object nullDefault) {
