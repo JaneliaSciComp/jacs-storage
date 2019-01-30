@@ -215,6 +215,7 @@ public class JacsBundle extends AbstractEntity {
         return storageVolume != null ? Optional.of(storageVolume) : Optional.empty();
     }
 
+    @JsonProperty
     public Optional<JacsStorageVolume> setStorageVolume(JacsStorageVolume storageVolume) {
         this.storageVolume = storageVolume;
         return getStorageVolume();

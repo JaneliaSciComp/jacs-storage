@@ -26,6 +26,7 @@ public class DataStorageInfo {
     private String name;
     private String ownerKey;
     private String path;
+    private String dataVirtualPath;
     private Set<String> readersKeys = new HashSet<>();
     private Set<String> writersKeys = new HashSet<>();
     private StoragePathURI storageRootPathURI;
@@ -56,6 +57,7 @@ public class DataStorageInfo {
                     dsi.setStorageHost(sv.getStorageHost());
                     dsi.setStorageTags(sv.getStorageTags());
                     dsi.setStorageRootDir(sv.evalStorageRootDir(dataBundle.asStorageContext()));
+                    dsi.setDataVirtualPath(Paths.get(sv.getStorageVirtualPath(), dataBundle.getId().toString()).toString());
                     dsi.setStorageRootPathURI(sv.getStorageURI());
                     dsi.setConnectionURL(sv.getStorageServiceURL());
                 });
@@ -122,6 +124,18 @@ public class DataStorageInfo {
 
     public DataStorageInfo setPath(String path) {
         this.path = path;
+        return this;
+    }
+
+    @ApiModelProperty(
+            value = "bundle absolute virtual path"
+    )
+    public String getDataVirtualPath() {
+        return dataVirtualPath;
+    }
+
+    public DataStorageInfo setDataVirtualPath(String dataVirtualPath) {
+        this.dataVirtualPath = dataVirtualPath;
         return this;
     }
 
