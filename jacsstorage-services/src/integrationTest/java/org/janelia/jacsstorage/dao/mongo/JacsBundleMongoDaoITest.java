@@ -108,15 +108,18 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
                         .name(testName + "1")
                         .path(testVolumeRootDir + "/" + testBundle1.getId().toString()).build(), 1)
                 .put(new JacsBundleBuilder()
+                        .dataBundleId(testBundle2.getId())
                         .storageHost(testHost)
                         .name(testName + "2")
                         .path(testVolumeRootDir + "/" + testBundle2.getId().toString()).build(), 1)
                 .put(new JacsBundleBuilder()
+                        .dataBundleId(testBundle1.getId())
                         .name(testName + "1").build(), 1)
                 .put(new JacsBundleBuilder()
                         .storageHost(testHost)
                         .name(testName + "1")
-                        .path(testVolumeRootDir + "/" + testBundle2.getId().toString()).build(), 0);
+                        .path(testVolumeRootDir + "/" + testBundle2.getId().toString()).build(), 0)
+                ;
 
         testDataBuilder.build().forEach((filter, expectedResult) -> {
             assertThat(testDao.findMatchingDataBundles(
