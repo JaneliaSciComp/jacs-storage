@@ -232,7 +232,7 @@ public class MasterStorageResource {
                 .storageHost(storageHost)
                 .storageTagsAsList(storageTags)
                 .volumeName(volumeName)
-                .storageVirtualPath(storagePath)
+                .path(storagePath)
                 .build();
         LOG.info("Count storage records filtered with: {}", dataBundle);
         PageRequest pageRequest = new PageRequestBuilder()
