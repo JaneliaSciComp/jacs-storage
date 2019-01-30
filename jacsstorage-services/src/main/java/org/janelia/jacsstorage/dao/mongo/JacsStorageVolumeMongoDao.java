@@ -186,39 +186,6 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
                 createSubstrExpr("$storageRootTemplate", 0, indexOfVarExpr));
     }
 
-    private Bson literalExp(Object exp) {
-        return new Document("$literal", exp);
-    }
-
-    private Bson ifNullExp(Object expr, Object nullDefault) {
-        return new Document("$ifNull", Arrays.asList(expr, nullDefault));
-    }
-
-    private Bson createCondExpr(Object cond, Object thenValue, Object elseValue) {
-        return new Document("$cond",
-                Arrays.asList(
-                        cond,
-                        thenValue,
-                        elseValue
-                ));
-    }
-
-    private Bson createStartsWithExpr(Object expr, Object subExpr) {
-        return createEqExpr(createIndexOfExpr(expr, subExpr), 0);
-    }
-
-    private Bson createEqExpr(Object... argList) {
-        return new Document("$eq", Arrays.asList(argList));
-    }
-
-    private Bson createIndexOfExpr(Object expr, Object subExpr) {
-        return new Document("$indexOfBytes", Arrays.asList(expr, subExpr));
-    }
-
-    private Bson createSubstrExpr(Object strExpr, Object startIndexExpr, Object countExpr) {
-        return new Document("$substrBytes", Arrays.asList(strExpr, startIndexExpr, countExpr));
-    }
-
     @Override
     public JacsStorageVolume getStorageByHostAndNameAndCreateIfNotFound(String hostName, String volumeName) {
         Preconditions.checkArgument(StringUtils.isNotBlank(volumeName));
