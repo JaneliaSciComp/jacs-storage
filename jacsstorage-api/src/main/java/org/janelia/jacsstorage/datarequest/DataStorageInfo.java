@@ -11,6 +11,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 
+import java.net.URI;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -179,6 +180,15 @@ public class DataStorageInfo {
     public DataStorageInfo setStorageRootPathURI(StoragePathURI storageRootPathURI) {
         this.storageRootPathURI = storageRootPathURI;
         return this;
+    }
+
+    @JsonProperty
+    public String getDataStorageURI() {
+        return URI.create(getConnectionURL()).resolve("agent_storage").resolve(getId()).toString();
+    }
+
+    @JsonIgnore
+    public void setDataStorageURI(String dataStorageURI) {
     }
 
     @ApiModelProperty(
