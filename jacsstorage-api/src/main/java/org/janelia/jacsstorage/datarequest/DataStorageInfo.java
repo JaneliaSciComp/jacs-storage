@@ -184,7 +184,8 @@ public class DataStorageInfo {
 
     @JsonProperty
     public String getDataStorageURI() {
-        return URI.create(getConnectionURL()).resolve("agent_storage").resolve(getId()).toString();
+        String connectionUrl = StringUtils.appendIfMissing(StringUtils.defaultIfBlank(getConnectionURL(), "/"), "/");
+        return URI.create(connectionUrl).resolve("agent_storage/").resolve(getId()).toString();
     }
 
     @JsonIgnore
