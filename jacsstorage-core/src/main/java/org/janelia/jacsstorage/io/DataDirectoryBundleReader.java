@@ -133,7 +133,17 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
     }
 
     private Path getSourcePath(String source) {
-        return Paths.get(source);
+        Path sourcePath = Paths.get(source);
+        if (Files.isSymbolicLink(sourcePath)) {
+            try {
+                return Files.readSymbolicLink(sourcePath);
+            } catch (IOException e) {
+                LOG.error("Error getting the actual path for symbolic link {}", source, e);
+                throw new IllegalStateException(e);
+            }
+        } else {
+            return sourcePath;
+        }
     }
 
 }
