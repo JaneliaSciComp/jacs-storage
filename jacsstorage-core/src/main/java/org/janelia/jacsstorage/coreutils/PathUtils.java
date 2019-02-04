@@ -92,7 +92,7 @@ public class PathUtils {
     }
 
     public static long getSize(Path fp) {
-        Preconditions.checkArgument(Files.exists(fp), "No path found for " + fp);
+        if (Files.notExists(fp)) return 0L;
         FileSizeVisitor pathVisitor = new FileSizeVisitor();
         try {
             Files.walkFileTree(fp, pathVisitor);
