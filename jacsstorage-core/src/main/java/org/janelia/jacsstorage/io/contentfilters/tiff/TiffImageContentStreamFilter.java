@@ -17,14 +17,10 @@ public class TiffImageContentStreamFilter implements ContentStreamFilter {
     }
 
     public ContentInputStream apply(ContentFilterParams filterParams, ContentInputStream stream) {
-        Integer x0 = filterParams.getAsInt("x0", 0);
-        Integer y0 = filterParams.getAsInt("y0", 0);
         Integer z0 = filterParams.getAsInt("z0", 0);
-        Integer deltaX = filterParams.getAsInt("deltax", -1);
-        Integer deltaY = filterParams.getAsInt("deltay", -1);
         Integer deltaZ = filterParams.getAsInt("deltaz", -1);
 
-        byte[] imageBytes = ImageUtils.loadImageFromTiffStream(stream, x0, y0, z0, deltaX, deltaY, deltaZ);
+        byte[] imageBytes = ImageUtils.loadRenderedImageBytesFromTiffStream(stream, z0, deltaZ);
         if (imageBytes == null) {
             return new ContentInputStream(stream.getContentEntryName(), new ByteArrayInputStream(new byte[0]));
         } else {
