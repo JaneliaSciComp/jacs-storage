@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.io;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.FileUtils;
+import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -59,7 +60,10 @@ public class SingleFileBundleReader extends AbstractBundleReader {
         checkSourcePath(sourcePath);
         Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
         try {
-            return FileUtils.copyFrom(sourcePath, outputStream);
+            ContentStreamFilter contentStreamFilter = contentStreamFilterProvider.getContentStreamFilter(filterParams);
+            return IOStreamUtils.copyFrom(
+                    contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, Files.newInputStream(sourcePath))),
+                    outputStream);
         } catch (IOException e) {
             LOG.error("Error copying data from {}", source, e);
             throw new IllegalStateException(e);
@@ -67,7 +71,17 @@ public class SingleFileBundleReader extends AbstractBundleReader {
     }
 
     private Path getSourcePath(String source) {
-        return Paths.get(source);
+        Path sourcePath = Paths.get(source);
+        if (Files.isSymbolicLink(sourcePath)) {
+            try {
+                return Files.readSymbolicLink(sourcePath);
+            } catch (IOException e) {
+                LOG.error("Error getting the actual path for symbolic link {}", source, e);
+                throw new IllegalStateException(e);
+            }
+        } else {
+            return sourcePath;
+        }
     }
 
     private void checkSourcePath(Path sourcePath) {

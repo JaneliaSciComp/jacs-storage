@@ -7,7 +7,9 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.coreutils.BufferUtils;
 import org.janelia.jacsstorage.coreutils.FileUtils;
+import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -234,7 +236,7 @@ public class TarArchiveBundleWriter implements BundleWriter {
                         .collect(Collectors.toList());
                 FileChannel tarChannel = existingTarFile.getChannel();
                 long writePos = 0L;
-                final ByteBuffer buffer = ByteBuffer.allocateDirect(FileUtils.BUFFER_SIZE);
+                final ByteBuffer buffer = ByteBuffer.allocateDirect(BufferUtils.BUFFER_SIZE);
                 for (StreamChunk toCopy : copiedIntervals) {
                     StreamChunk currentChunk = new StreamChunk(toCopy.startPos, toCopy.size);
                     while (currentChunk.size > 0) {

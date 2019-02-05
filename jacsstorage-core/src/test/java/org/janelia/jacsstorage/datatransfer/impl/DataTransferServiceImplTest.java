@@ -15,10 +15,12 @@ import org.janelia.jacsstorage.io.ContentStreamFilterProvider;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.io.SingleFileBundleReader;
 import org.janelia.jacsstorage.io.SingleFileBundleWriter;
+import org.janelia.jacsstorage.io.contentfilters.IDContentStreamFilter;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import javax.enterprise.inject.Instance;
 import java.io.ByteArrayOutputStream;
@@ -41,6 +43,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -57,6 +60,8 @@ public class DataTransferServiceImplTest {
         Instance<BundleReader> bundleReaderSource = mock(Instance.class);
         Instance<BundleWriter> bundleWriterSource = mock(Instance.class);
         ContentStreamFilterProvider contentStreamFilterProvider = mock(ContentStreamFilterProvider.class);
+        Mockito.when(contentStreamFilterProvider.getContentStreamFilter(any(ContentFilterParams.class)))
+                .thenReturn(new IDContentStreamFilter());
         when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader(contentStreamFilterProvider)).iterator());
         when(bundleWriterSource.iterator()).thenReturn(ImmutableList.<BundleWriter>of(new SingleFileBundleWriter()).iterator());
         storageService = new DataTransferServiceImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource));

@@ -5,9 +5,12 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.hamcrest.Matchers;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.janelia.jacsstorage.io.contentfilters.IDContentStreamFilter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 import java.io.BufferedInputStream;
@@ -47,6 +50,8 @@ public class DataDirectoryBundleReaderWriterTest {
     @Before
     public void setUp() throws IOException {
         ContentStreamFilterProvider contentStreamFilterProvider = Mockito.mock(ContentStreamFilterProvider.class);
+        Mockito.when(contentStreamFilterProvider.getContentStreamFilter(ArgumentMatchers.any(ContentFilterParams.class)))
+                .thenReturn(new IDContentStreamFilter());
         dataDirectoryBundleReader = new DataDirectoryBundleReader(contentStreamFilterProvider);
         dataDirectoryBundleWriter = new DataDirectoryBundleWriter();
         testDirectory = Files.createTempDirectory("DataDirectoryBundleReaderWriterTest");

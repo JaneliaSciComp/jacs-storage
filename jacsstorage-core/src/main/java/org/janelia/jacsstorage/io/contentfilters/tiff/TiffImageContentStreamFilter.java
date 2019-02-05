@@ -1,7 +1,7 @@
 package org.janelia.jacsstorage.io.contentfilters.tiff;
 
 import org.janelia.jacsstorage.io.ContentFilterParams;
-import org.janelia.jacsstorage.io.ContentInputStream;
+import org.janelia.jacsstorage.io.ContentFilteredInputStream;
 import org.janelia.jacsstorage.io.ContentStreamFilter;
 import org.janelia.rendering.utils.ImageUtils;
 
@@ -16,15 +16,15 @@ public class TiffImageContentStreamFilter implements ContentStreamFilter {
         return TIFF_FILTER_TYPE.equalsIgnoreCase(filterType);
     }
 
-    public ContentInputStream apply(ContentFilterParams filterParams, ContentInputStream stream) {
-        Integer z0 = filterParams.getAsInt("z0", 0);
-        Integer deltaZ = filterParams.getAsInt("deltaz", -1);
+    public ContentFilteredInputStream apply(ContentFilteredInputStream stream) {
+        Integer z0 = stream.getContentFilterParams().getAsInt("z0", 0);
+        Integer deltaZ = stream.getContentFilterParams().getAsInt("deltaz", -1);
 
         byte[] imageBytes = ImageUtils.loadRenderedImageBytesFromTiffStream(stream, z0, deltaZ);
         if (imageBytes == null) {
-            return new ContentInputStream(stream.getContentEntryName(), new ByteArrayInputStream(new byte[0]));
+            return new ContentFilteredInputStream(stream.getContentFilterParams(), new ByteArrayInputStream(new byte[0]));
         } else {
-            return new ContentInputStream(stream.getContentEntryName(), new ByteArrayInputStream(imageBytes));
+            return new ContentFilteredInputStream(stream.getContentFilterParams(), new ByteArrayInputStream(imageBytes));
         }
     }
 }

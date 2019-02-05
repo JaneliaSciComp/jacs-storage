@@ -5,7 +5,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.coreutils.FileUtils;
+import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,18 +34,25 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
 
     private static class ArchiveFileVisitor extends SimpleFileVisitor<Path> {
         private final Path parentDir;
+        private final ContentStreamFilter contentStreamFilter;
+        private final ContentFilterParams filterParams;
         private final ArchiveOutputStream outputStream;
+
         private long nBytes = 0L;
 
-        ArchiveFileVisitor(Path parentDir, ArchiveOutputStream outputStream) {
+        ArchiveFileVisitor(Path parentDir, ContentStreamFilter contentStreamFilter, ContentFilterParams filterParams, ArchiveOutputStream outputStream) {
             this.parentDir = parentDir;
+            this.contentStreamFilter = contentStreamFilter;
+            this.filterParams = filterParams;
             this.outputStream = outputStream;
         }
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
             createEntry(file);
-            nBytes += FileUtils.copyFrom(file, outputStream);
+            nBytes += IOStreamUtils.copyFrom(
+                    contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, Files.newInputStream(file))),
+                    outputStream);
             outputStream.closeArchiveEntry();
             return FileVisitResult.CONTINUE;
         }
@@ -117,14 +123,17 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
             throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
         }
         try {
+            ContentStreamFilter contentStreamFilter = contentStreamFilterProvider.getContentStreamFilter(filterParams);
             if (Files.isDirectory(entryPath)) {
                 TarArchiveOutputStream tarOutputStream = new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE);
-                ArchiveFileVisitor archiver = new ArchiveFileVisitor(entryPath, tarOutputStream);
+                ArchiveFileVisitor archiver = new ArchiveFileVisitor(entryPath, contentStreamFilter, filterParams, tarOutputStream);
                 Files.walkFileTree(entryPath, archiver);
                 tarOutputStream.finish();
                 return archiver.nBytes;
             } else {
-                return FileUtils.copyFrom(entryPath, outputStream);
+                return IOStreamUtils.copyFrom(
+                        contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, Files.newInputStream(entryPath))),
+                        outputStream);
             }
         } catch (Exception e) {
             LOG.error("Error copying data from {}:{}", source, entryName, e);

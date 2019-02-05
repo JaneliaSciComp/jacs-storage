@@ -1,26 +1,26 @@
 package org.janelia.jacsstorage.coreutils;
 
-import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
-public class FileUtils {
+public class IOStreamUtils {
 
     /**
      * Copies from a source path to a stream. The only reason for this is a larger buffer.
      *
-     * @param srcPath
+     * @param inputStream
      * @param dstStream
      * @return
-     * @throws IOException
+     * @throws IllegalStateException
      */
-    public static long copyFrom(Path srcPath, OutputStream dstStream)
-            throws IOException {
-        try (ReadableByteChannel in = Files.newByteChannel(srcPath)) {
+    public static long copyFrom(InputStream inputStream, OutputStream dstStream) {
+        ReadableByteChannel in = Channels.newChannel(inputStream);
+        try {
             return BufferUtils.copy(in, Channels.newChannel(dstStream));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
         }
     }
 

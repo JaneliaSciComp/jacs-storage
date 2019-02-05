@@ -3,18 +3,18 @@ package org.janelia.jacsstorage.io;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class ContentInputStream extends InputStream {
+public class ContentFilteredInputStream extends InputStream {
 
-    private final String contentEntryName;
+    private final ContentFilterParams contentFilterParams;
     private final InputStream inputStream;
 
-    public ContentInputStream(String contentEntryName, InputStream inputStream) {
-        this.contentEntryName = contentEntryName;
+    public ContentFilteredInputStream(ContentFilterParams contentFilterParams, InputStream inputStream) {
+        this.contentFilterParams = contentFilterParams;
         this.inputStream = inputStream;
     }
 
-    public String getContentEntryName() {
-        return contentEntryName;
+    public ContentFilterParams getContentFilterParams() {
+        return contentFilterParams;
     }
 
     @Override

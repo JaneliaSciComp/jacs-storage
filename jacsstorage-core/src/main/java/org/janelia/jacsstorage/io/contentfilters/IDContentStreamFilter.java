@@ -1,7 +1,6 @@
 package org.janelia.jacsstorage.io.contentfilters;
 
-import org.janelia.jacsstorage.io.ContentFilterParams;
-import org.janelia.jacsstorage.io.ContentInputStream;
+import org.janelia.jacsstorage.io.ContentFilteredInputStream;
 import org.janelia.jacsstorage.io.ContentStreamFilter;
 
 import javax.enterprise.inject.Vetoed;
@@ -14,7 +13,7 @@ public class IDContentStreamFilter implements ContentStreamFilter {
         return true;
     }
 
-    public ContentInputStream apply(ContentFilterParams filterParams, ContentInputStream stream) {
+    public ContentFilteredInputStream apply(ContentFilteredInputStream stream) {
         return stream;
     }
 }

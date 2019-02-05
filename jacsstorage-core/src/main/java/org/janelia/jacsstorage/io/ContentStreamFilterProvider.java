@@ -16,7 +16,7 @@ public class ContentStreamFilterProvider {
         this.filterSource = filterSource;
     }
 
-    ContentStreamFilter getContentStreamFilter(ContentFilterParams contentFilterParams) {
+    public ContentStreamFilter getContentStreamFilter(ContentFilterParams contentFilterParams) {
         if (contentFilterParams != null) {
             for (ContentStreamFilter streamFilter : getSupportedFilters(filterSource)) {
                 if (streamFilter.support(contentFilterParams.getFilterType())) {

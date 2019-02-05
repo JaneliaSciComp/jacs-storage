@@ -8,6 +8,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -109,6 +110,7 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
         long nbytes = 0L;
         TarArchiveInputStream inputStream = openSourceAsArchiveStream(sourcePath);
         try {
+            ContentStreamFilter contentStreamFilter = contentStreamFilterProvider.getContentStreamFilter(filterParams);
             String normalizedEntryName = normalizeEntryName(entryName);
             for (TarArchiveEntry sourceEntry = inputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = inputStream.getNextTarEntry()) {
                 String currentEntryName = normalizeEntryName(sourceEntry.getName());
@@ -116,7 +118,9 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                     if (sourceEntry.isDirectory()) {
                         tarOutputStream = new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE);
                     } else {
-                        return ByteStreams.copy(ByteStreams.limit(inputStream, sourceEntry.getSize()), outputStream);
+                        return IOStreamUtils.copyFrom(
+                                contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, ByteStreams.limit(inputStream, sourceEntry.getSize()))),
+                                outputStream);
                     }
                 }
                 if (currentEntryName.startsWith(normalizedEntryName)) {
@@ -133,7 +137,9 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                     entry.setMode(sourceEntry.getMode());
                     tarOutputStream.putArchiveEntry(entry);
                     if (sourceEntry.isFile()) {
-                        nbytes += ByteStreams.copy(ByteStreams.limit(inputStream, sourceEntry.getSize()), tarOutputStream);
+                        nbytes += IOStreamUtils.copyFrom(
+                                contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, ByteStreams.limit(inputStream, sourceEntry.getSize()))),
+                                tarOutputStream);
                     }
                     tarOutputStream.closeArchiveEntry();
                 }
