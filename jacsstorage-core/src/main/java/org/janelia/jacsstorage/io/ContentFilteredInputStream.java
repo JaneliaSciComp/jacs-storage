@@ -17,6 +17,10 @@ public class ContentFilteredInputStream extends InputStream {
         return contentFilterParams;
     }
 
+    public InputStream getUnderlyingStream() {
+        return inputStream;
+    }
+
     @Override
     public int read() throws IOException {
         if (inputStream == null) {

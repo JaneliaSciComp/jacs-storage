@@ -20,7 +20,7 @@ public class BufferUtils {
     static long copy(ReadableByteChannel source, WritableByteChannel sink)
             throws IOException {
         long nread = 0L;
-        final ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
+        final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
         int n;
         while ((n = source.read(buffer)) > 0) {
             nread += n;

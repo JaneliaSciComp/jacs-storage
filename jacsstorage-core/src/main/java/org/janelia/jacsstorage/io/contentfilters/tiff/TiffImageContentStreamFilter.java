@@ -20,7 +20,7 @@ public class TiffImageContentStreamFilter implements ContentStreamFilter {
         Integer z0 = stream.getContentFilterParams().getAsInt("z0", 0);
         Integer deltaZ = stream.getContentFilterParams().getAsInt("deltaz", -1);
 
-        byte[] imageBytes = ImageUtils.loadRenderedImageBytesFromTiffStream(stream, z0, deltaZ);
+        byte[] imageBytes = ImageUtils.loadRenderedImageBytesFromTiffStream(stream.getUnderlyingStream(), z0, deltaZ);
         if (imageBytes == null) {
             return new ContentFilteredInputStream(stream.getContentFilterParams(), new ByteArrayInputStream(new byte[0]));
         } else {
