@@ -48,7 +48,7 @@ public class VolumeStorageResource {
     private UriInfo resourceURI;
 
     @HEAD
-    @Path("storage_volume/{storageVolumeId}/{storageRelativePath:.+}")
+    @Path("storage_volume/{storageVolumeId}/content/{storageRelativePath:.+}")
     @ApiOperation(value = "Check if the specified file path identifies a valid data bundle entry content.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The content was found"),
@@ -78,7 +78,7 @@ public class VolumeStorageResource {
 
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
-    @Path("storage_volume/{storageVolumeId}/{storageRelativePath:.+}")
+    @Path("storage_volume/{storageVolumeId}/content/{storageRelativePath:.+}")
     @ApiOperation(value = "Stream the specified data file identified by the relative path to the volume mount point.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
@@ -100,6 +100,36 @@ public class VolumeStorageResource {
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
             return storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).build();
+        } else {
+            return Response
+                    .status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
+                    .build();
+        }
+    }
+
+    @Produces({MediaType.APPLICATION_JSON})
+    @GET
+    @Path("storage_volume/{storageVolumeId}/info/{storageRelativePath:.+}")
+    @ApiOperation(value = "Stream content info of specified data file identified by the relative path to the volume mount point.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The operation  was successfull"),
+            @ApiResponse(code = 404, message = "Invalid volume identifier or invalid file path"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
+    public Response retrieveDataInfoFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
+                                                      @PathParam("storageRelativePath") String storageRelativeFilePath) {
+        LOG.info("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
+        JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
+        if (storageVolume == null) {
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
+                    .build();
+        }
+        if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
+            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+            return storageResourceHelper.retrieveContentInfoFromFile(storageVolume, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).build();
         } else {
             return Response
                     .status(Response.Status.FORBIDDEN)

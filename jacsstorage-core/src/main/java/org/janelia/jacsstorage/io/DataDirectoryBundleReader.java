@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.io;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -25,6 +26,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -75,13 +77,37 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
     }
 
     @Inject
-    DataDirectoryBundleReader(ContentStreamFilterProvider contentStreamFilterProvider) {
-        super(contentStreamFilterProvider);
+    DataDirectoryBundleReader(ContentHandlerProvider contentHandlerProvider) {
+        super(contentHandlerProvider);
     }
 
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
         return EnumSet.of(JacsStorageFormat.DATA_DIRECTORY);
+    }
+
+    @TimedMethod(
+            logResult = true
+    )
+    @Override
+    public Map<String, Object> getContentInfo(String source, String entryName) {
+        Path sourcePath = getSourcePath(source);
+        Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
+        Path entryPath = StringUtils.isBlank(entryName) ? sourcePath : sourcePath.resolve(entryName);
+        if (Files.notExists(entryPath)) {
+            throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
+        }
+        try {
+            if (Files.isDirectory(entryPath)) {
+                return ImmutableMap.of("collectionFlag", true);
+            } else {
+                ContentInfoExtractor contentInfoExtractor = contentHandlerProvider.getContentInfoExtractor(getMimeType(sourcePath));
+                return contentInfoExtractor.extractContentInfo(Files.newInputStream(sourcePath));
+            }
+        } catch (Exception e) {
+            LOG.error("Error reading content info from {}:{}", source, entryName, e);
+            throw new IllegalStateException(e);
+        }
     }
 
     @TimedMethod(
@@ -123,7 +149,7 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
             throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
         }
         try {
-            ContentStreamFilter contentStreamFilter = contentStreamFilterProvider.getContentStreamFilter(filterParams);
+            ContentStreamFilter contentStreamFilter = contentHandlerProvider.getContentStreamFilter(filterParams);
             if (Files.isDirectory(entryPath)) {
                 TarArchiveOutputStream tarOutputStream = new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE);
                 ArchiveFileVisitor archiver = new ArchiveFileVisitor(entryPath, contentStreamFilter, filterParams, tarOutputStream);

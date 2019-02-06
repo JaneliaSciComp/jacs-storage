@@ -5,10 +5,19 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface BundleReader {
     Set<JacsStorageFormat> getSupportedFormats();
+
+    /**
+     * Get content info
+     * @param source
+     * @param entryName
+     * @return
+     */
+    Map<String, Object> getContentInfo(String source, String entryName);
 
     /**
      * List bundle content.

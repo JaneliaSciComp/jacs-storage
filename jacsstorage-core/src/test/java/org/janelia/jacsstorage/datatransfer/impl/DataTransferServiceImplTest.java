@@ -11,11 +11,11 @@ import org.janelia.jacsstorage.datatransfer.TransferState;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
 import org.janelia.jacsstorage.io.ContentFilterParams;
-import org.janelia.jacsstorage.io.ContentStreamFilterProvider;
+import org.janelia.jacsstorage.io.ContentHandlerProvider;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.io.SingleFileBundleReader;
 import org.janelia.jacsstorage.io.SingleFileBundleWriter;
-import org.janelia.jacsstorage.io.contentfilters.IDContentStreamFilter;
+import org.janelia.jacsstorage.io.contenthandlers.IDContentStreamFilter;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.junit.After;
 import org.junit.Before;
@@ -59,10 +59,10 @@ public class DataTransferServiceImplTest {
     public void setUp() throws IOException {
         Instance<BundleReader> bundleReaderSource = mock(Instance.class);
         Instance<BundleWriter> bundleWriterSource = mock(Instance.class);
-        ContentStreamFilterProvider contentStreamFilterProvider = mock(ContentStreamFilterProvider.class);
-        Mockito.when(contentStreamFilterProvider.getContentStreamFilter(any(ContentFilterParams.class)))
+        ContentHandlerProvider contentHandlerProvider = mock(ContentHandlerProvider.class);
+        Mockito.when(contentHandlerProvider.getContentStreamFilter(any(ContentFilterParams.class)))
                 .thenReturn(new IDContentStreamFilter());
-        when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader(contentStreamFilterProvider)).iterator());
+        when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader(contentHandlerProvider)).iterator());
         when(bundleWriterSource.iterator()).thenReturn(ImmutableList.<BundleWriter>of(new SingleFileBundleWriter()).iterator());
         storageService = new DataTransferServiceImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource));
         testDirectory = Files.createTempDirectory("StorageAgentTest");

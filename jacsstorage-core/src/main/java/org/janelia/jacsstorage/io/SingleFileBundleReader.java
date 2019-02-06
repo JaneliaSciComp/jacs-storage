@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.io;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.coreutils.FileUtils;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
@@ -14,13 +13,13 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class SingleFileBundleReader extends AbstractBundleReader {
@@ -28,13 +27,30 @@ public class SingleFileBundleReader extends AbstractBundleReader {
     private final static Logger LOG = LoggerFactory.getLogger(SingleFileBundleReader.class);
 
     @Inject
-    public SingleFileBundleReader(ContentStreamFilterProvider contentStreamFilterProvider) {
-        super(contentStreamFilterProvider);
+    public SingleFileBundleReader(ContentHandlerProvider contentHandlerProvider) {
+        super(contentHandlerProvider);
     }
 
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
         return EnumSet.of(JacsStorageFormat.SINGLE_DATA_FILE);
+    }
+
+    @TimedMethod(
+            logResult = true
+    )
+    @Override
+    public Map<String, Object> getContentInfo(String source, String entryName) {
+        Path sourcePath = getSourcePath(source);
+        checkSourcePath(sourcePath);
+        Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
+        try {
+            ContentInfoExtractor contentInfoExtractor = contentHandlerProvider.getContentInfoExtractor(getMimeType(sourcePath));
+            return contentInfoExtractor.extractContentInfo(Files.newInputStream(sourcePath));
+        } catch (IOException e) {
+            LOG.error("Error reading content info from {}", source, e);
+            throw new IllegalStateException(e);
+        }
     }
 
     @TimedMethod(
@@ -60,7 +76,7 @@ public class SingleFileBundleReader extends AbstractBundleReader {
         checkSourcePath(sourcePath);
         Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
         try {
-            ContentStreamFilter contentStreamFilter = contentStreamFilterProvider.getContentStreamFilter(filterParams);
+            ContentStreamFilter contentStreamFilter = contentHandlerProvider.getContentStreamFilter(filterParams);
             return IOStreamUtils.copyFrom(
                     contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, Files.newInputStream(sourcePath))),
                     outputStream);

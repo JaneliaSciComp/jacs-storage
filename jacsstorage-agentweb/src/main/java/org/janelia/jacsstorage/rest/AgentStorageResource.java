@@ -193,6 +193,12 @@ public class AgentStorageResource {
                         .build(dataBundle.getId(), dn.getNodeRelativePath())
                         .toString()
                 );
+                dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+                        .path(AgentStorageResource.class)
+                        .path(AgentStorageResource.class, "getEntryContentInfo")
+                        .build(dataBundle.getId(), dn.getNodeRelativePath())
+                        .toString()
+                );
             });
         }
         return dataBundleContent;
@@ -210,7 +216,7 @@ public class AgentStorageResource {
     })
     @HEAD
     @Path("{dataBundleId}/entry_content/{dataEntryPath:.*}")
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON})
     public Response checkEntryContent(@PathParam("dataBundleId") Long dataBundleId,
                                       @PathParam("dataEntryPath") String dataEntryPath,
                                       @QueryParam("directoryOnly") Boolean directoryOnlyParam,
@@ -243,6 +249,27 @@ public class AgentStorageResource {
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.retrieveContentFromDataBundle(dataBundle, ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters()), dataEntryPath).build();
+    }
+
+    @ApiOperation(
+            value = "Retrieve the metadata of the specified data bundle entry.",
+            notes = "Retrieve the specified entry's metadata."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully read the data bundle entry's metadata."),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
+    @GET
+    @Path("{dataBundleId}/entry_info/{dataEntryPath:.*}")
+    @Produces({MediaType.APPLICATION_JSON})
+    public Response getEntryContentInfo(@PathParam("dataBundleId") Long dataBundleId,
+                                        @PathParam("dataEntryPath") String dataEntryPath) {
+        LOG.info("Get entry {} content from bundle {} ", dataEntryPath, dataBundleId);
+        JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
+        Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        return storageResourceHelper.retrieveContentInfoFromDataBundle(dataBundle, dataEntryPath).build();
     }
 
     @ApiOperation(value = "Create a new folder in the specified data bundle.")
@@ -293,7 +320,6 @@ public class AgentStorageResource {
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
-                .path(AgentStorageResource.class)
                 .path(AgentStorageResource.class, "getEntryContent")
                 .build(dataBundleId, dataEntryPath);
         if (CollectionUtils.isNotEmpty(existingEntries)) {
@@ -317,6 +343,11 @@ public class AgentStorageResource {
         newDataNode.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
         newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
+        newDataNode.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+                .path(AgentStorageResource.class, "getEntryContentInfo")
+                .build(dataBundle.getId(), dataEntryPath)
+                .toString()
+        );
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(true);
         return Response
@@ -381,7 +412,6 @@ public class AgentStorageResource {
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
-                .path(AgentStorageResource.class)
                 .path(AgentStorageResource.class, "getEntryContent")
                 .build(dataBundleId, dataEntryPath)
                 ;
@@ -405,6 +435,11 @@ public class AgentStorageResource {
         newDataNode.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
         newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
+        newDataNode.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+                .path(AgentStorageResource.class, "getEntryContentInfo")
+                .build(dataBundle.getId(), dataEntryPath)
+                .toString()
+        );
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(false);
         return Response

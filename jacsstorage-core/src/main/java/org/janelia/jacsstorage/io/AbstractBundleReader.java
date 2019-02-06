@@ -7,16 +7,19 @@ import javax.activation.MimetypesFileTypeMap;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.function.BiFunction;
 
 abstract class AbstractBundleReader implements BundleReader {
 
-    final ContentStreamFilterProvider contentStreamFilterProvider;
+    final ContentHandlerProvider contentHandlerProvider;
+    private final MimetypesFileTypeMap mimetypesFileTypeMap;
 
-    AbstractBundleReader(ContentStreamFilterProvider contentStreamFilterProvider) {
-        this.contentStreamFilterProvider = contentStreamFilterProvider;
+    AbstractBundleReader(ContentHandlerProvider contentHandlerProvider) {
+        this.contentHandlerProvider = contentHandlerProvider;
+        this.mimetypesFileTypeMap = new MimetypesFileTypeMap();
     }
 
     @TimedMethod(
@@ -34,7 +37,7 @@ abstract class AbstractBundleReader implements BundleReader {
             BasicFileAttributes attrs = Files.readAttributes(nodePath, BasicFileAttributes.class);
             dataNodeInfo.setNodeRelativePath(nodePathMapper.apply(rootPath, nodePath));
             dataNodeInfo.setSize(attrs.size());
-            dataNodeInfo.setMimeType(new MimetypesFileTypeMap().getContentType(nodePath.toFile()));
+            dataNodeInfo.setMimeType(getMimeType(nodePath));
             dataNodeInfo.setCollectionFlag(attrs.isDirectory());
             dataNodeInfo.setCreationTime(new Date(attrs.creationTime().toMillis()));
             dataNodeInfo.setLastModified(new Date(attrs.lastModifiedTime().toMillis()));
@@ -42,5 +45,13 @@ abstract class AbstractBundleReader implements BundleReader {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    String getMimeType(String nodePath) {
+        return getMimeType(Paths.get(nodePath));
+    }
+
+    String getMimeType(Path nodePath) {
+        return mimetypesFileTypeMap.getContentType(nodePath.toFile());
     }
 }

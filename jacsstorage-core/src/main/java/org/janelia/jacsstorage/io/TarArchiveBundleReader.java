@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.io;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -12,13 +13,13 @@ import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.msgpack.core.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class TarArchiveBundleReader extends AbstractBundleReader {
@@ -36,13 +38,45 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     private final static Logger LOG = LoggerFactory.getLogger(TarArchiveBundleReader.class);
 
     @Inject
-    TarArchiveBundleReader(ContentStreamFilterProvider contentStreamFilterProvider) {
-        super(contentStreamFilterProvider);
+    TarArchiveBundleReader(ContentHandlerProvider contentHandlerProvider) {
+        super(contentHandlerProvider);
     }
 
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
         return EnumSet.of(JacsStorageFormat.ARCHIVE_DATA_FILE);
+    }
+
+    @TimedMethod(
+            logResult = true
+    )
+    @Override
+    public Map<String, Object> getContentInfo(String source, String entryName) {
+        Path sourcePath = getSourcePath(source);
+        checkSourcePath(sourcePath);
+        TarArchiveInputStream inputStream = openSourceAsArchiveStream(sourcePath);
+        try {
+            String normalizedEntryName = normalizeEntryName(entryName);
+            for (TarArchiveEntry sourceEntry = inputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = inputStream.getNextTarEntry()) {
+                String currentEntryName = normalizeEntryName(sourceEntry.getName());
+                if (currentEntryName.equals(normalizedEntryName)) {
+                    if (sourceEntry.isDirectory()) {
+                        return ImmutableMap.of("collectionFlag", true);
+                    } else {
+                        ContentInfoExtractor contentInfoExtractor = contentHandlerProvider.getContentInfoExtractor(getMimeType(currentEntryName));
+                        return contentInfoExtractor.extractContentInfo(ByteStreams.limit(inputStream, sourceEntry.getSize()));
+                    }
+                }
+            }
+            return ImmutableMap.of();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } finally {
+            try {
+                inputStream.close();
+            } catch (IOException ignore) {
+            }
+        }
     }
 
     @TimedMethod(
@@ -110,7 +144,7 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
         long nbytes = 0L;
         TarArchiveInputStream inputStream = openSourceAsArchiveStream(sourcePath);
         try {
-            ContentStreamFilter contentStreamFilter = contentStreamFilterProvider.getContentStreamFilter(filterParams);
+            ContentStreamFilter contentStreamFilter = contentHandlerProvider.getContentStreamFilter(filterParams);
             String normalizedEntryName = normalizeEntryName(entryName);
             for (TarArchiveEntry sourceEntry = inputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = inputStream.getNextTarEntry()) {
                 String currentEntryName = normalizeEntryName(sourceEntry.getName());

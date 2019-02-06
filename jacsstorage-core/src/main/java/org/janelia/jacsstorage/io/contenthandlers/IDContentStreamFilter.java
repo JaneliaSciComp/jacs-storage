@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.io.contentfilters;
+package org.janelia.jacsstorage.io.contenthandlers;
 
 import org.janelia.jacsstorage.io.ContentFilteredInputStream;
 import org.janelia.jacsstorage.io.ContentStreamFilter;

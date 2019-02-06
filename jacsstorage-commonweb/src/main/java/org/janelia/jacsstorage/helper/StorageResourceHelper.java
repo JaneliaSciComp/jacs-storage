@@ -212,6 +212,28 @@ public class StorageResourceHelper {
                 ;
     }
 
+    public Response.ResponseBuilder retrieveContentInfoFromFile(JacsStorageVolume storageVolume, StorageRelativePath dataEntryName) {
+        if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
+            return Response
+                    .status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to read " + dataEntryName))
+                    ;
+        }
+        return storageVolume.getDataStorageAbsolutePath(dataEntryName)
+                .filter(dataEntryPath -> Files.exists(dataEntryPath))
+                .map(dataEntryPath -> {
+                    JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
+                    return Response
+                            .ok(dataStorageService.getDataEntryInfo(dataEntryPath, "", storageFormat))
+                            ;
+                })
+                .orElseGet(() -> Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName())))
+                ;
+
+    }
+
     public Response.ResponseBuilder checkContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath, boolean collectionOnly) {
         List<DataNodeInfo> dataBundleContent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), 1);
         return dataBundleContent.stream()
@@ -244,6 +266,12 @@ public class StorageResourceHelper {
                 ;
     }
 
+    public Response.ResponseBuilder retrieveContentInfoFromDataBundle(JacsBundle dataBundle, String dataEntryPath) {
+        return Response
+                .ok(dataStorageService.getDataEntryInfo(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat()))
+                ;
+    }
+
     public Response.ResponseBuilder listContentFromDataBundle(JacsBundle dataBundle, URI baseURI, String dataEntryPath, int depth) {
         List<DataNodeInfo> dataBundleContent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), depth);
         if (CollectionUtils.isNotEmpty(dataBundleContent)) {
@@ -254,6 +282,13 @@ public class StorageResourceHelper {
                         .path(Constants.AGENTSTORAGE_URI_PATH)
                         .path(dataBundle.getId().toString())
                         .path("entry_content")
+                        .path(dn.getNodeRelativePath())
+                        .build()
+                        .toString());
+                dn.setNodeInfoURL(UriBuilder.fromUri(baseURI)
+                        .path(Constants.AGENTSTORAGE_URI_PATH)
+                        .path(dataBundle.getId().toString())
+                        .path("entry_info")
                         .path(dn.getNodeRelativePath())
                         .build()
                         .toString());
@@ -281,17 +316,24 @@ public class StorageResourceHelper {
                                             .map(dn -> {
                                                 String dataNodeAbsolutePath = dataEntryPath.resolve(dn.getNodeRelativePath()).toString();
                                                 Path dataNodeRelativePath = storageVolume.getPathRelativeToBaseStorageRoot(dataNodeAbsolutePath);
-                                                URI dataNodeAccessURI = UriBuilder.fromUri(baseURI)
-                                                        .path(Constants.AGENTSTORAGE_URI_PATH)
-                                                        .path("storage_volume")
-                                                        .path(storageVolume.getId().toString())
-                                                        .path(dataNodeRelativePath.toString())
-                                                        .build();
                                                 DataNodeInfo newDataNode = new DataNodeInfo();
                                                 newDataNode.setStorageId(dn.getStorageId());
                                                 newDataNode.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
                                                 newDataNode.setStorageRootPathURI(storageVolume.getStorageURI());
-                                                newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
+                                                newDataNode.setNodeAccessURL(UriBuilder.fromUri(baseURI)
+                                                        .path(Constants.AGENTSTORAGE_URI_PATH)
+                                                        .path("storage_volume")
+                                                        .path(storageVolume.getId().toString())
+                                                        .path("content")
+                                                        .path(dataNodeRelativePath.toString())
+                                                        .build().toString());
+                                                newDataNode.setNodeInfoURL(UriBuilder.fromUri(baseURI)
+                                                        .path(Constants.AGENTSTORAGE_URI_PATH)
+                                                        .path("storage_volume")
+                                                        .path(storageVolume.getId().toString())
+                                                        .path("info")
+                                                        .path(dataNodeRelativePath.toString())
+                                                        .build().toString());
                                                 newDataNode.setNodeRelativePath(dataNodeRelativePath.toString());
                                                 newDataNode.setSize(dn.getSize());
                                                 newDataNode.setMimeType(dn.getMimeType());
@@ -326,6 +368,12 @@ public class StorageResourceHelper {
         newDataNode.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
         newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(newContentURI.toString());
+        newDataNode.setNodeInfoURL(UriBuilder.fromUri(baseURI)
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path(dataBundle.getId().toString())
+                .path("entry_info")
+                .path(dataEntryName)
+                .build().toString());
         newDataNode.setNodeRelativePath(dataEntryName);
         newDataNode.setCollectionFlag(false);
         return Response
@@ -349,12 +397,20 @@ public class StorageResourceHelper {
                             .path(Constants.AGENTSTORAGE_URI_PATH)
                             .path("storage_volume")
                             .path(storageVolume.getId().toString())
+                            .path("content")
                             .path(dataNodeRelativePath.toString())
                             .build();
                     DataNodeInfo newDataNode = new DataNodeInfo();
                     newDataNode.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
                     newDataNode.setStorageRootPathURI(storageVolume.getStorageURI());
                     newDataNode.setNodeAccessURL(newContentURI.toString());
+                    newDataNode.setNodeInfoURL(UriBuilder.fromUri(baseURI)
+                            .path(Constants.AGENTSTORAGE_URI_PATH)
+                            .path("storage_volume")
+                            .path(storageVolume.getId().toString())
+                            .path("info")
+                            .path(dataNodeRelativePath.toString())
+                            .build().toString());
                     newDataNode.setNodeRelativePath(dataNodeRelativePath.toString());
                     newDataNode.setCollectionFlag(false);
                     return Response

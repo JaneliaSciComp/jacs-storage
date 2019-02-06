@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 public class DataStorageServiceImpl implements DataStorageService {
 
@@ -45,6 +46,15 @@ public class DataStorageServiceImpl implements DataStorageService {
     public long retrieveDataStream(Path dataPath, JacsStorageFormat dataStorageFormat, ContentFilterParams filterParams, OutputStream dataStream) throws IOException {
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
         return bundleReader.readBundle(dataPath.toString(), filterParams, dataStream);
+    }
+
+    @TimedMethod(
+            logResult = true
+    )
+    @Override
+    public Map<String, Object> getDataEntryInfo(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat) {
+        BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
+        return bundleReader.getContentInfo(dataPath.toString(), entryName);
     }
 
     @TimedMethod(
