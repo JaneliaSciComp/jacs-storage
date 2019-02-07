@@ -39,7 +39,7 @@ public class DataStorageServiceImpl implements DataStorageService {
     }
 
     @TimedMethod(
-            argList = {0, 1},
+            argList = {0, 1, 2},
             logResult = true
     )
     @Override
@@ -86,7 +86,7 @@ public class DataStorageServiceImpl implements DataStorageService {
     }
 
     @TimedMethod(
-            argList = {0, 1, 2},
+            argList = {0, 1, 2, 3},
             logResult = true
     )
     @Override

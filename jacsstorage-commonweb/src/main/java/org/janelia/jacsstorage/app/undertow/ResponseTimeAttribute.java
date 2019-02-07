@@ -25,7 +25,7 @@ import io.undertow.server.HttpServerExchange;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Response attribute in milliseconds.
+ * Response attribute in seconds.
  */
 public class ResponseTimeAttribute implements ExchangeAttribute {
 

@@ -117,7 +117,6 @@ public class DataDirectoryBundleWriter implements BundleWriter {
     }
 
     @TimedMethod(
-            argList = {0, 1},
             logResult = true
     )
     @Override

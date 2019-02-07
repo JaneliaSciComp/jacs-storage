@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.io;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,5 +59,15 @@ public class ContentFilterParams {
         } else {
             return defaultValue;
         }
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("filterType", filterType)
+                .append("entryName", entryName)
+                .append("maxDepth", maxDepth)
+                .append("filterTypeSpecificParams", filterTypeSpecificParams)
+                .toString();
     }
 }
