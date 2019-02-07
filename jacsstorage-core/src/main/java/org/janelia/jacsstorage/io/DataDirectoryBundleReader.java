@@ -102,7 +102,7 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
                 return ImmutableMap.of("collectionFlag", true);
             } else {
                 ContentInfoExtractor contentInfoExtractor = contentHandlerProvider.getContentInfoExtractor(getMimeType(entryPath));
-                return contentInfoExtractor.extractContentInfo(Files.newInputStream(sourcePath));
+                return contentInfoExtractor.extractContentInfo(Files.newInputStream(entryPath));
             }
         } catch (Exception e) {
             LOG.error("Error reading content info from {}:{}", source, entryName, e);
