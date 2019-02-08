@@ -53,10 +53,13 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
             createEntry(file);
-            nBytes += IOStreamUtils.copyFrom(
-                    contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, new FileSeekableStream(file.toFile()))),
-                    outputStream);
-            outputStream.closeArchiveEntry();
+            ContentFilteredInputStream inputStream = new ContentFilteredInputStream(filterParams, Files.newInputStream(file));
+            try {
+                nBytes += IOStreamUtils.copyFrom(contentStreamFilter.apply(inputStream), outputStream);
+                outputStream.closeArchiveEntry();
+            } finally {
+                inputStream.close();
+            }
             return FileVisitResult.CONTINUE;
         }
 
