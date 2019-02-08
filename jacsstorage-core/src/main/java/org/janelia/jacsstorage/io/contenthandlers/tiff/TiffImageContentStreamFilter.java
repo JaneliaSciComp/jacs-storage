@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.io.contenthandlers.tiff;
 
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.io.ContentFilteredInputStream;
 import org.janelia.jacsstorage.io.ContentStreamFilter;
 import org.janelia.rendering.utils.ImageUtils;
@@ -15,6 +16,9 @@ public class TiffImageContentStreamFilter implements ContentStreamFilter {
         return TIFF_FILTER_TYPE.equalsIgnoreCase(filterType);
     }
 
+    @TimedMethod(
+            logArgs = false
+    )
     @Override
     public ContentFilteredInputStream apply(ContentFilteredInputStream stream) {
         Integer x0 = stream.getContentFilterParams().getAsInt("x0", 0);

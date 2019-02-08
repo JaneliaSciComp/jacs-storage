@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.io.contenthandlers.tiff;
 
 import com.google.common.collect.ImmutableMap;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.io.ContentInfoExtractor;
 import org.janelia.rendering.RenderedImageInfo;
 import org.janelia.rendering.utils.ImageUtils;
@@ -15,6 +16,9 @@ public class TiffImageContentInfoExtractor implements ContentInfoExtractor {
         return "image/tiff".equalsIgnoreCase(mimeType);
     }
 
+    @TimedMethod(
+            logArgs = false
+    )
     @Override
     public Map<String, Object> extractContentInfo(InputStream inputStream) {
         RenderedImageInfo imageInfo = ImageUtils.loadImageInfoFromTiffStream(inputStream);
