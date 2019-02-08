@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.io;
 
 import com.google.common.collect.ImmutableMap;
+import com.sun.media.jai.codec.FileSeekableStream;
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -53,7 +54,7 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
             createEntry(file);
             nBytes += IOStreamUtils.copyFrom(
-                    contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, Files.newInputStream(file))),
+                    contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, new FileSeekableStream(file.toFile()))),
                     outputStream);
             outputStream.closeArchiveEntry();
             return FileVisitResult.CONTINUE;
