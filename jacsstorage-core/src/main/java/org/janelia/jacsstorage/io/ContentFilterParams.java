@@ -3,12 +3,15 @@ package org.janelia.jacsstorage.io;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class ContentFilterParams {
     private String filterType;
-    private String entryName;
+    private Set<String> selectedEntries = new HashSet<>();
     private int maxDepth;
     private Map<String, String> filterTypeSpecificParams = new HashMap<>();
 
@@ -21,13 +24,12 @@ public class ContentFilterParams {
         return this;
     }
 
-    public String getEntryName() {
-        return entryName;
+    public Set<String> getSelectedEntries() {
+        return selectedEntries;
     }
 
-    public ContentFilterParams setEntryName(String entryName) {
-        this.entryName = entryName;
-        return this;
+    public void addSelectedEntries(Collection<String> selectedEntries) {
+        this.selectedEntries.addAll(selectedEntries);
     }
 
     public int getMaxDepth() {
@@ -65,7 +67,7 @@ public class ContentFilterParams {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("filterType", filterType)
-                .append("entryName", entryName)
+                .append("selectedEntries", selectedEntries)
                 .append("maxDepth", maxDepth)
                 .append("filterTypeSpecificParams", filterTypeSpecificParams)
                 .toString();

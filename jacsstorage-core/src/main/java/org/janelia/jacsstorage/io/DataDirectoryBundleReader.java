@@ -8,6 +8,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -34,51 +35,6 @@ import java.util.stream.Collectors;
 public class DataDirectoryBundleReader extends AbstractBundleReader {
 
     private final static Logger LOG = LoggerFactory.getLogger(SingleFileBundleReader.class);
-
-    private static class ArchiveFileVisitor extends SimpleFileVisitor<Path> {
-        private final Path parentDir;
-        private final ContentStreamFilter contentStreamFilter;
-        private final ContentFilterParams filterParams;
-        private final ArchiveOutputStream outputStream;
-
-        private long nBytes = 0L;
-
-        ArchiveFileVisitor(Path parentDir, ContentStreamFilter contentStreamFilter, ContentFilterParams filterParams, ArchiveOutputStream outputStream) {
-            this.parentDir = parentDir;
-            this.contentStreamFilter = contentStreamFilter;
-            this.filterParams = filterParams;
-            this.outputStream = outputStream;
-        }
-
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            createEntry(file);
-            ContentFilteredInputStream inputStream = new ContentFilteredInputStream(filterParams, Files.newInputStream(file));
-            try {
-                nBytes += IOStreamUtils.copyFrom(contentStreamFilter.apply(inputStream), outputStream);
-                outputStream.closeArchiveEntry();
-            } finally {
-                inputStream.close();
-            }
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-            createEntry(dir);
-            outputStream.closeArchiveEntry();
-            return FileVisitResult.CONTINUE;
-        }
-
-        private void createEntry(Path p) throws IOException {
-            Path entryPath = parentDir.relativize(p);
-            String entryName = StringUtils.prependIfMissing(
-                    StringUtils.prependIfMissing(entryPath.toString(), "/"),
-                    ".");
-            TarArchiveEntry entry = new TarArchiveEntry(p.toFile(), entryName);
-            outputStream.putArchiveEntry(entry);
-        }
-    }
 
     @Inject
     DataDirectoryBundleReader(ContentHandlerProvider contentHandlerProvider) {
@@ -153,14 +109,14 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
             throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
         }
         try {
-            ContentStreamFilter contentStreamFilter = contentHandlerProvider.getContentStreamFilter(filterParams);
             if (Files.isDirectory(entryPath)) {
-                TarArchiveOutputStream tarOutputStream = new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE);
-                ArchiveFileVisitor archiver = new ArchiveFileVisitor(entryPath, contentStreamFilter, filterParams, tarOutputStream);
-                Files.walkFileTree(entryPath, archiver);
-                tarOutputStream.finish();
-                return archiver.nBytes;
+                int traverseDepth = filterParams.getMaxDepth() >= 0 ? filterParams.getMaxDepth() : Integer.MAX_VALUE;
+                List<Path> selectedEntries = Files.walk(entryPath, traverseDepth)
+                        .filter(p -> Files.isDirectory(p) || filterParams.getSelectedEntries().isEmpty() || filterParams.getSelectedEntries().contains(p.getFileName().toString()))
+                        .collect(Collectors.toList());
+                return -1; // !!!!!!!!!!!!!!FIXME
             } else {
+                ContentStreamFilter contentStreamFilter = contentHandlerProvider.getContentStreamFilter(filterParams);
                 return IOStreamUtils.copyFrom(
                         contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, Files.newInputStream(entryPath))),
                         outputStream);
