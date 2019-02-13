@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 
@@ -36,7 +37,11 @@ public class IOStreamUtils {
         if (inputBytes == null) {
             return 0L;
         } else {
-            return copyFrom(new ByteArrayInputStream(inputBytes), dstStream);
+            try {
+                return BufferUtils.copy(ByteBuffer.wrap(inputBytes), Channels.newChannel(dstStream));
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
         }
     }
 }

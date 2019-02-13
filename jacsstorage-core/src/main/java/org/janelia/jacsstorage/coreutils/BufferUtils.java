@@ -27,18 +27,25 @@ public class BufferUtils {
             // prepare the buffer to be drained
             buffer.flip();
             // write to the channel, may block
-            sink.write(buffer);
+            copy(buffer, sink);
             // If partial transfer, shift remainder down
             // If buffer is empty, same as doing clear()
             buffer.compact();
         }
         // EOF will leave buffer in fill state
         buffer.flip();
-        // make sure the buffer is fully drained.
-        while (buffer.hasRemaining()) {
-            sink.write(buffer);
-        }
+        copy(buffer, sink);
         return nread;
+    }
+
+    static long copy(ByteBuffer source, WritableByteChannel sink)
+            throws IOException {
+        // make sure the buffer is fully drained.
+        long nbytes = 0;
+        while (source.hasRemaining()) {
+            nbytes += sink.write(source);
+        }
+        return nbytes;
     }
 
 }
