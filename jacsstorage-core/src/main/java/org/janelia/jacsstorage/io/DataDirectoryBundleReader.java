@@ -1,14 +1,7 @@
 package org.janelia.jacsstorage.io;
 
 import com.google.common.collect.ImmutableMap;
-import com.sun.media.jai.codec.FileSeekableStream;
-import org.apache.commons.compress.archivers.ArchiveOutputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.coreutils.IOStreamUtils;
-import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -19,12 +12,9 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -109,18 +99,22 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
             throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
         }
         try {
+            ContentConverter contentConverter = contentHandlerProvider.getContentConverter(filterParams);
+            DataContent dataContent;
             if (Files.isDirectory(entryPath)) {
                 int traverseDepth = filterParams.getMaxDepth() >= 0 ? filterParams.getMaxDepth() : Integer.MAX_VALUE;
                 List<Path> selectedEntries = Files.walk(entryPath, traverseDepth)
-                        .filter(p -> Files.isDirectory(p) || filterParams.getSelectedEntries().isEmpty() || filterParams.getSelectedEntries().contains(p.getFileName().toString()))
+                        .filter(p -> Files.isDirectory(p) || filterParams.matchEntry(p.toString()))
                         .collect(Collectors.toList());
-                return -1; // !!!!!!!!!!!!!!FIXME
+                dataContent = new FileListDataContent(filterParams, entryPath, selectedEntries);
             } else {
-                ContentStreamFilter contentStreamFilter = contentHandlerProvider.getContentStreamFilter(filterParams);
-                return IOStreamUtils.copyFrom(
-                        contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, Files.newInputStream(entryPath))),
-                        outputStream);
+                if (filterParams.matchEntry(entryPath.toString())) {
+                    dataContent = new SingleFileDataContent(filterParams, entryPath);
+                } else {
+                    return 0L;
+                }
             }
+            return contentConverter.convertContent(dataContent, outputStream);
         } catch (Exception e) {
             LOG.error("Error copying data from {}:{}", source, entryName, e);
             throw new IllegalStateException(e);

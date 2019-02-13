@@ -21,6 +21,9 @@ class ContentFilterRequestHelper {
                 if (CollectionUtils.isNotEmpty(vs)) {
                     filterParams.setMaxDepth(vs.stream().filter(s -> StringUtils.isNotBlank(s)).map(s -> Integer.valueOf(s)).findFirst().orElse(-1));
                 }
+            } else if ("entryPattern".equalsIgnoreCase(k)) {
+                if (CollectionUtils.isNotEmpty(vs))
+                    filterParams.setEntryNamePattern(vs.get(0));
             } else if (StringUtils.isNotBlank(k) && CollectionUtils.isNotEmpty(vs)) {
                 filterParams.addFilterTypeSpecificParam(k, vs.get(0));
             }

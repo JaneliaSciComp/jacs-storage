@@ -3,16 +3,21 @@ package org.janelia.jacsstorage.io;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ContentFilterParams {
     private String filterType;
     private Set<String> selectedEntries = new HashSet<>();
-    private int maxDepth;
+    private String entryNamePattern;
+    private Pattern regexEntryNamePattern;
+    private int maxDepth = -1;
     private Map<String, String> filterTypeSpecificParams = new HashMap<>();
 
     public String getFilterType() {
@@ -30,6 +35,17 @@ public class ContentFilterParams {
 
     public void addSelectedEntries(Collection<String> selectedEntries) {
         this.selectedEntries.addAll(selectedEntries);
+    }
+
+    public String getEntryNamePattern() {
+        return entryNamePattern;
+    }
+
+    public void setEntryNamePattern(String entryNamePattern) {
+        this.entryNamePattern = entryNamePattern;
+        if (StringUtils.isNotBlank(entryNamePattern)) {
+            regexEntryNamePattern = Pattern.compile(entryNamePattern);
+        }
     }
 
     public int getMaxDepth() {
@@ -60,6 +76,19 @@ public class ContentFilterParams {
             }
         } else {
             return defaultValue;
+        }
+    }
+
+    boolean matchEntry(String entryName) {
+        String nameToMatch = Paths.get(entryName).getFileName().toString();
+        return selectedEntries.isEmpty() || selectedEntries.contains(nameToMatch) || matchEntryNamePattern(nameToMatch);
+    }
+
+    boolean matchEntryNamePattern(String entryName) {
+        if (regexEntryNamePattern == null) {
+            return true;
+        } else {
+            return regexEntryNamePattern.asPredicate().test(entryName);
         }
     }
 

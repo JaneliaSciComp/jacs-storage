@@ -8,7 +8,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.IsNot;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.io.contenthandlers.IDContentStreamFilter;
+import org.janelia.jacsstorage.io.contenthandlers.NoOPContentConverter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,8 +54,8 @@ public class TarBundleReaderWriterTest {
     @Before
     public void setUp() throws IOException {
         ContentHandlerProvider contentHandlerProvider = Mockito.mock(ContentHandlerProvider.class);
-        Mockito.when(contentHandlerProvider.getContentStreamFilter(ArgumentMatchers.any(ContentFilterParams.class)))
-                .thenReturn(new IDContentStreamFilter());
+        Mockito.when(contentHandlerProvider.getContentConverter(ArgumentMatchers.any(ContentFilterParams.class)))
+                .thenReturn(new NoOPContentConverter());
         dataDirectoryBundleReader = new DataDirectoryBundleReader(contentHandlerProvider);
         tarBundleReader = new TarArchiveBundleReader(contentHandlerProvider);
         tarBundleWriter = new TarArchiveBundleWriter();

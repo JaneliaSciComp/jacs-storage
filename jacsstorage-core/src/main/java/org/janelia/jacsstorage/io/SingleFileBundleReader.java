@@ -75,15 +75,9 @@ public class SingleFileBundleReader extends AbstractBundleReader {
         Path sourcePath = getSourcePath(source);
         checkSourcePath(sourcePath);
         Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
-        try {
-            ContentStreamFilter contentStreamFilter = contentHandlerProvider.getContentStreamFilter(filterParams);
-            return IOStreamUtils.copyFrom(
-                    contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, Files.newInputStream(sourcePath))),
-                    outputStream);
-        } catch (IOException e) {
-            LOG.error("Error copying data from {}", source, e);
-            throw new IllegalStateException(e);
-        }
+        ContentConverter contentConverter = contentHandlerProvider.getContentConverter(filterParams);
+        DataContent dataContent = new SingleFileDataContent(filterParams, sourcePath);
+        return contentConverter.convertContent(dataContent, outputStream);
     }
 
     private Path getSourcePath(String source) {

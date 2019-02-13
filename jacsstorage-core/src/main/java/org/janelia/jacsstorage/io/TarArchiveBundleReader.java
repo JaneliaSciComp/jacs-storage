@@ -13,7 +13,6 @@ import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.msgpack.core.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -140,57 +139,33 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     public long readDataEntry(String source, String entryName, ContentFilterParams filterParams, OutputStream outputStream) {
         Path sourcePath = getSourcePath(source);
         checkSourcePath(sourcePath);
-        TarArchiveOutputStream tarOutputStream = null;
-        long nbytes = 0L;
-        TarArchiveInputStream inputStream = openSourceAsArchiveStream(sourcePath);
-        try {
-            ContentStreamFilter contentStreamFilter = contentHandlerProvider.getContentStreamFilter(filterParams);
+        try (TarArchiveInputStream inputStream = openSourceAsArchiveStream(sourcePath)) {
+            ContentConverter contentConverter = contentHandlerProvider.getContentConverter(filterParams);
             String normalizedEntryName = normalizeEntryName(entryName);
+            ArchiveEntryListDataContent archiveEntryListDataContent = new ArchiveEntryListDataContent(filterParams, normalizedEntryName);
             for (TarArchiveEntry sourceEntry = inputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = inputStream.getNextTarEntry()) {
                 String currentEntryName = normalizeEntryName(sourceEntry.getName());
                 if (currentEntryName.equals(normalizedEntryName)) {
-                    if (sourceEntry.isDirectory()) {
-                        tarOutputStream = new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE);
-                    } else {
-                        return IOStreamUtils.copyFrom(
-                                contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, ByteStreams.limit(inputStream, sourceEntry.getSize()))),
-                                outputStream);
+                    if (!sourceEntry.isDirectory()) {
+                        // if the entry is not a directory just stream it right away
+                        if (filterParams.matchEntry(entryName)) {
+                            return contentConverter.convertContent(new SingleArchiveEntryDataContent(filterParams, currentEntryName, sourceEntry.getSize(), ByteStreams.limit(inputStream, sourceEntry.getSize())), outputStream);
+                        } else {
+                            return 0;
+                        }
                     }
                 }
-                if (currentEntryName.startsWith(normalizedEntryName)) {
-                    String relativeEntryName = StringUtils.removeStart(currentEntryName, normalizedEntryName);
-                    String newEntryName = StringUtils.prependIfMissing(
-                            StringUtils.prependIfMissing(relativeEntryName, "/"),
-                            ".");
-                    if (sourceEntry.isDirectory()) {
-                        newEntryName = StringUtils.appendIfMissing(newEntryName, "/");
-                    }
-                    TarArchiveEntry entry = new TarArchiveEntry(newEntryName, false);
-                    entry.setSize(sourceEntry.getSize());
-                    entry.setModTime(sourceEntry.getModTime());
-                    entry.setMode(sourceEntry.getMode());
-                    tarOutputStream.putArchiveEntry(entry);
-                    if (sourceEntry.isFile()) {
-                        nbytes += IOStreamUtils.copyFrom(
-                                contentStreamFilter.apply(new ContentFilteredInputStream(filterParams, ByteStreams.limit(inputStream, sourceEntry.getSize()))),
-                                tarOutputStream);
-                    }
-                    tarOutputStream.closeArchiveEntry();
+                if (currentEntryName.startsWith(normalizedEntryName) && (sourceEntry.isDirectory() || filterParams.matchEntry(currentEntryName))) {
+                    archiveEntryListDataContent.addArchiveEntry(currentEntryName, sourceEntry.isDirectory(), sourceEntry.isDirectory() ? 0L : sourceEntry.getSize(), inputStream);
                 }
             }
-            if (tarOutputStream == null)
+            if (archiveEntryListDataContent.getEntriesCount() == 0) {
                 throw new IllegalArgumentException("No entry " + normalizedEntryName + " found under " + source);
-            else {
-                tarOutputStream.finish();
-                return nbytes;
+            } else {
+                return contentConverter.convertContent(archiveEntryListDataContent, outputStream);
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
-        } finally {
-            try {
-                inputStream.close();
-            } catch (IOException ignore) {
-            }
         }
     }
 
