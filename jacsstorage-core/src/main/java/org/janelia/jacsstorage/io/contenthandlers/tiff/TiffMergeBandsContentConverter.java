@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.io.contenthandlers.tiff;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.io.ContentConverter;
@@ -48,15 +49,7 @@ public class TiffMergeBandsContentConverter implements ContentConverter {
                             return Optional.of(rim);
                         }
                     }))
-                    .map(imageBytes -> {
-                        try {
-                            outputStream.write(imageBytes);
-                        } catch (IOException e) {
-                            LOG.error("Error writing merged bands from {}", dataContent.listDataNodes(), e);
-                            throw new IllegalStateException(e);
-                        }
-                        return (long) imageBytes.length;
-                    })
+                    .map(imageBytes -> IOStreamUtils.copyFrom(imageBytes, outputStream))
                     .orElse(0L);
         }
     }

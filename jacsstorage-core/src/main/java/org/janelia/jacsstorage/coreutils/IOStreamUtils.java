@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.coreutils;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,15 +33,10 @@ public class IOStreamUtils {
      * @return
      */
     public static long copyFrom(byte[] inputBytes, OutputStream dstStream) {
-        try {
-            if (inputBytes == null) {
-                return 0L;
-            } else {
-                dstStream.write(inputBytes);
-                return (long) inputBytes.length;
-            }
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
+        if (inputBytes == null) {
+            return 0L;
+        } else {
+            return copyFrom(new ByteArrayInputStream(inputBytes), dstStream);
         }
     }
 }
