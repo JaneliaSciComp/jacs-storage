@@ -1,10 +1,12 @@
 package org.janelia.jacsstorage.io;
 
 import com.google.common.collect.ImmutableMap;
+import com.sun.media.jai.codec.FileSeekableStream;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.rendering.utils.ImageUtils;
 import org.msgpack.core.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,10 +108,10 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
                 List<Path> selectedEntries = Files.walk(entryPath, traverseDepth)
                         .filter(p -> Files.isDirectory(p) || filterParams.matchEntry(p.toString()))
                         .collect(Collectors.toList());
-                dataContent = new FileListDataContent(filterParams, entryPath, selectedEntries);
+                dataContent = new FileListDataContent(filterParams, entryPath, ImageUtils.getImagePathHandler(), selectedEntries);
             } else {
                 if (filterParams.matchEntry(entryPath.toString())) {
-                    dataContent = new SingleFileDataContent(filterParams, entryPath);
+                    dataContent = new SingleFileDataContent(filterParams, entryPath, ImageUtils.getImagePathHandler());
                 } else {
                     return 0L;
                 }

@@ -6,6 +6,7 @@ import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.rendering.utils.ImageUtils;
 import org.msgpack.core.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +77,7 @@ public class SingleFileBundleReader extends AbstractBundleReader {
         checkSourcePath(sourcePath);
         Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
         ContentConverter contentConverter = contentHandlerProvider.getContentConverter(filterParams);
-        DataContent dataContent = new SingleFileDataContent(filterParams, sourcePath);
+        DataContent dataContent = new SingleFileDataContent(filterParams, sourcePath, ImageUtils.getImagePathHandler());
         return contentConverter.convertContent(dataContent, outputStream);
     }
 
