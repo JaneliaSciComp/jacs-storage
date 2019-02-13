@@ -81,14 +81,12 @@ public class ContentFilterParams {
 
     boolean matchEntry(String entryName) {
         String nameToMatch = Paths.get(entryName).getFileName().toString();
-        return selectedEntries.isEmpty() || selectedEntries.contains(nameToMatch) || matchEntryNamePattern(nameToMatch);
-    }
-
-    boolean matchEntryNamePattern(String entryName) {
-        if (regexEntryNamePattern == null) {
-            return true;
-        } else {
+        if (!selectedEntries.isEmpty()) {
+            return selectedEntries.contains(nameToMatch);
+        } else if (regexEntryNamePattern != null) {
             return regexEntryNamePattern.asPredicate().test(entryName);
+        } else {
+            return true;
         }
     }
 
@@ -97,6 +95,7 @@ public class ContentFilterParams {
         return new ToStringBuilder(this)
                 .append("filterType", filterType)
                 .append("selectedEntries", selectedEntries)
+                .append("entryNamePattern", entryNamePattern)
                 .append("maxDepth", maxDepth)
                 .append("filterTypeSpecificParams", filterTypeSpecificParams)
                 .toString();
