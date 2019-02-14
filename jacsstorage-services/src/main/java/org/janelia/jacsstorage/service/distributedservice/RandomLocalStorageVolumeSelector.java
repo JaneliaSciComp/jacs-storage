@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
@@ -39,6 +40,7 @@ public class RandomLocalStorageVolumeSelector implements StorageVolumeSelector {
                     storageQuery.setStorageName(sv.getName());
                     storageQuery.setStorageVirtualPath(sv.getStorageVirtualPath());
                     storageQuery.setStorageTags(sv.getStorageTags());
+                    storageQuery.setAccessibleOnHost(sv.getStorageHost());
                 });
         if (storageRequest.hasUsedSpaceSet()) {
             storageQuery.setMinAvailableSpaceInBytes(storageRequest.getUsedSpaceInBytes());
