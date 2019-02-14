@@ -147,7 +147,7 @@ public class DataTransferServiceImpl implements DataTransferService {
                 transferState.setState(State.WRITE_DATA);
                 long nbytes = bundleWriter.writeBundle(receiverStream, dataLocation.getPath());
                 transferState.setTransferredBytes(nbytes);
-                transferState.setPersistedBytes(PathUtils.getSize(dataLocation.getPath()));
+                transferState.setPersistedBytes(PathUtils.getSize(dataLocation.getPath(), -1));
                 transferState.setChecksum(receiverStream.hash().asBytes());
                 transferState.setState(State.WRITE_DATA_COMPLETE);
             } catch (Exception e) {

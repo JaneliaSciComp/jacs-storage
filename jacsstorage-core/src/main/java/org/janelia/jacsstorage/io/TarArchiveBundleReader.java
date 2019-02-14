@@ -132,6 +132,39 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     }
 
     @TimedMethod(
+            logResult = true
+    )
+    @Override
+    public long estimateDataEntrySize(String source, String entryName, ContentFilterParams filterParams) {
+        Path sourcePath = getSourcePath(source);
+        checkSourcePath(sourcePath);
+        long size = 0L;
+        try (TarArchiveInputStream inputStream = openSourceAsArchiveStream(sourcePath)) {
+            String normalizedEntryName = normalizeEntryName(entryName);
+            for (TarArchiveEntry sourceEntry = inputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = inputStream.getNextTarEntry()) {
+                String currentEntryName = normalizeEntryName(sourceEntry.getName());
+                if (currentEntryName.equals(normalizedEntryName)) {
+                    if (!sourceEntry.isDirectory()) {
+                        // if the entry is not a directory just stream it right away
+                        if (filterParams.matchEntry(entryName)) {
+                            return sourceEntry.getSize();
+                        } else {
+                            return 0;
+                        }
+                    }
+                }
+                if (currentEntryName.startsWith(normalizedEntryName) && !sourceEntry.isDirectory() && filterParams.matchEntry(currentEntryName)) {
+                    size += sourceEntry.getSize();
+                }
+            }
+            return size;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+    }
+
+    @TimedMethod(
             argList = {0, 1, 2},
             logResult = true
     )

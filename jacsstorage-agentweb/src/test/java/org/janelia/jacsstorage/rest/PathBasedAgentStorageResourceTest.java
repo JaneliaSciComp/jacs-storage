@@ -37,6 +37,7 @@ import java.util.Set;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -94,9 +95,10 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         PowerMockito.mockStatic(PathUtils.class);
         Path expectedDataPath = Paths.get("/volRoot/testPath");
         Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
-        Mockito.when(PathUtils.getSize(eq(expectedDataPath))).thenReturn((long) testData.getBytes().length);
         Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
         JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
+        when(storageContentReader.estimateDataEntrySize(eq(expectedDataPath), eq(""), eq(testFormat), any(ContentFilterParams.class)))
+                .then(invocation -> (long) testData.length());
         when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(ContentFilterParams.class), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(3);
@@ -129,8 +131,9 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
         Mockito.when(Files.exists(eq(Paths.get("/volPrefix", "testPath")))).thenReturn(false);
         Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
-        Mockito.when(PathUtils.getSize(eq(expectedDataPath))).thenReturn((long) testData.getBytes().length);
         JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
+        when(storageContentReader.estimateDataEntrySize(eq(expectedDataPath), eq(""), eq(testFormat), any(ContentFilterParams.class)))
+                .then(invocation -> (long) testData.length());
         when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(ContentFilterParams.class), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(3);
@@ -166,8 +169,9 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
         Mockito.when(Files.exists(eq(Paths.get("/volPrefix", "testPath")))).thenReturn(false);
         Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
-        Mockito.when(PathUtils.getSize(eq(expectedDataPath))).thenReturn((long) testData.getBytes().length);
         JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
+        when(storageContentReader.estimateDataEntrySize(eq(expectedDataPath), eq(""), eq(testFormat), any(ContentFilterParams.class)))
+                .then(invocation -> (long) testData.length());
         when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(ContentFilterParams.class), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(3);

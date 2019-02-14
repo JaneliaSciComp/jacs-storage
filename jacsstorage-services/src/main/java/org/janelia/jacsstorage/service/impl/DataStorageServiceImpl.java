@@ -86,6 +86,15 @@ public class DataStorageServiceImpl implements DataStorageService {
     }
 
     @TimedMethod(
+            logResult = true
+    )
+    @Override
+    public long estimateDataEntrySize(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, ContentFilterParams filterParams) {
+        BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
+        return bundleReader.estimateDataEntrySize(dataPath.toString(), entryName, filterParams);
+    }
+
+    @TimedMethod(
             argList = {0, 1, 2, 3},
             logResult = true
     )

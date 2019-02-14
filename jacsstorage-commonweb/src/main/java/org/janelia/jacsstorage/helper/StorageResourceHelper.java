@@ -166,7 +166,7 @@ public class StorageResourceHelper {
                 .map(dataEntryPath -> {
                     long fileSize;
                     if (Files.isRegularFile(dataEntryPath)) {
-                        fileSize = PathUtils.getSize(dataEntryPath);
+                        fileSize = PathUtils.getSize(dataEntryPath, 0);
                     } else {
                         fileSize = 0;
                     }
@@ -190,7 +190,7 @@ public class StorageResourceHelper {
                 .filter(dataEntryPath -> Files.exists(dataEntryPath))
                 .map(dataEntryPath -> {
                     JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
-                    long fileSize = PathUtils.getSize(dataEntryPath);
+                    long fileSize = dataStorageService.estimateDataEntrySize(dataEntryPath, "", storageFormat, filterParams);
                     StreamingOutput fileStream = output -> {
                         try {
                             dataStorageService.retrieveDataStream(dataEntryPath, storageFormat, filterParams, output);
@@ -244,7 +244,7 @@ public class StorageResourceHelper {
     }
 
     public Response.ResponseBuilder retrieveContentFromDataBundle(JacsBundle dataBundle, ContentFilterParams filterParams, String dataEntryPath) {
-        long fileSize = PathUtils.getSize(dataBundle.getRealStoragePath().resolve(StringUtils.defaultIfBlank(dataEntryPath, "")));
+        long fileSize = dataStorageService.estimateDataEntrySize(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), filterParams);
         StreamingOutput bundleStream = output -> {
             try {
                 dataStorageService.readDataEntryStream(

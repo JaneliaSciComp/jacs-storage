@@ -29,6 +29,15 @@ public interface BundleReader {
     List<DataNodeInfo> listBundleContent(String source, String entryName, int depth);
 
     /**
+     * Estimate the specified entry size from the bundle.
+     * @param source
+     * @param entryName
+     * @param filterParams
+     * @return
+     */
+    long estimateDataEntrySize(String source, String entryName, ContentFilterParams filterParams);
+
+    /**
      * Read the specified entry from the bundle.
      * @param source
      * @param entryName

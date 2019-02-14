@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.io;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -65,6 +66,17 @@ public class SingleFileBundleReader extends AbstractBundleReader {
         }
         Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
         return ImmutableList.of(pathToDataNodeInfo(sourcePath, sourcePath, (rootPath, nodePath) -> rootPath.toString()));
+    }
+
+    @TimedMethod(
+            logResult = true
+    )
+    @Override
+    public long estimateDataEntrySize(String source, String entryName, ContentFilterParams filterParams) {
+        Path sourcePath = getSourcePath(source);
+        checkSourcePath(sourcePath);
+        Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
+        return PathUtils.getSize(sourcePath, 0);
     }
 
     @TimedMethod(

@@ -30,6 +30,7 @@ import java.util.Set;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -118,7 +119,12 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                         .build());
         DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
         String testData = "Test data";
-        when(PathUtils.getSize(Paths.get(testPath, testDataEntryName))).thenReturn((long) testData.length());
+        when(dataStorageService.estimateDataEntrySize(
+                eq(Paths.get(testPath)),
+                eq(testDataEntryName),
+                eq(testFormat),
+                any(ContentFilterParams.class)))
+                .then(invocation -> (long) testData.length());
 
         when(dataStorageService.readDataEntryStream(
                 eq(Paths.get(testPath)),
@@ -145,7 +151,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 .path(testBundleId.toString())
                 .path("entry_content")
                 .path(testDataEntryName)
-                .queryParam("selection", "v1,v2")
+                .queryParam("selectedEntries", "v1", "v2")
                 .request().get(InputStream.class);
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response));
     }

@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.io;
 import com.google.common.collect.ImmutableMap;
 import com.sun.media.jai.codec.FileSeekableStream;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -86,6 +87,41 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    @TimedMethod(
+            logResult = true
+    )
+    @Override
+    public long estimateDataEntrySize(String source, String entryName, ContentFilterParams filterParams) {
+        Path sourcePath = getSourcePath(source);
+        Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
+        Path entryPath = StringUtils.isBlank(entryName) ? sourcePath : sourcePath.resolve(entryName);
+        if (Files.notExists(entryPath)) {
+            throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
+        }
+        try {
+            if (Files.isDirectory(entryPath)) {
+                int traverseDepth = filterParams.getMaxDepth() >= 0 ? filterParams.getMaxDepth() : Integer.MAX_VALUE;
+                return Files.walk(entryPath, traverseDepth)
+                        .filter(p -> Files.isRegularFile(p))
+                        .filter(p -> filterParams.matchEntry(p.toString()))
+                        .map(p -> PathUtils.getSize(p, filterParams.getMaxDepth()))
+                        .reduce((s1, s2) -> s1 + s2)
+                        .orElse(0L)
+                        ;
+            } else {
+                if (filterParams.matchEntry(entryPath.toString())) {
+                    return PathUtils.getSize(entryPath, 0);
+                } else {
+                    return 0L;
+                }
+            }
+        } catch (Exception e) {
+            LOG.error("Error copying data from {}:{}", source, entryName, e);
+            throw new IllegalStateException(e);
+        }
+
     }
 
     @TimedMethod(
