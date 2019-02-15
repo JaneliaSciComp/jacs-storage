@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
-import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
@@ -17,11 +16,9 @@ import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
 import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
 import org.janelia.jacsstorage.testrest.TestResourceBinder;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,13 +26,11 @@ import java.nio.file.Paths;
 import java.util.Set;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({AgentStorageResource.class, PathUtils.class})
 public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
 
     private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
@@ -111,7 +106,6 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
         String testPath = "volPrefix/testPath";
         String testDataEntryName = "e1";
         JacsStorageFormat testFormat = JacsStorageFormat.DATA_DIRECTORY;
-        PowerMockito.mockStatic(PathUtils.class);
         when(storageLookupService.getDataBundleById(testBundleId))
                 .thenReturn(new JacsBundleBuilder()
                         .path(testPath)
@@ -125,7 +119,6 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 eq(testFormat),
                 any(ContentFilterParams.class)))
                 .then(invocation -> (long) testData.length());
-
         when(dataStorageService.readDataEntryStream(
                 eq(Paths.get(testPath)),
                 eq(testDataEntryName),
@@ -152,8 +145,104 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 .path("entry_content")
                 .path(testDataEntryName)
                 .queryParam("selectedEntries", "v1", "v2")
+                .request(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
+        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response));
+    }
+
+    @Test
+    public void retrieveEntryContentFromDataEntryRoot() throws IOException {
+        StorageLookupService storageLookupService = dependenciesProducer.getStorageLookupService();
+        Long testBundleId = 1L;
+        String testPath = "volPrefix/testPath";
+        JacsStorageFormat testFormat = JacsStorageFormat.DATA_DIRECTORY;
+        when(storageLookupService.getDataBundleById(testBundleId))
+                .thenReturn(new JacsBundleBuilder()
+                        .path(testPath)
+                        .storageFormat(testFormat)
+                        .build());
+        DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
+        String testData = "Test data";
+        when(dataStorageService.estimateDataEntrySize(
+                eq(Paths.get(testPath)),
+                eq(""),
+                eq(testFormat),
+                any(ContentFilterParams.class)))
+                .then(invocation -> (long) testData.length());
+        when(dataStorageService.readDataEntryStream(
+                eq(Paths.get(testPath)),
+                eq(""),
+                eq(testFormat),
+                any(ContentFilterParams.class),
+                any(OutputStream.class)))
+                .then(invocation -> {
+                    OutputStream out = invocation.getArgument(4);
+                    out.write(testData.getBytes());
+                    return (long) testData.length();
+                });
+        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
+                .thenReturn(ImmutableList.of(
+                        new JacsStorageVolumeBuilder()
+                                .storageVirtualPath("/volPrefix")
+                                .storageRootTemplate("/volRoot/${owner}")
+                                .build()
+                        )
+                );
+        InputStream response = target()
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path(testBundleId.toString())
+                .path("entry_content")
+                .queryParam("selectedEntries", "v1", "v2")
                 .request().get(InputStream.class);
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response));
     }
 
+    @Test
+    public void invalidRetrieveEntryContent() throws IOException {
+        StorageLookupService storageLookupService = dependenciesProducer.getStorageLookupService();
+        Long testBundleId = 1L;
+        String testPath = "volPrefix/testPath";
+        JacsStorageFormat testFormat = JacsStorageFormat.DATA_DIRECTORY;
+        when(storageLookupService.getDataBundleById(testBundleId))
+                .thenReturn(new JacsBundleBuilder()
+                        .path(testPath)
+                        .storageFormat(testFormat)
+                        .build());
+        DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
+        String testData = "Test data";
+        when(dataStorageService.estimateDataEntrySize(
+                eq(Paths.get(testPath)),
+                eq(""),
+                eq(testFormat),
+                any(ContentFilterParams.class)))
+                .then(invocation -> (long) testData.length());
+
+        when(dataStorageService.readDataEntryStream(
+                eq(Paths.get(testPath)),
+                eq(""),
+                eq(testFormat),
+                any(ContentFilterParams.class),
+                any(OutputStream.class)))
+                .then(invocation -> {
+                    OutputStream out = invocation.getArgument(4);
+                    out.write(testData.getBytes());
+                    return (long) testData.length();
+                });
+        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
+                .thenReturn(ImmutableList.of(
+                        new JacsStorageVolumeBuilder()
+                                .storageVirtualPath("/volPrefix")
+                                .storageRootTemplate("/volRoot/${owner}")
+                                .build()
+                        )
+                );
+        Response response = target()
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path(testBundleId.toString())
+                .path("entry_contente1")
+                .queryParam("selectedEntries", "v1", "v2")
+                .request().get();
+        assertNotEquals(200, response.getStatus());
+    }
 }

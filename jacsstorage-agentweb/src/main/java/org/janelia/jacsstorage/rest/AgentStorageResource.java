@@ -215,16 +215,17 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @HEAD
-    @Path("{dataBundleId}/entry_content/{dataEntryPath:.*}")
+    @Path("{dataBundleId}/entry_content{dataEntryPath:(/.*)?}")
     @Produces({MediaType.APPLICATION_JSON})
     public Response checkEntryContent(@PathParam("dataBundleId") Long dataBundleId,
-                                      @PathParam("dataEntryPath") String dataEntryPath,
+                                      @PathParam("dataEntryPath") String dataEntryPathParam,
                                       @QueryParam("directoryOnly") Boolean directoryOnlyParam,
                                       @Context SecurityContext securityContext) {
-        LOG.info("Get entry {} content from bundle {} ", dataEntryPath, dataBundleId);
+        LOG.info("Get entry {} content from bundle {} ", dataEntryPathParam, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        String dataEntryPath = StringUtils.removeStart(dataEntryPathParam, "/");
         return storageResourceHelper.checkContentFromDataBundle(dataBundle, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam).build();
     }
 
@@ -239,15 +240,16 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
-    @Path("{dataBundleId}/entry_content/{dataEntryPath:.*}")
+    @Path("{dataBundleId}/entry_content{dataEntryPath:(/.*)?}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     public Response getEntryContent(@PathParam("dataBundleId") Long dataBundleId,
-                                    @PathParam("dataEntryPath") String dataEntryPath,
+                                    @PathParam("dataEntryPath") String dataEntryPathParam,
                                     @Context UriInfo requestURI) {
-        LOG.info("Get entry {} content from bundle {} ", dataEntryPath, dataBundleId);
+        LOG.info("Get entry {} content from bundle {} ", dataEntryPathParam, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        String dataEntryPath = StringUtils.removeStart(dataEntryPathParam, "/");
         return storageResourceHelper.retrieveContentFromDataBundle(dataBundle, ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters()), dataEntryPath).build();
     }
 
@@ -261,14 +263,15 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
-    @Path("{dataBundleId}/entry_info/{dataEntryPath:.*}")
+    @Path("{dataBundleId}/entry_info{dataEntryPath:/?.*}")
     @Produces({MediaType.APPLICATION_JSON})
     public Response getEntryContentInfo(@PathParam("dataBundleId") Long dataBundleId,
-                                        @PathParam("dataEntryPath") String dataEntryPath) {
-        LOG.info("Get entry {} content from bundle {} ", dataEntryPath, dataBundleId);
+                                        @PathParam("dataEntryPath") String dataEntryPathParam) {
+        LOG.info("Get entry {} content from bundle {} ", dataEntryPathParam, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        String dataEntryPath = StringUtils.removeStart(dataEntryPathParam, "/");
         return storageResourceHelper.retrieveContentInfoFromDataBundle(dataBundle, dataEntryPath).build();
     }
 
@@ -284,7 +287,7 @@ public class AgentStorageResource {
             argList = {0, 1}
     )
     @POST
-    @Path("{dataBundleId}/directory/{dataEntryPath:.*}")
+    @Path("{dataBundleId}/directory/{dataEntryPath:.+}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response postCreateDirectory(@PathParam("dataBundleId") Long dataBundleId,
                                         @PathParam("dataEntryPath") String dataEntryPath,
@@ -304,7 +307,7 @@ public class AgentStorageResource {
             argList = {0, 1, 2}
     )
     @PUT
-    @Path("{dataBundleId}/directory/{dataEntryPath:.*}")
+    @Path("{dataBundleId}/directory/{dataEntryPath:.+}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response putCreateDirectory(@PathParam("dataBundleId") Long dataBundleId,
                                        @PathParam("dataEntryPath") String dataEntryPath,
@@ -369,7 +372,7 @@ public class AgentStorageResource {
     )
     @TimedMethod(argList = {0, 1, 2})
     @POST
-    @Path("{dataBundleId}/file/{dataEntryPath:.*}")
+    @Path("{dataBundleId}/file/{dataEntryPath:.+}")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
     public Response postCreateFile(@PathParam("dataBundleId") Long dataBundleId,
@@ -392,7 +395,7 @@ public class AgentStorageResource {
     )
     @TimedMethod(argList = {0, 1, 2})
     @PUT
-    @Path("{dataBundleId}/file/{dataEntryPath:.*}")
+    @Path("{dataBundleId}/file/{dataEntryPath:.+}")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
     public Response putCreateFile(@PathParam("dataBundleId") Long dataBundleId,

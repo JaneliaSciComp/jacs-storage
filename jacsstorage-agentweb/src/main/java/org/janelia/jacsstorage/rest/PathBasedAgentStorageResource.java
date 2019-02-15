@@ -59,7 +59,7 @@ public class PathBasedAgentStorageResource {
 
     @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
     @HEAD
-    @Path("storage_path/content/{dataPath:.*}")
+    @Path("storage_path/content/{dataPath:.+}")
     @ApiOperation(value = "Check if the specified file path identifies a valid data bundle entry content.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The content was found"),
@@ -79,7 +79,7 @@ public class PathBasedAgentStorageResource {
 
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
-    @Path("storage_path/content/{dataPath:.*}")
+    @Path("storage_path/content/{dataPath:.+}")
     @ApiOperation(value = "Retrieve the content of the specified data path.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
@@ -106,7 +106,7 @@ public class PathBasedAgentStorageResource {
     @RequireAuthentication
     @Produces({MediaType.APPLICATION_JSON})
     @DELETE
-    @Path("storage_path/content/{dataPath:.*}")
+    @Path("storage_path/content/{dataPath:.+}")
     @ApiOperation(value = "Retrieve the content of the specified data path.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The data streaming was successfull"),
@@ -138,7 +138,7 @@ public class PathBasedAgentStorageResource {
     @RequireAuthentication
     @Produces({MediaType.APPLICATION_JSON})
     @PUT
-    @Path("storage_path/content/{dataPath:.*}")
+    @Path("storage_path/content/{dataPath:.+}")
     @ApiOperation(value = "Store the content at the specified data path.")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "The data was saved successfully"),
@@ -173,7 +173,7 @@ public class PathBasedAgentStorageResource {
     @RequireAuthentication
     @Produces({MediaType.APPLICATION_JSON})
     @GET
-    @Path("storage_path/info/{dataPath:.*}")
+    @Path("storage_path/info/{dataPath:.+}")
     @ApiOperation(value = "Inspect and retrieve content info of the specified data path.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The operation was successfull. " +
