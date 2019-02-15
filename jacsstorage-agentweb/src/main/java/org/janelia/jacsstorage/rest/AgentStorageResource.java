@@ -190,13 +190,13 @@ public class AgentStorageResource {
                 dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
                         .path(AgentStorageResource.class)
                         .path(AgentStorageResource.class, "getEntryContent")
-                        .build(dataBundle.getId(), dn.getNodeRelativePath())
+                        .build(dataBundle.getId(), "/" + dn.getNodeRelativePath())
                         .toString()
                 );
                 dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
                         .path(AgentStorageResource.class)
                         .path(AgentStorageResource.class, "getEntryContentInfo")
-                        .build(dataBundle.getId(), dn.getNodeRelativePath())
+                        .build(dataBundle.getId(), "/" + dn.getNodeRelativePath())
                         .toString()
                 );
             });
@@ -324,7 +324,7 @@ public class AgentStorageResource {
         List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
                 .path(AgentStorageResource.class, "getEntryContent")
-                .build(dataBundleId, dataEntryPath);
+                .build(dataBundleId, "/" + dataEntryPath);
         if (CollectionUtils.isNotEmpty(existingEntries)) {
             // if an entry already exists return ACCEPTED(202) instead of CREATED (201)
             return Response
@@ -348,7 +348,7 @@ public class AgentStorageResource {
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeInfoURL(resourceURI.getBaseUriBuilder()
                 .path(AgentStorageResource.class, "getEntryContentInfo")
-                .build(dataBundle.getId(), dataEntryPath)
+                .build(dataBundle.getId(), "/" + dataEntryPath)
                 .toString()
         );
         newDataNode.setNodeRelativePath(dataEntryPath);
@@ -416,7 +416,7 @@ public class AgentStorageResource {
         List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
                 .path(AgentStorageResource.class, "getEntryContent")
-                .build(dataBundleId, dataEntryPath)
+                .build(dataBundleId, "/" + dataEntryPath)
                 ;
         if (CollectionUtils.isNotEmpty(existingEntries)) {
             return Response
@@ -440,7 +440,7 @@ public class AgentStorageResource {
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeInfoURL(resourceURI.getBaseUriBuilder()
                 .path(AgentStorageResource.class, "getEntryContentInfo")
-                .build(dataBundle.getId(), dataEntryPath)
+                .build(dataBundle.getId(), "/" + dataEntryPath)
                 .toString()
         );
         newDataNode.setNodeRelativePath(dataEntryPath);

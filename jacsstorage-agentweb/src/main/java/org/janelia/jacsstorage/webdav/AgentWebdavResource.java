@@ -97,12 +97,12 @@ public class AgentWebdavResource {
                     nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
                     nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
                             .path(AgentStorageResource.class, "getEntryContent")
-                            .build(dataBundle.getId(), nodeInfoRelPath)
+                            .build(dataBundle.getId(), "/" + nodeInfoRelPath)
                             .toString()
                     );
                     nodeInfo.setNodeInfoURL(resourceURI.getBaseUriBuilder()
                             .path(AgentStorageResource.class, "getEntryContentInfo")
-                            .build(dataBundle.getId(), nodeInfoRelPath)
+                            .build(dataBundle.getId(), "/" + nodeInfoRelPath)
                             .toString()
                     );
                     return nodeInfo;
@@ -157,12 +157,12 @@ public class AgentWebdavResource {
                                 nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
                                 nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
                                         .path(AgentStorageResource.class, "getEntryContent")
-                                        .build(dataBundle.getId(), nodeInfoRelPath)
+                                        .build(dataBundle.getId(), "/" + nodeInfoRelPath)
                                         .toString()
                                 );
                                 nodeInfo.setNodeInfoURL(resourceURI.getBaseUriBuilder()
                                         .path(AgentStorageResource.class, "getEntryContentInfo")
-                                        .build(dataBundle.getId(), nodeInfoRelPath)
+                                        .build(dataBundle.getId(), "/" + nodeInfoRelPath)
                                         .toString()
                                 );
                                 return nodeInfo;
