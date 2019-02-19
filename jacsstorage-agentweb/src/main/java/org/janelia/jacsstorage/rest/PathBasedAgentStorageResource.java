@@ -10,6 +10,7 @@ import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
@@ -117,16 +118,18 @@ public class PathBasedAgentStorageResource {
     public Response removeData(@PathParam("dataPath") String dataPathParam, @Context SecurityContext securityContext) {
         LOG.info("Remove data from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        JacsCredentials credentials = SecurityUtils.getUserPrincipal(securityContext);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryName) -> storageResourceHelper.removeContentFromDataBundle(dataBundle,
                         dataEntryName,
+                        credentials,
                         (Long freedEntrySize) -> storageAllocatorService.updateStorage(
                                 new JacsBundleBuilder()
                                         .dataBundleId(dataBundle.getId())
                                         .usedSpaceInBytes(-freedEntrySize)
                                         .build(),
-                                SecurityUtils.getUserPrincipal(securityContext))),
+                                credentials)),
                 (storageVolume, dataEntryName) -> storageResourceHelper.removeFileContentFromVolume(storageVolume, dataEntryName)
         ).build();
     }

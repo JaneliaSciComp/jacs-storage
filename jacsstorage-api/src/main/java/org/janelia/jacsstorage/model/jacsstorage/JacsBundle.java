@@ -37,6 +37,9 @@ public class JacsBundle extends AbstractEntity {
     private Map<String, Object> metadata = new LinkedHashMap<>();
     private Number storageVolumeId;
     @JsonIgnore
+    private String linkedPath;
+
+    @JsonIgnore
     private JacsStorageVolume storageVolume;
 
     public String getName() {
@@ -64,10 +67,24 @@ public class JacsBundle extends AbstractEntity {
     }
 
     @JsonIgnore
+    void setLinkedPath(String linkedPath) {
+        this.linkedPath = linkedPath;
+    }
+
+    @JsonIgnore
+    public boolean isLinkedStorage() {
+        return StringUtils.isNotBlank(linkedPath);
+    }
+
+    @JsonIgnore
     public Path getRealStoragePath() {
-        String storageRootDir = null;
-        if (storageVolume != null) {
+        String storageRootDir;
+        if (isLinkedStorage()) {
+            storageRootDir = linkedPath;
+        } else if (storageVolume != null) {
             storageRootDir = storageVolume.evalStorageRootDir(asStorageContext());
+        } else {
+            storageRootDir = null;
         }
         if (StringUtils.isNotBlank(storageRootDir)) {
             return Paths.get(storageRootDir, path);
@@ -256,6 +273,7 @@ public class JacsBundle extends AbstractEntity {
                 .append("path", path)
                 .append("storageFormat", storageFormat)
                 .append("storageVolumeId", storageVolumeId)
+                .append("linkedPath", linkedPath)
                 .toString();
     }
 }

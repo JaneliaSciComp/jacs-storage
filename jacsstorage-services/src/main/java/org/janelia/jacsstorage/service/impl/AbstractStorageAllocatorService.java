@@ -56,7 +56,7 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
     @Override
     public JacsBundle updateStorage(JacsBundle dataBundle, JacsCredentials credentials) {
         JacsBundle existingBundle = retrieveExistingStorage(dataBundle);
-        checkStorageWriteAccess(credentials, existingBundle);
+        checkStorageWriteAccess(existingBundle, credentials);
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedFieldsBuilder = ImmutableMap.builder();
         if (dataBundle.hasUsedSpaceSet()) {
             existingBundle.setUsedSpaceInBytes(dataBundle.getUsedSpaceInBytes());
@@ -83,13 +83,13 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
         return existingBundle;
     }
 
-    private void checkStorageWriteAccess(JacsCredentials credentials, JacsBundle dataBundle) {
+    private void checkStorageWriteAccess(JacsBundle dataBundle, JacsCredentials credentials) {
         if (!dataBundle.hasWritePermissions(credentials.getSubjectKey())) {
             throw new SecurityException("Access not allowed to " + dataBundle.getName() + " for " + credentials.getAuthKey() + " as " + credentials.getName());
         }
     }
 
-    protected void checkStorageDeletePermission(JacsCredentials credentials, JacsBundle dataBundle) {
+    protected void checkStorageDeletePermission(JacsBundle dataBundle, JacsCredentials credentials) {
         if (!credentials.getSubjectKey().equals(dataBundle.getOwnerKey())) {
             throw new SecurityException("Access not allowed to " + dataBundle.getName() + " for " + credentials.getAuthKey() + " as " + credentials.getName());
         }

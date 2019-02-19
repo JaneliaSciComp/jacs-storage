@@ -42,10 +42,14 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
     @Override
     public boolean deleteStorage(JacsBundle dataBundle, JacsCredentials credentials) {
         JacsBundle existingBundle = retrieveExistingStorage(dataBundle);
-        checkStorageDeletePermission(credentials, dataBundle);
+        checkStorageDeletePermission(dataBundle, credentials);
         LOG.info("Delete {}", existingBundle);
         return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
                 .map(storageVolume -> {
+                    if (existingBundle.isLinkedStorage()) {
+                        LOG.warn("Linked storage cannot be deleted: {}", dataBundle);
+                        return false;
+                    }
                     Path dataPath = existingBundle.getRealStoragePath();
                     try {
                         PathUtils.deletePath(dataPath);

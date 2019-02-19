@@ -294,6 +294,7 @@ public class DataStorageInfo {
                 .checksum(this.checksum)
                 .metadata(this.metadata)
                 .storageHost(this.storageHost)
+                .storageRootPath(this.storageRootDir)
                 .storageTagsAsList(this.storageTags)
                 .build();
     }

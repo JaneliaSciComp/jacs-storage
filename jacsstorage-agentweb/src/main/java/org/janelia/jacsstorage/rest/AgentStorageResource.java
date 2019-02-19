@@ -136,9 +136,7 @@ public class AgentStorageResource {
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StreamingOutput bundleStream = output -> {
             try {
-                dataStorageService.retrieveDataStream(
-                        dataBundle.getRealStoragePath(),
-                        dataBundle.getStorageFormat(),
+                dataStorageService.retrieveDataStream(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(),
                         ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters()),
                         output);
             } catch (Exception e) {

@@ -16,6 +16,7 @@ import org.janelia.jacsstorage.model.jacsstorage.StorageRelativePath;
 import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ErrorResponse;
+import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -422,8 +423,14 @@ public class StorageResourceHelper {
                 ;
     }
 
-    public Response.ResponseBuilder removeContentFromDataBundle(JacsBundle dataBundle, String dataEntryName, Consumer<Long> dataBundleUpdater) {
+    public Response.ResponseBuilder removeContentFromDataBundle(JacsBundle dataBundle, String dataEntryName, JacsCredentials credentials, Consumer<Long> dataBundleUpdater) {
         try {
+            if (!credentials.getSubjectKey().equals(dataBundle.getOwnerKey()) || dataBundle.isLinkedStorage()) {
+                return Response
+                        .status(Response.Status.FORBIDDEN)
+                        .entity(new ErrorResponse("No delete permission from " + dataBundle.getName() + " for " + credentials.getSubjectKey()))
+                        ;
+            }
             Path storagePath = dataBundle.getRealStoragePath();
             LOG.info("Delete {} from {}", dataEntryName, storagePath);
             long freedEntrySize = dataStorageService.deleteStorageEntry(storagePath, dataEntryName, dataBundle.getStorageFormat());
