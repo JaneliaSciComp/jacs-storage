@@ -10,7 +10,6 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
-import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
@@ -116,7 +115,7 @@ public class StorageVolumesResource {
             @ApiResponse(
                     code = 200,
                     message = "The list of storage entries that match the given filters",
-                    response = DataStorageInfo.class
+                    response = JacsStorageVolume.class
             ),
             @ApiResponse(
                     code = 401,

@@ -49,4 +49,3 @@ public class CacheableJacsBundleDao extends AbstractCacheableEntityByIdDao<JacsB
         return JACS_BUNDLE_CACHE;
     }
 }
-

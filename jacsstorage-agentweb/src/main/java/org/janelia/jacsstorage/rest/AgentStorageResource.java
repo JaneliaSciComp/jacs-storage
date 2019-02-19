@@ -44,7 +44,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -186,13 +185,11 @@ public class AgentStorageResource {
                 dn.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
                 dn.setStorageRootPathURI(dataBundle.getStorageURI());
                 dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                        .path(AgentStorageResource.class)
                         .path(AgentStorageResource.class, "getEntryContent")
                         .build(dataBundle.getId(), "/" + dn.getNodeRelativePath())
                         .toString()
                 );
                 dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
-                        .path(AgentStorageResource.class)
                         .path(AgentStorageResource.class, "getEntryContentInfo")
                         .build(dataBundle.getId(), "/" + dn.getNodeRelativePath())
                         .toString()

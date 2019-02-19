@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.service.impl;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -10,7 +11,6 @@ import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.IncFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
-import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 
 import java.nio.file.Path;
