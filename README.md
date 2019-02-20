@@ -353,12 +353,12 @@ The method documentation is available [here](http://jade1:8881/docs/#/Agent_stor
 The curl command must use the actual storage URL returned in 'connectionURL' field.
 
 ```
-curl "http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/entry_content/myDir1/myDir1.1" \
+curl "http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/2501203311319875608/data_content/myDir1/myDir1.1" \
 -H "accept: application/json" \
 -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1MTgyMDE0MjUsInVzZXJfbmFtZSI6ImphY3MifQ.El8GcDhswj-mNmBK2uMaAXHqBPDN_AGgNm_oyU3McQs" \
 ```
 
-If the entry name (the path after 'entry_content') denotes a folder the method returns all the sub-entries from
+If the entry name (the path after 'data_content') denotes a folder the method returns all the sub-entries from
 from specified entry packaged in a tar archive.
 
 If no entry is specified then the method returns the content of the entire bundle as a tar archive

@@ -280,14 +280,14 @@ public class StorageResourceHelper {
                 dn.setNodeAccessURL(UriBuilder.fromUri(baseURI)
                         .path(Constants.AGENTSTORAGE_URI_PATH)
                         .path(dataBundle.getId().toString())
-                        .path("entry_content")
+                        .path("data_content")
                         .path(dn.getNodeRelativePath())
                         .build()
                         .toString());
                 dn.setNodeInfoURL(UriBuilder.fromUri(baseURI)
                         .path(Constants.AGENTSTORAGE_URI_PATH)
                         .path(dataBundle.getId().toString())
-                        .path("entry_info")
+                        .path("data_info")
                         .path(dn.getNodeRelativePath())
                         .build()
                         .toString());
@@ -323,14 +323,14 @@ public class StorageResourceHelper {
                                                         .path(Constants.AGENTSTORAGE_URI_PATH)
                                                         .path("storage_volume")
                                                         .path(storageVolume.getId().toString())
-                                                        .path("content")
+                                                        .path("data_content")
                                                         .path(dataNodeRelativePath.toString())
                                                         .build().toString());
                                                 newDataNode.setNodeInfoURL(UriBuilder.fromUri(baseURI)
                                                         .path(Constants.AGENTSTORAGE_URI_PATH)
                                                         .path("storage_volume")
                                                         .path(storageVolume.getId().toString())
-                                                        .path("info")
+                                                        .path("data_info")
                                                         .path(dataNodeRelativePath.toString())
                                                         .build().toString());
                                                 newDataNode.setNodeRelativePath(dataNodeRelativePath.toString());
@@ -359,7 +359,7 @@ public class StorageResourceHelper {
         URI newContentURI = UriBuilder.fromUri(baseURI)
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path(dataBundle.getId().toString())
-                .path("entry_content")
+                .path("data_content")
                 .path(dataEntryName)
                 .build();
         DataNodeInfo newDataNode = new DataNodeInfo();
@@ -370,7 +370,7 @@ public class StorageResourceHelper {
         newDataNode.setNodeInfoURL(UriBuilder.fromUri(baseURI)
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path(dataBundle.getId().toString())
-                .path("entry_info")
+                .path("data_info")
                 .path(dataEntryName)
                 .build().toString());
         newDataNode.setNodeRelativePath(dataEntryName);
@@ -396,7 +396,7 @@ public class StorageResourceHelper {
                             .path(Constants.AGENTSTORAGE_URI_PATH)
                             .path("storage_volume")
                             .path(storageVolume.getId().toString())
-                            .path("content")
+                            .path("data_content")
                             .path(dataNodeRelativePath.toString())
                             .build();
                     DataNodeInfo newDataNode = new DataNodeInfo();
@@ -407,7 +407,7 @@ public class StorageResourceHelper {
                             .path(Constants.AGENTSTORAGE_URI_PATH)
                             .path("storage_volume")
                             .path(storageVolume.getId().toString())
-                            .path("info")
+                            .path("data_info")
                             .path(dataNodeRelativePath.toString())
                             .build().toString());
                     newDataNode.setNodeRelativePath(dataNodeRelativePath.toString());

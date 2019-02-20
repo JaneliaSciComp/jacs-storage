@@ -142,7 +142,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
         InputStream response = target()
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path(testBundleId.toString())
-                .path("entry_content")
+                .path("data_content")
                 .path(testDataEntryName)
                 .queryParam("selectedEntries", "v1", "v2")
                 .request(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
@@ -191,7 +191,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
         InputStream response = target()
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path(testBundleId.toString())
-                .path("entry_content")
+                .path("data_content")
                 .queryParam("selectedEntries", "v1", "v2")
                 .request().get(InputStream.class);
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response));
@@ -240,7 +240,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
         Response response = target()
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path(testBundleId.toString())
-                .path("entry_contente1")
+                .path("data_contente1")
                 .queryParam("selectedEntries", "v1", "v2")
                 .request().get();
         assertNotEquals(200, response.getStatus());

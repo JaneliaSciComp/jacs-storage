@@ -210,7 +210,7 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @HEAD
-    @Path("{dataBundleId}/entry_content{dataEntryPath:(/.*)?}")
+    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     @Produces({MediaType.APPLICATION_JSON})
     public Response checkEntryContent(@PathParam("dataBundleId") Long dataBundleId,
                                       @PathParam("dataEntryPath") String dataEntryPathParam,
@@ -235,7 +235,7 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
-    @Path("{dataBundleId}/entry_content{dataEntryPath:(/.*)?}")
+    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     public Response getEntryContent(@PathParam("dataBundleId") Long dataBundleId,
                                     @PathParam("dataEntryPath") String dataEntryPathParam,
@@ -258,7 +258,7 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
-    @Path("{dataBundleId}/entry_info{dataEntryPath:/?.*}")
+    @Path("{dataBundleId}/data_info{dataEntryPath:/?.*}")
     @Produces({MediaType.APPLICATION_JSON})
     public Response getEntryContentInfo(@PathParam("dataBundleId") Long dataBundleId,
                                         @PathParam("dataEntryPath") String dataEntryPathParam) {

@@ -105,7 +105,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                     out.write(testData.getBytes());
                     return (long) testData.length();
                 });
-        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/content").path(StoragePathURI.createAbsolutePathURI(testPath).toString()).request().get();
+        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(StoragePathURI.createAbsolutePathURI(testPath).toString()).request().get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
     }
@@ -140,7 +140,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                     out.write(testData.getBytes());
                     return (long) testData.length();
                 });
-        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/content").path(testPath).request().get();
+        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(testPath).request().get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
     }
@@ -179,7 +179,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                     return (long) testData.length();
                 });
         for (String testPath : testPaths) {
-            Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/content").path(testPath).request().get();
+            Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(testPath).request().get();
             assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
             assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
         }

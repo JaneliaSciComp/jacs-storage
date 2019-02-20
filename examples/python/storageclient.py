@@ -101,7 +101,7 @@ def list_storage(storage_url, storage_id, storage_entry_name, token):
 
 
 def get_content_bytes(storage_url, storage_id, storage_entry_name, token):
-    response = requests.get(storage_url + '/agent_storage/' + storage_id + '/entry_content/' + storage_entry_name,
+    response = requests.get(storage_url + '/agent_storage/' + storage_id + '/data_content/' + storage_entry_name,
                             headers={
                                 'Authorization': 'Bearer ' + token
                             })

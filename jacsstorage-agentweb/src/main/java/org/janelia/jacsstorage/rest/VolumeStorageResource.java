@@ -53,7 +53,7 @@ public class VolumeStorageResource {
     private UriInfo resourceURI;
 
     @HEAD
-    @Path("storage_volume/{storageVolumeId}/content/{storageRelativePath:.+}")
+    @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     @ApiOperation(value = "Check if the specified file path identifies a valid data bundle entry content.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The content was found"),
@@ -61,9 +61,9 @@ public class VolumeStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response checkPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
-                                               @PathParam("storageRelativePath") String storageRelativeFilePath,
-                                               @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
+    public Response checkDataPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
+                                                   @PathParam("storageRelativePath") String storageRelativeFilePath,
+                                                   @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
         LOG.info("Check data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
@@ -83,16 +83,16 @@ public class VolumeStorageResource {
 
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
-    @Path("storage_volume/{storageVolumeId}/content/{storageRelativePath:.+}")
+    @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     @ApiOperation(value = "Stream the specified data file identified by the relative path to the volume mount point.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
             @ApiResponse(code = 404, message = "Invalid volume identifier or invalid file path"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response retrieveDataFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
-                                                  @PathParam("storageRelativePath") String storageRelativeFilePath,
-                                                  @Context UriInfo requestURI) {
+    public Response retrieveDataContentFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
+                                                         @PathParam("storageRelativePath") String storageRelativeFilePath,
+                                                         @Context UriInfo requestURI) {
         LOG.info("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
@@ -115,7 +115,7 @@ public class VolumeStorageResource {
 
     @Produces({MediaType.APPLICATION_JSON})
     @GET
-    @Path("storage_volume/{storageVolumeId}/info/{storageRelativePath:.+}")
+    @Path("storage_volume/{storageVolumeId}/data_info/{storageRelativePath:.+}")
     @ApiOperation(value = "Stream content info of specified data file identified by the relative path to the volume mount point.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The operation  was successfull"),
@@ -180,7 +180,7 @@ public class VolumeStorageResource {
                             dn.setStorageRootLocation(storageVolume.getStorageVirtualPath());
                             dn.setStorageRootPathURI(storageVolume.getStorageURI());
                             dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                                    .path(VolumeStorageResource.class, "retrieveDataFromStorageVolume")
+                                    .path(VolumeStorageResource.class, "retrieveDataContentFromStorageVolume")
                                     .build(storageVolume.getId(), dn.getNodeRelativePath())
                                     .toString()
                             );
