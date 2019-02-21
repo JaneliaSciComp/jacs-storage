@@ -36,7 +36,6 @@ public class JacsBundle extends AbstractEntity {
     private Date modified = new Date();
     private Map<String, Object> metadata = new LinkedHashMap<>();
     private Number storageVolumeId;
-    @JsonIgnore
     private String linkedPath;
 
     @JsonIgnore
@@ -66,8 +65,11 @@ public class JacsBundle extends AbstractEntity {
         this.path = path;
     }
 
-    @JsonIgnore
-    void setLinkedPath(String linkedPath) {
+    public String getLinkedPath() {
+        return linkedPath;
+    }
+
+    public void setLinkedPath(String linkedPath) {
         this.linkedPath = linkedPath;
     }
 
