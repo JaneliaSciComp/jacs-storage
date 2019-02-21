@@ -82,7 +82,7 @@ public class JacsBundle extends AbstractEntity {
     public Path getRealStoragePath() {
         String storageRootDir;
         if (isLinkedStorage()) {
-            storageRootDir = linkedPath;
+            return Paths.get(linkedPath);
         } else if (storageVolume != null) {
             storageRootDir = storageVolume.evalStorageRootDir(asStorageContext());
         } else {
