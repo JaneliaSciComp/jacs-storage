@@ -172,28 +172,24 @@ public class VolumeStorageResource {
                 .map(dataEntryPath -> {
                     JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
                     List<DataNodeInfo> contentInfoList = dataStorageService.listDataEntries(dataEntryPath, "", storageFormat, depth);
-                    if (CollectionUtils.isNotEmpty(contentInfoList)) {
-                        return Response.ok(ImmutableList.of()).build();
-                    } else {
-                        contentInfoList.forEach(dn -> {
-                            dn.setNumericStorageId(storageVolume.getId());
-                            dn.setStorageRootLocation(storageVolume.getStorageVirtualPath());
-                            dn.setStorageRootPathURI(storageVolume.getStorageURI());
-                            dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                                    .path(VolumeStorageResource.class, "retrieveDataContentFromStorageVolume")
-                                    .build(storageVolume.getId(), dn.getNodeRelativePath())
-                                    .toString()
-                            );
-                            dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
-                                    .path(VolumeStorageResource.class, "retrieveDataInfoFromStorageVolume")
-                                    .build(storageVolume.getId(), dn.getNodeRelativePath())
-                                    .toString()
-                            );
-                        });
-                        return Response
-                                .ok(contentInfoList, MediaType.APPLICATION_JSON)
-                                .build();
-                    }
+                    contentInfoList.forEach(dn -> {
+                        dn.setNumericStorageId(storageVolume.getId());
+                        dn.setStorageRootLocation(storageVolume.getStorageVirtualPath());
+                        dn.setStorageRootPathURI(storageVolume.getStorageURI());
+                        dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
+                                .path(VolumeStorageResource.class, "retrieveDataContentFromStorageVolume")
+                                .build(storageVolume.getId(), dn.getNodeRelativePath())
+                                .toString()
+                        );
+                        dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+                                .path(VolumeStorageResource.class, "retrieveDataInfoFromStorageVolume")
+                                .build(storageVolume.getId(), dn.getNodeRelativePath())
+                                .toString()
+                        );
+                    });
+                    return Response
+                            .ok(contentInfoList, MediaType.APPLICATION_JSON)
+                            .build();
                 })
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND).build())
