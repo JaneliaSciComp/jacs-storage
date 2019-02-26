@@ -2,10 +2,11 @@ package org.janelia.jacsstorage.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.janelia.jacsstorage.model.annotations.EntityId;
 
 public class AbstractEntity implements BaseEntity {
 
-    @JsonProperty("_id")
+    @EntityId
     private Number id;
 
     @Override
