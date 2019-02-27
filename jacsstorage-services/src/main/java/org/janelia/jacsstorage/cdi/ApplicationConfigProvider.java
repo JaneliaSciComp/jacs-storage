@@ -105,7 +105,7 @@ public class ApplicationConfigProvider {
                 .filter(entry -> entry.getKey().toLowerCase().startsWith(envPrefix))
                 .forEach(entry -> {
                     String newKey = entry.getKey().substring(envPrefix.length()).replaceAll("_", ".");
-                    LOG.debug(logmessage, newKey);
+                    LOG.debug(logmessage, newKey, entry.getValue());
                     applicationConfig.put(newKey, entry.getValue());
                 });
     }
