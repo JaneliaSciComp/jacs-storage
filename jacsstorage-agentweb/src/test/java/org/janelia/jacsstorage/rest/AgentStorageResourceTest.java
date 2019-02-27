@@ -6,6 +6,7 @@ import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
@@ -17,8 +18,10 @@ import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
 import org.janelia.jacsstorage.testrest.TestResourceBinder;
 import org.junit.Test;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -26,6 +29,7 @@ import java.nio.file.Paths;
 import java.util.Set;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -100,6 +104,38 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
     }
 
     @Test
+    public void putEntryContent() {
+        Long testBundleId = 1L;
+
+        StorageLookupService storageLookupService = dependenciesProducer.getStorageLookupService();
+        String testPath = "/volPrefix/testPath";
+        JacsStorageFormat testFormat = JacsStorageFormat.DATA_DIRECTORY;
+
+        JacsBundle testBundle = new JacsBundleBuilder()
+                .dataBundleId(testBundleId)
+                .storageRootPath(testPath)
+                .storageVirtualPath(testPath)
+                .path(testPath)
+                .storageFormat(testFormat)
+                .build();
+
+        when(storageLookupService.getDataBundleById(testBundleId))
+                .thenReturn(testBundle);
+
+        String testDataEntryName = "d_1/d_1_1/e_1_1_1";
+        String testDataContent = "Test data";
+        Response response = target()
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path(testBundleId.toString())
+                .path("data_content")
+                .path(testDataEntryName)
+                .request(MediaType.APPLICATION_JSON)
+                .put(Entity.entity(new ByteArrayInputStream(testDataContent.getBytes()), MediaType.APPLICATION_OCTET_STREAM));
+        assertEquals(201, response.getStatus());
+
+    }
+
+    @Test
     public void retrieveEntryContent() throws IOException {
         StorageLookupService storageLookupService = dependenciesProducer.getStorageLookupService();
         Long testBundleId = 1L;
@@ -112,13 +148,13 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                         .storageFormat(testFormat)
                         .build());
         DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
-        String testData = "Test data";
+        String testDataContent = "Test data";
         when(dataStorageService.estimateDataEntrySize(
                 eq(Paths.get(testPath)),
                 eq(testDataEntryName),
                 eq(testFormat),
                 any(ContentFilterParams.class)))
-                .then(invocation -> (long) testData.length());
+                .then(invocation -> (long) testDataContent.length());
         when(dataStorageService.readDataEntryStream(
                 eq(Paths.get(testPath)),
                 eq(testDataEntryName),
@@ -127,8 +163,8 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(4);
-                    out.write(testData.getBytes());
-                    return (long) testData.length();
+                    out.write(testDataContent.getBytes());
+                    return (long) testDataContent.length();
                 });
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
@@ -146,7 +182,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 .path(testDataEntryName)
                 .queryParam("selectedEntries", "v1", "v2")
                 .request(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
-        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response));
+        assertArrayEquals(testDataContent.getBytes(), ByteStreams.toByteArray(response));
     }
 
     @Test
@@ -161,13 +197,13 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                         .storageFormat(testFormat)
                         .build());
         DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
-        String testData = "Test data";
+        String testDataContent = "Test data";
         when(dataStorageService.estimateDataEntrySize(
                 eq(Paths.get(testPath)),
                 eq(""),
                 eq(testFormat),
                 any(ContentFilterParams.class)))
-                .then(invocation -> (long) testData.length());
+                .then(invocation -> (long) testDataContent.length());
         when(dataStorageService.readDataEntryStream(
                 eq(Paths.get(testPath)),
                 eq(""),
@@ -176,8 +212,8 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(4);
-                    out.write(testData.getBytes());
-                    return (long) testData.length();
+                    out.write(testDataContent.getBytes());
+                    return (long) testDataContent.length();
                 });
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
@@ -193,8 +229,8 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 .path(testBundleId.toString())
                 .path("data_content")
                 .queryParam("selectedEntries", "v1", "v2")
-                .request().get(InputStream.class);
-        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response));
+                .request(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
+        assertArrayEquals(testDataContent.getBytes(), ByteStreams.toByteArray(response));
     }
 
     @Test
@@ -209,13 +245,13 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                         .storageFormat(testFormat)
                         .build());
         DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
-        String testData = "Test data";
+        String testDataContent = "Test data";
         when(dataStorageService.estimateDataEntrySize(
                 eq(Paths.get(testPath)),
                 eq(""),
                 eq(testFormat),
                 any(ContentFilterParams.class)))
-                .then(invocation -> (long) testData.length());
+                .then(invocation -> (long) testDataContent.length());
 
         when(dataStorageService.readDataEntryStream(
                 eq(Paths.get(testPath)),
@@ -225,8 +261,8 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(4);
-                    out.write(testData.getBytes());
-                    return (long) testData.length();
+                    out.write(testDataContent.getBytes());
+                    return (long) testDataContent.length();
                 });
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
