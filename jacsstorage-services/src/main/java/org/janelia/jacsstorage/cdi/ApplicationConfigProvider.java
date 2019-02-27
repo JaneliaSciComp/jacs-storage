@@ -99,19 +99,19 @@ public class ApplicationConfigProvider {
         return this;
     }
 
-    private void injectEnvProps() {
+    private void injectEnvProps(String logmessage) {
         final String envPrefix = "env.jade_";
         applicationConfig.asMap().entrySet().stream()
                 .filter(entry -> entry.getKey().toLowerCase().startsWith(envPrefix))
                 .forEach(entry -> {
                     String newKey = entry.getKey().substring(envPrefix.length()).replaceAll("_", ".");
-                    LOG.debug("Overriding {} with value from env", newKey);
+                    LOG.debug(logmessage, newKey);
                     applicationConfig.put(newKey, entry.getValue());
                 });
     }
 
     public ApplicationConfig build() {
-        injectEnvProps();
+        injectEnvProps(LOG.isDebugEnabled() ? "Overriding {} with {} from env" : "Overriding {} with value from env");
         return applicationConfig;
     }
 
