@@ -80,7 +80,12 @@ public class PersistenceProducer {
             mongoClientSettingsBuilder.applyToClusterSettings(builder -> builder.hosts(clusterMembers));
         } else {
             // use connection URL
-            mongoClientSettingsBuilder.applyConnectionString(new ConnectionString(mongoConnectionURL));
+            if (StringUtils.isBlank(mongoConnectionURL)) {
+                LOG.error("Neither mongo server(s) nor the mongo URL have been specified");
+                throw new IllegalStateException("Neither mongo server(s) nor the mongo URL have been specified");
+            } else {
+                mongoClientSettingsBuilder.applyConnectionString(new ConnectionString(mongoConnectionURL));
+            }
         }
         if (StringUtils.isNotBlank(mongoReplicaSet)) {
             LOG.info("Use replica set: {}", mongoReplicaSet);
