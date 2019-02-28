@@ -10,13 +10,19 @@ import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
+import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
 import org.janelia.jacsstorage.service.StorageUsageManager;
+import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +37,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -54,6 +62,45 @@ public class MasterStorageQuotaResource {
 
     @Inject @RemoteInstance
     private StorageUsageManager storageUsageManager;
+    @Inject @RemoteInstance
+    private StorageVolumeManager storageVolumeManager;
+
+    @Produces({MediaType.APPLICATION_JSON})
+    @GET
+    @Path("quota_report")
+    @ApiOperation(value = "Retrieve a user's quota on all storage volumes.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The stream was successfull"),
+            @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
+    public Response retrieveSubjectQuotaForVolumeName(@QueryParam("subjectName") String subjectName,
+                                                      @Context SecurityContext securityContext) {
+        LOG.info("Retrieve all quota(s) for {}", subjectName);
+        StorageQuery storageQuery = new StorageQuery()
+                .setIncludeInactiveVolumes(false);
+        JacsCredentials userPrincipal = SecurityUtils.getUserPrincipal(securityContext);
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
+        if (StringUtils.isBlank(subjectName)) {
+            Map<String, List<UsageData>> usageDataMap = storageVolumes.stream()
+                    .map(sv -> ImmutablePair.of(
+                            sv.getName(),
+                            storageUsageManager.getUsageByVolumeName(sv.getName(), userPrincipal)))
+                    .collect(Collectors.toMap(vqp -> vqp.getLeft(), vqp -> vqp.getRight()));
+            return Response
+                    .ok(usageDataMap)
+                    .build();
+        } else {
+            Map<String, UsageData> usageDataMap = storageVolumes.stream()
+                    .map(sv -> ImmutablePair.of(
+                            sv.getName(),
+                            storageUsageManager.getUsageByVolumeNameForUser(sv.getName(), subjectName, userPrincipal)))
+                    .collect(Collectors.toMap(vqp -> vqp.getLeft(), vqp -> vqp.getRight()));
+            return Response
+                    .ok(usageDataMap)
+                    .build();
+        }
+    }
 
     @Produces({MediaType.APPLICATION_JSON})
     @GET
