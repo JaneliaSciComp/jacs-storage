@@ -4,6 +4,7 @@ import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
+import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.service.DataStorageService;
@@ -16,6 +17,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 public class DataStorageServiceImpl implements DataStorageService {
 
@@ -37,13 +39,22 @@ public class DataStorageServiceImpl implements DataStorageService {
     }
 
     @TimedMethod(
-            argList = {0, 1},
+            argList = {0, 1, 2},
             logResult = true
     )
     @Override
-    public long retrieveDataStream(Path dataPath, JacsStorageFormat dataStorageFormat, OutputStream dataStream) throws IOException {
+    public long retrieveDataStream(Path dataPath, JacsStorageFormat dataStorageFormat, ContentFilterParams filterParams, OutputStream dataStream) throws IOException {
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
-        return bundleReader.readBundle(dataPath.toString(), dataStream);
+        return bundleReader.readBundle(dataPath.toString(), filterParams, dataStream);
+    }
+
+    @TimedMethod(
+            logResult = true
+    )
+    @Override
+    public Map<String, Object> getDataEntryInfo(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat) {
+        BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
+        return bundleReader.getContentInfo(dataPath.toString(), entryName);
     }
 
     @TimedMethod(
@@ -75,13 +86,22 @@ public class DataStorageServiceImpl implements DataStorageService {
     }
 
     @TimedMethod(
-            argList = {0, 1, 2},
             logResult = true
     )
     @Override
-    public long readDataEntryStream(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, OutputStream outputStream) throws IOException {
+    public long estimateDataEntrySize(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, ContentFilterParams filterParams) {
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
-        return bundleReader.readDataEntry(dataPath.toString(), entryName, outputStream);
+        return bundleReader.estimateDataEntrySize(dataPath.toString(), entryName, filterParams);
+    }
+
+    @TimedMethod(
+            argList = {0, 1, 2, 3},
+            logResult = true
+    )
+    @Override
+    public long readDataEntryStream(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, ContentFilterParams filterParams, OutputStream outputStream) throws IOException {
+        BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
+        return bundleReader.readDataEntry(dataPath.toString(), entryName, filterParams, outputStream);
     }
 
     @Override

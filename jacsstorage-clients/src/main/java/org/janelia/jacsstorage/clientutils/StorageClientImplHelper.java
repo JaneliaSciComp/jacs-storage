@@ -271,7 +271,7 @@ public class StorageClientImplHelper {
             httpClient = createNewHttpClient();
             WebTarget target = httpClient.target(connectionURL)
                     .path(dataStreamEndpoint)
-                    .path("entry_content")
+                    .path("data_content")
                     .path(entryPath);
             LOG.debug("Stream data entry from {} as {}", target, authToken);
             Response response = createRequestWithCredentials(target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE),

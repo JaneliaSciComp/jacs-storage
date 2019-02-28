@@ -82,10 +82,14 @@ public class TimedInterceptor {
         boolean includeResult = false;
         IntStream argStream;
         if (timedMethodAnnotation != null) {
-            if (timedMethodAnnotation.argList().length > 0) {
-                argStream = Arrays.stream(timedMethodAnnotation.argList());
+            if (!timedMethodAnnotation.logArgs()) {
+                argStream = IntStream.empty();
             } else {
-                argStream = IntStream.range(0, parameters.length);
+                if (timedMethodAnnotation.argList().length > 0) {
+                    argStream = Arrays.stream(timedMethodAnnotation.argList());
+                } else {
+                    argStream = IntStream.range(0, parameters.length);
+                }
             }
             if (timedMethodAnnotation.logResult()) {
                 includeResult = true;

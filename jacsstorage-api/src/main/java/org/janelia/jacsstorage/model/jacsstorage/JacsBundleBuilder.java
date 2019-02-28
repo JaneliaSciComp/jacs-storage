@@ -52,6 +52,11 @@ public class JacsBundleBuilder {
         return this;
     }
 
+    public JacsBundleBuilder storageRootPath(String v) {
+        jacsBundle.setLinkedPath(v);
+        return this;
+    }
+
     public JacsBundleBuilder storageTags(String tags) {
         if (StringUtils.isNotBlank(tags)) {
             return addStorageTags(Arrays.asList(tags.split(",")));

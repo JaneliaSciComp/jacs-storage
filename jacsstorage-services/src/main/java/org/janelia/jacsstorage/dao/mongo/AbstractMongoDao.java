@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -280,4 +281,46 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
             return Updates.set(fieldName, valueHandler.getFieldValue());
         }
     }
+
+    Bson createCondExpr(Object cond, Object thenValue, Object elseValue) {
+        return new Document("$cond",
+                Arrays.asList(
+                        cond,
+                        thenValue,
+                        elseValue
+                ));
+    }
+
+    Bson createConcatExpr(Object... svalues) {
+        return new Document("$concat", Arrays.asList(svalues));
+    }
+
+    Bson createEqExpr(Object arg1, Object arg2) {
+        return new Document("$eq", Arrays.asList(arg1, arg2));
+    }
+
+    Bson createIndexOfExpr(Object expr, Object subExpr) {
+        return new Document("$indexOfBytes", Arrays.asList(expr, subExpr));
+    }
+
+    Bson createStartsWithExpr(Object expr, Object subExpr) {
+        return createEqExpr(createIndexOfExpr(expr, subExpr), 0);
+    }
+
+    Bson createSubstrExpr(Object strExpr, Object startIndexExpr, Object countExpr) {
+        return new Document("$substrBytes", Arrays.asList(strExpr, startIndexExpr, countExpr));
+    }
+
+    Bson createToLowerExpr(Object expr) {
+        return new Document("$toLower", expr);
+    }
+
+    Bson ifNullExp(Object expr, Object nullDefault) {
+        return new Document("$ifNull", Arrays.asList(expr, nullDefault));
+    }
+
+    Bson literalExp(Object exp) {
+        return new Document("$literal", exp);
+    }
+
 }

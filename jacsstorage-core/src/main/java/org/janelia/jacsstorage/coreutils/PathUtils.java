@@ -23,6 +23,14 @@ public class PathUtils {
     private static class FileSizeVisitor extends SimpleFileVisitor<Path> {
         private long totalSize = 0L;
 
+        private final int depth;
+        private int currentDepth;
+
+        FileSizeVisitor(int depth) {
+            this.depth = depth >= 0 ? depth : Integer.MAX_VALUE;
+            this.currentDepth = 0;
+        }
+
         @Override
         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
             totalSize += Files.size(dir); // add the size for the directory (inode) entry
@@ -33,6 +41,15 @@ public class PathUtils {
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
             totalSize += Files.size(file);
             return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            if (++currentDepth > depth) {
+                return FileVisitResult.TERMINATE;
+            } else {
+                return FileVisitResult.CONTINUE;
+            }
         }
     }
 
@@ -87,13 +104,13 @@ public class PathUtils {
         }
     }
 
-    public static long getSize(String fn) {
-        return getSize(Paths.get(fn));
+    public static long getSize(String fn, int depth) {
+        return getSize(Paths.get(fn), depth);
     }
 
-    public static long getSize(Path fp) {
-        Preconditions.checkArgument(Files.exists(fp), "No path found for " + fp);
-        FileSizeVisitor pathVisitor = new FileSizeVisitor();
+    public static long getSize(Path fp, int depth) {
+        if (Files.notExists(fp)) return 0L;
+        FileSizeVisitor pathVisitor = new FileSizeVisitor(depth);
         try {
             Files.walkFileTree(fp, pathVisitor);
         } catch (IOException e) {
@@ -102,10 +119,10 @@ public class PathUtils {
         return pathVisitor.totalSize;
     }
 
-    public static long getSize(Path fp, BiPredicate<Path, BasicFileAttributes> matcher) {
+    public static long getSize(Path fp, int depth, BiPredicate<Path, BasicFileAttributes> matcher) {
         Preconditions.checkArgument(Files.exists(fp), "No path found for " + fp);
         try {
-            return Files.find(fp, Integer.MAX_VALUE, matcher)
+            return Files.find(fp, depth, matcher)
                     .map(p -> {
                         try {
                             return Files.size(p);

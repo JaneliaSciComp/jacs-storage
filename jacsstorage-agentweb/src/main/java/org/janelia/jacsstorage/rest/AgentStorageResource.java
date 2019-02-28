@@ -129,13 +129,15 @@ public class AgentStorageResource {
     @Path("{dataBundleId}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     public Response retrieveStream(@PathParam("dataBundleId") Long dataBundleId,
-                                   @Context SecurityContext securityContext) {
+                                   @Context UriInfo requestURI) {
         LOG.info("Retrieve the entire stored bundle {}", dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StreamingOutput bundleStream = output -> {
             try {
-                dataStorageService.retrieveDataStream(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(), output);
+                dataStorageService.retrieveDataStream(dataBundle.getRealStoragePath(), dataBundle.getStorageFormat(),
+                        ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters()),
+                        output);
             } catch (Exception e) {
                 throw new WebApplicationException(e);
             }
@@ -183,9 +185,13 @@ public class AgentStorageResource {
                 dn.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
                 dn.setStorageRootPathURI(dataBundle.getStorageURI());
                 dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                        .path(AgentStorageResource.class)
                         .path(AgentStorageResource.class, "getEntryContent")
-                        .build(dataBundle.getId(), dn.getNodeRelativePath())
+                        .build(dataBundle.getId(), "/" + dn.getNodeRelativePath())
+                        .toString()
+                );
+                dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+                        .path(AgentStorageResource.class, "getEntryContentInfo")
+                        .build(dataBundle.getId(), "/" + dn.getNodeRelativePath())
                         .toString()
                 );
             });
@@ -204,16 +210,17 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @HEAD
-    @Path("{dataBundleId}/entry_content/{dataEntryPath:.*}")
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
+    @Produces({MediaType.APPLICATION_JSON})
     public Response checkEntryContent(@PathParam("dataBundleId") Long dataBundleId,
-                                      @PathParam("dataEntryPath") String dataEntryPath,
+                                      @PathParam("dataEntryPath") String dataEntryPathParam,
                                       @QueryParam("directoryOnly") Boolean directoryOnlyParam,
                                       @Context SecurityContext securityContext) {
-        LOG.info("Get entry {} content from bundle {} ", dataEntryPath, dataBundleId);
+        LOG.info("Get entry {} content from bundle {} ", dataEntryPathParam, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        String dataEntryPath = StringUtils.removeStart(dataEntryPathParam, "/");
         return storageResourceHelper.checkContentFromDataBundle(dataBundle, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam).build();
     }
 
@@ -228,16 +235,60 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
-    @Path("{dataBundleId}/entry_content/{dataEntryPath:.*}")
+    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     public Response getEntryContent(@PathParam("dataBundleId") Long dataBundleId,
-                                    @PathParam("dataEntryPath") String dataEntryPath,
-                                    @Context SecurityContext securityContext) {
-        LOG.info("Get entry {} content from bundle {} ", dataEntryPath, dataBundleId);
+                                    @PathParam("dataEntryPath") String dataEntryPathParam,
+                                    @Context UriInfo requestURI) {
+        LOG.info("Get entry {} content from bundle {} ", dataEntryPathParam, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-        return storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath).build();
+        String dataEntryPath = StringUtils.removeStart(dataEntryPathParam, "/");
+        return storageResourceHelper.retrieveContentFromDataBundle(dataBundle, ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters()), dataEntryPath).build();
+    }
+
+    @ApiOperation(
+            value = "Retrieve the metadata of the specified data bundle entry.",
+            notes = "Retrieve the specified entry's metadata."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully read the data bundle entry's metadata."),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
+    @GET
+    @Path("{dataBundleId}/data_info{dataEntryPath:/?.*}")
+    @Produces({MediaType.APPLICATION_JSON})
+    public Response getEntryContentInfo(@PathParam("dataBundleId") Long dataBundleId,
+                                        @PathParam("dataEntryPath") String dataEntryPathParam) {
+        LOG.info("Get entry {} content from bundle {} ", dataEntryPathParam, dataBundleId);
+        JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
+        Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        String dataEntryPath = StringUtils.removeStart(dataEntryPathParam, "/");
+        return storageResourceHelper.retrieveContentInfoFromDataBundle(dataBundle, dataEntryPath).build();
+    }
+
+    @Deprecated
+    @ApiOperation(value = "Deprecated endpoint to create a new folder in the specified data bundle. Use {dataBundleId}/data_content_folder/{dataEntryPath:.+} instead")
+    @ApiResponses(value = {
+            @ApiResponse(code = 201, message = "The new folder was created successfully. Return the URL of the corresponding entry in the location header attribute.", response =  DataNodeInfo.class),
+            @ApiResponse(code = 202, message = "The folder already exists. Return the URL of the corresponding entry in the location header attribute.", response = DataNodeInfo.class),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
+    })
+    @LogStorageEvent(
+            eventName = "CREATE_STORAGE_FOLDER",
+            argList = {0, 1}
+    )
+    @PUT
+    @Path("{dataBundleId}/directory/{dataEntryPath:.+}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response putDirectory(@PathParam("dataBundleId") Long dataBundleId,
+                                 @PathParam("dataEntryPath") String dataEntryPath,
+                                 @Context SecurityContext securityContext) {
+        return createDataContentFolder(dataBundleId, dataEntryPath, securityContext);
     }
 
     @ApiOperation(value = "Create a new folder in the specified data bundle.")
@@ -252,12 +303,12 @@ public class AgentStorageResource {
             argList = {0, 1}
     )
     @POST
-    @Path("{dataBundleId}/directory/{dataEntryPath:.*}")
+    @Path("{dataBundleId}/data_content_folder/{dataEntryPath:.+}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response postCreateDirectory(@PathParam("dataBundleId") Long dataBundleId,
-                                        @PathParam("dataEntryPath") String dataEntryPath,
-                                        @Context SecurityContext securityContext) {
-        return createDirectory(dataBundleId, dataEntryPath, securityContext);
+    public Response postCreateDataContentFolder(@PathParam("dataBundleId") Long dataBundleId,
+                                                @PathParam("dataEntryPath") String dataEntryPath,
+                                                @Context SecurityContext securityContext) {
+        return createDataContentFolder(dataBundleId, dataEntryPath, securityContext);
     }
 
     @ApiOperation(value = "Create a new folder in the specified data bundle.")
@@ -272,25 +323,24 @@ public class AgentStorageResource {
             argList = {0, 1, 2}
     )
     @PUT
-    @Path("{dataBundleId}/directory/{dataEntryPath:.*}")
+    @Path("{dataBundleId}/data_content_folder/{dataEntryPath:.+}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response putCreateDirectory(@PathParam("dataBundleId") Long dataBundleId,
-                                       @PathParam("dataEntryPath") String dataEntryPath,
-                                       @Context SecurityContext securityContext) {
-        return createDirectory(dataBundleId, dataEntryPath, securityContext);
+    public Response putCreateDataContentFolder(@PathParam("dataBundleId") Long dataBundleId,
+                                               @PathParam("dataEntryPath") String dataEntryPath,
+                                               @Context SecurityContext securityContext) {
+        return createDataContentFolder(dataBundleId, dataEntryPath, securityContext);
     }
 
-    private Response createDirectory(Long dataBundleId,
-                                    String dataEntryPath,
-                                    SecurityContext securityContext) {
+    private Response createDataContentFolder(Long dataBundleId,
+                                             String dataEntryPath,
+                                             SecurityContext securityContext) {
         LOG.info("Create new directory {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
-                .path(AgentStorageResource.class)
                 .path(AgentStorageResource.class, "getEntryContent")
-                .build(dataBundleId, dataEntryPath);
+                .build(dataBundleId, "/" + dataEntryPath);
         if (CollectionUtils.isNotEmpty(existingEntries)) {
             // if an entry already exists return ACCEPTED(202) instead of CREATED (201)
             return Response
@@ -312,12 +362,41 @@ public class AgentStorageResource {
         newDataNode.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
         newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
+        newDataNode.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+                .path(AgentStorageResource.class, "getEntryContentInfo")
+                .build(dataBundle.getId(), "/" + dataEntryPath)
+                .toString()
+        );
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(true);
         return Response
                 .created(dataNodeAccessURI)
                 .entity(newDataNode)
                 .build();
+    }
+
+    @Deprecated
+    @ApiOperation(value = "Deprecated endpoint to create a new content entry in the specified data bundle. Use {dataBundleId}/data_content/{dataEntryPath:.+} instead")
+    @ApiResponses(value = {
+            @ApiResponse(code = 201, message = "The new content was created successfully. Return the URL of the corresponding entry in the location header attribute."),
+            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
+            @ApiResponse(code = 409, message = "A file with this name already exists"),
+            @ApiResponse(code = 500, message = "Data write error")
+    })
+    @LogStorageEvent(
+            eventName = "CREATE_STORAGE_FILE",
+            argList = {0, 1, 2}
+    )
+    @TimedMethod(argList = {0, 1, 2})
+    @PUT
+    @Path("{dataBundleId}/file/{dataEntryPath:.+}")
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response putFile(@PathParam("dataBundleId") Long dataBundleId,
+                            @PathParam("dataEntryPath") String dataEntryPath,
+                            @Context SecurityContext securityContext,
+                            InputStream contentStream) {
+        return createDataContent(dataBundleId, dataEntryPath, securityContext, contentStream);
     }
 
     @ApiOperation(value = "Create a new content entry in the specified data bundle.")
@@ -333,14 +412,14 @@ public class AgentStorageResource {
     )
     @TimedMethod(argList = {0, 1, 2})
     @POST
-    @Path("{dataBundleId}/file/{dataEntryPath:.*}")
+    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response postCreateFile(@PathParam("dataBundleId") Long dataBundleId,
-                                   @PathParam("dataEntryPath") String dataEntryPath,
-                                   @Context SecurityContext securityContext,
-                                   InputStream contentStream) {
-        return createFile(dataBundleId, dataEntryPath, securityContext, contentStream);
+    public Response postDataContent(@PathParam("dataBundleId") Long dataBundleId,
+                                    @PathParam("dataEntryPath") String dataEntryPath,
+                                    @Context SecurityContext securityContext,
+                                    InputStream contentStream) {
+        return createDataContent(dataBundleId, dataEntryPath, securityContext, contentStream);
     }
 
     @ApiOperation(value = "Create a new content entry in the specified data bundle.")
@@ -356,29 +435,28 @@ public class AgentStorageResource {
     )
     @TimedMethod(argList = {0, 1, 2})
     @PUT
-    @Path("{dataBundleId}/file/{dataEntryPath:.*}")
+    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response putCreateFile(@PathParam("dataBundleId") Long dataBundleId,
-                                  @PathParam("dataEntryPath") String dataEntryPath,
-                                  @Context SecurityContext securityContext,
-                                  InputStream contentStream) {
-        return createFile(dataBundleId, dataEntryPath, securityContext, contentStream);
+    public Response putDataContent(@PathParam("dataBundleId") Long dataBundleId,
+                                   @PathParam("dataEntryPath") String dataEntryPath,
+                                   @Context SecurityContext securityContext,
+                                   InputStream contentStream) {
+        return createDataContent(dataBundleId, dataEntryPath, securityContext, contentStream);
     }
 
-    @TimedMethod(argList = {0, 1, 2})
-    private Response createFile(Long dataBundleId,
-                                String dataEntryPath,
-                                SecurityContext securityContext,
-                                InputStream contentStream) {
-        LOG.info("Create new file {} under {} ", dataEntryPath, dataBundleId);
+    private Response createDataContent(Long dataBundleId,
+                                       String dataEntryPathParam,
+                                       SecurityContext securityContext,
+                                       InputStream contentStream) {
+        LOG.info("Create new file {} under {} ", dataEntryPathParam, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
+        String dataEntryPath = StringUtils.removeStart(dataEntryPathParam, "/");
         List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
-                .path(AgentStorageResource.class)
                 .path(AgentStorageResource.class, "getEntryContent")
-                .build(dataBundleId, dataEntryPath)
+                .build(dataBundleId, "/" + dataEntryPath)
                 ;
         if (CollectionUtils.isNotEmpty(existingEntries)) {
             return Response
@@ -400,6 +478,11 @@ public class AgentStorageResource {
         newDataNode.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
         newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
+        newDataNode.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+                .path(AgentStorageResource.class, "getEntryContentInfo")
+                .build(dataBundle.getId(), "/" + dataEntryPath)
+                .toString()
+        );
         newDataNode.setNodeRelativePath(dataEntryPath);
         newDataNode.setCollectionFlag(false);
         return Response

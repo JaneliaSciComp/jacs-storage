@@ -39,6 +39,7 @@ public class RandomLocalStorageVolumeSelector implements StorageVolumeSelector {
                     storageQuery.setStorageName(sv.getName());
                     storageQuery.setStorageVirtualPath(sv.getStorageVirtualPath());
                     storageQuery.setStorageTags(sv.getStorageTags());
+                    storageQuery.setAccessibleOnHost(sv.getStorageHost());
                 });
         if (storageRequest.hasUsedSpaceSet()) {
             storageQuery.setMinAvailableSpaceInBytes(storageRequest.getUsedSpaceInBytes());

@@ -19,6 +19,8 @@ public @interface TimedMethod {
      */
     @Nonbinding int[] argList() default {};
 
+    @Nonbinding boolean logArgs() default true;
+
     @Nonbinding boolean logResult() default false;
 
     @Nonbinding String logLevel() default "debug";

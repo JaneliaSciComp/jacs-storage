@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.io;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -8,11 +9,14 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.coreutils.FileUtils;
+import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -25,9 +29,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class TarArchiveBundleReader extends AbstractBundleReader {
+
+    private final static Logger LOG = LoggerFactory.getLogger(TarArchiveBundleReader.class);
+
+    @Inject
+    TarArchiveBundleReader(ContentHandlerProvider contentHandlerProvider) {
+        super(contentHandlerProvider);
+    }
 
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
@@ -35,17 +47,34 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     }
 
     @TimedMethod(
-            argList = {0},
             logResult = true
     )
     @Override
-    public long readBundle(String source, OutputStream stream) {
+    public Map<String, Object> getContentInfo(String source, String entryName) {
         Path sourcePath = getSourcePath(source);
         checkSourcePath(sourcePath);
+        TarArchiveInputStream inputStream = openSourceAsArchiveStream(sourcePath);
         try {
-            return FileUtils.copyFrom(sourcePath, stream);
+            String normalizedEntryName = normalizeEntryName(entryName);
+            for (TarArchiveEntry sourceEntry = inputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = inputStream.getNextTarEntry()) {
+                String currentEntryName = normalizeEntryName(sourceEntry.getName());
+                if (currentEntryName.equals(normalizedEntryName)) {
+                    if (sourceEntry.isDirectory()) {
+                        return ImmutableMap.of("collectionFlag", true);
+                    } else {
+                        ContentInfoExtractor contentInfoExtractor = contentHandlerProvider.getContentInfoExtractor(getMimeType(currentEntryName));
+                        return contentInfoExtractor.extractContentInfo(ByteStreams.limit(inputStream, sourceEntry.getSize()));
+                    }
+                }
+            }
+            return ImmutableMap.of();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        } finally {
+            try {
+                inputStream.close();
+            } catch (IOException ignore) {
+            }
         }
     }
 
@@ -103,60 +132,73 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
     }
 
     @TimedMethod(
-            argList = {0, 1},
             logResult = true
     )
     @Override
-    public long readDataEntry(String source, String entryName, OutputStream outputStream) throws IOException {
+    public long estimateDataEntrySize(String source, String entryName, ContentFilterParams filterParams) {
         Path sourcePath = getSourcePath(source);
         checkSourcePath(sourcePath);
-        if (StringUtils.isBlank(entryName)) {
-            return readBundle(source, outputStream);
-        }
-        TarArchiveOutputStream tarOutputStream = null;
-        long nbytes = 0L;
-        TarArchiveInputStream inputStream = new TarArchiveInputStream(new BufferedInputStream(new FileInputStream(sourcePath.toFile())));
-        try {
+        long size = 0L;
+        try (TarArchiveInputStream inputStream = openSourceAsArchiveStream(sourcePath)) {
             String normalizedEntryName = normalizeEntryName(entryName);
             for (TarArchiveEntry sourceEntry = inputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = inputStream.getNextTarEntry()) {
                 String currentEntryName = normalizeEntryName(sourceEntry.getName());
                 if (currentEntryName.equals(normalizedEntryName)) {
-                    if (sourceEntry.isDirectory()) {
-                        tarOutputStream = new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE);
-                    } else {
-                        return ByteStreams.copy(ByteStreams.limit(inputStream, sourceEntry.getSize()), outputStream);
+                    if (!sourceEntry.isDirectory()) {
+                        // if the entry is not a directory just stream it right away
+                        if (filterParams.matchEntry(entryName)) {
+                            return sourceEntry.getSize();
+                        } else {
+                            return 0;
+                        }
                     }
                 }
-                if (currentEntryName.startsWith(normalizedEntryName)) {
-                    String relativeEntryName = StringUtils.removeStart(currentEntryName, normalizedEntryName);
-                    String newEntryName = StringUtils.prependIfMissing(
-                            StringUtils.prependIfMissing(relativeEntryName, "/"),
-                            ".");
-                    if (sourceEntry.isDirectory()) {
-                        newEntryName = StringUtils.appendIfMissing(newEntryName, "/");
-                    }
-                    TarArchiveEntry entry = new TarArchiveEntry(newEntryName, false);
-                    entry.setSize(sourceEntry.getSize());
-                    entry.setModTime(sourceEntry.getModTime());
-                    entry.setMode(sourceEntry.getMode());
-                    tarOutputStream.putArchiveEntry(entry);
-                    if (sourceEntry.isFile()) {
-                        nbytes += ByteStreams.copy(ByteStreams.limit(inputStream, sourceEntry.getSize()), tarOutputStream);
-                    }
-                    tarOutputStream.closeArchiveEntry();
+                if (currentEntryName.startsWith(normalizedEntryName) && !sourceEntry.isDirectory() && filterParams.matchEntry(currentEntryName)) {
+                    size += sourceEntry.getSize();
                 }
             }
-            if (tarOutputStream == null)
+            return size;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+    }
+
+    @TimedMethod(
+            argList = {0, 1, 2},
+            logResult = true
+    )
+    @Override
+    public long readDataEntry(String source, String entryName, ContentFilterParams filterParams, OutputStream outputStream) {
+        Path sourcePath = getSourcePath(source);
+        checkSourcePath(sourcePath);
+        try (TarArchiveInputStream inputStream = openSourceAsArchiveStream(sourcePath)) {
+            ContentConverter contentConverter = contentHandlerProvider.getContentConverter(filterParams);
+            String normalizedEntryName = normalizeEntryName(entryName);
+            ArchiveEntryListDataContent archiveEntryListDataContent = new ArchiveEntryListDataContent(filterParams, normalizedEntryName);
+            for (TarArchiveEntry sourceEntry = inputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = inputStream.getNextTarEntry()) {
+                String currentEntryName = normalizeEntryName(sourceEntry.getName());
+                if (currentEntryName.equals(normalizedEntryName)) {
+                    if (!sourceEntry.isDirectory()) {
+                        // if the entry is not a directory just stream it right away
+                        if (filterParams.matchEntry(entryName)) {
+                            return contentConverter.convertContent(new SingleArchiveEntryDataContent(filterParams, currentEntryName, sourceEntry.getSize(), ByteStreams.limit(inputStream, sourceEntry.getSize())), outputStream);
+                        } else {
+                            return 0;
+                        }
+                    }
+                }
+                if (currentEntryName.startsWith(normalizedEntryName) && (sourceEntry.isDirectory() || filterParams.matchEntry(currentEntryName))) {
+                    archiveEntryListDataContent.addArchiveEntry(currentEntryName, sourceEntry.isDirectory(), sourceEntry.isDirectory() ? 0L : sourceEntry.getSize(), inputStream);
+                }
+            }
+            if (archiveEntryListDataContent.getEntriesCount() == 0) {
                 throw new IllegalArgumentException("No entry " + normalizedEntryName + " found under " + source);
-            else {
-                tarOutputStream.finish();
-                return nbytes;
+            } else {
+                return contentConverter.convertContent(archiveEntryListDataContent, outputStream);
             }
-        } finally {
-            try {
-                inputStream.close();
-            } catch (IOException ignore) {
-            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -169,6 +211,15 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
             throw new IllegalArgumentException("No file found for " + sourcePath);
         } else if (!Files.isRegularFile(sourcePath)) {
             throw new IllegalArgumentException("Path " + sourcePath + " expected to be a file");
+        }
+    }
+
+    private TarArchiveInputStream openSourceAsArchiveStream(Path sourcePath) {
+        try {
+            return new TarArchiveInputStream(new BufferedInputStream(new FileInputStream(sourcePath.toFile())));
+        } catch (IOException e) {
+            LOG.error("Error opening tar archive {}", sourcePath, e);
+            throw new IllegalArgumentException(e);
         }
     }
 

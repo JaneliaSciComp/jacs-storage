@@ -29,6 +29,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
 @Timed
@@ -61,6 +62,7 @@ public class ContentStorageResource {
     })
     public Response redirectForContentCheck(@PathParam("filePath") String filePathParam,
                                             @QueryParam("directoryOnly") Boolean directoryOnlyParam,
+                                            @Context UriInfo requestURI,
                                             @Context SecurityContext securityContext) {
         LOG.info("Check {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
@@ -71,9 +73,9 @@ public class ContentStorageResource {
                                 .temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
                                         .path("agent_storage")
                                         .path(dataBundle.getId().toString())
-                                        .path("entry_content")
+                                        .path("data_content")
                                         .path(dataEntryPath)
-                                        .queryParam("directoryOnly", directoryOnlyParam != null && directoryOnlyParam ? true : false)
+                                        .replaceQuery(requestURI.getRequestUri().getRawQuery())
                                         .build())
                         )
                         .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST)
@@ -85,8 +87,9 @@ public class ContentStorageResource {
                                         .path("agent_storage")
                                         .path("storage_volume")
                                         .path(storageVolume.getId().toString())
+                                        .path("data_content")
                                         .path(dataEntryPath.getPath())
-                                        .queryParam("directoryOnly", directoryOnlyParam != null && directoryOnlyParam ? true : false)
+                                        .replaceQuery(requestURI.getRequestUri().getRawQuery())
                                         .build())
                                 ;
                     } else {
@@ -114,7 +117,9 @@ public class ContentStorageResource {
             @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
     })
-    public Response redirectForContent(@PathParam("filePath") String filePathParam, @Context SecurityContext securityContext) {
+    public Response redirectForContent(@PathParam("filePath") String filePathParam,
+                                       @Context UriInfo requestURI,
+                                       @Context SecurityContext securityContext) {
         LOG.info("Redirecting to agent for getting content of {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
@@ -124,8 +129,9 @@ public class ContentStorageResource {
                                         .temporaryRedirect(UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
                                                 .path("agent_storage")
                                                 .path(dataBundle.getId().toString())
-                                                .path("entry_content")
+                                                .path("data_content")
                                                 .path(dataEntryPath)
+                                                .replaceQuery(requestURI.getRequestUri().getRawQuery())
                                                 .build())
                             )
                             .orElseGet(() -> Response
@@ -139,7 +145,9 @@ public class ContentStorageResource {
                                         .path("agent_storage")
                                         .path("storage_volume")
                                         .path(storageVolume.getId().toString())
+                                        .path("data_content")
                                         .path(dataEntryPath.getPath())
+                                        .replaceQuery(requestURI.getRequestUri().getRawQuery())
                                         .build())
                                 ;
                     } else {

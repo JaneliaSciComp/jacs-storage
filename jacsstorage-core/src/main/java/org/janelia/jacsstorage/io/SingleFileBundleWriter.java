@@ -77,7 +77,7 @@ public class SingleFileBundleWriter implements BundleWriter {
             LOG.info("No file path found for {}, ({}) to be deleted", dataPath, fullEntryPath);
             return 0L;
         }
-        long entrySize = PathUtils.getSize(fullEntryPath);
+        long entrySize = PathUtils.getSize(fullEntryPath, -1);
         try {
             PathUtils.deletePath(fullEntryPath);
             LOG.info("Deleted {} ({})", dataPath, fullEntryPath);

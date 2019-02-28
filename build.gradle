@@ -2,7 +2,7 @@ allprojects {
     apply plugin: 'java-library'
     apply plugin: 'idea'
     group = 'org.janelia.jacsstorage'
-    version = '1.7.3.RELEASE'
+    version = '1.7.4.SNAPSHOT'
 }
 
 subprojects {
@@ -48,6 +48,9 @@ subprojects {
         repositories {
             mavenLocal()
             mavenCentral()
+            maven {
+                url "https://raw.githubusercontent.com/JaneliaSciComp/mvn-repo/master/repository/"
+            }
         }
 
         compileJava {
@@ -115,13 +118,10 @@ subprojects {
     artifacts {
         perf perfJar
     }
-
-    check.dependsOn integrationTest
-    integrationTest.mustRunAfter test
 }
 
 task updateWrapper(type: Wrapper) {
-    gradleVersion = "5.0"
+    gradleVersion = "5.1.1"
 }
 
 def filteringProperties(otherProperties) {

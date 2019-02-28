@@ -255,7 +255,7 @@ class StorageClientUtils {
             httpClient = createHttpClient();
             WebTarget target = httpClient.target(storageURL)
                     .path(dataStreamEndpoint)
-                    .path("entry_content")
+                    .path("data_content")
                     .path(entryPath);
             Response response = target.request(MediaType.APPLICATION_OCTET_STREAM_TYPE)
                     .header("Authorization", "Bearer " + authToken)

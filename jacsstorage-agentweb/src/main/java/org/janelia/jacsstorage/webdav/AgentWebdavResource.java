@@ -96,9 +96,13 @@ public class AgentWebdavResource {
                     nodeInfo.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
                     nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
                     nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                            .path(AgentStorageResource.class)
                             .path(AgentStorageResource.class, "getEntryContent")
-                            .build(dataBundle.getId(), nodeInfoRelPath)
+                            .build(dataBundle.getId(), "/" + nodeInfoRelPath)
+                            .toString()
+                    );
+                    nodeInfo.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+                            .path(AgentStorageResource.class, "getEntryContentInfo")
+                            .build(dataBundle.getId(), "/" + nodeInfoRelPath)
                             .toString()
                     );
                     return nodeInfo;
@@ -152,9 +156,13 @@ public class AgentWebdavResource {
                                 nodeInfo.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
                                 nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
                                 nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                                        .path(AgentStorageResource.class)
                                         .path(AgentStorageResource.class, "getEntryContent")
-                                        .build(dataBundle.getId(), nodeInfoRelPath)
+                                        .build(dataBundle.getId(), "/" + nodeInfoRelPath)
+                                        .toString()
+                                );
+                                nodeInfo.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+                                        .path(AgentStorageResource.class, "getEntryContentInfo")
+                                        .build(dataBundle.getId(), "/" + nodeInfoRelPath)
                                         .toString()
                                 );
                                 return nodeInfo;

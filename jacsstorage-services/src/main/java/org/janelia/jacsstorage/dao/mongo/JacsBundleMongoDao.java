@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
@@ -70,13 +71,13 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
 
     @Override
     public long countMatchingDataBundles(JacsBundle pattern) {
-        return countAggregate(getAggregationOps(pattern));
+        return countAggregate(createMatchingPipeline(pattern));
     }
 
     @Override
     public PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest) {
         List<JacsBundle> results = aggregateAsList(
-                getAggregationOps(pattern),
+                createMatchingPipeline(pattern),
                 createBsonSortCriteria(pageRequest.getSortCriteria()),
                 (int) pageRequest.getOffset(),
                 pageRequest.getPageSize(),
@@ -93,6 +94,7 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
         if (StringUtils.isNotBlank(pattern.getOwnerKey())) {
             filtersBuilder.add(Filters.or(
                     Filters.eq("ownerKey", pattern.getOwnerKey()),
+                    Filters.all("readersKeys", "*"), // everybody can read it
                     Filters.all("readersKeys", pattern.getOwnerKey())
             ));
         }
@@ -111,43 +113,95 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
         return bsonFilter;
     }
 
-    private List<Bson> getAggregationOps(JacsBundle pattern) {
-        ImmutableList.Builder<Bson> bundleAggregationOpsBuilder = ImmutableList.builder();
+    private List<Bson> createMatchingPipeline(JacsBundle pattern) {
+        ImmutableList.Builder<Bson> pipelineBuilder = ImmutableList.builder();
+
         Bson matchFilter = getBsonFilter(pattern);
         if (matchFilter != null) {
-            bundleAggregationOpsBuilder.add(Aggregates.match(matchFilter));
+            pipelineBuilder.add(Aggregates.match(matchFilter));
         }
-        pattern.getStorageVolume().ifPresent(sv -> {
-            bundleAggregationOpsBuilder.add(Aggregates.lookup(
-                    EntityUtils.getPersistenceInfo(JacsStorageVolume.class).storeName(),
-                    "storageVolumeId",
-                    "_id",
-                    "referencedVolumes"
-            ));
-            if (sv.isShared()) {
-                bundleAggregationOpsBuilder.add(Aggregates.match(
-                        Filters.or(
-                                Filters.exists("referencedVolumes.storageHost", false),
-                                Filters.eq("referencedVolumes.storageHost", null))
-                ));
-            } else if (sv.getStorageHost() != null) {
-                if (StringUtils.isBlank(sv.getStorageHost())) {
-                    bundleAggregationOpsBuilder.add(Aggregates.match(Filters.exists("referencedVolumes.storageHost", true)));
-                    bundleAggregationOpsBuilder.add(Aggregates.match(Filters.ne("referencedVolumes.storageHost", null)));
-                } else {
-                    bundleAggregationOpsBuilder.add(Aggregates.match(Filters.eq("referencedVolumes.storageHost", sv.getStorageHost())));
-                }
-            }
-            if (StringUtils.isNotBlank(sv.getName())) {
-                bundleAggregationOpsBuilder.add(Aggregates.match(Filters.eq("referencedVolumes.name", sv.getName())));
-            }
-            if (CollectionUtils.isNotEmpty(sv.getStorageTags())) {
-                bundleAggregationOpsBuilder.add(Aggregates.match(Filters.all("referencedVolumes.storageTags", sv.getStorageTags())));
-            }
-            if (StringUtils.isNotBlank(sv.getStorageVirtualPath())) {
-                bundleAggregationOpsBuilder.add(Aggregates.match(Filters.eq("referencedVolumes.storageVirtualPath", sv.getStorageVirtualPath())));
-            }
-        });
-        return bundleAggregationOpsBuilder.build();
+        List<Bson> storageVolCriteria = pattern.getStorageVolume()
+                .map(sv -> {
+                    ImmutableList.Builder<Bson> localPipelineBuilder = ImmutableList.builder();
+                    localPipelineBuilder.add(Aggregates.lookup(
+                            EntityUtils.getPersistenceInfo(JacsStorageVolume.class).storeName(),
+                            "storageVolumeId",
+                            "_id",
+                            "storageVolume"
+                    ));
+                    localPipelineBuilder.add(
+                            Aggregates.unwind("$storageVolume")
+                    );
+
+                    if (sv.isShared()) {
+                        localPipelineBuilder.add(Aggregates.match(Filters.or(
+                                Filters.exists("storageVolume.storageHost", false),
+                                Filters.eq("storageVolume.storageHost", null)))
+                        );
+                    } else if (sv.getStorageHost() != null) {
+                        if (StringUtils.isBlank(sv.getStorageHost())) {
+                            localPipelineBuilder.add(Aggregates.match(Filters.exists("storageVolume.storageHost", true)));
+                            localPipelineBuilder.add(Aggregates.match(Filters.ne("storageVolume.storageHost", null)));
+                        } else {
+                            localPipelineBuilder.add(Aggregates.match(Filters.eq("storageVolume.storageHost", sv.getStorageHost())));
+                        }
+                    }
+                    if (StringUtils.isNotBlank(sv.getName())) {
+                        localPipelineBuilder.add(Aggregates.match(Filters.eq("storageVolume.name", sv.getName())));
+                    }
+                    if (CollectionUtils.isNotEmpty(sv.getStorageTags())) {
+                        localPipelineBuilder.add(Aggregates.match(Filters.all("storageVolume.storageTags", sv.getStorageTags())));
+                    }
+                    if (StringUtils.isNotBlank(sv.getStorageVirtualPath())) {
+                        localPipelineBuilder.add(Aggregates.match(Filters.eq("storageVolume.storageVirtualPath", sv.getStorageVirtualPath())));
+                    }
+                    if (StringUtils.isNotBlank(pattern.getPath())) {
+                        localPipelineBuilder.add(
+                                Aggregates.addFields(new Field<>(
+                                        "dbId",
+                                        createToLowerExpr("$_id")
+                                ))
+                        );
+                        localPipelineBuilder.add(
+                                Aggregates.addFields(new Field<>(
+                                        "dataStoragePath",
+                                        createConcatExpr("$storageVolume.storageVirtualPath", "/", "$dbId")
+                                ))
+                        );
+                        localPipelineBuilder.add(Aggregates.match(Filters.eq("dataStoragePath", pattern.getPath())));
+                    }
+                    return localPipelineBuilder.build();
+                })
+                .orElseGet(() -> {
+                    ImmutableList.Builder<Bson> localPipelineBuilder = ImmutableList.builder();
+
+                    if (StringUtils.isNotBlank(pattern.getPath())) {
+                        localPipelineBuilder.add(Aggregates.lookup(
+                                EntityUtils.getPersistenceInfo(JacsStorageVolume.class).storeName(),
+                                "storageVolumeId",
+                                "_id",
+                                "storageVolume"
+                        ));
+                        localPipelineBuilder.add(
+                                Aggregates.unwind("$storageVolume")
+                        );
+                        localPipelineBuilder.add(
+                                Aggregates.addFields(new Field<>(
+                                        "dbId",
+                                        createToLowerExpr("$_id")
+                                ))
+                        );
+                        localPipelineBuilder.add(
+                                Aggregates.addFields(new Field<>(
+                                        "dataStoragePath",
+                                        createConcatExpr("$storageVolume.storageVirtualPath", "/", "$dbId")
+                                ))
+                        );
+                        localPipelineBuilder.add(Aggregates.match(Filters.eq("dataStoragePath", pattern.getPath())));
+                    }
+                    return localPipelineBuilder.build();
+                });
+        pipelineBuilder.addAll(storageVolCriteria);
+        return pipelineBuilder.build();
     }
 }

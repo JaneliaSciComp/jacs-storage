@@ -4,6 +4,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.clientutils.AuthClientImplHelper;
+import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -24,7 +25,7 @@ public class StoragePersistBenchmark {
     @BenchmarkMode({Mode.Throughput, Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
     public void persist(PersistBenchmarkTrialParams trialParams, PersistBenchmarkInvocationParams invocationParams) throws Exception {
-        trialParams.storageClient.persistData(trialParams.dataLocation, invocationParams.dataStorageInfo, trialParams.authToken);
+        trialParams.storageClient.persistData(trialParams.dataLocation, invocationParams.dataStorageInfo, new ContentFilterParams(), trialParams.authToken);
     }
 
     public static void main(String[] args) throws RunnerException {

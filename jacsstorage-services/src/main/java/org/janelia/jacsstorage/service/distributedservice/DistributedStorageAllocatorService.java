@@ -7,9 +7,9 @@ import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.security.JacsCredentials;
+import org.janelia.jacsstorage.service.StorageVolumeSelector;
 import org.janelia.jacsstorage.service.impl.AbstractStorageAllocatorService;
 import org.janelia.jacsstorage.service.impl.OverflowStorageVolumeSelector;
-import org.janelia.jacsstorage.service.StorageVolumeSelector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
         if (existingBundle == null) {
             return false;
         }
-        checkStorageDeletePermission(credentials, existingBundle);
+        checkStorageDeletePermission(existingBundle, credentials);
         return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
                 .flatMap(sv -> agentManager.findRegisteredAgent(sv.getStorageServiceURL()))
                 .map(storageAgentInfo -> {

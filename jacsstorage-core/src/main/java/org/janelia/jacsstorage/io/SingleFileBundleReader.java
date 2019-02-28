@@ -2,24 +2,36 @@ package org.janelia.jacsstorage.io;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.coreutils.FileUtils;
+import org.janelia.jacsstorage.coreutils.IOStreamUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.rendering.utils.ImageUtils;
 import org.msgpack.core.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class SingleFileBundleReader extends AbstractBundleReader {
+
+    private final static Logger LOG = LoggerFactory.getLogger(SingleFileBundleReader.class);
+
+    @Inject
+    public SingleFileBundleReader(ContentHandlerProvider contentHandlerProvider) {
+        super(contentHandlerProvider);
+    }
 
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
@@ -27,17 +39,19 @@ public class SingleFileBundleReader extends AbstractBundleReader {
     }
 
     @TimedMethod(
-            argList = {0},
             logResult = true
     )
     @Override
-    public long readBundle(String source, OutputStream stream) {
+    public Map<String, Object> getContentInfo(String source, String entryName) {
         Path sourcePath = getSourcePath(source);
         checkSourcePath(sourcePath);
+        Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
         try {
-            return FileUtils.copyFrom(sourcePath, stream);
+            ContentInfoExtractor contentInfoExtractor = contentHandlerProvider.getContentInfoExtractor(getMimeType(sourcePath));
+            return contentInfoExtractor.extractContentInfo(Files.newInputStream(sourcePath));
         } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            LOG.error("Error reading content info from {}", source, e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -55,19 +69,42 @@ public class SingleFileBundleReader extends AbstractBundleReader {
     }
 
     @TimedMethod(
+            logResult = true
+    )
+    @Override
+    public long estimateDataEntrySize(String source, String entryName, ContentFilterParams filterParams) {
+        Path sourcePath = getSourcePath(source);
+        checkSourcePath(sourcePath);
+        Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
+        return PathUtils.getSize(sourcePath, 0);
+    }
+
+    @TimedMethod(
             argList = {0, 1},
             logResult = true
     )
     @Override
-    public long readDataEntry(String source, String entryName, OutputStream outputStream) throws IOException {
+    public long readDataEntry(String source, String entryName, ContentFilterParams filterParams, OutputStream outputStream) {
         Path sourcePath = getSourcePath(source);
         checkSourcePath(sourcePath);
         Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
-        return FileUtils.copyFrom(sourcePath, outputStream);
+        ContentConverter contentConverter = contentHandlerProvider.getContentConverter(filterParams);
+        DataContent dataContent = new SingleFileDataContent(filterParams, sourcePath, ImageUtils.getImagePathHandler());
+        return contentConverter.convertContent(dataContent, outputStream);
     }
 
     private Path getSourcePath(String source) {
-        return Paths.get(source);
+        Path sourcePath = Paths.get(source);
+        if (Files.isSymbolicLink(sourcePath)) {
+            try {
+                return Files.readSymbolicLink(sourcePath);
+            } catch (IOException e) {
+                LOG.error("Error getting the actual path for symbolic link {}", source, e);
+                throw new IllegalStateException(e);
+            }
+        } else {
+            return sourcePath;
+        }
     }
 
     private void checkSourcePath(Path sourcePath) {

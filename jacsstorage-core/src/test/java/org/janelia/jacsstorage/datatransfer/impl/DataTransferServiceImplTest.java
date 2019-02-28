@@ -10,13 +10,17 @@ import org.janelia.jacsstorage.datatransfer.StorageMessageHeaderCodec;
 import org.janelia.jacsstorage.datatransfer.TransferState;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
+import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentHandlerProvider;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.io.SingleFileBundleReader;
 import org.janelia.jacsstorage.io.SingleFileBundleWriter;
+import org.janelia.jacsstorage.io.contenthandlers.NoOPContentConverter;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import javax.enterprise.inject.Instance;
 import java.io.ByteArrayOutputStream;
@@ -39,6 +43,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -54,7 +59,10 @@ public class DataTransferServiceImplTest {
     public void setUp() throws IOException {
         Instance<BundleReader> bundleReaderSource = mock(Instance.class);
         Instance<BundleWriter> bundleWriterSource = mock(Instance.class);
-        when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader()).iterator());
+        ContentHandlerProvider contentHandlerProvider = mock(ContentHandlerProvider.class);
+        Mockito.when(contentHandlerProvider.getContentConverter(any(ContentFilterParams.class)))
+                .thenReturn(new NoOPContentConverter());
+        when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader(contentHandlerProvider)).iterator());
         when(bundleWriterSource.iterator()).thenReturn(ImmutableList.<BundleWriter>of(new SingleFileBundleWriter()).iterator());
         storageService = new DataTransferServiceImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource));
         testDirectory = Files.createTempDirectory("StorageAgentTest");
@@ -84,7 +92,7 @@ public class DataTransferServiceImplTest {
         FileInputStream testInput = new FileInputStream(testDataPath.toFile());
         try {
             TransferState<StorageMessageHeader> transferState = createMessageHeaderTransferState(DataTransferService.Operation.PERSIST_DATA, JacsStorageFormat.SINGLE_DATA_FILE, testTargetPath.toString());
-            storageService.beginDataTransfer(transferState);
+            storageService.beginDataTransfer(new ContentFilterParams(), transferState);
 
             ByteBuffer buffer = ByteBuffer.allocate(2048);
             FileChannel channel = testInput.getChannel();
@@ -115,7 +123,7 @@ public class DataTransferServiceImplTest {
     public void readData() throws IOException {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "f_1_1");
         TransferState<StorageMessageHeader> transferState = createMessageHeaderTransferState(DataTransferService.Operation.RETRIEVE_DATA, JacsStorageFormat.SINGLE_DATA_FILE, testDataPath.toString());
-        storageService.beginDataTransfer(transferState);
+        storageService.beginDataTransfer(new ContentFilterParams(), transferState);
 
         ByteBuffer buffer = ByteBuffer.allocate(2048);
         byte[] expectedResult = Files.readAllBytes(testDataPath);

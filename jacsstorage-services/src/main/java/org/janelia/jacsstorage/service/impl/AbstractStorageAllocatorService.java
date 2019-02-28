@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.service.impl;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -10,7 +11,6 @@ import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.IncFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
-import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 
 import java.nio.file.Path;
@@ -56,7 +56,7 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
     @Override
     public JacsBundle updateStorage(JacsBundle dataBundle, JacsCredentials credentials) {
         JacsBundle existingBundle = retrieveExistingStorage(dataBundle);
-        checkStorageWriteAccess(credentials, existingBundle);
+        checkStorageWriteAccess(existingBundle, credentials);
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedFieldsBuilder = ImmutableMap.builder();
         if (dataBundle.hasUsedSpaceSet()) {
             existingBundle.setUsedSpaceInBytes(dataBundle.getUsedSpaceInBytes());
@@ -83,13 +83,13 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
         return existingBundle;
     }
 
-    private void checkStorageWriteAccess(JacsCredentials credentials, JacsBundle dataBundle) {
+    private void checkStorageWriteAccess(JacsBundle dataBundle, JacsCredentials credentials) {
         if (!dataBundle.hasWritePermissions(credentials.getSubjectKey())) {
             throw new SecurityException("Access not allowed to " + dataBundle.getName() + " for " + credentials.getAuthKey() + " as " + credentials.getName());
         }
     }
 
-    protected void checkStorageDeletePermission(JacsCredentials credentials, JacsBundle dataBundle) {
+    protected void checkStorageDeletePermission(JacsBundle dataBundle, JacsCredentials credentials) {
         if (!credentials.getSubjectKey().equals(dataBundle.getOwnerKey())) {
             throw new SecurityException("Access not allowed to " + dataBundle.getName() + " for " + credentials.getAuthKey() + " as " + credentials.getName());
         }

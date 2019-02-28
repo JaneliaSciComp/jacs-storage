@@ -108,6 +108,7 @@ public class AgentAppBenchmarks {
                     .path("/agent_storage")
                     .path("storage_volume")
                     .path(trialParams.storageVolumeId)
+                    .path("data_content")
                     .path(dataEntry)
                     .request().get(InputStream.class);
             OutputStream targetStream = new NullOutputStream();

@@ -11,6 +11,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 
+import java.net.URI;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -26,6 +27,7 @@ public class DataStorageInfo {
     private String name;
     private String ownerKey;
     private String path;
+    private String dataVirtualPath;
     private Set<String> readersKeys = new HashSet<>();
     private Set<String> writersKeys = new HashSet<>();
     private StoragePathURI storageRootPathURI;
@@ -56,6 +58,7 @@ public class DataStorageInfo {
                     dsi.setStorageHost(sv.getStorageHost());
                     dsi.setStorageTags(sv.getStorageTags());
                     dsi.setStorageRootDir(sv.evalStorageRootDir(dataBundle.asStorageContext()));
+                    dsi.setDataVirtualPath(Paths.get(sv.getStorageVirtualPath(), dataBundle.getId().toString()).toString());
                     dsi.setStorageRootPathURI(sv.getStorageURI());
                     dsi.setConnectionURL(sv.getStorageServiceURL());
                 });
@@ -125,6 +128,18 @@ public class DataStorageInfo {
         return this;
     }
 
+    @ApiModelProperty(
+            value = "bundle absolute virtual path"
+    )
+    public String getDataVirtualPath() {
+        return dataVirtualPath;
+    }
+
+    public DataStorageInfo setDataVirtualPath(String dataVirtualPath) {
+        this.dataVirtualPath = dataVirtualPath;
+        return this;
+    }
+
     @JsonIgnore
     public String getDataStoragePath() {
         return StringUtils.isNotBlank(storageRootDir)
@@ -165,6 +180,16 @@ public class DataStorageInfo {
     public DataStorageInfo setStorageRootPathURI(StoragePathURI storageRootPathURI) {
         this.storageRootPathURI = storageRootPathURI;
         return this;
+    }
+
+    @JsonProperty
+    public String getDataStorageURI() {
+        String connectionUrl = StringUtils.appendIfMissing(StringUtils.defaultIfBlank(getConnectionURL(), "/"), "/");
+        return URI.create(connectionUrl).resolve("agent_storage/").resolve(getId()).toString();
+    }
+
+    @JsonIgnore
+    public void setDataStorageURI(String dataStorageURI) {
     }
 
     @ApiModelProperty(
@@ -269,6 +294,7 @@ public class DataStorageInfo {
                 .checksum(this.checksum)
                 .metadata(this.metadata)
                 .storageHost(this.storageHost)
+                .storageRootPath(this.storageRootDir)
                 .storageTagsAsList(this.storageTags)
                 .build();
     }

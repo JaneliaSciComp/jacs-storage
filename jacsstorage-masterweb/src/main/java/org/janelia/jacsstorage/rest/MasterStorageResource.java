@@ -213,6 +213,7 @@ public class MasterStorageResource {
                                    @QueryParam("storageHost") String storageHost,
                                    @QueryParam("storageTags") List<String> storageTags,
                                    @QueryParam("volumeName") String volumeName,
+                                   @QueryParam("storagePath") String storagePath,
                                    @QueryParam("page") Long pageNumber,
                                    @QueryParam("length") Integer pageLength,
                                    @Context SecurityContext securityContext) {
@@ -231,6 +232,7 @@ public class MasterStorageResource {
                 .storageHost(storageHost)
                 .storageTagsAsList(storageTags)
                 .volumeName(volumeName)
+                .path(storagePath)
                 .build();
         LOG.info("Count storage records filtered with: {}", dataBundle);
         PageRequest pageRequest = new PageRequestBuilder()

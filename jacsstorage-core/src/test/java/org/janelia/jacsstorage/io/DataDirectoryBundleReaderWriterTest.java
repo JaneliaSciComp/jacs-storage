@@ -5,9 +5,12 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.hamcrest.Matchers;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.janelia.jacsstorage.io.contenthandlers.NoOPContentConverter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -34,20 +37,23 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-public class ExpandedBundleReaderWriterTest {
+public class DataDirectoryBundleReaderWriterTest {
 
     private static final String TEST_DATA_DIRECTORY1 = "src/test/resources/testdata/bundletransfer";
 
     private Path testDirectory;
     private Path testDataDir;
-    private ExpandedArchiveBundleReader expandedBundleReader;
-    private ExpandedArchiveBundleWriter expandedArchiveBundleWriter;
+    private DataDirectoryBundleReader dataDirectoryBundleReader;
+    private DataDirectoryBundleWriter dataDirectoryBundleWriter;
 
     @Before
     public void setUp() throws IOException {
-        expandedBundleReader = new ExpandedArchiveBundleReader();
-        expandedArchiveBundleWriter = new ExpandedArchiveBundleWriter();
-        testDirectory = Files.createTempDirectory("ExpandedBundleReaderWriterTest");
+        ContentHandlerProvider contentHandlerProvider = Mockito.mock(ContentHandlerProvider.class);
+        Mockito.when(contentHandlerProvider.getContentConverter(ArgumentMatchers.any(ContentFilterParams.class)))
+                .thenReturn(new NoOPContentConverter());
+        dataDirectoryBundleReader = new DataDirectoryBundleReader(contentHandlerProvider);
+        dataDirectoryBundleWriter = new DataDirectoryBundleWriter();
+        testDirectory = Files.createTempDirectory("DataDirectoryBundleReaderWriterTest");
         testDataDir = testDirectory.resolve("tmpTestDataDir");
         PathUtils.copyFiles(Paths.get(TEST_DATA_DIRECTORY1), testDataDir);
     }
@@ -77,11 +83,11 @@ public class ExpandedBundleReaderWriterTest {
         InputStream testInputStream = null;
         try {
             testOutputStream = new FileOutputStream(testFilePath.toFile());
-            long nReadBytes = expandedBundleReader.readBundle(testDataDir.toString(), testOutputStream);
+            long nReadBytes = dataDirectoryBundleReader.readBundle(testDataDir.toString(), new ContentFilterParams(), testOutputStream);
             testOutputStream.close();
             testOutputStream = null;
             testInputStream = new BufferedInputStream(new FileInputStream(testFilePath.toFile()));
-            long nWrittenBytes = expandedArchiveBundleWriter.writeBundle(testInputStream, testExpandedPath.toString());
+            long nWrittenBytes = dataDirectoryBundleWriter.writeBundle(testInputStream, testExpandedPath.toString());
             assertEquals(nReadBytes, nWrittenBytes);
             Files.walkFileTree(testExpandedPath, new SimpleFileVisitor<Path>() {
                 @Override
@@ -109,9 +115,9 @@ public class ExpandedBundleReaderWriterTest {
         Path testDataPath = testDataDir.resolve("f_1_1");
         byte[] testDataBytes = Files.readAllBytes(testDataPath);
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        long nBytes = expandedBundleReader.readBundle(testDataPath.toString(), output);
+        long nBytes = dataDirectoryBundleReader.readBundle(testDataPath.toString(), new ContentFilterParams(), output);
         assertThat(nBytes, Matchers.equalTo((long) testDataBytes.length));
-        assertThat(output.toByteArray().length, Matchers.greaterThan(testDataBytes.length));
+        assertThat(output.toByteArray().length, Matchers.greaterThanOrEqualTo(testDataBytes.length));
     }
 
     @Test
@@ -125,7 +131,7 @@ public class ExpandedBundleReaderWriterTest {
                 ImmutableList.of()
         );
         for (int depth = 1; depth < expectedResults.size(); depth++) {
-            List<DataNodeInfo> nodeList = expandedBundleReader.listBundleContent(testDataDir.toString(), null, depth);
+            List<DataNodeInfo> nodeList = dataDirectoryBundleReader.listBundleContent(testDataDir.toString(), null, depth);
             List<String> currentExpectedResults = IntStream.rangeClosed(0, depth)
                     .mapToObj(i -> expectedResults.get(i))
                     .flatMap(l -> l.stream())
@@ -156,7 +162,7 @@ public class ExpandedBundleReaderWriterTest {
                 new TestData("d_1_3", 2, ImmutableList.of("d_1_3", "d_1_3/f_1_3_1", "d_1_3/f_1_3_2"))
         );
         for (TestData td : testData) {
-            List<DataNodeInfo> nodeList = expandedBundleReader.listBundleContent(testDataDir.toString(), td.entryName, td.depth);
+            List<DataNodeInfo> nodeList = dataDirectoryBundleReader.listBundleContent(testDataDir.toString(), td.entryName, td.depth);
             List<String> currentExpectedResults = td.expectedResults.stream().sorted().collect(Collectors.toList());
             assertEquals("For entry " + td.entryName + " depth " + td.depth, currentExpectedResults, nodeList.stream().map(ni -> ni.getNodeRelativePath()).sorted().collect(Collectors.toList()));
         }
@@ -173,9 +179,9 @@ public class ExpandedBundleReaderWriterTest {
         );
         for (String td : testData) {
             ByteArrayOutputStream referenceOutputStream = new ByteArrayOutputStream();
-            expandedBundleReader.readBundle(testDataDir + "/" + td, referenceOutputStream);
+            dataDirectoryBundleReader.readBundle(testDataDir + "/" + td, new ContentFilterParams(), referenceOutputStream);
             ByteArrayOutputStream testDataEntryStream = new ByteArrayOutputStream();
-            expandedBundleReader.readDataEntry(testDataDir.toString(), td, testDataEntryStream);
+            dataDirectoryBundleReader.readDataEntry(testDataDir.toString(), td, new ContentFilterParams(), testDataEntryStream);
             assertArrayEquals("Expected condition not met for " + td, referenceOutputStream.toByteArray(), testDataEntryStream.toByteArray());
         }
     }
@@ -195,7 +201,7 @@ public class ExpandedBundleReaderWriterTest {
             ByteArrayOutputStream referenceOutputStream = new ByteArrayOutputStream();
             Files.copy(testDataDir.resolve(td), referenceOutputStream);
             ByteArrayOutputStream testDataEntryStream = new ByteArrayOutputStream();
-            expandedBundleReader.readDataEntry(testDataDir.toString(), td, testDataEntryStream);
+            dataDirectoryBundleReader.readDataEntry(testDataDir.toString(), td, new ContentFilterParams(), testDataEntryStream);
             assertArrayEquals("Expected condition not met for " + td, referenceOutputStream.toByteArray(), testDataEntryStream.toByteArray());
         }
     }
@@ -203,7 +209,7 @@ public class ExpandedBundleReaderWriterTest {
     @Test
     public void bundleReadFailureBecauseSourceIsMissing() {
         Path missingDataPath = testDataDir.resolve("missing");
-        assertThatThrownBy(() -> expandedBundleReader.readBundle(missingDataPath.toString(), new ByteArrayOutputStream()))
+        assertThatThrownBy(() -> dataDirectoryBundleReader.readBundle(missingDataPath.toString(), new ContentFilterParams(), new ByteArrayOutputStream()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("No path found for " + missingDataPath);
     }
@@ -219,10 +225,10 @@ public class ExpandedBundleReaderWriterTest {
                 "d_1_5/d_1_5_1"
         );
         for (String td : testData) {
-            long size = expandedArchiveBundleWriter.createDirectoryEntry(testDataDir.toString(), td);
+            long size = dataDirectoryBundleWriter.createDirectoryEntry(testDataDir.toString(), td);
             assertTrue(size > 0);
         }
-        List<String> tarEntryNames = expandedBundleReader.listBundleContent(testDataDir.toString(), "", 10).stream()
+        List<String> tarEntryNames = dataDirectoryBundleReader.listBundleContent(testDataDir.toString(), "", 10).stream()
                 .map(ni -> ni.getNodeRelativePath())
                 .collect(Collectors.toList());
         testData.forEach(td -> {
@@ -233,7 +239,7 @@ public class ExpandedBundleReaderWriterTest {
     @Test
     public void tryToCreateDirectoryEntryWhenEntryExist() throws IOException {
         String testData = "d_1_1";
-        assertThatThrownBy(() -> expandedArchiveBundleWriter.createDirectoryEntry(testDataDir.toString(), testData))
+        assertThatThrownBy(() -> dataDirectoryBundleWriter.createDirectoryEntry(testDataDir.toString(), testData))
                 .isInstanceOf(DataAlreadyExistException.class)
                 .hasMessage("Entry " + testDataDir.resolve(testData) + " already exists");
     }
@@ -245,10 +251,10 @@ public class ExpandedBundleReaderWriterTest {
                 "d_1_6/d_1_6_1/d_1_6_1_1"
         );
         for (String td : testData) {
-            long size = expandedArchiveBundleWriter.createDirectoryEntry(testDataDir.toString(), td);
+            long size = dataDirectoryBundleWriter.createDirectoryEntry(testDataDir.toString(), td);
             assertTrue(size > 0);
         }
-        List<String> tarEntryNames = expandedBundleReader.listBundleContent(testDataDir.toString(), "", 10).stream()
+        List<String> tarEntryNames = dataDirectoryBundleReader.listBundleContent(testDataDir.toString(), "", 10).stream()
                 .map(ni -> ni.getNodeRelativePath())
                 .collect(Collectors.toList());
         testData.forEach(td -> {
@@ -259,7 +265,7 @@ public class ExpandedBundleReaderWriterTest {
     @Test
     public void tryToCreateDirectoryEntryWhenNoParentExistButNotADirectory() throws IOException {
         String testData = "d_1_3/f_1_3_1/d_1_3_1_1";
-        assertThatThrownBy(() -> expandedArchiveBundleWriter.createDirectoryEntry(testDataDir.toString(), testData))
+        assertThatThrownBy(() -> dataDirectoryBundleWriter.createDirectoryEntry(testDataDir.toString(), testData))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Parent entry found for " + testDataDir.resolve(testData) + " but it is not a directory");
     }
@@ -267,7 +273,7 @@ public class ExpandedBundleReaderWriterTest {
     @Test
     public void tryToCreateFileEntryWhenEntryExist() throws IOException {
         String testData = "d_1_1/f_1_1_1";
-        assertThatThrownBy(() -> expandedArchiveBundleWriter.createFileEntry(testDataDir.toString(), testData, new FileInputStream(testDataDir.resolve("d_1_1/f_1_1_1").toFile())))
+        assertThatThrownBy(() -> dataDirectoryBundleWriter.createFileEntry(testDataDir.toString(), testData, new FileInputStream(testDataDir.resolve("d_1_1/f_1_1_1").toFile())))
                 .isInstanceOf(DataAlreadyExistException.class)
                 .hasMessage("Entry " + testDataDir.resolve(testData) + " already exists");
     }

@@ -7,8 +7,10 @@ import io.swagger.annotations.ApiResponses;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
@@ -57,7 +59,7 @@ public class PathBasedAgentStorageResource {
 
     @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
     @HEAD
-    @Path("storage_path/{dataPath:.*}")
+    @Path("storage_path/data_content/{dataPath:.+}")
     @ApiOperation(value = "Check if the specified file path identifies a valid data bundle entry content.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The content was found"),
@@ -70,14 +72,14 @@ public class PathBasedAgentStorageResource {
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
-                (dataBundle, dataEntryPath) -> Response.ok(),
+                (dataBundle, dataEntryPath) -> storageResourceHelper.checkContentFromDataBundle(dataBundle, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam),
                 (storageVolume, dataEntryPath) -> storageResourceHelper.checkContentFromFile(storageVolume, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam)
         ).build();
     }
 
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @GET
-    @Path("storage_path/{dataPath:.*}")
+    @Path("storage_path/data_content/{dataPath:.+}")
     @ApiOperation(value = "Retrieve the content of the specified data path.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
@@ -85,13 +87,15 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response retrieveData(@PathParam("dataPath") String dataPathParam) {
+    public Response retrieveData(@PathParam("dataPath") String dataPathParam,
+                                 @Context UriInfo requestURI) {
         LOG.info("Retrieve data from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
-                (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, dataEntryPath),
-                (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, dataEntryPath)
+                (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, filterParams, dataEntryPath),
+                (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, dataEntryPath)
         ).build();
     }
 
@@ -102,10 +106,10 @@ public class PathBasedAgentStorageResource {
     @RequireAuthentication
     @Produces({MediaType.APPLICATION_JSON})
     @DELETE
-    @Path("storage_path/{dataPath:.*}")
+    @Path("storage_path/data_content/{dataPath:.+}")
     @ApiOperation(value = "Retrieve the content of the specified data path.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The stream was successfull"),
+            @ApiResponse(code = 200, message = "The data streaming was successfull"),
             @ApiResponse(code = 404, message = "Invalid data bundle identifier"),
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
@@ -113,16 +117,18 @@ public class PathBasedAgentStorageResource {
     public Response removeData(@PathParam("dataPath") String dataPathParam, @Context SecurityContext securityContext) {
         LOG.info("Remove data from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        JacsCredentials credentials = SecurityUtils.getUserPrincipal(securityContext);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryName) -> storageResourceHelper.removeContentFromDataBundle(dataBundle,
                         dataEntryName,
+                        credentials,
                         (Long freedEntrySize) -> storageAllocatorService.updateStorage(
                                 new JacsBundleBuilder()
                                         .dataBundleId(dataBundle.getId())
                                         .usedSpaceInBytes(-freedEntrySize)
                                         .build(),
-                                SecurityUtils.getUserPrincipal(securityContext))),
+                                credentials)),
                 (storageVolume, dataEntryName) -> storageResourceHelper.removeFileContentFromVolume(storageVolume, dataEntryName)
         ).build();
     }
@@ -134,7 +140,7 @@ public class PathBasedAgentStorageResource {
     @RequireAuthentication
     @Produces({MediaType.APPLICATION_JSON})
     @PUT
-    @Path("storage_path/file/{dataPath:.*}")
+    @Path("storage_path/data_content/{dataPath:.+}")
     @ApiOperation(value = "Store the content at the specified data path.")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "The data was saved successfully"),
@@ -163,6 +169,28 @@ public class PathBasedAgentStorageResource {
                                 resourceURI.getBaseUri(),
                                 dataEntryName,
                                 contentStream)
+        ).build();
+    }
+
+    @RequireAuthentication
+    @Produces({MediaType.APPLICATION_JSON})
+    @GET
+    @Path("storage_path/data_info/{dataPath:.+}")
+    @ApiOperation(value = "Inspect and retrieve content info of the specified data path.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The operation was successfull. " +
+                    "As a note the operation is considered successful even if there's currently no process to extract any information from the content"),
+            @ApiResponse(code = 404, message = "Invalid data bundle identifier"),
+            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
+    public Response retrieveDataInfo(@PathParam("dataPath") String dataPathParam) {
+        LOG.info("Retrieve data info from {}", dataPathParam);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        return storageResourceHelper.handleResponseForFullDataPathParam(
+                StoragePathURI.createAbsolutePathURI(dataPathParam),
+                (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentInfoFromDataBundle(dataBundle, dataEntryPath),
+                (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentInfoFromFile(storageVolume, dataEntryPath)
         ).build();
     }
 

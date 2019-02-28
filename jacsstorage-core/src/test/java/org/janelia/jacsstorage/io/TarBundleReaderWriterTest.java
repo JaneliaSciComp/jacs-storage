@@ -1,16 +1,19 @@
 package org.janelia.jacsstorage.io;
 
-import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.hamcrest.Matchers;
 import org.hamcrest.core.IsNot;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.janelia.jacsstorage.io.contenthandlers.NoOPContentConverter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -44,14 +47,17 @@ public class TarBundleReaderWriterTest {
 
     private Path testDirectory;
     private Path testTarFile;
-    private ExpandedArchiveBundleReader expandedArchiveBundleReader;
+    private DataDirectoryBundleReader dataDirectoryBundleReader;
     private TarArchiveBundleReader tarBundleReader;
     private TarArchiveBundleWriter tarBundleWriter;
 
     @Before
     public void setUp() throws IOException {
-        expandedArchiveBundleReader = new ExpandedArchiveBundleReader();
-        tarBundleReader = new TarArchiveBundleReader();
+        ContentHandlerProvider contentHandlerProvider = Mockito.mock(ContentHandlerProvider.class);
+        Mockito.when(contentHandlerProvider.getContentConverter(ArgumentMatchers.any(ContentFilterParams.class)))
+                .thenReturn(new NoOPContentConverter());
+        dataDirectoryBundleReader = new DataDirectoryBundleReader(contentHandlerProvider);
+        tarBundleReader = new TarArchiveBundleReader(contentHandlerProvider);
         tarBundleWriter = new TarArchiveBundleWriter();
         testDirectory = Files.createTempDirectory("TarBundleReaderWriterTest");
         testTarFile = createTestTarFile();
@@ -77,7 +83,7 @@ public class TarBundleReaderWriterTest {
     private Path createTestTarFile() throws IOException {
         Path testTarFilePath = testDirectory.resolve("tarBundle.tar");
         try(OutputStream testOutputStream = new FileOutputStream(testTarFilePath.toFile())) {
-            expandedArchiveBundleReader.readBundle(TEST_DATA_DIRECTORY, testOutputStream);
+            dataDirectoryBundleReader.readBundle(TEST_DATA_DIRECTORY, new ContentFilterParams(), testOutputStream);
         }
         return testTarFilePath;
     }
@@ -106,11 +112,11 @@ public class TarBundleReaderWriterTest {
     @Test
     public void listContentSubTree() {
         class TestData {
-            final String entryName;
-            final int depth;
-            final List<String> expectedResults;
+            private final String entryName;
+            private final int depth;
+            private final List<String> expectedResults;
 
-            public TestData(String entryName, int depth, List<String> expectedResults) {
+            private TestData(String entryName, int depth, List<String> expectedResults) {
                 this.entryName = entryName;
                 this.depth = depth;
                 this.expectedResults = expectedResults;
@@ -141,9 +147,9 @@ public class TarBundleReaderWriterTest {
         );
         for (String td : testData) {
             ByteArrayOutputStream referenceOutputStream = new ByteArrayOutputStream();
-            expandedArchiveBundleReader.readBundle(TEST_DATA_DIRECTORY + "/" + td, referenceOutputStream);
+            dataDirectoryBundleReader.readBundle(TEST_DATA_DIRECTORY + "/" + td, new ContentFilterParams(), referenceOutputStream);
             ByteArrayOutputStream testDataEntryStream = new ByteArrayOutputStream();
-            tarBundleReader.readDataEntry(testTarFile.toString(), td, testDataEntryStream);
+            tarBundleReader.readDataEntry(testTarFile.toString(), td, new ContentFilterParams(), testDataEntryStream);
             assertArrayEquals("Expected condition not met for " + td, referenceOutputStream.toByteArray(), testDataEntryStream.toByteArray());
         }
     }
@@ -163,7 +169,7 @@ public class TarBundleReaderWriterTest {
             ByteArrayOutputStream referenceOutputStream = new ByteArrayOutputStream();
             Files.copy(Paths.get(TEST_DATA_DIRECTORY, td), referenceOutputStream);
             ByteArrayOutputStream testDataEntryStream = new ByteArrayOutputStream();
-            tarBundleReader.readDataEntry(testTarFile.toString(), td, testDataEntryStream);
+            tarBundleReader.readDataEntry(testTarFile.toString(), td, new ContentFilterParams(), testDataEntryStream);
             assertArrayEquals("Expected condition not met for " + td, referenceOutputStream.toByteArray(), testDataEntryStream.toByteArray());
         }
     }
@@ -176,12 +182,12 @@ public class TarBundleReaderWriterTest {
         InputStream testInputStream = null;
         try {
             testOutputStream = new FileOutputStream(testReaderPath.toFile());
-            long nReadBytes = tarBundleReader.readBundle(testTarFile.toString(), testOutputStream);
+            long nReadBytes = tarBundleReader.readBundle(testTarFile.toString(), new ContentFilterParams(), testOutputStream);
             testOutputStream.close();
             testOutputStream = null;
             testInputStream = new BufferedInputStream(new FileInputStream(testReaderPath.toFile()));
             long nWrittenBytes = tarBundleWriter.writeBundle(testInputStream, testWriterPath.toString());
-            assertEquals(nReadBytes, nWrittenBytes);
+            assertThat(nWrittenBytes, Matchers.greaterThanOrEqualTo(nReadBytes));
         } finally {
             IOUtils.closeQuietly(testOutputStream);
             IOUtils.closeQuietly(testInputStream);
@@ -191,7 +197,7 @@ public class TarBundleReaderWriterTest {
     @Test
     public void invalidDataEntry() throws IOException {
         String testEntryName = "not-present";
-        assertThatThrownBy(() -> tarBundleReader.readDataEntry(testTarFile.toString(), testEntryName, new ByteArrayOutputStream()))
+        assertThatThrownBy(() -> tarBundleReader.readDataEntry(testTarFile.toString(), testEntryName, new ContentFilterParams(), new ByteArrayOutputStream()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("No entry " + testEntryName + " found under " + testTarFile.toString());
     }
@@ -200,7 +206,7 @@ public class TarBundleReaderWriterTest {
     public void bundleReadFailureBecauseSourceIsMissing() {
         Path testDataPath = Paths.get(TEST_DATA_DIRECTORY, "missing.tar");
 
-        assertThatThrownBy(() -> tarBundleReader.readBundle(testDataPath.toString(), new ByteArrayOutputStream()))
+        assertThatThrownBy(() -> tarBundleReader.readBundle(testDataPath.toString(), new ContentFilterParams(), new ByteArrayOutputStream()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("No file found for " + testDataPath.toString());
     }

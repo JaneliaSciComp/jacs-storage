@@ -25,7 +25,7 @@ import io.undertow.server.HttpServerExchange;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Response attribute
+ * Response attribute in seconds.
  */
 public class ResponseTimeAttribute implements ExchangeAttribute {
 
@@ -38,13 +38,13 @@ public class ResponseTimeAttribute implements ExchangeAttribute {
             final long nanos = System.nanoTime() - requestStartTime;
             StringBuilder buf = new StringBuilder();
             long milis = TimeUnit.MILLISECONDS.convert(nanos, TimeUnit.NANOSECONDS);
-            buf.append(Long.toString(milis / 1000));
+            buf.append(milis / 1000);
             buf.append('.');
             int remains = (int) (milis % 1000);
-            buf.append(Long.toString(remains / 100));
+            buf.append(remains / 100);
             remains = remains % 100;
-            buf.append(Long.toString(remains / 10));
-            buf.append(Long.toString(remains % 10));
+            buf.append(remains / 10);
+            buf.append(remains % 10);
             return buf.toString();
         }
     }

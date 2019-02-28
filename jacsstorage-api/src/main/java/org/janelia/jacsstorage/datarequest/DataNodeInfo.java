@@ -2,6 +2,8 @@ package org.janelia.jacsstorage.datarequest;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 
@@ -13,6 +15,7 @@ public class DataNodeInfo {
     private String storageRootLocation;
     private StoragePathURI storageRootPathURI;
     private String nodeAccessURL;
+    private String nodeInfoURL;
     private String nodeRelativePath; // node path relative to the root
     private long size;
     private String mimeType;
@@ -81,6 +84,14 @@ public class DataNodeInfo {
         this.nodeAccessURL = nodeAccessURL;
     }
 
+    public String getNodeInfoURL() {
+        return nodeInfoURL;
+    }
+
+    public void setNodeInfoURL(String nodeInfoURL) {
+        this.nodeInfoURL = nodeInfoURL;
+    }
+
     public String getNodeRelativePath() {
         return nodeRelativePath;
     }
@@ -127,6 +138,46 @@ public class DataNodeInfo {
 
     public void setLastModified(Date lastModified) {
         this.lastModified = lastModified;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DataNodeInfo that = (DataNodeInfo) o;
+
+        return new EqualsBuilder()
+                .append(size, that.size)
+                .append(collectionFlag, that.collectionFlag)
+                .append(storageId, that.storageId)
+                .append(storageRootLocation, that.storageRootLocation)
+                .append(storageRootPathURI, that.storageRootPathURI)
+                .append(nodeAccessURL, that.nodeAccessURL)
+                .append(nodeInfoURL, that.nodeInfoURL)
+                .append(nodeRelativePath, that.nodeRelativePath)
+                .append(mimeType, that.mimeType)
+                .append(creationTime, that.creationTime)
+                .append(lastModified, that.lastModified)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(storageId)
+                .append(storageRootLocation)
+                .append(storageRootPathURI)
+                .append(nodeAccessURL)
+                .append(nodeInfoURL)
+                .append(nodeRelativePath)
+                .append(size)
+                .append(mimeType)
+                .append(collectionFlag)
+                .append(creationTime)
+                .append(lastModified)
+                .toHashCode();
     }
 
     @Override

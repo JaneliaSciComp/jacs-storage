@@ -4,16 +4,16 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
+import org.janelia.jacsstorage.coreutils.NetUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.security.JacsCredentials;
+import org.janelia.jacsstorage.service.StorageVolumeSelector;
 import org.janelia.jacsstorage.service.impl.AbstractStorageAllocatorService;
 import org.janelia.jacsstorage.service.impl.OverflowStorageVolumeSelector;
-import org.janelia.jacsstorage.service.StorageVolumeSelector;
-import org.janelia.jacsstorage.coreutils.NetUtils;
-import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,10 +42,14 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
     @Override
     public boolean deleteStorage(JacsBundle dataBundle, JacsCredentials credentials) {
         JacsBundle existingBundle = retrieveExistingStorage(dataBundle);
-        checkStorageDeletePermission(credentials, dataBundle);
+        checkStorageDeletePermission(dataBundle, credentials);
         LOG.info("Delete {}", existingBundle);
         return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
                 .map(storageVolume -> {
+                    if (existingBundle.isLinkedStorage()) {
+                        LOG.warn("Linked storage cannot be deleted: {}", dataBundle);
+                        return false;
+                    }
                     Path dataPath = existingBundle.getRealStoragePath();
                     try {
                         PathUtils.deletePath(dataPath);

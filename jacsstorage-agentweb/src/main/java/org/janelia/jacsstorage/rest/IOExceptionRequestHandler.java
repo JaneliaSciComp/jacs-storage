@@ -17,9 +17,11 @@ public class IOExceptionRequestHandler implements ExceptionMapper<IOException> {
     @Override
     public Response toResponse(IOException exception) {
         LOG.error("Illegal state response", exception);
-        String errorMessage = exception.getMessage();
-        if (StringUtils.isBlank(errorMessage)) {
+        String errorMessage;
+        if (StringUtils.isBlank(exception.getMessage())) {
             errorMessage = "Server state error";
+        } else {
+            errorMessage = exception.getMessage();
         }
         return Response
                 .serverError()

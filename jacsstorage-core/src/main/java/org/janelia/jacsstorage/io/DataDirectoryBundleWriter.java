@@ -23,9 +23,9 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class ExpandedArchiveBundleWriter implements BundleWriter {
+public class DataDirectoryBundleWriter implements BundleWriter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ExpandedArchiveBundleWriter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DataDirectoryBundleWriter.class);
 
     @Override
     public Set<JacsStorageFormat> getSupportedFormats() {
@@ -117,7 +117,6 @@ public class ExpandedArchiveBundleWriter implements BundleWriter {
     }
 
     @TimedMethod(
-            argList = {0, 1},
             logResult = true
     )
     @Override
@@ -127,7 +126,7 @@ public class ExpandedArchiveBundleWriter implements BundleWriter {
             LOG.info("No file path found for {}, {} ({}) to be deleted", dataPath, entryName, fullEntryPath);
             return 0L;
         }
-        long entrySize = PathUtils.getSize(fullEntryPath);
+        long entrySize = PathUtils.getSize(fullEntryPath, -1);
         try {
             PathUtils.deletePath(fullEntryPath);
             LOG.info("Deleted {} from {} ({})", entryName, dataPath, fullEntryPath);

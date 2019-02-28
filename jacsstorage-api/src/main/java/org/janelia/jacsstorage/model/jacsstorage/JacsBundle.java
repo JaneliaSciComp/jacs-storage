@@ -36,6 +36,8 @@ public class JacsBundle extends AbstractEntity {
     private Date modified = new Date();
     private Map<String, Object> metadata = new LinkedHashMap<>();
     private Number storageVolumeId;
+    private String linkedPath;
+
     @JsonIgnore
     private JacsStorageVolume storageVolume;
 
@@ -63,11 +65,28 @@ public class JacsBundle extends AbstractEntity {
         this.path = path;
     }
 
+    public String getLinkedPath() {
+        return linkedPath;
+    }
+
+    public void setLinkedPath(String linkedPath) {
+        this.linkedPath = linkedPath;
+    }
+
+    @JsonIgnore
+    public boolean isLinkedStorage() {
+        return StringUtils.isNotBlank(linkedPath);
+    }
+
     @JsonIgnore
     public Path getRealStoragePath() {
-        String storageRootDir = null;
-        if (storageVolume != null) {
+        String storageRootDir;
+        if (isLinkedStorage()) {
+            return Paths.get(linkedPath);
+        } else if (storageVolume != null) {
             storageRootDir = storageVolume.evalStorageRootDir(asStorageContext());
+        } else {
+            storageRootDir = null;
         }
         if (StringUtils.isNotBlank(storageRootDir)) {
             return Paths.get(storageRootDir, path);
@@ -215,6 +234,7 @@ public class JacsBundle extends AbstractEntity {
         return storageVolume != null ? Optional.of(storageVolume) : Optional.empty();
     }
 
+    @JsonProperty
     public Optional<JacsStorageVolume> setStorageVolume(JacsStorageVolume storageVolume) {
         this.storageVolume = storageVolume;
         return getStorageVolume();
@@ -255,6 +275,7 @@ public class JacsBundle extends AbstractEntity {
                 .append("path", path)
                 .append("storageFormat", storageFormat)
                 .append("storageVolumeId", storageVolumeId)
+                .append("linkedPath", linkedPath)
                 .toString();
     }
 }
