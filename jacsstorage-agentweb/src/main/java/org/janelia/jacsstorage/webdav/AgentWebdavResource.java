@@ -96,13 +96,19 @@ public class AgentWebdavResource {
                     nodeInfo.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
                     nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
                     nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                            .path(AgentStorageResource.class, "getEntryContent")
-                            .build(dataBundle.getId(), "/" + nodeInfoRelPath)
+                            .path(Constants.AGENTSTORAGE_URI_PATH)
+                            .path(dataBundle.getId().toString())
+                            .path("data_content")
+                            .path(nodeInfoRelPath)
+                            .build()
                             .toString()
                     );
                     nodeInfo.setNodeInfoURL(resourceURI.getBaseUriBuilder()
-                            .path(AgentStorageResource.class, "getEntryContentInfo")
-                            .build(dataBundle.getId(), "/" + nodeInfoRelPath)
+                            .path(Constants.AGENTSTORAGE_URI_PATH)
+                            .path(dataBundle.getId().toString())
+                            .path("data_info")
+                            .path(nodeInfoRelPath)
+                            .build()
                             .toString()
                     );
                     return nodeInfo;
@@ -156,13 +162,19 @@ public class AgentWebdavResource {
                                 nodeInfo.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
                                 nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
                                 nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                                        .path(AgentStorageResource.class, "getEntryContent")
-                                        .build(dataBundle.getId(), "/" + nodeInfoRelPath)
+                                        .path(Constants.AGENTSTORAGE_URI_PATH)
+                                        .path(dataBundle.getId().toString())
+                                        .path("data_content")
+                                        .path(nodeInfoRelPath)
+                                        .build()
                                         .toString()
                                 );
                                 nodeInfo.setNodeInfoURL(resourceURI.getBaseUriBuilder()
-                                        .path(AgentStorageResource.class, "getEntryContentInfo")
-                                        .build(dataBundle.getId(), "/" + nodeInfoRelPath)
+                                        .path(Constants.AGENTSTORAGE_URI_PATH)
+                                        .path(dataBundle.getId().toString())
+                                        .path("data_info")
+                                        .path(nodeInfoRelPath)
+                                        .build()
                                         .toString()
                                 );
                                 return nodeInfo;

@@ -5,7 +5,10 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.CopyOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -171,5 +174,32 @@ public class PathUtils {
         Preconditions.checkArgument(Files.exists(source), "No path found for " + source);
         DirTreeCopyVisitor pathVisitor = new DirTreeCopyVisitor(source, target);
         Files.walkFileTree(source, pathVisitor);
+    }
+
+    /**
+     * Copies from a source path to a stream. The only reason for this is a larger buffer.
+     *
+     * @param srcPath
+     * @param dstStream
+     * @return
+     * @throws IOException
+     */
+    public static long copyFileToStream(Path srcPath, OutputStream dstStream)
+            throws IOException {
+        try (ReadableByteChannel in = Files.newByteChannel(srcPath)) {
+            return BufferUtils.copy(in, Channels.newChannel(dstStream));
+        }
+    }
+
+    public static String getFileExt(Path p) {
+        String fn = p.getFileName().toString();
+        int extDelimPos = fn.lastIndexOf('.');
+        String ext;
+        if (extDelimPos == -1) {
+            ext = "";
+        } else {
+            ext = fn.substring(extDelimPos + 1);
+        }
+        return StringUtils.isNotBlank(ext) ? "." + ext : "";
     }
 }

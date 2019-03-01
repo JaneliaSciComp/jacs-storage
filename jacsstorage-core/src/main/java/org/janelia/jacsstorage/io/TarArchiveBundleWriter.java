@@ -8,8 +8,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.BufferUtils;
-import org.janelia.jacsstorage.coreutils.FileUtils;
-import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -137,7 +135,7 @@ public class TarArchiveBundleWriter implements BundleWriter {
                     },
                     (os) -> {
                         try {
-                            return FileUtils.copyFrom(entryFile, os);
+                            return PathUtils.copyFileToStream(entryFile, os);
                         } catch (IOException e) {
                             throw new IllegalStateException(e);
                         }

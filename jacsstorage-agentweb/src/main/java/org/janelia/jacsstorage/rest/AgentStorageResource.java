@@ -185,13 +185,19 @@ public class AgentStorageResource {
                 dn.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
                 dn.setStorageRootPathURI(dataBundle.getStorageURI());
                 dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                        .path(AgentStorageResource.class, "getEntryContent")
-                        .build(dataBundle.getId(), "/" + dn.getNodeRelativePath())
+                        .path(Constants.AGENTSTORAGE_URI_PATH)
+                        .path(dataBundle.getId().toString())
+                        .path("data_content")
+                        .path(dn.getNodeRelativePath())
+                        .build()
                         .toString()
                 );
                 dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
-                        .path(AgentStorageResource.class, "getEntryContentInfo")
-                        .build(dataBundle.getId(), "/" + dn.getNodeRelativePath())
+                        .path(Constants.AGENTSTORAGE_URI_PATH)
+                        .path(dataBundle.getId().toString())
+                        .path("data_info")
+                        .path(dn.getNodeRelativePath())
+                        .build()
                         .toString()
                 );
             });
@@ -339,8 +345,11 @@ public class AgentStorageResource {
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
-                .path(AgentStorageResource.class, "getEntryContent")
-                .build(dataBundleId, "/" + dataEntryPath);
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path(dataBundleId.toString())
+                .path("data_content")
+                .path(dataEntryPath)
+                .build();
         if (CollectionUtils.isNotEmpty(existingEntries)) {
             // if an entry already exists return ACCEPTED(202) instead of CREATED (201)
             return Response
@@ -363,8 +372,11 @@ public class AgentStorageResource {
         newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeInfoURL(resourceURI.getBaseUriBuilder()
-                .path(AgentStorageResource.class, "getEntryContentInfo")
-                .build(dataBundle.getId(), "/" + dataEntryPath)
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path(dataBundleId.toString())
+                .path("data_info")
+                .path(dataEntryPath)
+                .build()
                 .toString()
         );
         newDataNode.setNodeRelativePath(dataEntryPath);
@@ -455,8 +467,11 @@ public class AgentStorageResource {
         String dataEntryPath = StringUtils.removeStart(dataEntryPathParam, "/");
         List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
-                .path(AgentStorageResource.class, "getEntryContent")
-                .build(dataBundleId, "/" + dataEntryPath)
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path(dataBundleId.toString())
+                .path("data_content")
+                .path(dataEntryPath)
+                .build()
                 ;
         if (CollectionUtils.isNotEmpty(existingEntries)) {
             return Response
@@ -479,8 +494,11 @@ public class AgentStorageResource {
         newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeInfoURL(resourceURI.getBaseUriBuilder()
-                .path(AgentStorageResource.class, "getEntryContentInfo")
-                .build(dataBundle.getId(), "/" + dataEntryPath)
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path(dataBundleId.toString())
+                .path("data_info")
+                .path(dataEntryPath)
+                .build()
                 .toString()
         );
         newDataNode.setNodeRelativePath(dataEntryPath);

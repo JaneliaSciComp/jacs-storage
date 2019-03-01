@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.io;
 
+import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 
@@ -52,6 +53,11 @@ abstract class AbstractBundleReader implements BundleReader {
     }
 
     String getMimeType(Path nodePath) {
-        return mimetypesFileTypeMap.getContentType(nodePath.toFile());
+        switch (PathUtils.getFileExt(nodePath).toLowerCase()) {
+            case ".lsm":
+                return "image/tiff";
+            default:
+                return mimetypesFileTypeMap.getContentType(nodePath.toFile());
+        }
     }
 }
