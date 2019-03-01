@@ -99,6 +99,22 @@ public class PathBasedAgentStorageResource {
         ).build();
     }
 
+    @Deprecated
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @GET
+    @Path("storage_path/{dataPath:.+}")
+    @ApiOperation(value = "Deprecated endpoint to retrieve the content of the specified data path. Use 'storage_path/data_content/{dataPath:.+}' instead ")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The stream was successfull"),
+            @ApiResponse(code = 404, message = "Invalid data bundle identifier"),
+            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
+    public Response deprecatedRetrieveData(@PathParam("dataPath") String dataPathParam,
+                                           @Context UriInfo requestURI) {
+        return retrieveData(dataPathParam, requestURI);
+    }
+
     @LogStorageEvent(
             eventName = "DELETE_STORAGE_ENTRY",
             argList = {0, 1}
