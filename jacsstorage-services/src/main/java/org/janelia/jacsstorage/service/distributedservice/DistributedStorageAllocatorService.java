@@ -43,15 +43,11 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
         checkStorageDeletePermission(existingBundle, credentials);
         return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
                 .flatMap(sv -> agentManager.findRegisteredAgent(sv.getStorageServiceURL()))
-                .map(storageAgentInfo -> {
-                    if (AgentConnectionHelper.deleteStorage(storageAgentInfo.getAgentHttpURL(), existingBundle.getId(), credentials.getSubjectName(), credentials)) {
-                        LOG.info("Delete {}", existingBundle);
-                        bundleDao.delete(existingBundle);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                })
+                .map(storageAgentInfo -> AgentConnectionHelper.deleteStorage(
+                        storageAgentInfo.getAgentHttpURL(),
+                        existingBundle.getId(),
+                        credentials.getSubjectName(),
+                        credentials))
                 .orElse(false);
     }
 
