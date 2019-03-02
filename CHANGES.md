@@ -1,3 +1,14 @@
+# 1.8.0.RELEASE
+
+* Added an endpoint to get quota report(s) for all registered volumes
+
+# 1.7.4.SNAPSHOT
+
+* When creating a storage bundle allow to link it to an existing data path by specifying the link
+* Changed the retrieve content endpoints "/storage_path/data_content/{dataPath:.+}"
+* Added an endpoint to retrieve content information by examining the entry content "/storage_path/data_info/{dataPath:.+}"
+* Added a filtering mechanism to be able to retrieve slices from a TIFF for example
+
 # 1.6.2.SNAPSHOT
 
 # 1.6.1.RELEASE
