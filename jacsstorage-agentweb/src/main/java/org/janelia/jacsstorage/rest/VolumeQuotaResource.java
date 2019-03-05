@@ -14,8 +14,6 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
 import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
-import org.janelia.jacsstorage.security.JacsCredentials;
-import org.janelia.jacsstorage.securitycontext.SecurityUtils;
 import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,10 +24,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import java.util.List;
 
 @Timed
@@ -64,11 +60,10 @@ public class VolumeQuotaResource {
             @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response retrieveSubjectQuotaStatusForVolumeName(@PathParam("volumeName") String volumeName,
-                                                            @QueryParam("subjectName") String subjectName,
-                                                            @Context SecurityContext securityContext) {
+    public Response getSubjectQuotaStatusForVolumeName(@PathParam("volumeName") String volumeName,
+                                                       @QueryParam("subjectName") String subjectName) {
         LOG.info("Retrieve usage status for {} on {}", subjectName, volumeName);
-        return retrieveSubjectQuotaStatusForVolumeName(volumeName, subjectName, SecurityUtils.getUserPrincipal(securityContext));
+        return retrieveQuotaForVolumeNameAndSubject(volumeName, subjectName);
     }
 
     @Produces({MediaType.APPLICATION_JSON})
@@ -80,20 +75,19 @@ public class VolumeQuotaResource {
             @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response retrieveSubjectQuotaForVolumeName(@PathParam("volumeName") String volumeName,
-                                                      @QueryParam("subjectName") String subjectName,
-                                                      @Context SecurityContext securityContext) {
+    public Response getSubjectReportQuotaForVolumeName(@PathParam("volumeName") String volumeName,
+                                                       @QueryParam("subjectName") String subjectName) {
         LOG.info("Retrieve quota(s) for {} on {}", subjectName, volumeName);
-        return retrieveSubjectQuotaStatusForVolumeName(volumeName, subjectName, SecurityUtils.getUserPrincipal(securityContext));
+        return retrieveQuotaForVolumeNameAndSubject(volumeName, subjectName);
     }
 
-    private Response retrieveSubjectQuotaStatusForVolumeName(String volumeName, String subjectNameParam, JacsCredentials userPrincipal) {
+    private Response retrieveQuotaForVolumeNameAndSubject(String volumeName, String subjectNameParam) {
         List<UsageData> usageData;
         String subjectName = JacsSubjectHelper.getNameFromSubjectKey(subjectNameParam);
         if (StringUtils.isBlank(subjectName)) {
-            usageData = storageUsageManager.getUsageByVolumeName(volumeName, userPrincipal);
+            usageData = storageUsageManager.getUsageByVolumeName(volumeName);
         } else {
-            UsageData subjectUsageData = storageUsageManager.getUsageByVolumeNameForUser(volumeName, subjectName, userPrincipal);
+            UsageData subjectUsageData = storageUsageManager.getUsageByVolumeNameForUser(volumeName, subjectName);
             usageData = ImmutableList.of(subjectUsageData);
         }
         return Response
@@ -110,19 +104,15 @@ public class VolumeQuotaResource {
             @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response retrieveSubjectQuotaForVolumeId(@PathParam("storageVolumeId") Long storageVolumeId,
-                                                    @QueryParam("subjectName") String subjectNameParam,
-                                                    @Context SecurityContext securityContext) {
+    public Response getSubjectQuotaReportForVolumeId(@PathParam("storageVolumeId") Long storageVolumeId,
+                                                     @QueryParam("subjectName") String subjectNameParam) {
         LOG.info("Retrieve user quota for {} on {}", subjectNameParam, storageVolumeId);
         List<UsageData> usageData;
         String subjectName = JacsSubjectHelper.getNameFromSubjectKey(subjectNameParam);
         if (StringUtils.isBlank(subjectName)) {
-            usageData = storageUsageManager.getUsageByVolumeId(storageVolumeId,
-                    SecurityUtils.getUserPrincipal(securityContext));
+            usageData = storageUsageManager.getUsageByVolumeId(storageVolumeId);
         } else {
-            UsageData subjectUsageData = storageUsageManager.getUsageByVolumeIdForUser(storageVolumeId,
-                    subjectName,
-                    SecurityUtils.getUserPrincipal(securityContext));
+            UsageData subjectUsageData = storageUsageManager.getUsageByVolumeIdForUser(storageVolumeId, subjectName);
             usageData = ImmutableList.of(subjectUsageData);
         }
         return Response
@@ -139,20 +129,16 @@ public class VolumeQuotaResource {
             @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response retrieveSubjectQuotaForDataPath(@PathParam("dataPath") String dataPath,
-                                                    @QueryParam("subjectName") String subjectNameParam,
-                                                    @Context SecurityContext securityContext) {
+    public Response getSubjectQuotaReportForDataPath(@PathParam("dataPath") String dataPath,
+                                                     @QueryParam("subjectName") String subjectNameParam) {
         String fullDataPath = StringUtils.prependIfMissing(dataPath, "/");
         LOG.info("Retrieve user quota for {} on {}", subjectNameParam, fullDataPath);
         List<UsageData> usageData;
         String subjectName = JacsSubjectHelper.getNameFromSubjectKey(subjectNameParam);
         if (StringUtils.isBlank(subjectName)) {
-            usageData = storageUsageManager.getUsageByStoragePath(fullDataPath,
-                    SecurityUtils.getUserPrincipal(securityContext));
+            usageData = storageUsageManager.getUsageByStoragePath(fullDataPath);
         } else {
-            UsageData subjectUsageData = storageUsageManager.getUsageByStoragePathForUser(fullDataPath,
-                    subjectName,
-                    SecurityUtils.getUserPrincipal(securityContext));
+            UsageData subjectUsageData = storageUsageManager.getUsageByStoragePathForUser(fullDataPath, subjectName);
             usageData = ImmutableList.of(subjectUsageData);
         }
         return Response
