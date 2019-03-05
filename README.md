@@ -1,3 +1,7 @@
+# JADE - The JACS Storage Engine
+
+[![CircleCI](https://circleci.com/gh/JaneliaSciComp/jacs-storage.svg?style=svg)](https://circleci.com/gh/JaneliaSciComp/jacs-storage)
+
 ## General Notes
 
 JADE is a distributed storage system that can manage a set of configured volumes local to the machine or shared 
