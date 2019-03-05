@@ -11,19 +11,26 @@ jobs:
     docker:
       - image: circleci/openjdk:8u171-jdk
 
+    environment:
+      TERM: dumb
+
     steps:
 
       - checkout
 
       - restore_cache:
-          key: jacs-storage-{{ checksum "build.gradle" }}
+          keys: 
+            - jacs-storage-{{ checksum "build.gradle" }}
+            - jacs-storage-
       
-      - run: ./gradlew installDist
+      - run: ./gradlew dependencies
       
       - save_cache:
           key: jacs-storage-{{ checksum "build.gradle" }}
           paths:
             - ~/.gradle
+
+      - run: ./gradlew installDist
 
       - store_test_results:
           paths: 
