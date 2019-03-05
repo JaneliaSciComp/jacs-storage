@@ -34,7 +34,7 @@ jobs:
 
       - store_test_results:
           paths: 
-            - build/test-results/test
+            - **/build/test-results/test
       
       - store_artifacts:
           path: build/libs/*.jar
