@@ -15,7 +15,6 @@ import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
 import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.security.JacsCredentials;
-import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
 import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.slf4j.Logger;
@@ -34,7 +33,6 @@ import javax.ws.rs.core.SecurityContext;
 import java.util.List;
 
 @Timed
-@RequireAuthentication
 @Produces(MediaType.APPLICATION_JSON)
 @Path(Constants.AGENTSTORAGE_URI_PATH)
 @SwaggerDefinition(

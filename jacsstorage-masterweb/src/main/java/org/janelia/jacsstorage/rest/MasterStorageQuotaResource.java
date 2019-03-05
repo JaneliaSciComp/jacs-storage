@@ -12,14 +12,11 @@ import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
-import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
 import org.janelia.jacsstorage.security.JacsCredentials;
-import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
 import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -54,7 +51,6 @@ import java.util.stream.Collectors;
         }
 )
 @Timed
-@RequireAuthentication
 @Produces(MediaType.APPLICATION_JSON)
 @Path("storage")
 public class MasterStorageQuotaResource {
