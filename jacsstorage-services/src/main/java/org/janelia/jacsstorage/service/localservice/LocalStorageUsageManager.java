@@ -51,7 +51,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             logResult = true
     )
     @Override
-    public List<UsageData> getUsageByVolumeId(Number volumeId, JacsCredentials jacsCredentials) {
+    public List<UsageData> getUsageByVolumeId(Number volumeId) {
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(volumeId);
         if (storageVolume == null) {
             LOG.warn("No volume found for {}", volumeId);
@@ -64,7 +64,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             logResult = true
     )
     @Override
-    public UsageData getUsageByVolumeIdForUser(Number volumeId, String username, JacsCredentials jacsCredentials) {
+    public UsageData getUsageByVolumeIdForUser(Number volumeId, String username) {
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(volumeId);
         if (storageVolume == null) {
             LOG.warn("No volume found for {}", volumeId);
@@ -77,7 +77,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             logResult = true
     )
     @Override
-    public List<UsageData> getUsageByVolumeName(String volumeName, JacsCredentials jacsCredentials) {
+    public List<UsageData> getUsageByVolumeName(String volumeName) {
         List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(
                 new StorageQuery().setStorageName(volumeName).setAccessibleOnHost(storageHost)
         );
@@ -95,7 +95,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             logResult = true
     )
     @Override
-    public UsageData getUsageByVolumeNameForUser(String volumeName, String username, JacsCredentials jacsCredentials) {
+    public UsageData getUsageByVolumeNameForUser(String volumeName, String username) {
         List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(
                 new StorageQuery().setStorageName(volumeName).setAccessibleOnHost(storageHost)
         );
@@ -113,7 +113,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             logResult = true
     )
     @Override
-    public List<UsageData> getUsageByStoragePath(String storagePath, JacsCredentials jacsCredentials) {
+    public List<UsageData> getUsageByStoragePath(String storagePath) {
         List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(
                 new StorageQuery().setDataStoragePath(storagePath).setAccessibleOnHost(storageHost)
         );
@@ -131,7 +131,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             logResult = true
     )
     @Override
-    public UsageData getUsageByStoragePathForUser(String storagePath, String username, JacsCredentials jacsCredentials) {
+    public UsageData getUsageByStoragePathForUser(String storagePath, String username) {
         List<JacsStorageVolume> localVolumes = storageVolumeManager.getManagedVolumes(
                 new StorageQuery().setDataStoragePath(storagePath).setAccessibleOnHost(storageHost)
         );

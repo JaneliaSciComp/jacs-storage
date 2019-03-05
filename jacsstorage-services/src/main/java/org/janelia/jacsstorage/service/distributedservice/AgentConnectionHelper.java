@@ -44,7 +44,7 @@ class AgentConnectionHelper {
         return null;
     }
 
-    static List<UsageData> retrieveVolumeUsageData(String agentUrl, Number storageVolumeId, String subject, JacsCredentials jacsCredentials) {
+    static List<UsageData> retrieveVolumeUsageData(String agentUrl, Number storageVolumeId, String subject) {
         Client httpClient = HttpClientUtils.createHttpClient();
         try {
             WebTarget target = httpClient.target(agentUrl)
@@ -56,7 +56,6 @@ class AgentConnectionHelper {
                 target = target.queryParam("subjectName", subjectName);
             }
             Invocation.Builder targetRequestBuilder = target.request()
-                    .header("Authorization", getAuthorizationHeader(jacsCredentials))
                     .header("JacsSubject", subject)
                     ;
             Response response = targetRequestBuilder.get();
@@ -76,7 +75,7 @@ class AgentConnectionHelper {
         return ImmutableList.of();
     }
 
-    static List<UsageData> retrieveDataPathUsageData(String agentUrl, String storagePath, String subject, JacsCredentials jacsCredentials) {
+    static List<UsageData> retrieveDataPathUsageData(String agentUrl, String storagePath, String subject) {
         Client httpClient = HttpClientUtils.createHttpClient();
         try {
             WebTarget target = httpClient.target(agentUrl)
@@ -88,7 +87,6 @@ class AgentConnectionHelper {
                 target = target.queryParam("subjectName", subjectName);
             }
             Invocation.Builder targetRequestBuilder = target.request()
-                    .header("Authorization", getAuthorizationHeader(jacsCredentials))
                     .header("JacsSubject", subject)
                     ;
             Response response = targetRequestBuilder.get();

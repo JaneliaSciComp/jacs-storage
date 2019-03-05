@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
-import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
 import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
@@ -23,7 +22,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.nullable;
 
 public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
 
@@ -62,11 +60,11 @@ public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
     public void retrieveSubjectQuotaForVolumeName() throws IOException {
         StorageUsageManager storageUsageManager = dependenciesProducer.getStorageUsageManager();
         UsageData testUsageData = new UsageData("test", "200", "400", "100", .7, .9, "jacs");
-        Mockito.when(storageUsageManager.getUsageByVolumeName(anyString(), nullable(JacsCredentials.class)))
+        Mockito.when(storageUsageManager.getUsageByVolumeName(anyString()))
                 .then(invocation -> {
                     return ImmutableList.of(testUsageData);
                 });
-        Mockito.when(storageUsageManager.getUsageByVolumeNameForUser(anyString(), anyString(), nullable(JacsCredentials.class)))
+        Mockito.when(storageUsageManager.getUsageByVolumeNameForUser(anyString(), anyString()))
                 .then(invocation -> {
                     return testUsageData;
                 });
@@ -121,11 +119,11 @@ public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
     public void retrieveSubjectQuotaForVolumeId() throws IOException {
         StorageUsageManager storageUsageManager = dependenciesProducer.getStorageUsageManager();
         UsageData testUsageData = new UsageData("test", "200", "400", "100", .7, .9, null);
-        Mockito.when(storageUsageManager.getUsageByVolumeId(any(Number.class), nullable(JacsCredentials.class)))
+        Mockito.when(storageUsageManager.getUsageByVolumeId(any(Number.class)))
                 .then(invocation -> {
                     return ImmutableList.of(testUsageData);
                 });
-        Mockito.when(storageUsageManager.getUsageByVolumeIdForUser(any(Number.class), anyString(), nullable(JacsCredentials.class)))
+        Mockito.when(storageUsageManager.getUsageByVolumeIdForUser(any(Number.class), anyString()))
                 .then(invocation -> {
                     return testUsageData;
                 });
@@ -167,11 +165,11 @@ public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
     public void retrieveSubjectQuotaForDataPath() throws IOException {
         StorageUsageManager storageUsageManager = dependenciesProducer.getStorageUsageManager();
         UsageData testUsageData = new UsageData("test", "200", "400", "100", .7, .9, "jacs");
-        Mockito.when(storageUsageManager.getUsageByStoragePath(anyString(), nullable(JacsCredentials.class)))
+        Mockito.when(storageUsageManager.getUsageByStoragePath(anyString()))
                 .then(invocation -> {
                     return ImmutableList.of(testUsageData);
                 });
-        Mockito.when(storageUsageManager.getUsageByStoragePathForUser(anyString(), anyString(), nullable(JacsCredentials.class)))
+        Mockito.when(storageUsageManager.getUsageByStoragePathForUser(anyString(), anyString()))
                 .then(invocation -> {
                     return testUsageData;
                 });
