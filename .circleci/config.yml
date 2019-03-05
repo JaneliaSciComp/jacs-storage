@@ -34,7 +34,7 @@ jobs:
 
       - store_test_results:
           paths: 
-            - **/build/test-results/test
+            - jacsstorage-*/build/test-results/test
       
       - store_artifacts:
           path: build/libs/*.jar
