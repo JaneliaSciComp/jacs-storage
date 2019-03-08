@@ -91,8 +91,8 @@ public class UsageData {
         return UsageDataHelper.percentage(spaceUsedInBytes, totalSpaceInBytes);
     }
 
-    @JsonProperty("status")
-    public String getStatus() {
+    @JsonProperty
+    public String getState() {
         Double usageRatio = getPercentUsage();
         if (usageRatio == null) {
             return "UNKNOWN";
