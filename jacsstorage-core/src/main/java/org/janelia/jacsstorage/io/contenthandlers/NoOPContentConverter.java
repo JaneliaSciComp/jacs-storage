@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.enterprise.inject.Vetoed;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,7 +44,16 @@ public class NoOPContentConverter implements ContentConverter {
             return 0L;
         } else if (dataNodes.size() == 1) {
             if (!dataNodes.get(0).isCollectionFlag()) {
-                return IOStreamUtils.copyFrom(dataContent.streamDataNode(dataNodes.get(0)), outputStream);
+                InputStream dataStream = dataContent.streamDataNode(dataNodes.get(0));
+                try {
+                    return IOStreamUtils.copyFrom(dataStream, outputStream);
+                } finally {
+                    try {
+                        dataStream.close();
+                    } catch (Exception e) {
+                        LOG.warn("Error closing data stream for {}", dataNodes.get(0), e);
+                    }
+                }
             } else {
                 return 0L;
             }
@@ -74,7 +84,16 @@ public class NoOPContentConverter implements ContentConverter {
                                 try {
                                     p.getLeft().putArchiveEntry(entry);
                                     if (!dn.isCollectionFlag()) {
-                                        nbytes = IOStreamUtils.copyFrom(dataContent.streamDataNode(dn), p.getLeft());
+                                        InputStream dataStream = dataContent.streamDataNode(dn);
+                                        try {
+                                            nbytes = IOStreamUtils.copyFrom(dataStream, p.getLeft());
+                                        } finally {
+                                            try {
+                                                dataStream.close();
+                                            } catch (Exception e) {
+                                                LOG.warn("Error closing data stream for {}", dn, e);
+                                            }
+                                        }
                                     } else {
                                         nbytes = 0L;
                                     }

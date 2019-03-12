@@ -1,3 +1,6 @@
+* Cache local host (attempt to fix UnknownHostException thrown in NetUtils.getCurrentHostName)
+* Close the data nodes stream when reading a content directory (bug fix)
+
 # 1.8.0.RELEASE
 
 * Added an endpoint to get quota report(s) for all registered volumes
