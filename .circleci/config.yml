@@ -40,5 +40,3 @@ jobs:
             - jacsstorage-masterweb/build/test-results/test
             - jacsstorage-services/build/test-results/test
       
-      - store_artifacts:
-            path: jacsstorage-core/build/libs/jacsstorage-core-*.jar
