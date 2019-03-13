@@ -20,21 +20,23 @@ jobs:
 
       - restore_cache:
           keys: 
-            - jacs-storage-{{ checksum "build.gradle" }}
-            - jacs-storage-
+            - jacs-storage-c1-{{ checksum "build.gradle" }}
+            - jacs-storage-c1-
       
-      - run: ./gradlew dependencies
+      - run: ./gradlew --no-daemon dependencies
       
       - save_cache:
-          key: jacs-storage-{{ checksum "build.gradle" }}
+          key: jacs-storage-c1-{{ checksum "build.gradle" }}
           paths:
             - ~/.gradle
 
-      - run: ./gradlew installDist
+      - run: ./gradlew --no-daemon installDist test
 
       - store_test_results:
           paths: 
-            - jacsstorage-*/build/test-results/test
+            - jacsstorage-agentweb/build/test-results/test
+            - jacsstorage-api/build/test-results/test
+            - jacsstorage-core/build/test-results/test
+            - jacsstorage-masterweb/build/test-results/test
+            - jacsstorage-services/build/test-results/test
       
-      - store_artifacts:
-          path: build/libs/*.jar
