@@ -17,6 +17,7 @@ import javax.ws.rs.core.UriBuilder;
  */
 public class JacsAgentStorageApp extends AbstractStorageApp {
 
+    private static final Logger LOG = LoggerFactory.getLogger(JacsAgentStorageApp.class);
     private static final String DEFAULT_APP_ID = "JacsStorageWorker";
 
     private static class AgentArgs extends AppArgs {
@@ -29,47 +30,51 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
     }
 
     public static void main(String[] args) {
-        final AgentArgs agentArgs = parseAppArgs(args, new AgentArgs());
-        // validate agentArgs
-        if (agentArgs.displayUsage) {
-            displayAppUsage(agentArgs);
-            return;
-        } else if (StringUtils.isBlank(agentArgs.masterHttpUrl)) {
-            // this is somehow redundant since the parameter is marked as required
-            displayAppUsage(agentArgs, new StringBuilder("'masterURL' parameter is required").append('\n'));
-            throw new IllegalStateException("The 'masterURL' parameter is required");
-        }
-        SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
-        SeContainer container = containerInit.initialize();
-        JacsAgentStorageApp app = container.select(JacsAgentStorageApp.class).get();
+        try {
+            final AgentArgs agentArgs = parseAppArgs(args, new AgentArgs());
+            // validate agentArgs
+            if (agentArgs.displayUsage) {
+                displayAppUsage(agentArgs);
+                return;
+            } else if (StringUtils.isBlank(agentArgs.masterHttpUrl)) {
+                // this is somehow redundant since the parameter is marked as required
+                displayAppUsage(agentArgs, new StringBuilder("'masterURL' parameter is required").append('\n'));
+                throw new IllegalStateException("The 'masterURL' parameter is required");
+            }
+            SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
+            SeContainer container = containerInit.initialize();
+            JacsAgentStorageApp app = container.select(JacsAgentStorageApp.class).get();
 
-        if (agentArgs.bootstrapStorageVolumes) {
-            StorageVolumeBootstrapper volumeBootstrapper = container.select(StorageVolumeBootstrapper.class).get();
-            volumeBootstrapper.initializeStorageVolumes();
+            if (agentArgs.bootstrapStorageVolumes) {
+                StorageVolumeBootstrapper volumeBootstrapper = container.select(StorageVolumeBootstrapper.class).get();
+                volumeBootstrapper.initializeStorageVolumes();
+            }
+            AgentState agentState = container.select(AgentState.class).get();
+            // update agent info
+            int agentPortNumber;
+            if (agentArgs.publicPortNumber != null && agentArgs.publicPortNumber > 0) {
+                agentPortNumber = agentArgs.publicPortNumber;
+            } else {
+                agentPortNumber = agentArgs.portNumber;
+            }
+            agentState.updateAgentInfo(
+                    UriBuilder.fromPath(new ContextPathBuilder()
+                            .path(agentArgs.baseContextPath)
+                            .path(app.getRestApiContext())
+                            .path(app.getApiVersion())
+                            .build())
+                            .scheme("http")
+                            .host(agentState.getStorageHost())
+                            .port(agentPortNumber)
+                            .build()
+                            .toString());
+            // register agent
+            agentState.connectTo(agentArgs.masterHttpUrl);
+            // start the HTTP application
+            app.start(agentArgs);
+        } catch (Throwable e) {
+            LOG.error("Error starting application", e);
         }
-        AgentState agentState = container.select(AgentState.class).get();
-        // update agent info
-        int agentPortNumber;
-        if (agentArgs.publicPortNumber != null && agentArgs.publicPortNumber > 0) {
-            agentPortNumber = agentArgs.publicPortNumber;
-        } else {
-            agentPortNumber = agentArgs.portNumber;
-        }
-        agentState.updateAgentInfo(
-                UriBuilder.fromPath(new ContextPathBuilder()
-                        .path(agentArgs.baseContextPath)
-                        .path(app.getRestApiContext())
-                        .path(app.getApiVersion())
-                        .build())
-                        .scheme("http")
-                        .host(agentState.getStorageHost())
-                        .port(agentPortNumber)
-                        .build()
-                        .toString());
-        // register agent
-        agentState.connectTo(agentArgs.masterHttpUrl);
-        // start the HTTP application
-        app.start(agentArgs);
     }
 
     @Override
