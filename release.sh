@@ -15,7 +15,10 @@ sed s/"version = '${VER}.SNAPSHOT'"/"version = '${VER}.RELEASE'"/ build.tmp.prer
 
 git add build.gradle
 git commit -m "Prepare ${VER}.RELEASE"
-git tag "${VER}.RELEASE"
 git push origin
+
+# tag it
+git tag "${VER}.RELEASE"
+git push --tags
 
 rm -f build.tmp.prerelease
