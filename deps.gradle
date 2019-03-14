@@ -83,7 +83,7 @@ dependencies {
         JAVA_EXP_IMPL_LIB = "org.glassfish:javax.el:3.0.0"
 
         // auth
-        JWT_LIB = "com.nimbusds:nimbus-jose-jwt:5.4"
+        JWT_LIB = "com.nimbusds:nimbus-jose-jwt:7.0.1"
 
         // data
         MESSAGEPACK_LIB = "org.msgpack:msgpack-core:0.8.14"
