@@ -17,7 +17,9 @@ import io.undertow.attribute.ResponseCodeAttribute;
 import io.undertow.attribute.ResponseHeaderAttribute;
 import io.undertow.predicate.Predicate;
 import io.undertow.predicate.Predicates;
+import io.undertow.predicate.PredicatesHandler;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.handlers.PredicateHandler;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.server.handlers.resource.PathResourceManager;
@@ -115,8 +117,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
         HttpHandler storageHandler = new AccessLogHandler(
                 Handlers.path(Handlers.redirect(docsContextPath))
                         .addPrefixPath(docsContextPath, staticHandler)
-                        .addPrefixPath(contextPath + "/unauthenticated", restApiHttpHandler)
-                        .addPrefixPath(contextPath, restApiHttpHandler),
+                        .addPrefixPath(contextPath, new PredicateHandler(Predicates.prefix("undertow"), restApiHttpHandler, restApiHttpHandler)),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),
                 "ignored",
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {
