@@ -117,7 +117,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
         HttpHandler storageHandler = new AccessLogHandler(
                 Handlers.path(Handlers.redirect(docsContextPath))
                         .addPrefixPath(docsContextPath, staticHandler)
-                        .addPrefixPath(contextPath, new PredicateHandler(Predicates.prefix("undertow"), restApiHttpHandler, restApiHttpHandler)),
+                        .addPrefixPath(contextPath, new PredicateHandler(Predicates.prefix("/unauthenticated"), restApiHttpHandler, restApiHttpHandler)),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),
                 "ignored",
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {
