@@ -5,8 +5,11 @@ project(":jacsstorage-core") {
 
         implementation COMMONS_COMPRESS_LIB,
                        JACS_MODEL_RENDERING_LIB,
-                       JWT_LIB,
+                       JWT_API_LIB,
                        MESSAGEPACK_LIB
+
+        runtime JWT_IMPL_LIB,
+                JWT_JACKSON_LIB
     }
 }
 

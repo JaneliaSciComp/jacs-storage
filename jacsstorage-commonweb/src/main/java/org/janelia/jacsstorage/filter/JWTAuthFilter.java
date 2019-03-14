@@ -8,9 +8,9 @@ import org.janelia.jacsstorage.security.AggregatedTokenCredentialsValidator;
 import org.janelia.jacsstorage.security.ApiKeyCredentialsValidator;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.security.JwtTokenCredentialsValidator;
-import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.security.TokenCredentialsValidator;
 import org.janelia.jacsstorage.securitycontext.JacsSecurityContext;
+import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 
 import javax.annotation.Priority;
 import javax.inject.Inject;

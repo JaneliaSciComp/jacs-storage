@@ -1,28 +1,24 @@
 package org.janelia.jacsstorage.security;
 
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.JWSKeySelector;
-import com.nimbusds.jose.proc.JWSVerificationKeySelector;
-import com.nimbusds.jose.proc.SecurityContext;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
-import com.nimbusds.jwt.proc.DefaultJWTProcessor;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.Charset;
 import java.util.Optional;
 
 public class JwtTokenCredentialsValidator implements TokenCredentialsValidator {
     private static final String USERNAME_CLAIM = "user_name";
     private static final Logger LOG = LoggerFactory.getLogger(JwtTokenCredentialsValidator.class);
 
-    private final String secretKey;
+    private final byte[] secretKeyBytes;
 
     public JwtTokenCredentialsValidator(String secretKey) {
-        this.secretKey = secretKey;
+        this.secretKeyBytes = StringUtils.isNotBlank(secretKey) ? secretKey.getBytes(Charset.forName("UTF-8")) : new byte[32];
     }
 
     @Override
@@ -45,18 +41,13 @@ public class JwtTokenCredentialsValidator implements TokenCredentialsValidator {
     public Optional<TokenCredentials> validateToken(String token) {
         String jwt = getJwt(token);
         try {
-            ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
-            JWSAlgorithm expectedJWSAlg = JWSAlgorithm.HS256;
-            JWKSource<SecurityContext> jwtKeySource = new ImmutableSecret<>(secretKey.getBytes());
-            JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(expectedJWSAlg, jwtKeySource);
-            jwtProcessor.setJWSKeySelector(keySelector);
-
-            JWTClaimsSet claimsSet = jwtProcessor.process(jwt, null);
-
+            SecretKey key = Keys.hmacShaKeyFor(secretKeyBytes);
+            Claims claimsSet = Jwts.parser()
+                    .setSigningKey(key).parseClaimsJws(jwt).getBody();
             return Optional.of(new TokenCredentials()
-                    .setAuthName(StringUtils.defaultIfBlank(claimsSet.getSubject(), claimsSet.getStringClaim(USERNAME_CLAIM)))
+                    .setAuthName(StringUtils.defaultIfBlank(claimsSet.getSubject(), claimsSet.get(USERNAME_CLAIM, String.class)))
                     .setAuthToken(jwt)
-                    .setClaims(claimsSet.getClaims())
+                    .setClaims(claimsSet)
             );
         } catch (Exception e) {
             LOG.error("Error while validating {}", jwt, e);
