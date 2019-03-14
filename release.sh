@@ -14,8 +14,8 @@ mv build.gradle build.tmp.prerelease
 sed s/"version = '${VER}.SNAPSHOT'"/"version = '${VER}.RELEASE'"/ build.tmp.prerelease > build.gradle
 
 git add build.gradle
-git tag "${VER}.RELEASE"
 git commit -m "Prepare ${VER}.RELEASE"
+git tag "${VER}.RELEASE"
 git push origin
 
 rm -f build.tmp.prerelease
