@@ -1,3 +1,5 @@
+# 1.9.0.RELEASE
+
 * Cache local host (attempt to fix UnknownHostException thrown in NetUtils.getCurrentHostName)
 * Close the data nodes stream when reading a content directory (bug fix)
 
