@@ -19,6 +19,7 @@ import io.undertow.predicate.Predicate;
 import io.undertow.predicate.Predicates;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
+import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.server.handlers.resource.PathResourceManager;
 import io.undertow.server.handlers.resource.ResourceHandler;
 import io.undertow.servlet.Servlets;
@@ -112,11 +113,10 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                 resource(new PathResourceManager(Paths.get("swagger-webapp"), 100));
 
         HttpHandler storageHandler = new AccessLogHandler(
-                Handlers.path(
-                        Handlers.redirect(docsContextPath))
+                Handlers.path(Handlers.redirect(docsContextPath))
                         .addPrefixPath(docsContextPath, staticHandler)
-                        .addPrefixPath(contextPath, restApiHttpHandler)
-                        .addPrefixPath(contextPath + "/unauthenticated", restApiHttpHandler),
+                        .addPrefixPath(contextPath + "/unauthenticated", restApiHttpHandler)
+                        .addPrefixPath(contextPath, restApiHttpHandler),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),
                 "ignored",
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {
