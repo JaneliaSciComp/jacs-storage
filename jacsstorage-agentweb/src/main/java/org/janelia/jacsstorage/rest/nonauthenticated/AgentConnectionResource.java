@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.rest;
+package org.janelia.jacsstorage.rest.nonauthenticated;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -22,10 +22,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+@Api(value = "Agent connectivity API")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("connection")
-@Api(value = "Agent connectivity API")
 public class AgentConnectionResource {
     private static final Logger LOG = LoggerFactory.getLogger(AgentConnectionResource.class);
 

@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.rest;
+package org.janelia.jacsstorage.rest.nonauthenticated;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.service.distributedservice.StorageAgentManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,10 +28,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+@Api(value = "Agent registration API")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("agents")
-@Api(value = "Agent registration API")
 public class StorageAgentsResource {
     private static final Logger LOG = LoggerFactory.getLogger(StorageAgentsResource.class);
 

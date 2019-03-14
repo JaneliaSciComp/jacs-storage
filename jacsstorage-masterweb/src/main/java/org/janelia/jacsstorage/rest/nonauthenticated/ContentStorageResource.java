@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.rest;
+package org.janelia.jacsstorage.rest.nonauthenticated;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -9,7 +9,7 @@ import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
-import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
+import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
@@ -32,10 +32,10 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
+@Api(value = "File path based API for retrieving storage content")
 @Timed
 @Produces(MediaType.APPLICATION_JSON)
 @Path("storage_content")
-@Api(value = "File path based API for retrieving storage content")
 public class ContentStorageResource {
     private static final Logger LOG = LoggerFactory.getLogger(ContentStorageResource.class);
 
@@ -165,7 +165,6 @@ public class ContentStorageResource {
      * @param filePathParam
      * @return an HTTP Redirect response if a storage volume is found for the given path or BAD_GATEWAY otherwise
      */
-    @RequireAuthentication
     @Produces({MediaType.APPLICATION_JSON})
     @DELETE
     @Path("storage_path_redirect/{filePath:.+}")

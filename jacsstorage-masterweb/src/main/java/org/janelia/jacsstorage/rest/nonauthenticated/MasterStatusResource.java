@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.rest;
+package org.janelia.jacsstorage.rest.nonauthenticated;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -11,9 +11,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+@Api(value = "Master storage status API.")
 @ApplicationScoped
 @Path("storage")
-@Api(value = "Master storage status API.")
 public class MasterStatusResource {
 
     @Produces(MediaType.TEXT_PLAIN)

@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.rest;
+package org.janelia.jacsstorage.rest.authenticated;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
@@ -15,6 +15,7 @@ import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
@@ -160,7 +161,6 @@ public class StorageVolumesResource {
             eventName = "UPDATE_OR_CREATE_STORAGE_VOLUME",
             argList = {0, 1}
     )
-    @RequireAuthentication
     @Consumes("application/json")
     @POST
     @ApiOperation(
@@ -185,7 +185,6 @@ public class StorageVolumesResource {
             eventName = "UPDATE_OR_CREATE_STORAGE_VOLUME",
             argList = {0, 1}
     )
-    @RequireAuthentication
     @Consumes("application/json")
     @PUT
     @ApiOperation(

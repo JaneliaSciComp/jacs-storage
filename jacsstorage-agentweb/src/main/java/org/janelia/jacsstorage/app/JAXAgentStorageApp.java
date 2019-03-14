@@ -1,11 +1,12 @@
 package org.janelia.jacsstorage.app;
 
 import com.google.common.collect.ImmutableSet;
-import org.janelia.jacsstorage.rest.AgentConnectionResource;
-import org.janelia.jacsstorage.rest.AgentStorageResource;
-import org.janelia.jacsstorage.rest.PathBasedAgentStorageResource;
-import org.janelia.jacsstorage.rest.VolumeQuotaResource;
-import org.janelia.jacsstorage.rest.VolumeStorageResource;
+import org.janelia.jacsstorage.rest.nonauthenticated.AgentConnectionResource;
+import org.janelia.jacsstorage.rest.authenticated.AgentStorageResource;
+import org.janelia.jacsstorage.rest.authenticated.PathBasedAgentStorageAuthenticatedResource;
+import org.janelia.jacsstorage.rest.nonauthenticated.PathBasedAgentStorageUnauthenticatedResource;
+import org.janelia.jacsstorage.rest.nonauthenticated.VolumeQuotaResource;
+import org.janelia.jacsstorage.rest.nonauthenticated.VolumeStorageResource;
 import org.janelia.jacsstorage.webdav.AgentWebdavResource;
 
 import java.util.Set;
@@ -16,7 +17,8 @@ public class JAXAgentStorageApp extends AbstractJAXApp {
         return ImmutableSet.of(
                 AgentConnectionResource.class,
                 AgentStorageResource.class,
-                PathBasedAgentStorageResource.class,
+                PathBasedAgentStorageAuthenticatedResource.class,
+                PathBasedAgentStorageUnauthenticatedResource.class,
                 VolumeStorageResource.class,
                 VolumeQuotaResource.class,
                 AgentWebdavResource.class

@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.rest;
+package org.janelia.jacsstorage.rest.authenticated;
 
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
@@ -22,6 +22,9 @@ import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
+import org.janelia.jacsstorage.rest.Constants;
+import org.janelia.jacsstorage.rest.ContentFilterRequestHelper;
+import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
@@ -69,8 +72,8 @@ import java.util.List;
                 @Authorization("jwtBearerToken")
         }
 )
-@Timed
 @RequireAuthentication
+@Timed
 @Path(Constants.AGENTSTORAGE_URI_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public class AgentStorageResource {

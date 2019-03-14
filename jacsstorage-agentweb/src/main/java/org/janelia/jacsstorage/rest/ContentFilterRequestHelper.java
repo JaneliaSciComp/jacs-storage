@@ -6,9 +6,9 @@ import org.janelia.jacsstorage.io.ContentFilterParams;
 
 import javax.ws.rs.core.MultivaluedMap;
 
-class ContentFilterRequestHelper {
+public class ContentFilterRequestHelper {
 
-    static ContentFilterParams createContentFilterParamsFromQuery(MultivaluedMap<String, String> queryParameters) {
+    public static ContentFilterParams createContentFilterParamsFromQuery(MultivaluedMap<String, String> queryParameters) {
         ContentFilterParams filterParams = new ContentFilterParams();
         queryParameters.forEach((k, vs) -> {
             if ("filterType".equalsIgnoreCase(k)) {

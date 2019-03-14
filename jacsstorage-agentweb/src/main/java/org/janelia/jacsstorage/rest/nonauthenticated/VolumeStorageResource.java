@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.rest;
+package org.janelia.jacsstorage.rest.nonauthenticated;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -13,6 +13,9 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.StorageRelativePath;
+import org.janelia.jacsstorage.rest.Constants;
+import org.janelia.jacsstorage.rest.ContentFilterRequestHelper;
+import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -33,10 +36,10 @@ import javax.ws.rs.core.UriInfo;
 import java.nio.file.Files;
 import java.util.List;
 
+@Api(value = "Agent storage API on a particular volume.")
 @Timed
 @Produces(MediaType.APPLICATION_JSON)
 @Path(Constants.AGENTSTORAGE_URI_PATH)
-@Api(value = "Agent storage API on a particular volume. This API requires an authenticated subject.")
 public class VolumeStorageResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(VolumeStorageResource.class);

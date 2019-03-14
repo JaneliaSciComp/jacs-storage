@@ -12,7 +12,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.rest.Constants;
-import org.janelia.jacsstorage.rest.ContentStorageResource;
+import org.janelia.jacsstorage.rest.nonauthenticated.ContentStorageResource;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
@@ -43,8 +43,8 @@ import javax.ws.rs.core.UriInfo;
 import java.util.List;
 import java.util.Optional;
 
-@Timed
 @RequireAuthentication
+@Timed
 @Path("webdav")
 public class MasterWebdavResource {
     private static final Logger LOG = LoggerFactory.getLogger(MasterWebdavResource.class);

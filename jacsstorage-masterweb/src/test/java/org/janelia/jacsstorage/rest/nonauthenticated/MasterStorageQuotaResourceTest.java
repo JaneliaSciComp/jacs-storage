@@ -1,13 +1,13 @@
-package org.janelia.jacsstorage.rest;
+package org.janelia.jacsstorage.rest.nonauthenticated;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.app.JAXAgentStorageApp;
+import org.janelia.jacsstorage.app.JAXMasterStorageApp;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
 import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
-import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
+import org.janelia.jacsstorage.testrest.TestMasterStorageDependenciesProducer;
 import org.janelia.jacsstorage.testrest.TestResourceBinder;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -23,13 +23,13 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
-public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
+public class MasterStorageQuotaResourceTest extends AbstractCdiInjectedResourceTest {
 
-    private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
+    private TestMasterStorageDependenciesProducer dependenciesProducer = new TestMasterStorageDependenciesProducer();
 
     @Override
-    protected JAXAgentStorageApp configure() {
-        return new JAXAgentStorageApp() {
+    protected JAXMasterStorageApp configure() {
+        return new JAXMasterStorageApp() {
             @Override
             protected Set<Class<?>> getAppClasses() {
                 return ImmutableSet.<Class<?>>builder()
@@ -52,22 +52,20 @@ public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
     @Override
     protected Class<?>[] getTestBeanProviders() {
         return new Class<?>[] {
-                TestAgentStorageDependenciesProducer.class
+                TestMasterStorageDependenciesProducer.class
         };
     }
 
     @Test
     public void retrieveSubjectQuotaForVolumeName() throws IOException {
         StorageUsageManager storageUsageManager = dependenciesProducer.getStorageUsageManager();
-        UsageData testUsageData = new UsageData("test", "200", "400", "100", .7, .9, "jacs");
+        UsageData testUsageData = new UsageData("test", "200", "400", "100", .7, .9, null);
         Mockito.when(storageUsageManager.getUsageByVolumeName(anyString()))
                 .then(invocation -> {
                     return ImmutableList.of(testUsageData);
                 });
         Mockito.when(storageUsageManager.getUsageByVolumeNameForUser(anyString(), anyString()))
-                .then(invocation -> {
-                    return testUsageData;
-                });
+                .then(invocation -> testUsageData);
 
         class TestData {
             private final String testVolumeName;
@@ -87,22 +85,20 @@ public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
                 new TestData("v1", "", 200)
         };
         for (TestData td : testData) {
-            WebTarget wt = target()
-                    .path(Constants.AGENTSTORAGE_URI_PATH)
-                    .path("quota")
+            WebTarget reportWt = target()
+                    .path("storage/quota")
                     .path(td.testVolumeName)
                     .path("report");
             if (StringUtils.isNotBlank(td.testSubject)) {
-                wt = wt.queryParam("subjectName", td.testSubject);
+                reportWt = reportWt.queryParam("subjectName", td.testSubject);
             }
-            Response testQuotaResponse = wt.request().get();
+            Response testQuotaResponse = reportWt.request().get();
             assertEquals("Volume: " + td.testVolumeName + ", subject: " + td.testSubject, td.expectedStatus, testQuotaResponse.getStatus());
             String usageDataResponse = testQuotaResponse.readEntity(String.class);
             assertThat(usageDataResponse, equalTo(dependenciesProducer.getObjectMapper().writeValueAsString(ImmutableList.of(testUsageData))));
 
             WebTarget statusWt = target()
-                    .path(Constants.AGENTSTORAGE_URI_PATH)
-                    .path("quota")
+                    .path("storage/quota")
                     .path(td.testVolumeName)
                     .path("status");
             if (StringUtils.isNotBlank(td.testSubject)) {
@@ -146,15 +142,14 @@ public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
                 new TestData(1, "", 200)
         };
         for (TestData td : testData) {
-            WebTarget wt = target()
-                    .path(Constants.AGENTSTORAGE_URI_PATH)
-                    .path("volume_quota")
+            WebTarget reportWt = target()
+                    .path("storage/volume_quota")
                     .path(td.testVolumeId.toString())
                     .path("report");
             if (StringUtils.isNotBlank(td.testSubject)) {
-                wt = wt.queryParam("subjectName", td.testSubject);
+                reportWt = reportWt.queryParam("subjectName", td.testSubject);
             }
-            Response testResponse = wt.request().get();
+            Response testResponse = reportWt.request().get();
             assertEquals("VolumeID: " + td.testVolumeId + ", subject: " + td.testSubject, td.expectedStatus, testResponse.getStatus());
             String usageDataResponse = testResponse.readEntity(String.class);
             assertThat(usageDataResponse, equalTo(dependenciesProducer.getObjectMapper().writeValueAsString(ImmutableList.of(testUsageData))));
@@ -166,9 +161,7 @@ public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
         StorageUsageManager storageUsageManager = dependenciesProducer.getStorageUsageManager();
         UsageData testUsageData = new UsageData("test", "200", "400", "100", .7, .9, "jacs");
         Mockito.when(storageUsageManager.getUsageByStoragePath(anyString()))
-                .then(invocation -> {
-                    return ImmutableList.of(testUsageData);
-                });
+                .then(invocation -> ImmutableList.of(testUsageData));
         Mockito.when(storageUsageManager.getUsageByStoragePathForUser(anyString(), anyString()))
                 .then(invocation -> {
                     return testUsageData;
@@ -192,15 +185,14 @@ public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
                 new TestData("volPrefix/testPath", "", 200)
         };
         for (TestData td : testData) {
-            WebTarget wt = target()
-                    .path(Constants.AGENTSTORAGE_URI_PATH)
-                    .path("path_quota")
+            WebTarget reportWt = target()
+                    .path("storage/path_quota")
                     .path(td.testPath)
                     .path("report");
             if (StringUtils.isNotBlank(td.testSubject)) {
-                wt = wt.queryParam("subjectName", td.testSubject);
+                reportWt = reportWt.queryParam("subjectName", td.testSubject);
             }
-            Response testResponse = wt.request().get();
+            Response testResponse = reportWt.request().get();
             assertEquals("Path: " + td.testPath + ", subject: " + td.testSubject, td.expectedStatus, testResponse.getStatus());
             String usageDataResponse = testResponse.readEntity(String.class);
             assertThat(usageDataResponse, equalTo(dependenciesProducer.getObjectMapper().writeValueAsString(ImmutableList.of(testUsageData))));

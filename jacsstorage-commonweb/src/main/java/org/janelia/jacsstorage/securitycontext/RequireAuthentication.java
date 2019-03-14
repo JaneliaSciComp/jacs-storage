@@ -13,6 +13,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Documented
 @Retention (RUNTIME)
-@Target({TYPE, METHOD})
+@Target({TYPE})
 public @interface RequireAuthentication {
 }

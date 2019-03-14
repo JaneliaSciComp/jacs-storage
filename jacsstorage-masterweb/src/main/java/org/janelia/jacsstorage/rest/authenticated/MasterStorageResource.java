@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.rest;
+package org.janelia.jacsstorage.rest.authenticated;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
@@ -18,6 +18,7 @@ import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
+import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
@@ -46,6 +47,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@RequireAuthentication
 @Timed
 @Produces(MediaType.APPLICATION_JSON)
 @Path("storage")
@@ -73,7 +75,6 @@ public class MasterStorageResource {
     private UriInfo resourceURI;
 
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML})
-    @RequireAuthentication
     @GET
     @Path("size")
     @ApiOperation(
@@ -127,7 +128,6 @@ public class MasterStorageResource {
                 .build();
     }
 
-    @RequireAuthentication
     @GET
     @Path("{id}")
     @ApiOperation(
@@ -182,7 +182,6 @@ public class MasterStorageResource {
         }
     }
 
-    @RequireAuthentication
     @GET
     @ApiOperation(
             value = "List storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}.",
@@ -253,7 +252,6 @@ public class MasterStorageResource {
                 .build();
     }
 
-    @RequireAuthentication
     @GET
     @Path("{ownerKey}/{name}")
     @ApiOperation(
@@ -318,7 +316,6 @@ public class MasterStorageResource {
             eventName = "ALLOCATE_STORAGE_METADATA",
             argList = {0, 1}
     )
-    @RequireAuthentication
     @Consumes("application/json")
     @POST
     @ApiOperation(
@@ -355,7 +352,6 @@ public class MasterStorageResource {
             eventName = "UPDATE_STORAGE_METADATA",
             argList = {0, 1, 2}
     )
-    @RequireAuthentication
     @Consumes("application/json")
     @PUT
     @Path("{id}")
@@ -380,7 +376,6 @@ public class MasterStorageResource {
     @LogStorageEvent(
             eventName = "DELETE_STORAGE_METADATA"
     )
-    @RequireAuthentication
     @DELETE
     @Path("{id}")
     public Response deleteBundleInfo(@PathParam("id") Long id, @Context SecurityContext securityContext) {
