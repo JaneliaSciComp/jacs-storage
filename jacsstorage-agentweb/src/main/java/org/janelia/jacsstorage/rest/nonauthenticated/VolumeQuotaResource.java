@@ -61,7 +61,7 @@ public class VolumeQuotaResource {
     @Path("quota/{volumeName}/report/{subjectName}")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The stream was successfull"),
+            @ApiResponse(code = 200, message = "The usage retrieval was successfull"),
             @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
             @ApiResponse(code = 500, message = "Data read error")
     })
@@ -87,7 +87,7 @@ public class VolumeQuotaResource {
     @Path("quota/{volumeName}/report")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The stream was successfull"),
+            @ApiResponse(code = 200, message = "The usage retrieval was successfull"),
             @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
             @ApiResponse(code = 500, message = "Data read error")
     })
