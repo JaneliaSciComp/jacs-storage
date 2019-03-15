@@ -1,3 +1,6 @@
+* added /authenticated and /unauthenticated mappings for the REST servlet
+* quota endpoint for volume and mandatory subject
+
 # 1.9.0.RELEASE
 
 * Cache local host (attempt to fix UnknownHostException thrown in NetUtils.getCurrentHostName)
