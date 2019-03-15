@@ -83,7 +83,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         .setEnabled(true)
                         .addInitParam(ServletProperties.JAXRS_APPLICATION_CLASS, application.getClass().getName())
                         .addInitParam("jersey.config.server.wadl.disableWadl", "true")
-                        .addMapping("/*")
+                        .addMappings("/*", "/unauthenticated/*")
                 ;
 
         String basepath = "http://" + appArgs.host + ":" + appArgs.portNumber + contextPath;
@@ -117,7 +117,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
         HttpHandler storageHandler = new AccessLogHandler(
                 Handlers.path(Handlers.redirect(docsContextPath))
                         .addPrefixPath(docsContextPath, staticHandler)
-                        .addPrefixPath(contextPath, new PredicateHandler(Predicates.prefix("unauthenticated"), restApiHttpHandler, restApiHttpHandler)),
+                        .addPrefixPath(contextPath, restApiHttpHandler),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),
                 "ignored",
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {
