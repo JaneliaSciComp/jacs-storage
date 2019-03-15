@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 @Api(value = "Master storage quota API.")
 @Timed
 @Produces(MediaType.APPLICATION_JSON)
-@Path("storage")
+@Path("/storage")
 public class MasterStorageQuotaResource {
     private static final Logger LOG = LoggerFactory.getLogger(MasterStorageQuotaResource.class);
 
