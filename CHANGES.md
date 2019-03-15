@@ -1,3 +1,5 @@
+# 1.10.0.RELEASE
+
 * added /authenticated and /unauthenticated mappings for the REST servlet
 * quota endpoint for volume and mandatory subject
 
