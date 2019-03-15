@@ -16,13 +16,13 @@ import javax.ws.rs.core.MediaType;
 @Path("storage")
 public class MasterStatusResource {
 
-    @Produces(MediaType.TEXT_PLAIN)
-    @GET
-    @Path("status")
     @ApiOperation(value = "Retrieve master status.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "If the server is up and running")
     })
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    @Path("status")
     public String getStatus() {
         return "OK";
     }

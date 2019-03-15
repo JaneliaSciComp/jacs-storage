@@ -57,11 +57,11 @@ public class MasterWebdavResource {
     @Context
     private UriInfo resourceURI;
 
+    @PROPFIND
     @Consumes(MediaType.APPLICATION_XML)
     @Produces({
             MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
     })
-    @PROPFIND
     @Path("storage_prefix/{storagePrefix:.+}")
     public Response dataStoragePropFindByStoragePrefix(@PathParam("storagePrefix") String storagePrefixParam,
                                                        Propfind propfindRequest,
@@ -99,11 +99,11 @@ public class MasterWebdavResource {
                 .build();
     }
 
+    @PROPFIND
     @Consumes(MediaType.APPLICATION_XML)
     @Produces({
             MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
     })
-    @PROPFIND
     @Path("data_storage_path/{dataStoragePath:.+}")
     public Response dataStoragePropFindByStoragePath(@PathParam("dataStoragePath") String dataStoragePathParam,
                                                      Propfind propfindRequest,
@@ -154,8 +154,8 @@ public class MasterWebdavResource {
             eventName = "STORAGE_MKCOL",
             argList = {0, 1, 2, 3, 4}
     )
-    @Produces(MediaType.APPLICATION_JSON)
     @MKCOL
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("storage/{storageName}{format:(/format/[^/]+?)?}")
     public Response createDataStorage(@PathParam("storageName") String storageName,
                                       @PathParam("format") String format,

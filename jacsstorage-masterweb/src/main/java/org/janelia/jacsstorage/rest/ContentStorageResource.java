@@ -50,8 +50,6 @@ public class ContentStorageResource {
      * @param securityContext
      * @return
      */
-    @HEAD
-    @Path("storage_path_redirect/{filePath:.+}")
     @ApiOperation(value = "Get file content",
             notes = "Return the redirect URL to for retrieving the content based on the file path")
     @ApiResponses(value = {
@@ -59,6 +57,8 @@ public class ContentStorageResource {
             @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
     })
+    @HEAD
+    @Path("storage_path_redirect/{filePath:.+}")
     public Response redirectForContentCheck(@PathParam("filePath") String filePathParam,
                                             @QueryParam("directoryOnly") Boolean directoryOnlyParam,
                                             @Context UriInfo requestURI,
@@ -106,9 +106,6 @@ public class ContentStorageResource {
      * @param securityContext
      * @return
      */
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-    @GET
-    @Path("storage_path_redirect/{filePath:.+}")
     @ApiOperation(value = "Get file content",
             notes = "Return the redirect URL to for retrieving the content based on the file path")
     @ApiResponses(value = {
@@ -116,6 +113,9 @@ public class ContentStorageResource {
             @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
     })
+    @GET
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Path("storage_path_redirect/{filePath:.+}")
     public Response redirectForContent(@PathParam("filePath") String filePathParam,
                                        @Context UriInfo requestURI,
                                        @Context SecurityContext securityContext) {
@@ -164,9 +164,6 @@ public class ContentStorageResource {
      * @param filePathParam
      * @return an HTTP Redirect response if a storage volume is found for the given path or BAD_GATEWAY otherwise
      */
-    @Produces({MediaType.APPLICATION_JSON})
-    @DELETE
-    @Path("storage_path_redirect/{filePath:.+}")
     @ApiOperation(value = "Delete file content",
             notes = "Return the redirect URL to for deleting the content based on the file path")
     @ApiResponses(value = {
@@ -174,6 +171,9 @@ public class ContentStorageResource {
             @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
     })
+    @DELETE
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path("storage_path_redirect/{filePath:.+}")
     public Response redirectForDeleteContent(@PathParam("filePath") String filePathParam) {
         LOG.info("Redirect to agent for deleting content of {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);

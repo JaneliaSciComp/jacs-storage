@@ -39,13 +39,13 @@ public class StorageAgentsResource {
     @Context
     private UriInfo resourceURI;
 
-    @Path("url/{agentURL:.+}")
-    @GET
     @ApiOperation(value = "Find registered agent")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Return the agent info", response = StorageAgentInfo.class),
             @ApiResponse(code = 404, message = "Agent URL is invalid", response = ErrorResponse.class)
     })
+    @GET
+    @Path("url/{agentURL:.+}")
     public Response findRegisteredAgent(@PathParam("agentURL") String agentLocationInfo) {
         LOG.trace("Find registered agent for {}", agentLocationInfo);
         return agentManager.findRegisteredAgent(agentLocationInfo)
@@ -53,11 +53,11 @@ public class StorageAgentsResource {
                 .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
 
-    @GET
     @ApiOperation(value = "List registered agents")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Return registered agents info", response = StorageAgentInfo.class)
     })
+    @GET
     public Response getCurrentRegisteredAgents(@QueryParam("connStatus") String connectionStatus) {
         LOG.debug("Get available agents with connectionStatus - {}", StringUtils.defaultIfBlank(connectionStatus, "<ANY>"));
         return Response
@@ -65,13 +65,13 @@ public class StorageAgentsResource {
                 .build();
     }
 
-    @Timed
-    @Consumes("application/json")
-    @POST
     @ApiOperation(value = "Register/re-register agent")
     @ApiResponses(value = {
             @ApiResponse(code = 202, message = "Return registered agent info", response = StorageAgentInfo.class)
     })
+    @Timed
+    @POST
+    @Consumes("application/json")
     public Response registerAgent(StorageAgentInfo agentInfo) {
         LOG.info("Register agent - {}", agentInfo);
         StorageAgentInfo registeterdAgentInfo = agentManager.registerAgent(agentInfo);
@@ -81,14 +81,14 @@ public class StorageAgentsResource {
                 .build();
     }
 
-    @Timed
-    @Path("url/{agentURL:.+}")
-    @DELETE
     @ApiOperation(value = "Deregister agent")
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "If the de-registration was successful"),
             @ApiResponse(code = 404, message = "Agent to be de-registered was not found or the token was invalid")
     })
+    @Timed
+    @DELETE
+    @Path("url/{agentURL:.+}")
     public Response deregisterAgent(@PathParam("agentURL") String agentURL, @HeaderParam("agentToken") String agentToken) {
         LOG.info("Disconnect agent - {} with {}", agentURL, agentToken);
         if (agentManager.deregisterAgent(agentURL, agentToken) != null) {

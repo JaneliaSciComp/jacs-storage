@@ -37,10 +37,6 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
-@Timed
-@RequireAuthentication
-@Produces(MediaType.APPLICATION_JSON)
-@Path("storage_volumes")
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
                 apiKeyAuthDefinitions = {
@@ -54,6 +50,10 @@ import java.util.List;
                 @Authorization("jwtBearerToken")
         }
 )
+@Timed
+@RequireAuthentication
+@Produces(MediaType.APPLICATION_JSON)
+@Path("storage_volumes")
 public class StorageVolumesResource {
     private static final Logger LOG = LoggerFactory.getLogger(StorageVolumesResource.class);
 
@@ -62,8 +62,6 @@ public class StorageVolumesResource {
     @Context
     private UriInfo resourceURI;
 
-    @GET
-    @Path("{id}")
     @ApiOperation(
             value = "Retrieve storage volume by ID.",
             authorizations = {
@@ -88,6 +86,8 @@ public class StorageVolumesResource {
             ),
             @ApiResponse(code = 500, message = "Data read error")
     })
+    @GET
+    @Path("{id}")
     public Response getStorageVolumeById(@PathParam("id") Long storageVolumeId, @Context SecurityContext securityContext) {
         LOG.info("Retrieve storage volume info for {}", storageVolumeId);
         JacsStorageVolume jacsStorageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
@@ -104,7 +104,6 @@ public class StorageVolumesResource {
         }
     }
 
-    @GET
     @ApiOperation(
             value = "List storage volumes. The volumes could be filtered by {id, storageHost, storageTags, volumeName}.",
             authorizations = {
@@ -128,6 +127,7 @@ public class StorageVolumesResource {
                     response = ErrorResponse.class
             )
     })
+    @GET
     public Response listStorageVolumes(@QueryParam("id") Long storageVolumeId,
                                        @QueryParam("name") String volumeName,
                                        @QueryParam("shared") boolean shared,
@@ -172,8 +172,8 @@ public class StorageVolumesResource {
             eventName = "UPDATE_OR_CREATE_STORAGE_VOLUME",
             argList = {0, 1}
     )
-    @Consumes("application/json")
     @POST
+    @Consumes("application/json")
     public Response postUpdateStorageVolume(@ApiParam(value = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
                                         @Context SecurityContext securityContext) {
         LOG.info("Create storage: {} with credentials {}", jacsStorageVolume, securityContext.getUserPrincipal());
@@ -196,8 +196,8 @@ public class StorageVolumesResource {
             eventName = "UPDATE_OR_CREATE_STORAGE_VOLUME",
             argList = {0, 1}
     )
-    @Consumes("application/json")
     @PUT
+    @Consumes("application/json")
     public Response putUpdateStorageVolume(@ApiParam(value = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
                                            @Context SecurityContext securityContext) {
         LOG.info("Update storage: {} with credentials {}", jacsStorageVolume, securityContext.getUserPrincipal());

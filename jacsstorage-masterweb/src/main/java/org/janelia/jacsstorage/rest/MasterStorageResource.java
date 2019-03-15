@@ -72,15 +72,8 @@ public class MasterStorageResource {
     @Context
     private UriInfo resourceURI;
 
-    @RequireAuthentication
-    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML})
-    @GET
-    @Path("size")
     @ApiOperation(
-            value = "Count storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}.",
-            authorizations = {
-                @Authorization("jwtBearerToken")
-            }
+            value = "Count storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -99,6 +92,10 @@ public class MasterStorageResource {
                     response = ErrorResponse.class
             )
     })
+    @RequireAuthentication
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML})
+    @Path("size")
     public Response countBundleInfo(@ApiParam(value = "search by storage id parameter") @QueryParam("id") Long dataBundleId,
                                     @ApiParam(value = "search by storage storage owner parameter") @QueryParam("ownerKey") String ownerKey,
                                     @ApiParam(value = "search by storage storage host parameter") @QueryParam("storageHost") String storageHost,
@@ -127,14 +124,8 @@ public class MasterStorageResource {
                 .build();
     }
 
-    @RequireAuthentication
-    @GET
-    @Path("{id}")
     @ApiOperation(
-            value = "Retrieve storage entry by ID.",
-            authorizations = {
-                    @Authorization("jwtBearerToken")
-            }
+            value = "Retrieve storage entry by ID."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -159,6 +150,9 @@ public class MasterStorageResource {
             ),
             @ApiResponse(code = 500, message = "Data read error")
     })
+    @RequireAuthentication
+    @GET
+    @Path("{id}")
     public Response getBundleInfo(@PathParam("id") Long id, @Context SecurityContext securityContext) {
         LOG.info("Retrieve storage info for {}", id);
         JacsBundle jacsBundle = storageLookupService.getDataBundleById(id);
@@ -182,13 +176,8 @@ public class MasterStorageResource {
         }
     }
 
-    @RequireAuthentication
-    @GET
     @ApiOperation(
-            value = "List storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}.",
-            authorizations = {
-                    @Authorization("jwtBearerToken")
-            }
+            value = "List storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -207,6 +196,8 @@ public class MasterStorageResource {
                     response = ErrorResponse.class
             )
     })
+    @RequireAuthentication
+    @GET
     public Response listBundleInfo(@QueryParam("id") Long dataBundleId,
                                    @QueryParam("name") String dataBundleName,
                                    @QueryParam("ownerKey") String ownerKey,
@@ -253,14 +244,8 @@ public class MasterStorageResource {
                 .build();
     }
 
-    @RequireAuthentication
-    @GET
-    @Path("{ownerKey}/{name}")
     @ApiOperation(
-            value = "Retrieve storage entry by owner and name.",
-            authorizations = {
-                @Authorization("jwtBearerToken")
-            }
+            value = "Retrieve storage entry by owner and name."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -289,6 +274,9 @@ public class MasterStorageResource {
                     response = ErrorResponse.class
             )
     })
+    @RequireAuthentication
+    @GET
+    @Path("{ownerKey}/{name}")
     public Response getBundleInfoByOwnerAndName(@PathParam("ownerKey") String ownerKey,
                                                 @PathParam("name") String name,
                                                 @Context SecurityContext securityContext) {
@@ -314,18 +302,8 @@ public class MasterStorageResource {
         }
     }
 
-    @LogStorageEvent(
-            eventName = "ALLOCATE_STORAGE_METADATA",
-            argList = {0, 1}
-    )
-    @RequireAuthentication
-    @Consumes("application/json")
-    @POST
     @ApiOperation(
-            value = "Create new storage entry.",
-            authorizations = {
-                    @Authorization("jwtBearerToken")
-            }
+            value = "Create new storage entry."
     )
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "The new storage entry.", response = DataStorageInfo.class),
@@ -334,6 +312,13 @@ public class MasterStorageResource {
             @ApiResponse(code = 404, message = "Volume on which to store the data was not found or no agent is available.", response = ErrorResponse.class),
             @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
     })
+    @LogStorageEvent(
+            eventName = "ALLOCATE_STORAGE_METADATA",
+            argList = {0, 1}
+    )
+    @RequireAuthentication
+    @POST
+    @Consumes("application/json")
     public Response createBundleInfo(@ApiParam(value = "information about the storage to be created") DataStorageInfo dataStorageInfo,
                                      @Context SecurityContext securityContext) {
         LOG.info("Create storage: {} with credentials {}", dataStorageInfo, securityContext.getUserPrincipal());
@@ -351,13 +336,23 @@ public class MasterStorageResource {
                         .build());
     }
 
+    @ApiOperation(
+            value = "Update a storage entry."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The updated storage entry.", response = DataStorageInfo.class),
+            @ApiResponse(code = 401, message = "If user is not authenticated", response = ErrorResponse.class),
+            @ApiResponse(code = 403, message = "If user is authenticated but does not have enough privileges to perform the operation", response = ErrorResponse.class),
+            @ApiResponse(code = 404, message = "Invalid storage entry id.", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
+    })
     @LogStorageEvent(
             eventName = "UPDATE_STORAGE_METADATA",
             argList = {0, 1, 2}
     )
     @RequireAuthentication
-    @Consumes("application/json")
     @PUT
+    @Consumes("application/json")
     @Path("{id}")
     public Response updateBundleInfo(@PathParam("id") Long id, DataStorageInfo dataStorageInfo, @Context SecurityContext securityContext) {
         LOG.info("Update storage: {} - {}", id, dataStorageInfo);
@@ -377,6 +372,16 @@ public class MasterStorageResource {
         }
     }
 
+    @ApiOperation(
+            value = "Update a storage entry."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(code = 204, message = "The storage entry was removed."),
+            @ApiResponse(code = 401, message = "If user is not authenticated", response = ErrorResponse.class),
+            @ApiResponse(code = 403, message = "If user is authenticated but does not have enough privileges to perform the operation", response = ErrorResponse.class),
+            @ApiResponse(code = 404, message = "Invalid storage entry id.", response = ErrorResponse.class),
+            @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
+    })
     @LogStorageEvent(
             eventName = "DELETE_STORAGE_METADATA"
     )
