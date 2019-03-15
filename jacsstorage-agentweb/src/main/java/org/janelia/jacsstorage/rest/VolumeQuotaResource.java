@@ -2,13 +2,9 @@ package org.janelia.jacsstorage.rest;
 
 import com.google.common.collect.ImmutableList;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
@@ -28,22 +24,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
+@Api(value = "Agent storage volumes API.")
 @Timed
 @Produces(MediaType.APPLICATION_JSON)
 @Path(Constants.AGENTSTORAGE_URI_PATH)
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "jwtBearerToken", name = "Authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Agent storage volumes API. This API requires an authenticated subject.",
-        authorizations = {
-                @Authorization("jwtBearerToken")
-        }
-)
 public class VolumeQuotaResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(VolumeQuotaResource.class);

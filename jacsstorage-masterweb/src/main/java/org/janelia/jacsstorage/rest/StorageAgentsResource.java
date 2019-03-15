@@ -27,10 +27,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+@Api(value = "Agent registration API")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("agents")
-@Api(value = "Agent registration API")
 public class StorageAgentsResource {
     private static final Logger LOG = LoggerFactory.getLogger(StorageAgentsResource.class);
 

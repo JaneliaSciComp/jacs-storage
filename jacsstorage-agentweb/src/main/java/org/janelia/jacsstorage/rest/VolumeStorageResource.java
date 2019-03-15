@@ -33,10 +33,10 @@ import javax.ws.rs.core.UriInfo;
 import java.nio.file.Files;
 import java.util.List;
 
+@Api(value = "Agent storage API on a particular volume")
 @Timed
 @Produces(MediaType.APPLICATION_JSON)
 @Path(Constants.AGENTSTORAGE_URI_PATH)
-@Api(value = "Agent storage API on a particular volume. This API requires an authenticated subject.")
 public class VolumeStorageResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(VolumeStorageResource.class);

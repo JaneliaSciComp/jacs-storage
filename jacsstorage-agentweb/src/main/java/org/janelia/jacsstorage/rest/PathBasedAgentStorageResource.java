@@ -38,10 +38,10 @@ import javax.ws.rs.core.UriInfo;
 import java.io.InputStream;
 import java.net.URI;
 
+@Api(value = "Agent storage API based on file's path.")
 @Timed
 @Produces(MediaType.APPLICATION_JSON)
 @Path(Constants.AGENTSTORAGE_URI_PATH)
-@Api(value = "Agent storage API based on file's path. This API requires an authenticated subject.")
 public class PathBasedAgentStorageResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(PathBasedAgentStorageResource.class);

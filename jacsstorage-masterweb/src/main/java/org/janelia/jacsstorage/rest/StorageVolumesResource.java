@@ -156,13 +156,6 @@ public class StorageVolumesResource {
                 .build();
     }
 
-    @LogStorageEvent(
-            eventName = "UPDATE_OR_CREATE_STORAGE_VOLUME",
-            argList = {0, 1}
-    )
-    @RequireAuthentication
-    @Consumes("application/json")
-    @POST
     @ApiOperation(
             value = "Update an existing or create a new storage volume.",
             authorizations = {
@@ -175,19 +168,18 @@ public class StorageVolumesResource {
             @ApiResponse(code = 401, message = "If user is not authenticated", response = ErrorResponse.class),
             @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
     })
+    @LogStorageEvent(
+            eventName = "UPDATE_OR_CREATE_STORAGE_VOLUME",
+            argList = {0, 1}
+    )
+    @Consumes("application/json")
+    @POST
     public Response postUpdateStorageVolume(@ApiParam(value = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
                                         @Context SecurityContext securityContext) {
         LOG.info("Create storage: {} with credentials {}", jacsStorageVolume, securityContext.getUserPrincipal());
         return updateStorageVolume(jacsStorageVolume);
     }
 
-    @LogStorageEvent(
-            eventName = "UPDATE_OR_CREATE_STORAGE_VOLUME",
-            argList = {0, 1}
-    )
-    @RequireAuthentication
-    @Consumes("application/json")
-    @PUT
     @ApiOperation(
             value = "Update an existing or create a new storage volume.",
             authorizations = {
@@ -200,6 +192,12 @@ public class StorageVolumesResource {
             @ApiResponse(code = 401, message = "If user is not authenticated", response = ErrorResponse.class),
             @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
     })
+    @LogStorageEvent(
+            eventName = "UPDATE_OR_CREATE_STORAGE_VOLUME",
+            argList = {0, 1}
+    )
+    @Consumes("application/json")
+    @PUT
     public Response putUpdateStorageVolume(@ApiParam(value = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
                                            @Context SecurityContext securityContext) {
         LOG.info("Update storage: {} with credentials {}", jacsStorageVolume, securityContext.getUserPrincipal());

@@ -2,13 +2,9 @@ package org.janelia.jacsstorage.rest;
 
 import com.google.common.collect.ImmutableList;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
@@ -33,19 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "jwtBearerToken", name = "Authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Master storage quota API.",
-        authorizations = {
-                @Authorization("jwtBearerToken")
-        }
-)
+@Api(value = "Master storage quota API.")
 @Timed
 @Produces(MediaType.APPLICATION_JSON)
 @Path("storage")

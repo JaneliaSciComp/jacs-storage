@@ -80,7 +80,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         .setEnabled(true)
                         .addInitParam(ServletProperties.JAXRS_APPLICATION_CLASS, application.getClass().getName())
                         .addInitParam("jersey.config.server.wadl.disableWadl", "true")
-                        .addMapping("/*")
+                        .addMappings("/*", "/authenticated/*", "/unauthenticated/*")
                 ;
 
         String basepath = "http://" + appArgs.host + ":" + appArgs.portNumber + contextPath;
@@ -112,8 +112,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                 resource(new PathResourceManager(Paths.get("swagger-webapp"), 100));
 
         HttpHandler storageHandler = new AccessLogHandler(
-                Handlers.path(
-                        Handlers.redirect(docsContextPath))
+                Handlers.path(Handlers.redirect(docsContextPath))
                         .addPrefixPath(docsContextPath, staticHandler)
                         .addPrefixPath(contextPath, restApiHttpHandler),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),

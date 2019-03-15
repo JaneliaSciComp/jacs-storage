@@ -46,9 +46,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Timed
-@Produces(MediaType.APPLICATION_JSON)
-@Path("storage")
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
                 apiKeyAuthDefinitions = {
@@ -62,6 +59,9 @@ import java.util.stream.Collectors;
                 @Authorization("jwtBearerToken")
         }
 )
+@Timed
+@Produces(MediaType.APPLICATION_JSON)
+@Path("storage")
 public class MasterStorageResource {
     private static final Logger LOG = LoggerFactory.getLogger(MasterStorageResource.class);
 
@@ -72,8 +72,8 @@ public class MasterStorageResource {
     @Context
     private UriInfo resourceURI;
 
-    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML})
     @RequireAuthentication
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML})
     @GET
     @Path("size")
     @ApiOperation(
