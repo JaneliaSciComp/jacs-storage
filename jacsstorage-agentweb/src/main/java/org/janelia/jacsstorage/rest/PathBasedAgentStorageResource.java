@@ -57,9 +57,6 @@ public class PathBasedAgentStorageResource {
     @Context
     private UriInfo resourceURI;
 
-    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
-    @HEAD
-    @Path("storage_path/data_content/{dataPath:.+}")
     @ApiOperation(value = "Check if the specified file path identifies a valid data bundle entry content.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The content was found"),
@@ -67,6 +64,9 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
+    @HEAD
+    @Path("storage_path/data_content/{dataPath:.+}")
     public Response checkPath(@PathParam("dataPath") String dataPathParam, @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
         LOG.info("Check path {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
@@ -77,9 +77,6 @@ public class PathBasedAgentStorageResource {
         ).build();
     }
 
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-    @GET
-    @Path("storage_path/data_content/{dataPath:.+}")
     @ApiOperation(value = "Retrieve the content of the specified data path.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
@@ -87,6 +84,9 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
+    @GET
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Path("storage_path/data_content/{dataPath:.+}")
     public Response retrieveData(@PathParam("dataPath") String dataPathParam,
                                  @Context UriInfo requestURI) {
         LOG.info("Retrieve data from {}", dataPathParam);
@@ -100,9 +100,6 @@ public class PathBasedAgentStorageResource {
     }
 
     @Deprecated
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-    @GET
-    @Path("storage_path/{dataPath:.+}")
     @ApiOperation(value = "Deprecated endpoint to retrieve the content of the specified data path. Use 'storage_path/data_content/{dataPath:.+}' instead ")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
@@ -110,19 +107,14 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
+    @GET
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Path("storage_path/{dataPath:.+}")
     public Response deprecatedRetrieveData(@PathParam("dataPath") String dataPathParam,
                                            @Context UriInfo requestURI) {
         return retrieveData(dataPathParam, requestURI);
     }
 
-    @LogStorageEvent(
-            eventName = "DELETE_STORAGE_ENTRY",
-            argList = {0, 1}
-    )
-    @RequireAuthentication
-    @Produces({MediaType.APPLICATION_JSON})
-    @DELETE
-    @Path("storage_path/data_content/{dataPath:.+}")
     @ApiOperation(value = "Retrieve the content of the specified data path.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The data streaming was successfull"),
@@ -130,6 +122,14 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
+    @LogStorageEvent(
+            eventName = "DELETE_STORAGE_ENTRY",
+            argList = {0, 1}
+    )
+    @RequireAuthentication
+    @DELETE
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path("storage_path/data_content/{dataPath:.+}")
     public Response removeData(@PathParam("dataPath") String dataPathParam, @Context SecurityContext securityContext) {
         LOG.info("Remove data from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
@@ -149,14 +149,6 @@ public class PathBasedAgentStorageResource {
         ).build();
     }
 
-    @LogStorageEvent(
-            eventName = "CREATE_STORAGE_FILE",
-            argList = {0, 1}
-    )
-    @RequireAuthentication
-    @Produces({MediaType.APPLICATION_JSON})
-    @PUT
-    @Path("storage_path/data_content/{dataPath:.+}")
     @ApiOperation(value = "Store the content at the specified data path.")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "The data was saved successfully"),
@@ -164,6 +156,14 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data write error")
     })
+    @LogStorageEvent(
+            eventName = "CREATE_STORAGE_FILE",
+            argList = {0, 1}
+    )
+    @RequireAuthentication
+    @PUT
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path("storage_path/data_content/{dataPath:.+}")
     public Response storeData(@PathParam("dataPath") String dataPathParam, @Context SecurityContext securityContext, InputStream contentStream) {
         LOG.info("Retrieve data from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
@@ -188,10 +188,6 @@ public class PathBasedAgentStorageResource {
         ).build();
     }
 
-    @RequireAuthentication
-    @Produces({MediaType.APPLICATION_JSON})
-    @GET
-    @Path("storage_path/data_info/{dataPath:.+}")
     @ApiOperation(value = "Inspect and retrieve content info of the specified data path.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The operation was successfull. " +
@@ -200,6 +196,10 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
+    @RequireAuthentication
+    @GET
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path("storage_path/data_info/{dataPath:.+}")
     public Response retrieveDataInfo(@PathParam("dataPath") String dataPathParam) {
         LOG.info("Retrieve data info from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
@@ -210,10 +210,6 @@ public class PathBasedAgentStorageResource {
         ).build();
     }
 
-    @RequireAuthentication
-    @Produces(MediaType.APPLICATION_JSON)
-    @GET
-    @Path("storage_path/list/{dataPath:.*}")
     @ApiOperation(
             value = "List the content.",
             notes = "Lists tree hierarchy of the storage path"
@@ -223,6 +219,10 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 404, message = "Invalid data bundle ID"),
             @ApiResponse(code = 500, message = "Data read error")
     })
+    @RequireAuthentication
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("storage_path/list/{dataPath:.*}")
     public Response listContent(@PathParam("dataPath") String dataPathParam,
                                 @QueryParam("depth") Integer depthParam,
                                 @Context SecurityContext securityContext) {

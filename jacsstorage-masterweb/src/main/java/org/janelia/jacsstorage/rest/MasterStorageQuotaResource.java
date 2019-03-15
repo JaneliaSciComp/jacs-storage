@@ -41,15 +41,15 @@ public class MasterStorageQuotaResource {
     @Inject @RemoteInstance
     private StorageVolumeManager storageVolumeManager;
 
-    @Produces({MediaType.APPLICATION_JSON})
-    @GET
-    @Path("quota_report")
     @ApiOperation(value = "Retrieve a user's quota on all storage volumes.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
             @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
             @ApiResponse(code = 500, message = "Data read error")
     })
+    @Produces({MediaType.APPLICATION_JSON})
+    @GET
+    @Path("quota_report")
     public Response getSubjectQuotaForAllVolumes(@QueryParam("subjectName") String subjectName) {
         LOG.info("Retrieve all quota(s) for {}", subjectName);
         StorageQuery storageQuery = new StorageQuery()
@@ -76,32 +76,32 @@ public class MasterStorageQuotaResource {
         }
     }
 
-    @Produces({MediaType.APPLICATION_JSON})
-    @GET
-    @Path("quota/{volumeName}/status")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
             @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response getSubjectQuotaStatusForVolumeName(@PathParam("volumeName") String volumeName,
-                                                       @QueryParam("subjectName") String subjectName) {
+    @Produces({MediaType.APPLICATION_JSON})
+    @GET
+    @Path("quota/{volumeName}/status")
+    public Response getQuotaStatusForVolumeName(@PathParam("volumeName") String volumeName,
+                                                @QueryParam("subjectName") String subjectName) {
         LOG.info("Retrieve usage status for {} on {}", subjectName, volumeName);
         return retrieveQuotaForVolumeNameAndSubject(volumeName, subjectName);
     }
 
-    @Produces({MediaType.APPLICATION_JSON})
-    @GET
-    @Path("quota/{volumeName}/report")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
             @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response getSubjectQuotaReportForVolumeName(@PathParam("volumeName") String volumeName,
-                                                       @QueryParam("subjectName") String subjectName) {
+    @Produces({MediaType.APPLICATION_JSON})
+    @GET
+    @Path("quota/{volumeName}/report")
+    public Response getQuotaReportForVolumeName(@PathParam("volumeName") String volumeName,
+                                                @QueryParam("subjectName") String subjectName) {
         LOG.info("Retrieve quota(s) for {} on {}", subjectName, volumeName);
         return retrieveQuotaForVolumeNameAndSubject(volumeName, subjectName);
     }
@@ -119,17 +119,42 @@ public class MasterStorageQuotaResource {
                 .build();
     }
 
-    @Produces({MediaType.APPLICATION_JSON})
-    @GET
-    @Path("volume_quota/{storageVolumeId}/report")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
             @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response getSubjectQuotaReportForVolumeId(@PathParam("storageVolumeId") Long storageVolumeId,
-                                                     @QueryParam("subjectName") String subjectName) {
+    @Produces({MediaType.APPLICATION_JSON})
+    @GET
+    @Path("quota/{volumeName}/report/{subjectName}")
+    public Response getQuotaReportForVolumeNameAndSubject(@PathParam("volumeName") String volumeName,
+                                                          @PathParam("subjectName") String subjectName) {
+        LOG.info("Retrieve quota for {} on {}", subjectName, volumeName);
+        if (StringUtils.isBlank(subjectName)) {
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Subject name must be specified"))
+                    .build();
+        } else {
+            UsageData subjectUsageData = storageUsageManager.getUsageByVolumeNameForUser(volumeName, subjectName);
+            return Response
+                    .ok(subjectUsageData)
+                    .build();
+        }
+    }
+
+    @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "The stream was successfull"),
+            @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
+            @ApiResponse(code = 500, message = "Data read error")
+    })
+    @Produces({MediaType.APPLICATION_JSON})
+    @GET
+    @Path("volume_quota/{storageVolumeId}/report")
+    public Response getQuotaReportForVolumeId(@PathParam("storageVolumeId") Long storageVolumeId,
+                                              @QueryParam("subjectName") String subjectName) {
         LOG.info("Retrieve user quota for {} on {}", subjectName, storageVolumeId);
         List<UsageData> usageData;
         if (StringUtils.isBlank(subjectName)) {
@@ -143,17 +168,17 @@ public class MasterStorageQuotaResource {
                 .build();
     }
 
-    @Produces({MediaType.APPLICATION_JSON})
-    @GET
-    @Path("path_quota/{dataPath:.+}/report")
     @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
             @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    public Response getSubjectQuotaReportForDataPath(@PathParam("dataPath") String dataPath,
-                                                     @QueryParam("subjectName") String subjectName) {
+    @Produces({MediaType.APPLICATION_JSON})
+    @GET
+    @Path("path_quota/{dataPath:.+}/report")
+    public Response getQuotaReportForDataPath(@PathParam("dataPath") String dataPath,
+                                              @QueryParam("subjectName") String subjectName) {
         String fullDataPath = StringUtils.prependIfMissing(dataPath, "/");
         LOG.info("Retrieve user quota for {} on {}", subjectName, fullDataPath);
         List<UsageData> usageData;

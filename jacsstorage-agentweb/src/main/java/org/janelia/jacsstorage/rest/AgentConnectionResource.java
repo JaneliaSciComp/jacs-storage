@@ -34,8 +34,8 @@ public class AgentConnectionResource {
     @Context
     private UriInfo resourceURI;
 
-    @Path("status")
     @GET
+    @Path("status")
     public Response getStatus() {
         StorageAgentInfo localAgentInfo = agentState.getLocalAgentInfo();
         return Response
@@ -43,14 +43,14 @@ public class AgentConnectionResource {
                 .build();
     }
 
-    @Timed
-    @Consumes(MediaType.APPLICATION_JSON)
-    @POST
     @ApiOperation(value = "Connect this agent to the specified master URL")
     @ApiResponses(value = {
             @ApiResponse(code = 202, message = "Return this agent's connection status URL in the location header attribute"),
             @ApiResponse(code = 404, message = "Master URL is invalid")
     })
+    @Timed
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response connect(String connectURL) {
         LOG.info("Connect agent to {}", connectURL);
         agentState.connectTo(connectURL);

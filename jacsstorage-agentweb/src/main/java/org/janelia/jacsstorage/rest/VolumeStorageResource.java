@@ -50,8 +50,6 @@ public class VolumeStorageResource {
     @Context
     private UriInfo resourceURI;
 
-    @HEAD
-    @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     @ApiOperation(value = "Check if the specified file path identifies a valid data bundle entry content.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The content was found"),
@@ -59,6 +57,8 @@ public class VolumeStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
+    @HEAD
+    @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     public Response checkDataPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                    @PathParam("storageRelativePath") String storageRelativeFilePath,
                                                    @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
@@ -79,15 +79,15 @@ public class VolumeStorageResource {
         return storageResourceHelper.checkContentFromFile(storageVolume, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath), directoryOnlyParam != null && directoryOnlyParam).build();
     }
 
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-    @GET
-    @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     @ApiOperation(value = "Stream the specified data file identified by the relative path to the volume mount point.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The stream was successfull"),
             @ApiResponse(code = 404, message = "Invalid volume identifier or invalid file path"),
             @ApiResponse(code = 500, message = "Data read error")
     })
+    @GET
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     public Response retrieveDataContentFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                          @PathParam("storageRelativePath") String storageRelativeFilePath,
                                                          @Context UriInfo requestURI) {
@@ -111,15 +111,15 @@ public class VolumeStorageResource {
         }
     }
 
-    @Produces({MediaType.APPLICATION_JSON})
-    @GET
-    @Path("storage_volume/{storageVolumeId}/data_info/{storageRelativePath:.+}")
     @ApiOperation(value = "Stream content info of specified data file identified by the relative path to the volume mount point.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The operation  was successfull"),
             @ApiResponse(code = 404, message = "Invalid volume identifier or invalid file path"),
             @ApiResponse(code = 500, message = "Data read error")
     })
+    @GET
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path("storage_volume/{storageVolumeId}/data_info/{storageRelativePath:.+}")
     public Response retrieveDataInfoFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                       @PathParam("storageRelativePath") String storageRelativeFilePath) {
         LOG.info("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
@@ -141,8 +141,6 @@ public class VolumeStorageResource {
         }
     }
 
-    @GET
-    @Path("storage_volume/{storageVolumeId}/list/{storageRelativePath:.+}")
     @ApiOperation(value = "List the content of the specified path.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "The listing was successful"),
@@ -150,6 +148,8 @@ public class VolumeStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
+    @GET
+    @Path("storage_volume/{storageVolumeId}/list/{storageRelativePath:.+}")
     public Response listPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                               @PathParam("storageRelativePath") String storageRelativeFilePath,
                                               @QueryParam("depth") Integer depthParam) {

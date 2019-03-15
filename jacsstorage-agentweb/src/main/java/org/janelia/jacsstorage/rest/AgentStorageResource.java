@@ -100,8 +100,8 @@ public class AgentStorageResource {
             argList = {0, 1}
     )
     @TimedMethod(argList = {0, 1})
-    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @POST
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Path("{dataBundleId}")
     public Response persistStream(@PathParam("dataBundleId") Long dataBundleId,
                                   @Context SecurityContext securityContext,
@@ -126,8 +126,8 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
-    @Path("{dataBundleId}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Path("{dataBundleId}")
     public Response retrieveStream(@PathParam("dataBundleId") Long dataBundleId,
                                    @Context UriInfo requestURI) {
         LOG.info("Retrieve the entire stored bundle {}", dataBundleId);
@@ -158,8 +158,8 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
-    @Path("{dataBundleId}/list")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("{dataBundleId}/list")
     public Response listContent(@PathParam("dataBundleId") Long dataBundleId,
                                 @QueryParam("entry") String entry,
                                 @QueryParam("depth") Integer depthParam,
@@ -216,8 +216,8 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @HEAD
-    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     @Produces({MediaType.APPLICATION_JSON})
+    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     public Response checkEntryContent(@PathParam("dataBundleId") Long dataBundleId,
                                       @PathParam("dataEntryPath") String dataEntryPathParam,
                                       @QueryParam("directoryOnly") Boolean directoryOnlyParam,
@@ -241,8 +241,8 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
-    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     public Response getEntryContent(@PathParam("dataBundleId") Long dataBundleId,
                                     @PathParam("dataEntryPath") String dataEntryPathParam,
                                     @Context UriInfo requestURI) {
@@ -264,8 +264,8 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
-    @Path("{dataBundleId}/data_info{dataEntryPath:/?.*}")
     @Produces({MediaType.APPLICATION_JSON})
+    @Path("{dataBundleId}/data_info{dataEntryPath:/?.*}")
     public Response getEntryContentInfo(@PathParam("dataBundleId") Long dataBundleId,
                                         @PathParam("dataEntryPath") String dataEntryPathParam) {
         LOG.info("Get entry {} content from bundle {} ", dataEntryPathParam, dataBundleId);
@@ -289,8 +289,8 @@ public class AgentStorageResource {
             argList = {0, 1}
     )
     @PUT
-    @Path("{dataBundleId}/directory/{dataEntryPath:.+}")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("{dataBundleId}/directory/{dataEntryPath:.+}")
     public Response putDirectory(@PathParam("dataBundleId") Long dataBundleId,
                                  @PathParam("dataEntryPath") String dataEntryPath,
                                  @Context SecurityContext securityContext) {
@@ -309,8 +309,8 @@ public class AgentStorageResource {
             argList = {0, 1}
     )
     @POST
-    @Path("{dataBundleId}/data_content_folder/{dataEntryPath:.+}")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("{dataBundleId}/data_content_folder/{dataEntryPath:.+}")
     public Response postCreateDataContentFolder(@PathParam("dataBundleId") Long dataBundleId,
                                                 @PathParam("dataEntryPath") String dataEntryPath,
                                                 @Context SecurityContext securityContext) {
@@ -329,8 +329,8 @@ public class AgentStorageResource {
             argList = {0, 1, 2}
     )
     @PUT
-    @Path("{dataBundleId}/data_content_folder/{dataEntryPath:.+}")
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("{dataBundleId}/data_content_folder/{dataEntryPath:.+}")
     public Response putCreateDataContentFolder(@PathParam("dataBundleId") Long dataBundleId,
                                                @PathParam("dataEntryPath") String dataEntryPath,
                                                @Context SecurityContext securityContext) {
@@ -401,9 +401,9 @@ public class AgentStorageResource {
     )
     @TimedMethod(argList = {0, 1, 2})
     @PUT
-    @Path("{dataBundleId}/file/{dataEntryPath:.+}")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("{dataBundleId}/file/{dataEntryPath:.+}")
     public Response putFile(@PathParam("dataBundleId") Long dataBundleId,
                             @PathParam("dataEntryPath") String dataEntryPath,
                             @Context SecurityContext securityContext,
@@ -424,9 +424,9 @@ public class AgentStorageResource {
     )
     @TimedMethod(argList = {0, 1, 2})
     @POST
-    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     public Response postDataContent(@PathParam("dataBundleId") Long dataBundleId,
                                     @PathParam("dataEntryPath") String dataEntryPath,
                                     @Context SecurityContext securityContext,
@@ -447,9 +447,9 @@ public class AgentStorageResource {
     )
     @TimedMethod(argList = {0, 1, 2})
     @PUT
-    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     public Response putDataContent(@PathParam("dataBundleId") Long dataBundleId,
                                    @PathParam("dataEntryPath") String dataEntryPath,
                                    @Context SecurityContext securityContext,
