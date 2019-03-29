@@ -7,6 +7,7 @@ if [ "${VER}" == "" ]; then
     exit 1
 fi
 
+git checkout master
 git merge dev
 
 mv build.gradle build.tmp.prerelease
