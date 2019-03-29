@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +42,7 @@ public class TiffMergeBandsContentConverter implements ContentConverter {
             return ImageUtils.mergeImageBands(dataNodes.stream()
                     .sorted(DataContentUtils.getDataNodePathComparator())
                     .filter(dn -> !dn.isCollectionFlag())
+                    .sorted(Comparator.comparing(DataNodeInfo::getNodeRelativePath))
                     .map(dn -> () -> {
                         RenderedImage rim = ImageUtils.loadRenderedImageFromTiffStream(dataContent.streamDataNode(dn), z);
                         if (rim == null) {
