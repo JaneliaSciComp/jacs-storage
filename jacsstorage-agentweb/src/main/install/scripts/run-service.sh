@@ -5,6 +5,7 @@ source "${jacs.runtime.env.installDir}/etc/servicevars.sh"
 cd "${jacs.runtime.env.installDir}"
 
 DEBUG_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5006"
+EXPOSED_AGENT_HOST="${jacs.runtime.env.agentHost}"
 
 JAVA_OPTS="${JAVA_OPTS}" JACSSTORAGE_CONFIG="${JACSSTORAGE_CONFIG}" \
 bin/jacsstorage-agentweb \
@@ -13,4 +14,5 @@ bin/jacsstorage-agentweb \
      -masterURL ${MASTER_URL} \
      -bootstrapStorageVolumes \
      -DStorageAgent.InitialPingDelayInSeconds=0 \
+     -DStorageAgent.StorageHost=${EXPOSED_AGENT_HOST} \
      $*
