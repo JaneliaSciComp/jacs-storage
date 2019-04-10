@@ -149,11 +149,19 @@ public class StorageResourceHelper {
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(dirName));
         if (storageVolumes.isEmpty()) {
             LOG.warn("No volume found to match {}", dirName);
-            return null;
         } else if (storageVolumes.size() > 1) {
+            // This case may be tricky especially for locally mounted volumes (non-shared) when the path
+            // exists only on certain volumes. In order to find out we would actually have to go to the actual agent
+            // to find if the directory exists but we are not doing that yet
+            // E.g. we have 2 non-shared volumes served by node1 and node2 and both use the same root directory /data/jacsstorage
+            // Now if one searches for a directory /data/jacsstorage/dirOnNode2Only, which is only available on node1
+            // the master may redirect the caller to the wrong agent - node1 instead of node2 because at this point it has no information
+            // whether the directory really exists
             LOG.warn("More than one storage volumes found for {} -> {}", dirName, storageVolumes);
+        } else {
+            LOG.debug("Found exactly one volume {} to for {}", storageVolumes, dirName);
         }
-        return storageVolumes.get(0);
+        return storageVolumes.stream().findAny().orElse(null);
     }
 
     public Response.ResponseBuilder checkContentFromFile(JacsStorageVolume storageVolume, StorageRelativePath dataEntryName, boolean dirOnly) {

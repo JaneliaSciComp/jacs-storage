@@ -11,12 +11,14 @@ class DistributedStorageHelper {
     }
 
     void updateStorageServiceInfo(JacsStorageVolume storageVolume) {
-        if (storageVolume.isShared() && StringUtils.isBlank(storageVolume.getStorageHost())) {
-            agentManager.findRandomRegisteredAgent((StorageAgentConnection ac) -> ac.isConnected())
-                    .ifPresent(ai -> {
-                        storageVolume.setStorageHost(ai.getStorageHost());
-                        storageVolume.setStorageServiceURL(ai.getAgentHttpURL());
-                    });
+        if (storageVolume.isShared()) {
+            if (StringUtils.isBlank(storageVolume.getStorageHost())) {
+                agentManager.findRandomRegisteredAgent((StorageAgentConnection ac) -> ac.isConnected())
+                        .ifPresent(ai -> {
+                            storageVolume.setStorageHost(ai.getStorageHost());
+                            storageVolume.setStorageServiceURL(ai.getAgentHttpURL());
+                        });
+            }
         }
     }
 }
