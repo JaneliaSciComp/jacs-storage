@@ -171,17 +171,27 @@ public class VolumeStorageResource {
                     JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
                     List<DataNodeInfo> contentInfoList = dataStorageService.listDataEntries(dataEntryPath, "", storageFormat, depth);
                     contentInfoList.forEach(dn -> {
+                        String dataNodeAbsolutePath = dataEntryPath.resolve(dn.getNodeRelativePath()).toString();
+                        java.nio.file.Path dataNodeVolumeRelativePath = storageVolume.getPathRelativeToBaseStorageRoot(dataNodeAbsolutePath);
                         dn.setNumericStorageId(storageVolume.getId());
                         dn.setStorageRootLocation(storageVolume.getStorageVirtualPath());
                         dn.setStorageRootPathURI(storageVolume.getStorageURI());
                         dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                                .path(VolumeStorageResource.class, "retrieveDataContentFromStorageVolume")
-                                .build(storageVolume.getId(), dn.getNodeRelativePath())
+                                .path(Constants.AGENTSTORAGE_URI_PATH)
+                                .path("storage_volume")
+                                .path(storageVolume.getId().toString())
+                                .path("data_content")
+                                .path(dataNodeVolumeRelativePath.toString())
+                                .build()
                                 .toString()
                         );
                         dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
-                                .path(VolumeStorageResource.class, "retrieveDataInfoFromStorageVolume")
-                                .build(storageVolume.getId(), dn.getNodeRelativePath())
+                                .path(Constants.AGENTSTORAGE_URI_PATH)
+                                .path("storage_volume")
+                                .path(storageVolume.getId().toString())
+                                .path("data_info")
+                                .path(dataNodeVolumeRelativePath.toString())
+                                .build()
                                 .toString()
                         );
                     });
