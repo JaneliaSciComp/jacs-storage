@@ -1,0 +1,16 @@
+LICENSES-DEPENDENCIES.txt
+
+jacs-storage integrates dependencies with the following open source licenses:
+
+- the Apache Software License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0
+
+- the BSD 3-Clause license: https://opensource.org/licenses/BSD-3-Clause
+
+- the Common Development and Distribution License (CDDL), Version 1.1: https://opensource.org/licenses/CDDL-1.0
+
+- the Eclipse Public License - v 1.0: https://www.eclipse.org/legal/epl-v10.html
+
+- the GNU General Public License (GPL), Version 2, With Classpath Exception: https://www.gnu.org/licenses/licenses.html#GPL and https://www.gnu.org/software/classpath/license.html
+
+- the MIT license: https://opensource.org/licenses/MIT
+
