@@ -204,7 +204,7 @@ public class StorageResourceHelper {
                             dataStorageService.retrieveDataStream(dataEntryPath, storageFormat, filterParams, output);
                         } catch (Exception e) {
                             LOG.error("Error streaming data file content for {}", dataEntryPath, e);
-                            throw new WebApplicationException(e);
+                            throw new WebApplicationException("Error streaming content for " + dataEntryName, e, Response.Status.INTERNAL_SERVER_ERROR);
                         }
                     };
                     return Response

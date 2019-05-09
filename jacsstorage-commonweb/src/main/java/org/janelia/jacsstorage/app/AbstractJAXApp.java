@@ -26,8 +26,11 @@ public abstract class AbstractJAXApp extends Application {
                         IllegalStateRequestHandler.class,
                         InvalidJsonRequestHandler.class,
                         JsonParseErrorRequestHandler.class,
-                        IOErrorRequestHandler.class,
-                        NotFoundRequestHandler.class)
+                        IOExceptionRequestHandler.class,
+                        NotFoundRequestHandler.class,
+                        UncheckedIOExceptionRequestHandler.class,
+                        UnexpectedRuntimeExceptionRequestHandler.class
+                )
                 .addAll(getAppClasses())
                 .build();
     }

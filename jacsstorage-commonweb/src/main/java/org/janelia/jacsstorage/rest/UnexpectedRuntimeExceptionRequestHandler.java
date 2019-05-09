@@ -8,15 +8,15 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
-import java.io.IOException;
+import java.io.UncheckedIOException;
 
 @Provider
-public class IOExceptionRequestHandler implements ExceptionMapper<IOException> {
-    private static final Logger LOG = LoggerFactory.getLogger(IOExceptionRequestHandler.class);
+public class UnexpectedRuntimeExceptionRequestHandler implements ExceptionMapper<RuntimeException> {
+    private static final Logger LOG = LoggerFactory.getLogger(UnexpectedRuntimeExceptionRequestHandler.class);
 
     @Override
-    public Response toResponse(IOException exception) {
-        LOG.error("Illegal state response", exception);
+    public Response toResponse(RuntimeException exception) {
+        LOG.error("Unexpected exception", exception);
         String errorMessage;
         if (StringUtils.isBlank(exception.getMessage())) {
             errorMessage = "Server state error";

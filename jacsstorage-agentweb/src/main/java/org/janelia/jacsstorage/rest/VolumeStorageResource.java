@@ -65,11 +65,13 @@ public class VolumeStorageResource {
         LOG.info("Check data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
+            LOG.error("No volume found for {}", storageVolumeId);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .header("Content-Length", 0)
                     .build();
         } else if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
+            LOG.warn("Attempt to check {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .header("Content-Length", 0)
@@ -94,6 +96,7 @@ public class VolumeStorageResource {
         LOG.info("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
+            LOG.error("No volume found for {}", storageVolumeId);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
@@ -104,6 +107,7 @@ public class VolumeStorageResource {
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
             return storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).build();
         } else {
+            LOG.warn("Attempt to read {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
@@ -125,6 +129,7 @@ public class VolumeStorageResource {
         LOG.info("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
+            LOG.error("No volume found for {}", storageVolumeId);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
@@ -134,6 +139,7 @@ public class VolumeStorageResource {
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
             return storageResourceHelper.retrieveContentInfoFromFile(storageVolume, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).build();
         } else {
+            LOG.warn("Attempt to get info about {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))

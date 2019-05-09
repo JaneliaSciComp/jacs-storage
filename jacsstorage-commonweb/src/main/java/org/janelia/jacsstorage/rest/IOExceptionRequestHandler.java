@@ -10,8 +10,8 @@ import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 
 @Provider
-public class IOErrorRequestHandler implements ExceptionMapper<IOException> {
-    private static final Logger LOG = LoggerFactory.getLogger(IOErrorRequestHandler.class);
+public class IOExceptionRequestHandler implements ExceptionMapper<IOException> {
+    private static final Logger LOG = LoggerFactory.getLogger(IOExceptionRequestHandler.class);
 
     @Override
     public Response toResponse(IOException exception) {
