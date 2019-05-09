@@ -173,7 +173,7 @@ public class StorageVolumesResource {
             argList = {0, 1}
     )
     @POST
-    @Consumes("application/json")
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response postUpdateStorageVolume(@ApiParam(value = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
                                         @Context SecurityContext securityContext) {
         LOG.info("Create storage: {} with credentials {}", jacsStorageVolume, securityContext.getUserPrincipal());
@@ -197,7 +197,7 @@ public class StorageVolumesResource {
             argList = {0, 1}
     )
     @PUT
-    @Consumes("application/json")
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response putUpdateStorageVolume(@ApiParam(value = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
                                            @Context SecurityContext securityContext) {
         LOG.info("Update storage: {} with credentials {}", jacsStorageVolume, securityContext.getUserPrincipal());

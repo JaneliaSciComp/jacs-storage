@@ -318,7 +318,7 @@ public class MasterStorageResource {
     )
     @RequireAuthentication
     @POST
-    @Consumes("application/json")
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response createBundleInfo(@ApiParam(value = "information about the storage to be created") DataStorageInfo dataStorageInfo,
                                      @Context SecurityContext securityContext) {
         LOG.info("Create storage: {} with credentials {}", dataStorageInfo, securityContext.getUserPrincipal());
@@ -352,7 +352,7 @@ public class MasterStorageResource {
     )
     @RequireAuthentication
     @PUT
-    @Consumes("application/json")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Path("{id}")
     public Response updateBundleInfo(@PathParam("id") Long id, DataStorageInfo dataStorageInfo, @Context SecurityContext securityContext) {
         LOG.info("Update storage: {} - {}", id, dataStorageInfo);

@@ -71,7 +71,7 @@ public class StorageAgentsResource {
     })
     @Timed
     @POST
-    @Consumes("application/json")
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response registerAgent(StorageAgentInfo agentInfo) {
         LOG.info("Register agent - {}", agentInfo);
         StorageAgentInfo registeterdAgentInfo = agentManager.registerAgent(agentInfo);
