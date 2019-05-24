@@ -31,7 +31,7 @@ dependencies {
         COMMONS_COMPRESS_LIB = "org.apache.commons:commons-compress:${COMMONS_COMPRESS_LIB_VERSION}"
 
         // Janelia libraries
-        JACS_MODEL_VERSION = "2.0.2"
+        JACS_MODEL_VERSION = "2.3.0"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"
 
         // JAX-RS API
