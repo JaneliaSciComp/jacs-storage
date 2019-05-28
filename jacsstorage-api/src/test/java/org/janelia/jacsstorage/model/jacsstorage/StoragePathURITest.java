@@ -16,6 +16,8 @@ public class StoragePathURITest {
                 .put("jade:///jade_dev/2567842844077203473", "/jade_dev/2567842844077203473")
                 .put("jade://jade_dev/2567842844077203473", "/jade_dev/2567842844077203473")
                 .put("jade:///jade_dev/2567842844077203473/mips/image-1/image-1_all.png", "/jade_dev/2567842844077203473/mips/image-1/image-1_all.png")
+                .put("//jade_dev/2567842844077203473", "/jade_dev/2567842844077203473")
+                .put("///jade_dev/2567842844077203473", "/jade_dev/2567842844077203473")
                 .build();
         testData.forEach((k, v) -> {
             StoragePathURI storagePathURI = StoragePathURI.createAbsolutePathURI(k);
