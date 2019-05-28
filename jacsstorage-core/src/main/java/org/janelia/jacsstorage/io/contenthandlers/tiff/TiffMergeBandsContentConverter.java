@@ -43,7 +43,7 @@ public class TiffMergeBandsContentConverter implements ContentConverter {
                             .filter(dn -> !dn.isCollectionFlag())
                             .sorted(Comparator.comparing(DataNodeInfo::getNodeRelativePath))
                             .map(dn -> NamedSupplier.namedSupplier(
-                                    dn.getNodeRelativePath(),
+                                    dn.getNodeAccessURL(),
                                     () -> dataContent.streamDataNode(dn))),
                     pageNumber
             );
