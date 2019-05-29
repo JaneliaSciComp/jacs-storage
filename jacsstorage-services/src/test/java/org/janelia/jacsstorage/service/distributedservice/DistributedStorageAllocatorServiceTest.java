@@ -1,7 +1,13 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
+import java.io.File;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.function.Predicate;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
@@ -18,11 +24,6 @@ import org.janelia.jacsstorage.security.JacsCredentials;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import java.io.File;
-import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.function.Predicate;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;

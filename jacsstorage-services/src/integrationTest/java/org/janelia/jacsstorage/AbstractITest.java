@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage;
 
 import com.google.common.collect.ImmutableMap;
+
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.junit.BeforeClass;

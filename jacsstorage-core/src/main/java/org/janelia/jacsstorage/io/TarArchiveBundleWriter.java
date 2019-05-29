@@ -1,20 +1,12 @@
 package org.janelia.jacsstorage.io;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Streams;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.archivers.tar.TarConstants;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.coreutils.BufferUtils;
-import org.janelia.jacsstorage.coreutils.PathUtils;
-import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -31,6 +23,21 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Streams;
+
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.tar.TarConstants;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.coreutils.BufferUtils;
+import org.janelia.jacsstorage.coreutils.PathUtils;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TarArchiveBundleWriter implements BundleWriter {
 

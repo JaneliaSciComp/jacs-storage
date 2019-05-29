@@ -1,17 +1,5 @@
 package org.janelia.jacsstorage.io;
 
-import com.google.common.collect.ImmutableList;
-import org.apache.commons.compress.utils.IOUtils;
-import org.hamcrest.Matchers;
-import org.janelia.jacsstorage.coreutils.PathUtils;
-import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.io.contenthandlers.NoOPContentConverter;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -28,6 +16,19 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import com.google.common.collect.ImmutableList;
+
+import org.apache.commons.compress.utils.IOUtils;
+import org.hamcrest.Matchers;
+import org.janelia.jacsstorage.coreutils.PathUtils;
+import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.janelia.jacsstorage.io.contenthandlers.NoOPContentConverter;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.collection.IsIn.in;

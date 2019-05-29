@@ -1,14 +1,15 @@
 package org.janelia.jacsstorage.io;
 
-import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 
+import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+
 public class DataContentUtils {
+
     public static DataNodeInfo createDataNodeInfo(Path rootPath,
                                                   Path nodePath,
                                                   boolean collectionFlag,

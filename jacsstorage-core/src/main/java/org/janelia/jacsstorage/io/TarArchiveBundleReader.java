@@ -1,23 +1,11 @@
 package org.janelia.jacsstorage.io;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteStreams;
-import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.archivers.tar.TarConstants;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.coreutils.IOStreamUtils;
-import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,6 +15,22 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.inject.Inject;
+
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteStreams;
+
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TarArchiveBundleReader extends AbstractBundleReader {
 
