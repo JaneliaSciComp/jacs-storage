@@ -226,7 +226,7 @@ public class DataDirectoryBundleReaderWriterTest {
         );
         for (String td : testData) {
             long size = dataDirectoryBundleWriter.createDirectoryEntry(testDataDir.toString(), td);
-            assertTrue(size > 0);
+            assertTrue(size >= 0);
         }
         List<String> tarEntryNames = dataDirectoryBundleReader.listBundleContent(testDataDir.toString(), "", 10).stream()
                 .map(ni -> ni.getNodeRelativePath())
@@ -252,7 +252,7 @@ public class DataDirectoryBundleReaderWriterTest {
         );
         for (String td : testData) {
             long size = dataDirectoryBundleWriter.createDirectoryEntry(testDataDir.toString(), td);
-            assertTrue(size > 0);
+            assertTrue(size >= 0);
         }
         List<String> tarEntryNames = dataDirectoryBundleReader.listBundleContent(testDataDir.toString(), "", 10).stream()
                 .map(ni -> ni.getNodeRelativePath())
@@ -272,10 +272,12 @@ public class DataDirectoryBundleReaderWriterTest {
 
     @Test
     public void tryToCreateFileEntryWhenEntryExist() throws IOException {
-        String testData = "d_1_1/f_1_1_1";
-        assertThatThrownBy(() -> dataDirectoryBundleWriter.createFileEntry(testDataDir.toString(), testData, new FileInputStream(testDataDir.resolve("d_1_1/f_1_1_1").toFile())))
-                .isInstanceOf(DataAlreadyExistException.class)
-                .hasMessage("Entry " + testDataDir.resolve(testData) + " already exists");
+        try (InputStream testInputStream = new FileInputStream(testDataDir.resolve("d_1_1/f_1_1_1").toFile())) {
+            String testData = "d_1_1/f_1_1_1";
+            assertThatThrownBy(() -> dataDirectoryBundleWriter.createFileEntry(testDataDir.toString(), testData, testInputStream))
+                    .isInstanceOf(DataAlreadyExistException.class)
+                    .hasMessage("Entry " + testDataDir.resolve(testData) + " already exists");
+        }
     }
 
 }

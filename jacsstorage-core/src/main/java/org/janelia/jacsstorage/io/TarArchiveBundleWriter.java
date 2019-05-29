@@ -14,12 +14,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -349,7 +344,7 @@ public class TarArchiveBundleWriter implements BundleWriter {
             int nPathComponents = parentEntryPath.getNameCount();
             entryParentHierarchy = IntStream.rangeClosed(1, nPathComponents)
                     .mapToObj(i -> parentEntryPath.subpath(0, i))
-                    .map(p -> p.toString())
+                    .map(p -> p.toString().replace(File.separatorChar, '/'))
                     .collect(Collectors.toList());
         }
         boolean entryNameFound = false;

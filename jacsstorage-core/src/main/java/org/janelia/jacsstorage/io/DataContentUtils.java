@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.io;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
@@ -13,9 +14,9 @@ public class DataContentUtils {
                                                   boolean collectionFlag,
                                                   long size) {
         DataNodeInfo ni = new DataNodeInfo();
-        ni.setStorageRootPathURI(StoragePathURI.createAbsolutePathURI(rootPath.toString()));
+        ni.setStorageRootPathURI(StoragePathURI.createAbsolutePathURI(rootPath.toString().replace(File.separatorChar, '/')));
         ni.setNodeAccessURL(nodePath.toUri().toString());
-        ni.setNodeRelativePath(rootPath.relativize(nodePath).toString());
+        ni.setNodeRelativePath(rootPath.relativize(nodePath).toString().replace(File.separatorChar, '/'));
         ni.setCollectionFlag(collectionFlag);
         ni.setSize(size);
         return ni;

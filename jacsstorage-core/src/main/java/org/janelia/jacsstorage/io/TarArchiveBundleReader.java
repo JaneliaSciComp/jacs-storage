@@ -17,11 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -87,8 +83,13 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
         if (Files.notExists(sourcePath)) {
             return Collections.emptyList();
         }
+        TarArchiveInputStream inputStream;
         try {
-            TarArchiveInputStream inputStream = new TarArchiveInputStream(new FileInputStream(sourcePath.toFile()));
+            inputStream = new TarArchiveInputStream(new FileInputStream(sourcePath.toFile()));
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        try {
             List<DataNodeInfo> dataNodeList = new ArrayList<>();
             String normalizedEntryName = normalizeEntryName(entryName);
             int normalizedEntryNameLength = normalizedEntryName.length();
@@ -128,6 +129,11 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
             return dataNodeList;
         } catch (Exception e) {
             throw new IllegalStateException(e);
+        } finally {
+            try {
+                inputStream.close();
+            } catch (IOException ignore) {
+            }
         }
     }
 
@@ -175,21 +181,21 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
         try (TarArchiveInputStream inputStream = openSourceAsArchiveStream(sourcePath)) {
             ContentConverter contentConverter = contentHandlerProvider.getContentConverter(filterParams);
             String normalizedEntryName = normalizeEntryName(entryName);
-            ArchiveEntryListDataContent archiveEntryListDataContent = new ArchiveEntryListDataContent(filterParams, normalizedEntryName);
+            ArchiveEntryListDataContent archiveEntryListDataContent = new ArchiveEntryListDataContent(filterParams, prepareEntryName(normalizedEntryName));
             for (TarArchiveEntry sourceEntry = inputStream.getNextTarEntry(); sourceEntry != null; sourceEntry = inputStream.getNextTarEntry()) {
                 String currentEntryName = normalizeEntryName(sourceEntry.getName());
                 if (currentEntryName.equals(normalizedEntryName)) {
                     if (!sourceEntry.isDirectory()) {
                         // if the entry is not a directory just stream it right away
                         if (filterParams.matchEntry(entryName)) {
-                            return contentConverter.convertContent(new SingleArchiveEntryDataContent(filterParams, currentEntryName, sourceEntry.getSize(), ByteStreams.limit(inputStream, sourceEntry.getSize())), outputStream);
+                            return contentConverter.convertContent(new SingleArchiveEntryDataContent(filterParams, prepareEntryName(currentEntryName), sourceEntry.getSize(), ByteStreams.limit(inputStream, sourceEntry.getSize())), outputStream);
                         } else {
                             return 0;
                         }
                     }
                 }
                 if (currentEntryName.startsWith(normalizedEntryName) && (sourceEntry.isDirectory() || filterParams.matchEntry(currentEntryName))) {
-                    archiveEntryListDataContent.addArchiveEntry(currentEntryName, sourceEntry.isDirectory(), sourceEntry.isDirectory() ? 0L : sourceEntry.getSize(), inputStream);
+                    archiveEntryListDataContent.addArchiveEntry(prepareEntryName(currentEntryName), sourceEntry.isDirectory(), sourceEntry.isDirectory() ? 0L : sourceEntry.getSize(), inputStream);
                 }
             }
             if (archiveEntryListDataContent.getEntriesCount() == 0) {
@@ -230,5 +236,9 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
                         StringUtils.removeStart(name, "."),
                         "/"),
                 "/");
+    }
+
+    private String prepareEntryName(String name) {
+        return "./" + name.replace(File.separatorChar, '/');
     }
 }

@@ -1,10 +1,8 @@
 package org.janelia.jacsstorage.config;
 
 import com.google.common.collect.ImmutableSet;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Map;
 import java.util.Set;
 
 public class ApplicationConfigValueResolver {

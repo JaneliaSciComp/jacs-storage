@@ -150,6 +150,7 @@ public class TarBundleReaderWriterTest {
             dataDirectoryBundleReader.readBundle(TEST_DATA_DIRECTORY + "/" + td, new ContentFilterParams(), referenceOutputStream);
             ByteArrayOutputStream testDataEntryStream = new ByteArrayOutputStream();
             tarBundleReader.readDataEntry(testTarFile.toString(), td, new ContentFilterParams(), testDataEntryStream);
+            assertEquals("Expected arrays to have the same length for " + td, referenceOutputStream.toByteArray().length, testDataEntryStream.toByteArray().length);
             assertArrayEquals("Expected condition not met for " + td, referenceOutputStream.toByteArray(), testDataEntryStream.toByteArray());
         }
     }

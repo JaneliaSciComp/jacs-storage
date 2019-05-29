@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.io;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -84,7 +85,7 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
         }
         try {
             // start to collect the files from the startPath but return the data relative to sourcePath
-            return Files.walk(startPath, depth).map(p -> pathToDataNodeInfo(sourcePath, p, (rootPath, nodePath) -> rootPath.relativize(nodePath).toString())).collect(Collectors.toList());
+            return Files.walk(startPath, depth).map(p -> pathToDataNodeInfo(sourcePath, p, (rootPath, nodePath) -> rootPath.relativize(nodePath).toString().replace(File.separatorChar, '/'))).collect(Collectors.toList());
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

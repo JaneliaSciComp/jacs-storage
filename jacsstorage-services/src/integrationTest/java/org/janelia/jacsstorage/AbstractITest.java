@@ -11,10 +11,11 @@ public abstract class AbstractITest {
     @BeforeClass
     public static void setUpTestsConfig() {
         integrationTestsConfig = new ApplicationConfigProvider()
-                .fromDefaultResources()
+                .fromResource("/jacsstorage.properties")
                 .fromMap(ImmutableMap.of(
+                        "user.name", System.getProperty("user.name"),
                         "MongoDB.ConnectionURL", "mongodb://localhost:27017",
-                        "MongoDB.Database", "${user.home}_jacsstorage_test"
+                        "MongoDB.Database", "${user.name}_jacsstorage_test"
                 ))
                 .fromFile("src/integrationTest/resources/jacsstorage_test.properties")
                 .fromEnvVar("JACSSTORAGE_CONFIG_TEST")
