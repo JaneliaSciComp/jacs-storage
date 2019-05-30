@@ -85,7 +85,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             LOG.warn("No storage volume found for {}", volumeName);
             throw new IllegalArgumentException("No volume found for " + volumeName);
         } else if (localVolumes.size() > 1) {
-            LOG.warn("More than one storage volumes found for {} on host {} -> {}", volumeName, storageHost, localVolumes);
+            LOG.debug("More than one storage volumes found for {} on host {} -> {}", volumeName, storageHost, localVolumes);
         }
         JacsStorageVolume storageVolume = localVolumes.get(0); // even if there are more volumes pick the first one - this assumes that the first one has the longest match
         return getVolumeUsage(storageVolume);
@@ -103,7 +103,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             LOG.warn("No storage volume found for {}", volumeName);
             throw new IllegalArgumentException("No volume found for " + volumeName);
         } else if (localVolumes.size() > 1) {
-            LOG.warn("More than one storage volumes found for {} on host {} -> {}", volumeName, storageHost, localVolumes);
+            LOG.debug("More than one storage volumes found for {} on host {} -> {}", volumeName, storageHost, localVolumes);
         }
         JacsStorageVolume storageVolume = localVolumes.get(0); // even if there are more volumes pick the first one - this assumes that the first one has the longest match
         return getVolumeUsageForUser(storageVolume, username);
@@ -121,7 +121,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             LOG.warn("No storage volume found for {}", storagePath);
             throw new IllegalArgumentException("No volume found for " + storagePath);
         } else if (localVolumes.size() > 1) {
-            LOG.warn("More than one storage volumes found for {} on host {} -> {}", storagePath, storageHost, localVolumes);
+            LOG.debug("More than one storage volumes found for {} on host {} -> {}", storagePath, storageHost, localVolumes);
         }
         JacsStorageVolume storageVolume = localVolumes.get(0); // even if there are more volumes pick the first one - this assumes that the first one has the longest match
         return getVolumeUsage(storageVolume);
@@ -139,7 +139,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             LOG.warn("No storage volume found for {}", storagePath);
             throw new IllegalArgumentException("No volume found for " + storagePath);
         } else if (localVolumes.size() > 1) {
-            LOG.warn("More than one storage volumes found for {} on host {} -> {}", storagePath, storageHost, localVolumes);
+            LOG.debug("More than one storage volumes found for {} on host {} -> {}", storagePath, storageHost, localVolumes);
         }
         JacsStorageVolume storageVolume = localVolumes.get(0); // even if there are more volumes pick the first one - this assumes that the first one has the longest match
         return getVolumeUsageForUser(storageVolume, username);

@@ -1,8 +1,11 @@
 package org.janelia.jacsstorage.app;
 
+import java.lang.annotation.Annotation;
+
 import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.agent.AgentState;
+import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.service.localservice.StorageVolumeBootstrapper;
 import org.slf4j.Logger;
@@ -45,7 +48,12 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
             SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
             SeContainer container = containerInit.initialize();
             JacsAgentStorageApp app = container.select(JacsAgentStorageApp.class).get();
-            ApplicationConfig appConfig = container.select(ApplicationConfig.class).get();
+            ApplicationConfig appConfig = container.select(ApplicationConfig.class, new ApplicationProperties() {
+                @Override
+                public Class<ApplicationProperties> annotationType() {
+                    return ApplicationProperties.class;
+                }
+            }).get();
 
             if (agentArgs.bootstrapStorageVolumes) {
                 StorageVolumeBootstrapper volumeBootstrapper = container.select(StorageVolumeBootstrapper.class).get();

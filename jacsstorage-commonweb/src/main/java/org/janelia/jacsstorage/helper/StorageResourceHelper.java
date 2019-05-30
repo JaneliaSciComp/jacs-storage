@@ -157,7 +157,7 @@ public class StorageResourceHelper {
             // Now if one searches for a directory /data/jacsstorage/dirOnNode2Only, which is only available on node1
             // the master may redirect the caller to the wrong agent - node1 instead of node2 because at this point it has no information
             // whether the directory really exists
-            LOG.warn("More than one storage volumes found for {} -> {}", dirName, storageVolumes);
+            LOG.debug("More than one storage volumes found for {} -> {}", dirName, storageVolumes);
         } else {
             LOG.debug("Found exactly one volume {} to for {}", storageVolumes, dirName);
         }
