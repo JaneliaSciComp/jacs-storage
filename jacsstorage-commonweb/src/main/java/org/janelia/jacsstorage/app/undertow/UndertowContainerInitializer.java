@@ -171,8 +171,6 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         .filter(h -> StringUtils.isNotBlank(h))
                         .map(h -> new HttpString(h.trim()))
                         .collect(Collectors.toSet());
-        return h -> {
-            return ignoredHeaders.contains("*") || ignoredHeaders.contains(h);
-        };
+        return h -> ignoredHeaders.contains("*") || ignoredHeaders.contains(h);
     }
 }
