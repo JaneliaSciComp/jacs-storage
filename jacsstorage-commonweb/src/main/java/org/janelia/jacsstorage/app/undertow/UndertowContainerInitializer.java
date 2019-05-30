@@ -169,7 +169,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
         Set<HttpString> ignoredHeaders =
                 applicationConfig.getStringListPropertyValue("AccessLog.OmittedHeaders").stream()
                         .filter(h -> StringUtils.isNotBlank(h))
-                        .map(h -> new HttpString(h))
+                        .map(h -> new HttpString(h.trim()))
                         .collect(Collectors.toSet());
         return h -> {
             return ignoredHeaders.contains("*") || ignoredHeaders.contains(h);
