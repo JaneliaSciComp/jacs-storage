@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.app;
 import com.beust.jcommander.JCommander;
 import org.janelia.jacsstorage.app.undertow.UndertowContainerInitializer;
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
+import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,12 +33,13 @@ public abstract class AbstractStorageApp {
         cmdline.usage(output);
     }
 
-    protected void start(AppArgs appArgs) {
+    protected void start(AppArgs appArgs, ApplicationConfig applicationConfig) {
         ContainerInitializer containerInitializer = new UndertowContainerInitializer(
                 getApplicationId(appArgs),
                 getRestApiContext(),
                 getApiVersion(),
-                getPathsExcludedFromAccessLog()
+                getPathsExcludedFromAccessLog(),
+                applicationConfig
         );
         try {
             containerInitializer.initialize(this.getJaxApplication(), appArgs);

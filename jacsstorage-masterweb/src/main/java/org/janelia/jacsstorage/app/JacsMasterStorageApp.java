@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.app;
 
 import com.beust.jcommander.JCommander;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,9 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
             SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
             SeContainer container = containerInit.initialize();
             JacsMasterStorageApp app = container.select(JacsMasterStorageApp.class).get();
-            app.start(appArgs);
+            ApplicationConfig appConfig = container.select(ApplicationConfig.class).get();
+
+            app.start(appArgs, appConfig);
         } catch (Throwable e) {
             LOG.error("Error starting application", e);
         }
