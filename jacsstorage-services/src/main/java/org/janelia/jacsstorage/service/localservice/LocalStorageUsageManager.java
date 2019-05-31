@@ -15,6 +15,8 @@ import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -168,27 +170,36 @@ public class LocalStorageUsageManager implements StorageUsageManager {
      */
     private String getGroupNameForUserUsingDirHierarchy(JacsStorageVolume storageVolume, String username) {
         Path storagePath;
+        Path physicalStoragePath;
+        Marker withFullStack = MarkerFactory.getMarker("WITH_FULLSTACK");
         try {
             storagePath = Paths.get(
                     ExprHelper.getConstPrefix(storageVolume.evalStorageRootDir(ImmutableMap.of("username", username)))
-            ).toRealPath().toAbsolutePath();
+            );
+        } catch (Exception e) {
+            LOG.warn("No storage path could be resolved on volume {} for user {}", storageVolume, username);
+            LOG.warn(withFullStack, "No storage path could be resolved on volume {} for user {}", storageVolume, username, e);
+            return null;
+        }
+        try {
+            physicalStoragePath = storagePath.toRealPath().toAbsolutePath();
         } catch (IOException e) {
-            LOG.warn("Storage path {} could not be resolved to a real path for user {} on volume {}",
-                    username, storageVolume, e);
+            LOG.warn("Storage path {} could not be resolved to a real path for user {} on volume {}", storagePath, username, storageVolume);
+            LOG.warn(withFullStack, "Storage path {} could not be resolved to a real path for user {} on volume {}", storagePath, username, storageVolume, e);
             return null;
         }
         Pattern p = Pattern.compile(".*groups/(\\w+)/"+username+".*");
-        Matcher m = p.matcher(storagePath.toString());
+        Matcher m = p.matcher(physicalStoragePath.toString());
         if (m.matches()) {
             String userGroup = m.group(1);
             if (StringUtils.isBlank(userGroup)) {
-                LOG.warn("Empty user group found for user {} from path {} on {}", username, storagePath, storageVolume);
+                LOG.warn("Empty user group found for user {} from path {} on {}", username, physicalStoragePath, storageVolume);
                 return null;
             } else {
                 return userGroup;
             }
         } else {
-            LOG.warn("Group could not be determined for user {} from path {} on {}", username, storagePath, storageVolume);
+            LOG.warn("Group could not be determined for user {} from path {} on {}", username, physicalStoragePath, storageVolume);
             return null;
         }
     }
