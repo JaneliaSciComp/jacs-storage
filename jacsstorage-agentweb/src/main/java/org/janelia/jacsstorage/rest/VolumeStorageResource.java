@@ -100,6 +100,7 @@ public class VolumeStorageResource {
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
         ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
@@ -111,6 +112,7 @@ public class VolumeStorageResource {
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
     }

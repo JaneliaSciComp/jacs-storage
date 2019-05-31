@@ -64,6 +64,7 @@ public class StorageResourceHelper {
                 () -> Response
                         .status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("No managed volume found for " + storagePathURI))
+                        .type(MediaType.APPLICATION_JSON)
         );
     }
 
@@ -89,6 +90,7 @@ public class StorageResourceHelper {
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("Empty storage path: " + storagePathURI))
+                    .type(MediaType.APPLICATION_JSON)
                     ;
         }
         return storageVolume.getStoragePathRelativeToStorageRoot(storagePathURI.getStoragePath())
@@ -120,6 +122,7 @@ public class StorageResourceHelper {
                     return Response
                             .status(Response.Status.NOT_FOUND)
                             .entity(new ErrorResponse("Empty storage path: " + storagePathURI))
+                            .type(MediaType.APPLICATION_JSON)
                             ;
                 });
     }
@@ -192,6 +195,7 @@ public class StorageResourceHelper {
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to read " + dataEntryName))
+                    .type(MediaType.APPLICATION_JSON)
                     ;
         }
         return storageVolume.getDataStorageAbsolutePath(dataEntryName)
@@ -216,7 +220,7 @@ public class StorageResourceHelper {
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName()))
-                        .type(MediaType.APPLICATION_JSON_TYPE))
+                        .type(MediaType.APPLICATION_JSON))
                 ;
     }
 
@@ -225,6 +229,7 @@ public class StorageResourceHelper {
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to read " + dataEntryName))
+                    .type(MediaType.APPLICATION_JSON)
                     ;
         }
         return storageVolume.getDataStorageAbsolutePath(dataEntryName)
@@ -237,7 +242,8 @@ public class StorageResourceHelper {
                 })
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName())))
+                        .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName()))
+                        .type(MediaType.APPLICATION_JSON))
                 ;
 
     }
@@ -312,6 +318,7 @@ public class StorageResourceHelper {
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to list " + dataEntryName))
+                    .type(MediaType.APPLICATION_JSON)
                     ;
         }
         return storageVolume.getDataStorageAbsolutePath(dataEntryName)
@@ -356,7 +363,8 @@ public class StorageResourceHelper {
                 })
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName())))
+                        .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName()))
+                        .type(MediaType.APPLICATION_JSON))
                 ;
     }
 
@@ -394,6 +402,7 @@ public class StorageResourceHelper {
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to list " + dataEntryName))
+                    .type(MediaType.APPLICATION_JSON)
                     ;
         }
         return storageVolume.getDataStorageAbsolutePath(dataEntryName)
@@ -427,7 +436,8 @@ public class StorageResourceHelper {
 
                 })
                 .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST)
-                            .entity(new ErrorResponse("Could not create entry " + dataEntryName + " on volume " + storageVolume.getName())))
+                        .entity(new ErrorResponse("Could not create entry " + dataEntryName + " on volume " + storageVolume.getName()))
+                        .type(MediaType.APPLICATION_JSON))
                 ;
     }
 
@@ -437,6 +447,7 @@ public class StorageResourceHelper {
                 return Response
                         .status(Response.Status.FORBIDDEN)
                         .entity(new ErrorResponse("No delete permission from " + dataBundle.getName() + " for " + credentials.getSubjectKey()))
+                        .type(MediaType.APPLICATION_JSON)
                         ;
             }
             Path storagePath = dataBundle.getRealStoragePath();
@@ -449,6 +460,7 @@ public class StorageResourceHelper {
             return Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(new ErrorResponse("Delete bundle entry error: " + dataBundle.getId() + "/" + dataEntryName))
+                    .type(MediaType.APPLICATION_JSON)
                     ;
         }
     }
@@ -458,6 +470,7 @@ public class StorageResourceHelper {
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse("No delete permission for volume " + storageVolume.getName() + " to delete " + dataEntryName))
+                    .type(MediaType.APPLICATION_JSON)
                     ;
         }
         return storageVolume.getDataStorageAbsolutePath(dataEntryName)
@@ -472,12 +485,14 @@ public class StorageResourceHelper {
                         return Response
                                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                                 .entity(new ErrorResponse("Internal error while trying to delete " + dataEntryName + " from " + storageVolume))
+                                .type(MediaType.APPLICATION_JSON)
                                 ;
                     }
                 })
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("Invalid storage volume " + storageVolume.getName() + " for deleting " + dataEntryName)))
+                        .entity(new ErrorResponse("Invalid storage volume " + storageVolume.getName() + " for deleting " + dataEntryName))
+                        .type(MediaType.APPLICATION_JSON))
                 ;
     }
 }

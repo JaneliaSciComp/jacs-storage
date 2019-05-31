@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -27,7 +28,9 @@ public class NotFoundRequestHandler implements ExceptionMapper<NotFoundException
             responseBuilder.header("Content-Length", 0);
         } else {
             String errorMessage = StringUtils.defaultIfBlank(exception.getMessage(), "Invalid request");
-            responseBuilder.entity(new ErrorResponse(errorMessage));
+            responseBuilder
+                    .entity(new ErrorResponse(errorMessage))
+                    .type(MediaType.APPLICATION_JSON);
         }
         return responseBuilder.build();
     }

@@ -52,7 +52,6 @@ import java.util.List;
 )
 @Timed
 @RequireAuthentication
-@Produces(MediaType.APPLICATION_JSON)
 @Path("storage_volumes")
 public class StorageVolumesResource {
     private static final Logger LOG = LoggerFactory.getLogger(StorageVolumesResource.class);
@@ -87,6 +86,7 @@ public class StorageVolumesResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("{id}")
     public Response getStorageVolumeById(@PathParam("id") Long storageVolumeId, @Context SecurityContext securityContext) {
         LOG.info("Retrieve storage volume info for {}", storageVolumeId);
@@ -128,6 +128,7 @@ public class StorageVolumesResource {
             )
     })
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     public Response listStorageVolumes(@QueryParam("id") Long storageVolumeId,
                                        @QueryParam("name") String volumeName,
                                        @QueryParam("shared") boolean shared,
@@ -174,6 +175,7 @@ public class StorageVolumesResource {
     )
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response postUpdateStorageVolume(@ApiParam(value = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
                                         @Context SecurityContext securityContext) {
         LOG.info("Create storage: {} with credentials {}", jacsStorageVolume, securityContext.getUserPrincipal());
@@ -198,6 +200,7 @@ public class StorageVolumesResource {
     )
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response putUpdateStorageVolume(@ApiParam(value = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
                                            @Context SecurityContext securityContext) {
         LOG.info("Update storage: {} with credentials {}", jacsStorageVolume, securityContext.getUserPrincipal());

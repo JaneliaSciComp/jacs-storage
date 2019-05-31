@@ -20,6 +20,7 @@ import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Cookie;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -65,6 +66,7 @@ public class JWTAuthFilter implements ContainerRequestFilter {
             requestContext.abortWith(
                     Response.status(Response.Status.UNAUTHORIZED)
                             .entity(new ErrorResponse(e.getMessage()))
+                            .type(MediaType.APPLICATION_JSON)
                             .build()
             );
         }

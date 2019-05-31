@@ -60,7 +60,6 @@ import java.util.stream.Collectors;
         }
 )
 @Timed
-@Produces(MediaType.APPLICATION_JSON)
 @Path("storage")
 public class MasterStorageResource {
     private static final Logger LOG = LoggerFactory.getLogger(MasterStorageResource.class);
@@ -152,6 +151,7 @@ public class MasterStorageResource {
     })
     @RequireAuthentication
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("{id}")
     public Response getBundleInfo(@PathParam("id") Long id, @Context SecurityContext securityContext) {
         LOG.info("Retrieve storage info for {}", id);
@@ -198,6 +198,7 @@ public class MasterStorageResource {
     })
     @RequireAuthentication
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     public Response listBundleInfo(@QueryParam("id") Long dataBundleId,
                                    @QueryParam("name") String dataBundleName,
                                    @QueryParam("ownerKey") String ownerKey,
@@ -276,6 +277,7 @@ public class MasterStorageResource {
     })
     @RequireAuthentication
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("{ownerKey}/{name}")
     public Response getBundleInfoByOwnerAndName(@PathParam("ownerKey") String ownerKey,
                                                 @PathParam("name") String name,
@@ -319,6 +321,7 @@ public class MasterStorageResource {
     @RequireAuthentication
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response createBundleInfo(@ApiParam(value = "information about the storage to be created") DataStorageInfo dataStorageInfo,
                                      @Context SecurityContext securityContext) {
         LOG.info("Create storage: {} with credentials {}", dataStorageInfo, securityContext.getUserPrincipal());
@@ -353,6 +356,7 @@ public class MasterStorageResource {
     @RequireAuthentication
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("{id}")
     public Response updateBundleInfo(@PathParam("id") Long id, DataStorageInfo dataStorageInfo, @Context SecurityContext securityContext) {
         LOG.info("Update storage: {} - {}", id, dataStorageInfo);
@@ -387,6 +391,7 @@ public class MasterStorageResource {
     )
     @RequireAuthentication
     @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("{id}")
     public Response deleteBundleInfo(@PathParam("id") Long id, @Context SecurityContext securityContext) {
         LOG.info("Delete storage: {}", id);
