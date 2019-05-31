@@ -1,5 +1,12 @@
 package org.janelia.jacsstorage.app.undertow;
 
+import java.nio.file.Paths;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.servlet.ServletException;
+import javax.ws.rs.core.Application;
+
 import io.swagger.jersey.config.JerseyJaxrsConfig;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -13,7 +20,7 @@ import io.undertow.attribute.QueryStringAttribute;
 import io.undertow.attribute.RemoteHostAttribute;
 import io.undertow.attribute.RemoteUserAttribute;
 import io.undertow.attribute.RequestMethodAttribute;
-import io.undertow.attribute.RequestPathAttribute;
+import io.undertow.attribute.RequestSchemeAttribute;
 import io.undertow.attribute.RequestURLAttribute;
 import io.undertow.attribute.ResponseCodeAttribute;
 import io.undertow.attribute.ResponseHeaderAttribute;
@@ -40,12 +47,6 @@ import org.jboss.weld.module.web.servlet.WeldInitialListener;
 import org.jboss.weld.module.web.servlet.WeldTerminalListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletException;
-import javax.ws.rs.core.Application;
-import java.nio.file.Paths;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static io.undertow.Handlers.resource;
 import static io.undertow.servlet.Servlets.servlet;
@@ -131,10 +132,10 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         RemoteUserAttribute.INSTANCE, // <RemoteUser>
                         new ConstantExchangeAttribute(applicationId), // <Application-Id>
                         DateTimeAttribute.INSTANCE, // <timestamp>
-                        RequestURLAttribute.INSTANCE, // <Request URL>
-                        HostAndPortAttribute.INSTANCE, // <Host:Port>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
-                        RequestPathAttribute.INSTANCE, // <RequestPath>
+                        RequestSchemeAttribute.INSTANCE, // <Scheme (http or https)>
+                        HostAndPortAttribute.INSTANCE, // <Host:Port>
+                        RequestURLAttribute.INSTANCE, // <Request URL>
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
                         new NameValueAttribute("requestHeaders", new RequestHeadersAttribute(getOmittedHeaders())),
                         new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location"))), // location=<ResponseLocation>
