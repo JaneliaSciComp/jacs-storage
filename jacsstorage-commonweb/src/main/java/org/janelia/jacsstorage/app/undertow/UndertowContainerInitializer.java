@@ -8,11 +8,13 @@ import io.undertow.attribute.BytesSentAttribute;
 import io.undertow.attribute.ConstantExchangeAttribute;
 import io.undertow.attribute.DateTimeAttribute;
 import io.undertow.attribute.ExchangeAttribute;
+import io.undertow.attribute.HostAndPortAttribute;
 import io.undertow.attribute.QueryStringAttribute;
 import io.undertow.attribute.RemoteHostAttribute;
 import io.undertow.attribute.RemoteUserAttribute;
 import io.undertow.attribute.RequestMethodAttribute;
 import io.undertow.attribute.RequestPathAttribute;
+import io.undertow.attribute.RequestURLAttribute;
 import io.undertow.attribute.ResponseCodeAttribute;
 import io.undertow.attribute.ResponseHeaderAttribute;
 import io.undertow.predicate.Predicate;
@@ -129,6 +131,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         RemoteUserAttribute.INSTANCE, // <RemoteUser>
                         new ConstantExchangeAttribute(applicationId), // <Application-Id>
                         DateTimeAttribute.INSTANCE, // <timestamp>
+                        RequestURLAttribute.INSTANCE, // <Request URL>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         RequestPathAttribute.INSTANCE, // <RequestPath>
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
