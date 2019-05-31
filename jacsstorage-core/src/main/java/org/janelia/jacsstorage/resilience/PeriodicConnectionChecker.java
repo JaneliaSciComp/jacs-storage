@@ -46,7 +46,11 @@ public class PeriodicConnectionChecker<S extends ConnectionState> implements Con
                     handleConnectionFailure(prevConnState.getConnectStatus(), newConnState, onFailure);
                 }
             } catch (Exception e) {
-                LOG.error("Error testing connection", e);
+                if (LOG.isDebugEnabled()) {
+                    LOG.error("Error testing connection", e);
+                } else {
+                    LOG.error("Error testing connection {}", e.toString());
+                }
                 handleConnectionFailure(prevConnState.getConnectStatus(), prevConnState, onFailure);
             }
         };
