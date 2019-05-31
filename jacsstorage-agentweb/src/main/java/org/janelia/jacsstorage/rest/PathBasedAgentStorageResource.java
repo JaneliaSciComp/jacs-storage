@@ -84,7 +84,7 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response retrieveData(@PathParam("dataPath") String dataPathParam,
                                  @Context UriInfo requestURI) {
@@ -107,7 +107,7 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @Path("storage_path/{dataPath:.+}")
     public Response deprecatedRetrieveData(@PathParam("dataPath") String dataPathParam,
                                            @Context UriInfo requestURI) {

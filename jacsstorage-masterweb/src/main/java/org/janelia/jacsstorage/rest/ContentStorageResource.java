@@ -114,7 +114,7 @@ public class ContentStorageResource {
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
     })
     @GET
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @Path("storage_path_redirect/{filePath:.+}")
     public Response redirectForContent(@PathParam("filePath") String filePathParam,
                                        @Context UriInfo requestURI,

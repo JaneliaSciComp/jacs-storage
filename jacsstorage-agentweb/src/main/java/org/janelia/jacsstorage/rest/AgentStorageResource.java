@@ -126,7 +126,7 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @Path("{dataBundleId}")
     public Response retrieveStream(@PathParam("dataBundleId") Long dataBundleId,
                                    @Context UriInfo requestURI) {
@@ -241,7 +241,7 @@ public class AgentStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
-    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @Path("{dataBundleId}/data_content{dataEntryPath:(/.*)?}")
     public Response getEntryContent(@PathParam("dataBundleId") Long dataBundleId,
                                     @PathParam("dataEntryPath") String dataEntryPathParam,
