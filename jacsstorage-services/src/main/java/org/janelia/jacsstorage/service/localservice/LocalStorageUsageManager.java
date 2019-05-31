@@ -186,7 +186,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
             if (LOG.isDebugEnabled()) {
                 LOG.warn("Storage path {} could not be resolved to a real path for user {} on volume {}", storagePath, username, storageVolume, e);
             } else {
-                LOG.warn("Storage path {} could not be resolved to a real path for user {} on volume {}: {}", storagePath, username, storageVolume, e.getMessage());
+                LOG.warn("Storage path {} could not be resolved to a real path for user {} : {}", storagePath, username, e.getLocalizedMessage());
             }
             return null;
         }
