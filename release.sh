@@ -19,7 +19,7 @@ git commit -m "Prepare ${VER}.RELEASE"
 git push origin
 
 # tag it
-git tag "${VER}.RELEASE"
+git tag "${VER}"
 git push --tags
 
 rm -f build.tmp.prerelease
