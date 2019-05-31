@@ -49,7 +49,7 @@ public class PeriodicConnectionChecker<S extends ConnectionState> implements Con
                 if (LOG.isDebugEnabled()) {
                     LOG.error("Error testing connection", e);
                 } else {
-                    LOG.error("Error testing connection {}", e.toString());
+                    LOG.error("Error testing connection {}", e);
                 }
                 handleConnectionFailure(prevConnState.getConnectStatus(), prevConnState, onFailure);
             }

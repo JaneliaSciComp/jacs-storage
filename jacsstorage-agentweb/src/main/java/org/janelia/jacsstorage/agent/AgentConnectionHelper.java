@@ -60,7 +60,11 @@ class AgentConnectionHelper {
                 response.close();
             }
         } catch (Exception e) {
-            LOG.error("Error while registering {}", agentInfo, e);
+            if (LOG.isDebugEnabled()) {
+                LOG.error("Error while registering {}", agentInfo, e);
+            } else {
+                LOG.error("Error while registering {}: {}", agentInfo, e);
+            }
         } finally {
             if (httpClient != null) {
                 httpClient.close();
