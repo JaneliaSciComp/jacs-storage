@@ -215,7 +215,8 @@ public class StorageResourceHelper {
                 })
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
-                        .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName())))
+                        .entity(new ErrorResponse("No path found for " + dataEntryName + " on volume " + storageVolume.getName()))
+                        .type(MediaType.APPLICATION_JSON_TYPE))
                 ;
     }
 
