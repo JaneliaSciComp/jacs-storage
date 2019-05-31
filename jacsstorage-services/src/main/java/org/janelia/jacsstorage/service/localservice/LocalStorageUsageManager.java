@@ -1,6 +1,19 @@
 package org.janelia.jacsstorage.service.localservice;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.inject.Inject;
+
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
@@ -10,26 +23,10 @@ import org.janelia.jacsstorage.expr.ExprHelper;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
-import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
-
-import javax.inject.Inject;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @LocalInstance
 public class LocalStorageUsageManager implements StorageUsageManager {
@@ -171,21 +168,26 @@ public class LocalStorageUsageManager implements StorageUsageManager {
     private String getGroupNameForUserUsingDirHierarchy(JacsStorageVolume storageVolume, String username) {
         Path storagePath;
         Path physicalStoragePath;
-        Marker withFullStack = MarkerFactory.getMarker("WITH_FULLSTACK");
         try {
             storagePath = Paths.get(
                     ExprHelper.getConstPrefix(storageVolume.evalStorageRootDir(ImmutableMap.of("username", username)))
             );
         } catch (Exception e) {
-            LOG.warn("No storage path could be resolved on volume {} for user {}", storageVolume, username);
-            LOG.warn(withFullStack, "No storage path could be resolved on volume {} for user {}", storageVolume, username, e);
+            if (LOG.isDebugEnabled()) {
+                LOG.warn("No storage path could be resolved on volume {} for user {}", storageVolume, username, e);
+            } else {
+                LOG.warn("No storage path could be resolved on volume {} for user {} : {}", storageVolume, username, e.getMessage());
+            }
             return null;
         }
         try {
             physicalStoragePath = storagePath.toRealPath().toAbsolutePath();
         } catch (IOException e) {
-            LOG.warn("Storage path {} could not be resolved to a real path for user {} on volume {}", storagePath, username, storageVolume);
-            LOG.warn(withFullStack, "Storage path {} could not be resolved to a real path for user {} on volume {}", storagePath, username, storageVolume, e);
+            if (LOG.isDebugEnabled()) {
+                LOG.warn("Storage path {} could not be resolved to a real path for user {} on volume {}", storagePath, username, storageVolume, e);
+            } else {
+                LOG.warn("Storage path {} could not be resolved to a real path for user {} on volume {}: {}", storagePath, username, storageVolume, e.getMessage());
+            }
             return null;
         }
         Pattern p = Pattern.compile(".*groups/(\\w+)/"+username+".*");
