@@ -132,6 +132,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         new ConstantExchangeAttribute(applicationId), // <Application-Id>
                         DateTimeAttribute.INSTANCE, // <timestamp>
                         RequestURLAttribute.INSTANCE, // <Request URL>
+                        HostAndPortAttribute.INSTANCE, // <Host:Port>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         RequestPathAttribute.INSTANCE, // <RequestPath>
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
