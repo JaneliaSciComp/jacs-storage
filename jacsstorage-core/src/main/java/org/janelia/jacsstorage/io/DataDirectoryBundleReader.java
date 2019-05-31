@@ -97,7 +97,7 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
     @Override
     public long estimateDataEntrySize(String source, String entryName, ContentFilterParams filterParams) {
         Path sourcePath = getSourcePath(source);
-        Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
+//!!!!        Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
         Path entryPath = StringUtils.isBlank(entryName) ? sourcePath : sourcePath.resolve(entryName);
         if (Files.notExists(entryPath)) {
             throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
