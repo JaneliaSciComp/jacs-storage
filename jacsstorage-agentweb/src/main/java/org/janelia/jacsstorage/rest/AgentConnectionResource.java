@@ -24,7 +24,6 @@ import javax.ws.rs.core.UriInfo;
 
 @Api(value = "Agent connectivity API")
 @ApplicationScoped
-@Produces(MediaType.APPLICATION_JSON)
 @Path("connection")
 public class AgentConnectionResource {
     private static final Logger LOG = LoggerFactory.getLogger(AgentConnectionResource.class);
@@ -35,6 +34,7 @@ public class AgentConnectionResource {
     private UriInfo resourceURI;
 
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("status")
     public Response getStatus() {
         StorageAgentInfo localAgentInfo = agentState.getLocalAgentInfo();
@@ -49,8 +49,9 @@ public class AgentConnectionResource {
             @ApiResponse(code = 404, message = "Master URL is invalid")
     })
     @Timed
-    @POST
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @POST
     public Response connect(String connectURL) {
         LOG.info("Connect agent to {}", connectURL);
         agentState.connectTo(connectURL);

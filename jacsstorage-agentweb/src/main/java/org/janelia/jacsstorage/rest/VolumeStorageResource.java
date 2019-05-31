@@ -35,7 +35,6 @@ import java.util.List;
 
 @Api(value = "Agent storage API on a particular volume")
 @Timed
-@Produces(MediaType.APPLICATION_JSON)
 @Path(Constants.AGENTSTORAGE_URI_PATH)
 public class VolumeStorageResource {
 
@@ -58,6 +57,7 @@ public class VolumeStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @HEAD
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
     @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     public Response checkDataPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                    @PathParam("storageRelativePath") String storageRelativeFilePath,
@@ -155,6 +155,7 @@ public class VolumeStorageResource {
             @ApiResponse(code = 500, message = "Data read error")
     })
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("storage_volume/{storageVolumeId}/list/{storageRelativePath:.+}")
     public Response listPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                               @PathParam("storageRelativePath") String storageRelativeFilePath,

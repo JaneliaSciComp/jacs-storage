@@ -26,7 +26,6 @@ import java.util.List;
 
 @Api(value = "Agent storage volumes API.")
 @Timed
-@Produces(MediaType.APPLICATION_JSON)
 @Path(Constants.AGENTSTORAGE_URI_PATH)
 public class VolumeQuotaResource {
 

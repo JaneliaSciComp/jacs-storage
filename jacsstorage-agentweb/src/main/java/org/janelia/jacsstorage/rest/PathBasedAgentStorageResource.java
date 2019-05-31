@@ -40,7 +40,6 @@ import java.net.URI;
 
 @Api(value = "Agent storage API based on file's path.")
 @Timed
-@Produces(MediaType.APPLICATION_JSON)
 @Path(Constants.AGENTSTORAGE_URI_PATH)
 public class PathBasedAgentStorageResource {
 
@@ -64,8 +63,8 @@ public class PathBasedAgentStorageResource {
             @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
             @ApiResponse(code = 500, message = "Data read error")
     })
-    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
     @HEAD
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response checkPath(@PathParam("dataPath") String dataPathParam, @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
         LOG.info("Check path {}", dataPathParam);

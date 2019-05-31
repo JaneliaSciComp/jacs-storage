@@ -72,7 +72,6 @@ import java.util.List;
 @Timed
 @RequireAuthentication
 @Path(Constants.AGENTSTORAGE_URI_PATH)
-@Produces(MediaType.APPLICATION_JSON)
 public class AgentStorageResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(AgentStorageResource.class);
@@ -102,6 +101,7 @@ public class AgentStorageResource {
     @TimedMethod(argList = {0, 1})
     @POST
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("{dataBundleId}")
     public Response persistStream(@PathParam("dataBundleId") Long dataBundleId,
                                   @Context SecurityContext securityContext,
@@ -521,6 +521,7 @@ public class AgentStorageResource {
     )
     @TimedMethod
     @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("{dataBundleId}")
     public Response deleteStorage(@PathParam("dataBundleId") Long dataBundleId,
                                   @Context SecurityContext securityContext) throws IOException {
