@@ -21,7 +21,6 @@ import io.undertow.attribute.RemoteHostAttribute;
 import io.undertow.attribute.RemoteUserAttribute;
 import io.undertow.attribute.RequestMethodAttribute;
 import io.undertow.attribute.RequestSchemeAttribute;
-import io.undertow.attribute.RequestURLAttribute;
 import io.undertow.attribute.ResponseCodeAttribute;
 import io.undertow.attribute.ResponseHeaderAttribute;
 import io.undertow.predicate.Predicate;
@@ -133,9 +132,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                         new ConstantExchangeAttribute(applicationId), // <Application-Id>
                         DateTimeAttribute.INSTANCE, // <timestamp>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
-                        RequestSchemeAttribute.INSTANCE, // <Scheme (http or https)>
-                        HostAndPortAttribute.INSTANCE, // <Host:Port>
-                        RequestURLAttribute.INSTANCE, // <Request URL>
+                        new RequestFullURLAttribute(), // <Request URL>
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
                         new NameValueAttribute("requestHeaders", new RequestHeadersAttribute(getOmittedHeaders())),
                         new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location"))), // location=<ResponseLocation>
