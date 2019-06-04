@@ -15,12 +15,10 @@ import io.undertow.attribute.BytesSentAttribute;
 import io.undertow.attribute.ConstantExchangeAttribute;
 import io.undertow.attribute.DateTimeAttribute;
 import io.undertow.attribute.ExchangeAttribute;
-import io.undertow.attribute.HostAndPortAttribute;
 import io.undertow.attribute.QueryStringAttribute;
 import io.undertow.attribute.RemoteHostAttribute;
 import io.undertow.attribute.RemoteUserAttribute;
 import io.undertow.attribute.RequestMethodAttribute;
-import io.undertow.attribute.RequestSchemeAttribute;
 import io.undertow.attribute.ResponseCodeAttribute;
 import io.undertow.attribute.ResponseHeaderAttribute;
 import io.undertow.predicate.Predicate;
@@ -38,7 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.servlet.ServletProperties;
 import org.janelia.jacsstorage.app.AppArgs;
-import org.janelia.jacsstorage.app.ContainerInitializer;
+import org.janelia.jacsstorage.app.AppContainer;
 import org.janelia.jacsstorage.app.ContextPathBuilder;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.jboss.weld.environment.servlet.Listener;
@@ -50,9 +48,9 @@ import org.slf4j.LoggerFactory;
 import static io.undertow.Handlers.resource;
 import static io.undertow.servlet.Servlets.servlet;
 
-public class UndertowContainerInitializer implements ContainerInitializer {
+public class UndertowAppContainer implements AppContainer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(UndertowContainerInitializer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UndertowAppContainer.class);
 
     private final String applicationId;
     private final String restApiContext;
@@ -63,11 +61,11 @@ public class UndertowContainerInitializer implements ContainerInitializer {
     private AppArgs serverAppArgs;
     private Undertow server;
 
-    public UndertowContainerInitializer(String applicationId,
-                                        String restApiContext,
-                                        String restApiVersion,
-                                        String[] excludedPathsFromAccessLog,
-                                        ApplicationConfig applicationConfig) {
+    public UndertowAppContainer(String applicationId,
+                                String restApiContext,
+                                String restApiVersion,
+                                String[] excludedPathsFromAccessLog,
+                                ApplicationConfig applicationConfig) {
         this.applicationId = applicationId;
         this.restApiContext = restApiContext;
         this.restApiVersion = restApiVersion;

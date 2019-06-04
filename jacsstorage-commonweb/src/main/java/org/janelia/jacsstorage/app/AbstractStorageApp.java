@@ -1,12 +1,13 @@
 package org.janelia.jacsstorage.app;
 
+import javax.annotation.PreDestroy;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.BeforeShutdown;
 import javax.ws.rs.core.Application;
 
 import com.beust.jcommander.JCommander;
 
-import org.janelia.jacsstorage.app.undertow.UndertowContainerInitializer;
+import org.janelia.jacsstorage.app.undertow.UndertowAppContainer;
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.slf4j.Logger;
@@ -36,10 +37,10 @@ public abstract class AbstractStorageApp {
         cmdline.usage(output);
     }
 
-    private ContainerInitializer containerInitializer;
+    private AppContainer appContainer;
 
     protected void start(AppArgs appArgs, ApplicationConfig applicationConfig) {
-        containerInitializer = new UndertowContainerInitializer(
+        appContainer = new UndertowAppContainer(
                 getApplicationId(appArgs),
                 getRestApiContext(),
                 getApiVersion(),
@@ -47,18 +48,18 @@ public abstract class AbstractStorageApp {
                 applicationConfig
         );
         try {
-            containerInitializer.initialize(this.getJaxApplication(), appArgs);
-            containerInitializer.start();
+            appContainer.initialize(this.getJaxApplication(), appArgs);
+            appContainer.start();
         } catch (Exception e) {
             LOG.error("Error starting the application", e);
         }
     }
 
-    public void shutdownApp(@Observes BeforeShutdown event) {
-        LOG.info("!!!!!!!!!Stopping the container");
-        if (containerInitializer != null) {
+    @PreDestroy
+    public void shutdownApp() {
+        if (appContainer != null) {
             LOG.info("Stopping the container");
-            containerInitializer.stop();
+            appContainer.stop();
         }
     }
 

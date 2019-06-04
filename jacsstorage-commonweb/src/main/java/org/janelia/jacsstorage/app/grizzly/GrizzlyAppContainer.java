@@ -13,7 +13,7 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.glassfish.jersey.servlet.ServletProperties;
 import org.janelia.jacsstorage.app.AppArgs;
-import org.janelia.jacsstorage.app.ContainerInitializer;
+import org.janelia.jacsstorage.app.AppContainer;
 import org.janelia.jacsstorage.app.ContextPathBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +23,9 @@ import javax.ws.rs.core.Application;
 import java.io.IOException;
 import java.net.URI;
 
-public class GrizzlyContainerInitializer implements ContainerInitializer {
+public class GrizzlyAppContainer implements AppContainer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GrizzlyContainerInitializer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GrizzlyAppContainer.class);
 
     private final String applicationId;
     private final String restApiContext;
@@ -34,10 +34,10 @@ public class GrizzlyContainerInitializer implements ContainerInitializer {
 
     private HttpServer server;
 
-    public GrizzlyContainerInitializer(String applicationId,
-                                       String restApiContext,
-                                       String restApiVersion,
-                                       String[] excludedPathsFromAccessLog) {
+    public GrizzlyAppContainer(String applicationId,
+                               String restApiContext,
+                               String restApiVersion,
+                               String[] excludedPathsFromAccessLog) {
         this.applicationId = applicationId;
         this.restApiContext = restApiContext;
         this.restApiVersion = restApiVersion;
