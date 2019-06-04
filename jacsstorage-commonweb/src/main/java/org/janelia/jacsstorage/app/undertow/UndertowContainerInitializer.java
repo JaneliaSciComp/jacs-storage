@@ -60,6 +60,7 @@ public class UndertowContainerInitializer implements ContainerInitializer {
     private final String[] excludedPathsFromAccessLog;
     private final ApplicationConfig applicationConfig;
 
+    private AppArgs serverAppArgs;
     private Undertow server;
 
     public UndertowContainerInitializer(String applicationId,
@@ -144,13 +145,13 @@ public class UndertowContainerInitializer implements ContainerInitializer {
                 getAccessLogFilter()
         );
 
-        LOG.info("Starting JACS storage listener on {}:{}", appArgs.host, appArgs.portNumber);
+        serverAppArgs = appArgs;
         server = Undertow
                 .builder()
-                .addHttpListener(appArgs.portNumber, appArgs.host)
-                .setIoThreads(appArgs.nIOThreads)
+                .addHttpListener(serverAppArgs.portNumber, serverAppArgs.host)
+                .setIoThreads(serverAppArgs.nIOThreads)
                 .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, true)
-                .setWorkerThreads(appArgs.nWorkers)
+                .setWorkerThreads(serverAppArgs.nWorkers)
                 .setHandler(storageHandler)
                 .build();
 
@@ -158,12 +159,14 @@ public class UndertowContainerInitializer implements ContainerInitializer {
 
     @Override
     public void start() {
+        LOG.info("Starting JACS storage listener on {}:{}", serverAppArgs.host, serverAppArgs.portNumber);
         server.start();
     }
 
     @Override
     public void stop() {
         if (server != null) {
+            LOG.info("Stopping JACS storage listener on {}:{}", serverAppArgs.host, serverAppArgs.portNumber);
             server.stop();
         }
     }

@@ -1,19 +1,16 @@
 package org.janelia.jacsstorage.app;
 
-import java.lang.reflect.Type;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.BeforeShutdown;
+import javax.ws.rs.core.Application;
 
 import com.beust.jcommander.JCommander;
+
 import org.janelia.jacsstorage.app.undertow.UndertowContainerInitializer;
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.AfterDeploymentValidation;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.BeforeShutdown;
-import javax.ws.rs.core.Application;
 
 /**
  * This is the bootstrap application for JACS services.
@@ -58,6 +55,7 @@ public abstract class AbstractStorageApp {
     }
 
     public void shutdownApp(@Observes BeforeShutdown event) {
+        LOG.info("!!!!!!!!!Stopping the container");
         if (containerInitializer != null) {
             LOG.info("Stopping the container");
             containerInitializer.stop();
