@@ -37,11 +37,13 @@ public abstract class AbstractStorageApp {
         cmdline.usage(output);
     }
 
+    private String appId;
     private AppContainer appContainer;
 
     protected void start(AppArgs appArgs, ApplicationConfig applicationConfig) {
+        appId = getApplicationId(appArgs);
         appContainer = new UndertowAppContainer(
-                getApplicationId(appArgs),
+                appId,
                 getRestApiContext(),
                 getApiVersion(),
                 getPathsExcludedFromAccessLog(),
@@ -51,14 +53,14 @@ public abstract class AbstractStorageApp {
             appContainer.initialize(this.getJaxApplication(), appArgs);
             appContainer.start();
         } catch (Exception e) {
-            LOG.error("Error starting the application", e);
+            LOG.error("Error starting the application {}", appId, e);
         }
     }
 
     @PreDestroy
     public void shutdownApp() {
         if (appContainer != null) {
-            LOG.info("Stopping the container");
+            LOG.info("Stopping the application {}", appId);
             appContainer.stop();
         }
     }

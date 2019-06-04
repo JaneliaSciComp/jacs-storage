@@ -132,6 +132,7 @@ public class UndertowAppContainer implements AppContainer {
                         DateTimeAttribute.INSTANCE, // <timestamp>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         new RequestFullURLAttribute(), // <Request URL>
+                        new RequestBodyAttribute(), // Request Body
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
                         new NameValueAttribute("requestHeaders", new RequestHeadersAttribute(getOmittedHeaders())),
                         new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location"))), // location=<ResponseLocation>
