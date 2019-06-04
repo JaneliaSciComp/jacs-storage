@@ -1,5 +1,7 @@
 package org.janelia.jacsstorage.app;
 
+import java.lang.reflect.Type;
+
 import com.beust.jcommander.JCommander;
 import org.janelia.jacsstorage.app.undertow.UndertowContainerInitializer;
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
@@ -7,6 +9,10 @@ import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.AfterDeploymentValidation;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.enterprise.inject.spi.BeforeShutdown;
 import javax.ws.rs.core.Application;
 
 /**
@@ -33,8 +39,10 @@ public abstract class AbstractStorageApp {
         cmdline.usage(output);
     }
 
+    private ContainerInitializer containerInitializer;
+
     protected void start(AppArgs appArgs, ApplicationConfig applicationConfig) {
-        ContainerInitializer containerInitializer = new UndertowContainerInitializer(
+        containerInitializer = new UndertowContainerInitializer(
                 getApplicationId(appArgs),
                 getRestApiContext(),
                 getApiVersion(),
@@ -46,6 +54,13 @@ public abstract class AbstractStorageApp {
             containerInitializer.start();
         } catch (Exception e) {
             LOG.error("Error starting the application", e);
+        }
+    }
+
+    public void shutdownApp(@Observes BeforeShutdown event) {
+        if (containerInitializer != null) {
+            LOG.info("Stopping the container");
+            containerInitializer.stop();
         }
     }
 

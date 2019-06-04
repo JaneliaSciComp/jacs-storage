@@ -96,4 +96,10 @@ public class GrizzlyContainerInitializer implements ContainerInitializer {
         }
     }
 
+    @Override
+    public void stop() {
+        if (server != null) {
+            server.shutdownNow();
+        }
+    }
 }

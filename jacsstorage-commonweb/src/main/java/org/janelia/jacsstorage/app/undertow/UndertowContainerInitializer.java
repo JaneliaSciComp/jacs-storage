@@ -161,6 +161,13 @@ public class UndertowContainerInitializer implements ContainerInitializer {
         server.start();
     }
 
+    @Override
+    public void stop() {
+        if (server != null) {
+            server.stop();
+        }
+    }
+
     private Predicate getAccessLogFilter() {
         return Predicates.not(
                 Predicates.prefixes(excludedPathsFromAccessLog)
