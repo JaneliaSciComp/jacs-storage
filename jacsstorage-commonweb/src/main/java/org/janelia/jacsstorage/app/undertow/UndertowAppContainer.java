@@ -122,7 +122,7 @@ public class UndertowAppContainer implements AppContainer {
         HttpHandler storageHandler = new AccessLogHandler(
                 Handlers.path(Handlers.redirect(docsContextPath))
                         .addPrefixPath(docsContextPath, staticHandler)
-                        .addPrefixPath(contextPath, restApiHttpHandler),
+                        .addPrefixPath(contextPath, new SavedRequestBodyHandler(restApiHttpHandler, applicationConfig.getBooleanPropertyValue("AccessLog.WithRequestBody", false))),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),
                 "ignored",
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {
@@ -132,14 +132,14 @@ public class UndertowAppContainer implements AppContainer {
                         DateTimeAttribute.INSTANCE, // <timestamp>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         new RequestFullURLAttribute(), // <Request URL>
-                        new RequestBodyAttribute(), // Request Body
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
                         new NameValueAttribute("requestHeaders", new RequestHeadersAttribute(getOmittedHeaders())),
                         new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location"))), // location=<ResponseLocation>
                         new NameValueAttribute("status", ResponseCodeAttribute.INSTANCE), // status=<ResponseStatus>
                         new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>
                         new NameValueAttribute("rt", new ResponseTimeAttribute()), // rt=<ResponseTimeInSeconds>
-                        new NameValueAttribute("tp", new ThroughputAttribute()) // tp=<Throughput>
+                        new NameValueAttribute("tp", new ThroughputAttribute()), // tp=<Throughput>
+                        new RequestBodyAttribute() // Request Body
                 }, " "),
                 getAccessLogFilter()
         );
