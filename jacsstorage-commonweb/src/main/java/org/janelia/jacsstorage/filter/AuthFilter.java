@@ -28,7 +28,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 @Priority(Priorities.AUTHENTICATION)
-public class JWTAuthFilter implements ContainerRequestFilter {
+public class AuthFilter implements ContainerRequestFilter {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String SUBJECT_PARAM_NAME = "JacsSubject";

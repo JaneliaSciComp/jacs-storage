@@ -2,10 +2,9 @@ package org.janelia.jacsstorage.testrest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.janelia.jacsstorage.cdi.ObjectMapperFactory;
-import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.NumberSerializerModule;
-import org.janelia.jacsstorage.filter.JWTAuthFilter;
+import org.janelia.jacsstorage.filter.AuthFilter;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageUsageManager;
@@ -23,7 +22,7 @@ public class TestMasterStorageDependenciesProducer {
     private StorageLookupService storageLookupService = mock(StorageLookupService.class);
     private StorageUsageManager storageUsageManager = mock(StorageUsageManager.class);
     private StorageVolumeManager storageVolumeManager = mock(StorageVolumeManager.class);
-    private JWTAuthFilter jwtAuthFilter = mock(JWTAuthFilter.class);
+    private AuthFilter authFilter = mock(AuthFilter.class);
 
     @Produces
     public StorageAgentManager getStorageAgentManager() {
@@ -61,8 +60,8 @@ public class TestMasterStorageDependenciesProducer {
     }
 
     @Produces
-    public JWTAuthFilter getJwtAuthFilter() {
-        return jwtAuthFilter;
+    public AuthFilter getAuthFilter() {
+        return authFilter;
     }
 
 }

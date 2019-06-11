@@ -4,7 +4,7 @@ import com.fasterxml.jackson.jaxrs.xml.JacksonJaxbXMLProvider;
 import com.google.common.collect.ImmutableSet;
 import io.swagger.jaxrs.listing.ApiListingResource;
 import org.janelia.jacsstorage.filter.CORSResponseFilter;
-import org.janelia.jacsstorage.filter.JWTAuthFilter;
+import org.janelia.jacsstorage.filter.AuthFilter;
 import org.janelia.jacsstorage.provider.ObjectMapperResolver;
 import org.janelia.jacsstorage.rest.*;
 
@@ -18,7 +18,7 @@ public abstract class AbstractJAXApp extends Application {
                 .add(ApiListingResource.class,
                         ObjectMapperResolver.class,
                         JacksonJaxbXMLProvider.class,
-                        JWTAuthFilter.class,
+                        AuthFilter.class,
                         CORSResponseFilter.class,
                         DataAlreadyExistRequestHandler.class,
                         InvalidArgumentRequestHandler.class,
