@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,10 +14,14 @@ class UsageDataHelper {
     private static final Logger LOG = LoggerFactory.getLogger(UsageDataHelper.class);
 
     static Number parseValue(String fieldName, String fieldValue, Function<String, Number> valueConverter) {
-        try {
-            return valueConverter.apply(fieldValue);
-        } catch (Exception e) {
-            LOG.warn("Invalid '{}' value: {}", fieldName, fieldValue, e);
+        if (StringUtils.isBlank(fieldValue)) {
+            LOG.warn("Null or empty field '{}' -> '{}'", fieldName, fieldValue);
+        } else {
+            try {
+                return valueConverter.apply(fieldValue);
+            } catch (Exception e) {
+                LOG.error("Invalid '{}' value: '{}'", fieldName, fieldValue, e);
+            }
         }
         return null;
     }
