@@ -120,9 +120,11 @@ project(":jacsstorage-agentweb") {
         }
 
         if (project.hasProperty('externalConfig')) {
-            from(new File("${externalConfig}")) {
-                into "etc/config.properties"
+            def configFile = new File("${externalConfig}")
+            from(configFile) {
+                into "etc"
                 filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
+                rename("etc/${configFile.name}", "etc/config.properties")
             }
         }
 
