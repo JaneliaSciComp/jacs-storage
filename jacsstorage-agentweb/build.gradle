@@ -93,6 +93,10 @@ project(":jacsstorage-agentweb") {
         from(new File(project(':jacsstorage-commonweb').projectDir, 'src/main/install/etc')) {
             into "etc"
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
+            if (project.hasProperty('externalConfig')) {
+                rename '(.*)config.properties' '$1default-config.properties'
+            }
+
         }
 
         from ("${buildDir}/install/${project.name}/bin") {
@@ -120,11 +124,13 @@ project(":jacsstorage-agentweb") {
         }
 
         if (project.hasProperty('externalConfig')) {
-            def configFile = new File("${externalConfig}")
-            from(configFile) {
+            def externalConfigFile = new File("${externalConfig}")
+            from (externalConfigFile) {
                 into "etc"
                 filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
-                rename("etc/${configFile.name}", "etc/config.properties")
+                rename { fileName ->
+                    'config1.properties'
+                }
             }
         }
 
