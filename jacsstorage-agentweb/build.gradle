@@ -119,6 +119,13 @@ project(":jacsstorage-agentweb") {
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
+        if (project.hasProperty('externalConfig')) {
+            from(new File("${externalConfig}")) {
+                into "etc"
+                filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
+            }
+        }
+
         link("${systemServiceDir}/multi-user.target.wants/${project.name}.service", "${systemServiceDir}/${project.name}.service")
     }
 }
