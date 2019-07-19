@@ -184,44 +184,4 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
             assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
         }
     }
-
-    @Test
-    public void retrieveDataStreamUsingDeprecatedEndpointForDataPathURIRelativeToVolumePrefix() throws IOException {
-        String[] testPaths = new String[] {
-                "jade://volPrefix/testPath",
-                "jade:///volPrefix/testPath"
-        };
-        StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
-        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/volPrefix/testPath"))))
-                .thenReturn(ImmutableList.of(
-                        new JacsStorageVolumeBuilder()
-                                .storageVirtualPath("/volPrefix")
-                                .storageRootTemplate("/volRoot")
-                                .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
-                                .build()
-                        )
-                );
-        PowerMockito.mockStatic(Files.class);
-        PowerMockito.mockStatic(PathUtils.class);
-        String testData = "Test data";
-        Path expectedDataPath = Paths.get("/volRoot/testPath");
-        Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
-        Mockito.when(Files.exists(eq(Paths.get("/volPrefix", "testPath")))).thenReturn(false);
-        Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
-        JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
-        when(storageContentReader.estimateDataEntrySize(eq(expectedDataPath), eq(""), eq(testFormat), any(ContentFilterParams.class)))
-                .then(invocation -> (long) testData.length());
-        when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(ContentFilterParams.class), any(OutputStream.class)))
-                .then(invocation -> {
-                    OutputStream out = invocation.getArgument(3);
-                    out.write(testData.getBytes());
-                    return (long) testData.length();
-                });
-        for (String testPath : testPaths) {
-            Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path").path(testPath).request().get();
-            assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
-            assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
-        }
-    }
 }

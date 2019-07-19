@@ -17,7 +17,7 @@ public class CacheableJacsStorageVolumeDao extends AbstractCacheableEntityByIdDa
 
     private static final Cache<Number, JacsStorageVolume> JACS_VOLUME_CACHE = CacheBuilder.newBuilder()
             .maximumSize(100)
-            .expireAfterAccess(5, TimeUnit.MINUTES)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
             .build();
 
     private JacsStorageVolumeDao dao;

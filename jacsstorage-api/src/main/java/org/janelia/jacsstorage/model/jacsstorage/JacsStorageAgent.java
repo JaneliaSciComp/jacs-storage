@@ -43,6 +43,10 @@ public class JacsStorageAgent extends AbstractEntity {
         this.servedVolumes = servedVolumes;
     }
 
+    public boolean canServe(String volumeName) {
+        return servedVolumes != null && (servedVolumes.contains("*") || servedVolumes.contains(volumeName));
+    }
+
     public String getStatus() {
         return status;
     }

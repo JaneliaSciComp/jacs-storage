@@ -59,12 +59,7 @@ public abstract class AbstractCacheableEntityByIdDao<T extends BaseEntity>
     @Override
     public T findById(Number id) {
         try {
-            return getCache().get(id, new Callable<T>() {
-                @Override
-                public T call() {
-                    return getDelegator().findById(id);
-                }
-            });
+            return getCache().get(id, () -> getDelegator().findById(id));
         } catch (Exception e) {
             LOG.warn("No entity of type {} found for {}", getEntityType(), id, e);
             return null;
