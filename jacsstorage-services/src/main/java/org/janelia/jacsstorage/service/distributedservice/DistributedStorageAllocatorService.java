@@ -44,7 +44,7 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
         return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
                 .flatMap(sv -> agentManager.findRegisteredAgent(sv.getStorageServiceURL()))
                 .map(storageAgentInfo -> AgentConnectionHelper.deleteStorage(
-                        storageAgentInfo.getAgentHttpURL(),
+                        storageAgentInfo.getAgentAccessURL(),
                         existingBundle.getId(),
                         credentials.getSubjectName(),
                         credentials))
@@ -56,10 +56,10 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
         List<StorageAgentInfo> availableAgents = agentManager.getCurrentRegisteredAgents(ac -> ac.isConnected());
         StorageVolumeSelector[] volumeSelectors = new StorageVolumeSelector[] {
                 new RandomLocalStorageVolumeSelector(storageVolumeDao,
-                        availableAgents.stream().map(ai -> ai.getStorageHost()).collect(Collectors.toList()),
-                        availableAgents.stream().map(ai -> ai.getAgentHttpURL()).collect(Collectors.toList())),
+                        availableAgents.stream().map(ai -> ai.getAgentHost()).collect(Collectors.toList()),
+                        availableAgents.stream().map(ai -> ai.getAgentAccessURL()).collect(Collectors.toList())),
                 new RandomSharedStorageVolumeSelector(storageVolumeDao,
-                        availableAgents.stream().map(ai -> ai.getAgentHttpURL()).collect(Collectors.toList())),
+                        availableAgents.stream().map(ai -> ai.getAgentAccessURL()).collect(Collectors.toList())),
                 new OverflowStorageVolumeSelector(storageVolumeDao)
         };
         JacsStorageVolume storageVolume = null;
@@ -75,11 +75,11 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
         }
         JacsStorageVolume selectedVolume = storageVolume;
         if (selectedVolume.getStorageServiceURL() == null) {
-            // find any connected agent
-            return agentManager.findRandomRegisteredAgent((StorageAgentConnection ac) -> ac.isConnected())
+            // find any connected agent that can serve selected volume
+            return agentManager.findRandomRegisteredAgent((StorageAgentConnection ac) -> ac.isConnected() && ac.getAgentInfo().canServe(selectedVolume))
                     .map((StorageAgentInfo ai) -> {
-                        selectedVolume.setStorageHost(ai.getStorageHost());
-                        selectedVolume.setStorageServiceURL(ai.getAgentHttpURL());
+                        selectedVolume.setStorageHost(ai.getAgentHost());
+                        selectedVolume.setStorageServiceURL(ai.getAgentAccessURL());
                         return selectedVolume;
                     });
         } else {

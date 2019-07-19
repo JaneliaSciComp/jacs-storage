@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service.distributedservice;
 import com.google.common.collect.ImmutableList;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
+import org.janelia.jacsstorage.dao.JacsStorageAgentDao;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.ConnectionChecker;
 import org.janelia.jacsstorage.resilience.ConnectionState;
@@ -43,6 +44,8 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     @Inject @PropertyValue(name = "Storage.Overflow.RootDir")
     private String overflowRootDir;
     @Inject
+    private JacsStorageAgentDao jacsStorageAgentDao;
+    @Inject
     private NotificationService connectivityNotifier;
 
     @Override
@@ -65,27 +68,27 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
                 tripThreshold);
         StorageAgentConnection agentConnection = new StorageAgentConnection(agentInfo, connectionChecker);
         StorageAgentConnection registeredConnection =
-                registeredAgentConnections.putIfAbsent(agentInfo.getAgentHttpURL(), agentConnection);
+                registeredAgentConnections.putIfAbsent(agentInfo.getAgentAccessURL(), agentConnection);
         if (registeredConnection == null) {
             agentConnection.updateConnectionStatus(ConnectionState.Status.CLOSED);
             agentInfo.setAgentToken(String.valueOf(AGENT_TOKEN_GENERATOR.nextInt()));
             connectionChecker.initialize(
                     () -> agentConnection, new AgentConnectionTester(),
-                    newAgentConnection -> {
-                        LOG.trace("Agent {} is up and running", newAgentConnection.getAgentInfo().getAgentHttpURL());
-                        if (agentConnection.getConnectStatus() != newAgentConnection.getConnectStatus()) {
+                    agentConnectionState -> {
+                        LOG.trace("Agent {} is up and running", agentConnectionState.getAgentInfo().getAgentAccessURL());
+                        if (agentConnection.getConnectStatus() != agentConnectionState.getConnectStatus()) {
                             connectivityNotifier.sendNotification(
-                                    "Master reconnected to " + newAgentConnection.getAgentInfo().getAgentHttpURL(),
-                                    "Master reconnected to " + newAgentConnection.getAgentInfo().getAgentHttpURL());
+                                    "Master reconnected to " + agentConnectionState.getAgentInfo().getAgentAccessURL(),
+                                    "Master reconnected to " + agentConnectionState.getAgentInfo().getAgentAccessURL());
                         }
-                        agentConnection.updateConnectionStatus(newAgentConnection.getConnectStatus());
+                        agentConnection.updateConnectionStatus(agentConnectionState.getConnectStatus());
                     },
-                    newAgentConnection -> {
-                        LOG.error("Connection lost to {}", newAgentConnection.getAgentInfo());
-                        agentConnection.updateConnectionStatus(newAgentConnection.getConnectStatus());
+                    agentConnectionState -> {
+                        LOG.error("Connection lost to {}", agentConnectionState.getAgentInfo());
+                        agentConnection.updateConnectionStatus(agentConnectionState.getConnectStatus());
                         connectivityNotifier.sendNotification(
-                                "Master lost connection to " + newAgentConnection.getAgentInfo().getAgentHttpURL(),
-                                "Master lost connection to " + newAgentConnection.getAgentInfo().getAgentHttpURL());
+                                "Master lost connection to " + agentConnectionState.getAgentInfo().getAgentAccessURL(),
+                                "Master lost connection to " + agentConnectionState.getAgentInfo().getAgentAccessURL());
                     });
             return agentInfo;
         } else {

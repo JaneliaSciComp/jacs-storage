@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.dao.mongo;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Field;
@@ -45,11 +46,14 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
     }
 
     @Override
-    public void update(JacsBundle entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
-        Map<String, EntityFieldValueHandler<?>> fieldsWithUpdatedDate = new LinkedHashMap<>(fieldsToUpdate);
-        entity.setModified(new Date());
-        fieldsWithUpdatedDate.put("modified", new SetFieldValueHandler<>(entity.getModified()));
-        super.update(entity, fieldsWithUpdatedDate);
+    public JacsBundle update(Number entityId, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+        return super.update(
+                entityId,
+                fieldsToUpdate.containsKey("modified")
+                        ? fieldsToUpdate
+                        : ImmutableMap.<String, EntityFieldValueHandler<?>>builder().putAll(fieldsToUpdate).put("modified", new SetFieldValueHandler<>(new Date()))
+                        .build()
+        );
     }
 
     @Override

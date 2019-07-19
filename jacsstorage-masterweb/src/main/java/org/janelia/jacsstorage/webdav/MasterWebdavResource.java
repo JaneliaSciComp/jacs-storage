@@ -69,7 +69,7 @@ public class MasterWebdavResource {
         LOG.info("Find storage by prefix {} for {}", storagePrefixParam, securityContext.getUserPrincipal());
         StoragePathURI storagePrefixURI = StoragePathURI.createAbsolutePathURI(storagePrefixParam);
         StorageQuery storageQuery = new StorageQuery().setStorageVirtualPath(storagePrefixURI.getStoragePath());
-        List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
+        List<JacsStorageVolume> managedVolumes = storageVolumeManager.findVolumes(storageQuery);
         if (CollectionUtils.isEmpty(managedVolumes)) {
             LOG.warn("No storage found for prefix {}", storagePrefixParam);
             Multistatus statusResponse = new Multistatus();
@@ -111,7 +111,7 @@ public class MasterWebdavResource {
         LOG.info("Find storage for path {} for {}", dataStoragePathParam, securityContext.getUserPrincipal());
         StoragePathURI dataStoragePathURI = StoragePathURI.createAbsolutePathURI(dataStoragePathParam);
         StorageQuery storageQuery = new StorageQuery().setDataStoragePath(dataStoragePathURI.getStoragePath());
-        List<JacsStorageVolume> managedVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
+        List<JacsStorageVolume> managedVolumes = storageVolumeManager.findVolumes(storageQuery);
         if (CollectionUtils.isEmpty(managedVolumes)) {
             LOG.warn("No storage found for path {} - {}", dataStoragePathParam, dataStoragePathURI);
             Multistatus statusResponse = new Multistatus();

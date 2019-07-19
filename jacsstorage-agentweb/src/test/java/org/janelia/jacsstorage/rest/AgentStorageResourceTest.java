@@ -88,7 +88,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                     return (long) testData.length();
                 });
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
+        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
                                 .storageVirtualPath("/volPrefix")
@@ -167,7 +167,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                     return (long) testDataContent.length();
                 });
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
+        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
                                 .storageVirtualPath("/volPrefix")
@@ -216,7 +216,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                     return (long) testDataContent.length();
                 });
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
+        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
                                 .storageVirtualPath("/volPrefix")
@@ -265,7 +265,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                     return (long) testDataContent.length();
                 });
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
+        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
                                 .storageVirtualPath("/volPrefix")

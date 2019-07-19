@@ -2,17 +2,23 @@ package org.janelia.jacsstorage.agent;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageAgent;
 import org.janelia.jacsstorage.resilience.ConnectionState;
 import org.janelia.jacsstorage.resilience.ConnectionTester;
 
-import java.util.function.Consumer;
-
 public class AgentConnectionTester implements ConnectionTester<AgentConnectionState> {
+
+    private final JacsStorageAgent jacsStorageAgent;
+
+    AgentConnectionTester(JacsStorageAgent jacsStorageAgent) {
+        this.jacsStorageAgent = jacsStorageAgent;
+    }
 
     @Override
     public AgentConnectionState testConnection(AgentConnectionState agentConnectionState) {
         if (StringUtils.isBlank(agentConnectionState.getMasterHttpURL())) {
-            return new AgentConnectionState(agentConnectionState.getStorageHost(),
+            return new AgentConnectionState(
+                    agentConnectionState.getStorageHost(),
                     agentConnectionState.getMasterHttpURL(),
                     agentConnectionState.getAgentHttpURL(),
                     ConnectionState.Status.OPEN,
@@ -20,16 +26,18 @@ public class AgentConnectionTester implements ConnectionTester<AgentConnectionSt
                     null);
         }
         if (!agentConnectionState.isConnected()) {
-            StorageAgentInfo registeredAgentInfo = AgentConnectionHelper.registerAgent(agentConnectionState.getMasterHttpURL(), agentConnectionState.toStorageAgentInfo());
+            StorageAgentInfo registeredAgentInfo = AgentConnectionHelper.registerAgent(agentConnectionState.getMasterHttpURL(), agentConnectionState.toStorageAgentInfo(jacsStorageAgent.getServedVolumes()));
             if (registeredAgentInfo == null) {
-                return new AgentConnectionState(agentConnectionState.getStorageHost(),
+                return new AgentConnectionState(
+                        agentConnectionState.getStorageHost(),
                         agentConnectionState.getMasterHttpURL(),
                         agentConnectionState.getAgentHttpURL(),
                         ConnectionState.Status.OPEN,
                         agentConnectionState.getConnectionAttempts() + 1,
                         agentConnectionState.getRegisteredToken());
             } else {
-                return new AgentConnectionState(agentConnectionState.getStorageHost(),
+                return new AgentConnectionState(
+                        agentConnectionState.getStorageHost(),
                         agentConnectionState.getMasterHttpURL(),
                         agentConnectionState.getAgentHttpURL(),
                         ConnectionState.Status.CLOSED,

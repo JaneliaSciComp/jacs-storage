@@ -1,7 +1,17 @@
 package org.janelia.jacsstorage.dao.mongo;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.StreamSupport;
+
+import javax.inject.Inject;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Field;
@@ -11,6 +21,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
@@ -26,15 +37,6 @@ import org.janelia.jacsstorage.expr.ExprHelper;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
-
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.StreamSupport;
 
 /**
  * Mongo based implementation of JacsStorageVolumeDao.
@@ -57,11 +59,14 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
     }
 
     @Override
-    public void update(JacsStorageVolume entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
-        Map<String, EntityFieldValueHandler<?>> fieldsWithUpdatedDate = new LinkedHashMap<>(fieldsToUpdate);
-        entity.setModified(new Date());
-        fieldsWithUpdatedDate.put("modified", new SetFieldValueHandler<>(entity.getModified()));
-        super.update(entity, fieldsWithUpdatedDate);
+    public JacsStorageVolume update(Number entityId, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+        return super.update(
+                entityId,
+                fieldsToUpdate.containsKey("modified")
+                        ? fieldsToUpdate
+                        : ImmutableMap.<String, EntityFieldValueHandler<?>>builder().putAll(fieldsToUpdate).put("modified", new SetFieldValueHandler<>(new Date()))
+                        .build()
+        );
     }
 
     @Override
@@ -187,7 +192,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
     }
 
     @Override
-    public JacsStorageVolume getStorageByHostAndNameAndCreateIfNotFound(String hostName, String volumeName) {
+    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String hostName) {
         Preconditions.checkArgument(StringUtils.isNotBlank(volumeName));
 
         FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
@@ -195,19 +200,27 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         updateOptions.upsert(true);
 
         ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
+        String storageHost;
+        boolean sharedVolume;
         if (StringUtils.isBlank(hostName)) {
+            sharedVolume = true;
+            storageHost = null;
             filtersBuilder.add(Filters.or(Filters.exists("storageHost", false), Filters.eq("storageHost", null)));
         } else {
+            sharedVolume = false;
+            storageHost = hostName;
             filtersBuilder.add(Filters.eq("storageHost", hostName));
         }
         filtersBuilder.add(Filters.eq("name", volumeName));
 
+        Date changedTimestamp = new Date();
         Bson fieldsToInsert = Updates.combine(
                 Updates.setOnInsert("_id", idGenerator.generateId()),
-                Updates.setOnInsert("storageHost", StringUtils.defaultIfBlank(hostName, null)),
                 Updates.setOnInsert("name", volumeName),
-                Updates.setOnInsert("shared", StringUtils.isBlank(hostName)),
-                Updates.setOnInsert("created", new Date()),
+                Updates.setOnInsert("storageHost", storageHost),
+                Updates.setOnInsert("shared", sharedVolume),
+                Updates.setOnInsert("created", changedTimestamp),
+                Updates.set("modified", changedTimestamp),
                 Updates.setOnInsert("class", JacsStorageVolume.class.getName())
         );
         return mongoCollection.findOneAndUpdate(

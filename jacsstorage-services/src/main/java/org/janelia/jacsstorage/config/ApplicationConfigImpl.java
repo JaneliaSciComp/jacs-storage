@@ -27,7 +27,7 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     @Override
     public String getStringPropertyValue(String name, String defaultValue) {
         String value = getStringPropertyValue(name);
-        return value == null ? defaultValue : value;
+        return StringUtils.isBlank(value) ? defaultValue : value;
     }
 
     @Override
@@ -87,10 +87,15 @@ public class ApplicationConfigImpl implements ApplicationConfig {
     public List<String> getStringListPropertyValue(String name, List<String> defaultValue) {
         String stringValue = getStringPropertyValue(name);
         if (StringUtils.isBlank(stringValue)) {
-            return ImmutableList.of();
+            return defaultValue == null ? ImmutableList.of() : ImmutableList.copyOf(defaultValue);
         } else {
             return Splitter.on(',').trimResults().splitToList(stringValue);
         }
+    }
+
+    @Override
+    public boolean hasProperty(String name) {
+        return configProperties.containsKey(name);
     }
 
     @Override

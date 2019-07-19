@@ -1,13 +1,14 @@
 package org.janelia.jacsstorage.dao;
 
+import java.util.concurrent.TimeUnit;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Cached data accessed by ID.
@@ -36,8 +37,8 @@ public class CacheableJacsStorageVolumeDao extends AbstractCacheableEntityByIdDa
     }
 
     @Override
-    public JacsStorageVolume getStorageByHostAndNameAndCreateIfNotFound(String hostName, String volumeName) {
-        return getDelegator().getStorageByHostAndNameAndCreateIfNotFound(hostName, volumeName);
+    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String hostName) {
+        return getDelegator().createStorageVolumeIfNotFound(volumeName, hostName);
     }
 
     @Override

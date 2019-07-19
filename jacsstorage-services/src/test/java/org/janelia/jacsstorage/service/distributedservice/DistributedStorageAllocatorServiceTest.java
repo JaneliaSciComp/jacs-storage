@@ -3,10 +3,12 @@ package org.janelia.jacsstorage.service.distributedservice;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
@@ -29,6 +31,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -59,16 +62,18 @@ public class DistributedStorageAllocatorServiceTest {
         final String testBundlePrefix;
         final JacsBundle testBundle;
         final JacsStorageVolume testVolume;
+        final Set<String> testAgentServedVolumes;
 
-        public TestAllocateData(Long testBundleId,
-                                Long testVolumeId,
-                                String testVolumentName,
-                                String testHost,
-                                String testAgentURL,
-                                String testAgentMountPoint,
-                                String testBundlePrefix,
-                                JacsBundle testBundle,
-                                JacsStorageVolume testVolume) {
+        TestAllocateData(Long testBundleId,
+                         Long testVolumeId,
+                         String testVolumentName,
+                         String testHost,
+                         String testAgentURL,
+                         String testAgentMountPoint,
+                         String testBundlePrefix,
+                         JacsBundle testBundle,
+                         JacsStorageVolume testVolume,
+                         Set<String> testAgentServedVolumes) {
             this.testBundleId = testBundleId;
             this.testVolumeId = testVolumeId;
             this.testVolumentName = testVolumentName;
@@ -78,6 +83,7 @@ public class DistributedStorageAllocatorServiceTest {
             this.testBundlePrefix = testBundlePrefix;
             this.testBundle = testBundle;
             this.testVolume = testVolume;
+            this.testAgentServedVolumes = testAgentServedVolumes;
         }
     }
 
@@ -93,10 +99,12 @@ public class DistributedStorageAllocatorServiceTest {
                         null,
                         new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
+                                .name("testVolumeName")
                                 .storageHost("testHost")
                                 .storageRootTemplate("/storage/${owner}")
                                 .storageServiceURL("http://agentURL")
-                                .build()
+                                .build(),
+                        ImmutableSet.of("testVolumeName")
                 ),
                 new TestAllocateData(10L,
                         20L,
@@ -109,7 +117,8 @@ public class DistributedStorageAllocatorServiceTest {
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .name(JacsStorageVolume.OVERFLOW_VOLUME)
                                 .storageRootTemplate("/overflowStorage")
-                                .build()
+                                .build(),
+                        ImmutableSet.of("testVolumeName")
                 ),
                 new TestAllocateData(10L,
                         20L,
@@ -123,7 +132,8 @@ public class DistributedStorageAllocatorServiceTest {
                                 .storageHost("testHost")
                                 .storageRootTemplate("/storage")
                                 .storageServiceURL("http://agentURL")
-                                .build()
+                                .build(),
+                        ImmutableSet.of("testVolumeName")
                 )
         };
         for (TestAllocateData td : testData) {
@@ -139,7 +149,8 @@ public class DistributedStorageAllocatorServiceTest {
         Mockito.reset(storageAgentManager, storageVolumeDao, bundleDao);
         StorageAgentInfo testAgentInfo = new StorageAgentInfo(
                 testData.testHost,
-                testData.testAgentURL);
+                testData.testAgentURL,
+                testData.testAgentServedVolumes);
         testAgentInfo.setConnectionStatus("CONNECTED");
         when(storageAgentManager.findRandomRegisteredAgent(any(Predicate.class)))
                 .thenReturn(Optional.of(testAgentInfo));
@@ -160,6 +171,8 @@ public class DistributedStorageAllocatorServiceTest {
             bundle.setId(testData.testBundleId);
             return null;
         }).when(bundleDao).save(any(JacsBundle.class));
+        when(bundleDao.update(any(Number.class), anyMap()))
+                .thenReturn(testData.testBundle);
     }
 
     private void verifyTestBundle(Optional<JacsBundle> bundleResult, TestAllocateData testData) {
@@ -174,7 +187,7 @@ public class DistributedStorageAllocatorServiceTest {
             assertThat(dataBundle.getId(), equalTo(testData.testBundleId));
             assertThat(dataBundle.getPath(), equalTo((StringUtils.isBlank(testData.testBundlePrefix) ? "" : testData.testBundlePrefix + File.separator) + testData.testBundleId.toString()));
             assertThat(dataBundle.getRealStoragePath(), equalTo(Paths.get(testData.testVolume.getStorageRootTemplate(), StringUtils.defaultIfBlank(testData.testBundlePrefix, ""), testData.testBundleId.toString())));
-            Mockito.verify(bundleDao).update(dataBundle, ImmutableMap.of(
+            Mockito.verify(bundleDao).update(dataBundle.getId(), ImmutableMap.of(
                     "path", new SetFieldValueHandler<>(dataBundle.getPath())
             ));
         });

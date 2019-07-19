@@ -1,6 +1,15 @@
 package org.janelia.jacsstorage.dao.mongo;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
@@ -13,16 +22,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
@@ -62,10 +65,11 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
     public void updateTestEntity() {
         JacsStorageVolume te = persistEntity(testDao, createTestEntity("127.0.0.1", 100, "testVol", "/tmp", "/tmp",100L));
         Set<JacsStoragePermission> volumePermissions = EnumSet.of(JacsStoragePermission.READ, JacsStoragePermission.WRITE);
-        testDao.update(te, ImmutableMap.of("volumePermissions", new SetFieldValueHandler<>(volumePermissions)));
+        JacsStorageVolume updatedEntity = testDao.update(te.getId(), ImmutableMap.of("volumePermissions", new SetFieldValueHandler<>(volumePermissions)));
         JacsStorageVolume retrievedTe = testDao.findById(te.getId());
-        assertThat(retrievedTe.getName(), equalTo(te.getName()));
+        assertThat(retrievedTe.getName(), equalTo(updatedEntity.getName()));
         assertThat(retrievedTe.getVolumePermissions(), equalTo(volumePermissions));
+        assertThat(updatedEntity.getVolumePermissions(), equalTo(volumePermissions));
     }
 
     @Test
@@ -80,10 +84,10 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
     @Test
     public void searchMissingVolumeByLocationAndCheckIfCreated() {
         class TestInputData {
-            final String testHost;
-            final String testName;
+            private final String testHost;
+            private final String testName;
 
-            public TestInputData(String testHost, String testName) {
+            private TestInputData(String testHost, String testName) {
                 this.testHost = testHost;
                 this.testName = testName;
             }
@@ -97,13 +101,19 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
                 new TestInputData("127.0.0.2", "testVol1")
         };
         for (TestInputData td : testInputData) {
-            JacsStorageVolume justCreated = testDao.getStorageByHostAndNameAndCreateIfNotFound(td.testHost, td.testName);
+            JacsStorageVolume justCreated = testDao.createStorageVolumeIfNotFound(td.testName, td.testHost);
             assertNotNull(justCreated);
             testData.add(justCreated);
             JacsStorageVolume retrievedTe = testDao.findById(justCreated.getId());
             assertNotNull(retrievedTe);
             assertThat(retrievedTe.getName(), equalTo(justCreated.getName()));
             assertNotSame(justCreated, retrievedTe);
+            JacsStorageVolume again = testDao.createStorageVolumeIfNotFound(td.testName, td.testHost);
+            assertNotNull(again);
+            assertNotSame(justCreated, again);
+            assertEquals(justCreated.getId(), again.getId());
+            assertEquals(justCreated.getCreated(), again.getCreated());
+            assertThat(again.getModified(), greaterThan(justCreated.getModified()));
             if (td.testHost == null) {
                 assertNull(justCreated.getStorageHost());
                 assertNull(retrievedTe.getStorageHost());
@@ -119,7 +129,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
         String testHost = "127.0.0.1";
         String testVolumeName = "testVol";
         JacsStorageVolume te = persistEntity(testDao, createTestEntity(testHost, 100, testVolumeName, "/tmp", "/tmp", 100L));
-        JacsStorageVolume existingVolume = testDao.getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolumeName);
+        JacsStorageVolume existingVolume = testDao.createStorageVolumeIfNotFound(testVolumeName, testHost);
         assertNotNull(existingVolume);
         assertNotSame(te, existingVolume);
         PageResult<JacsStorageVolume> allVolumes = testDao.findAll(new PageRequest());

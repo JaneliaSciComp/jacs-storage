@@ -18,6 +18,7 @@ public interface ApplicationConfig {
     Long getLongPropertyValue(String name, Long defaultValue);
     List<String> getStringListPropertyValue(String name);
     List<String> getStringListPropertyValue(String name, List<String> defaultValue);
+    boolean hasProperty(String name);
     void load(InputStream stream) throws IOException;
     void put(String key, String value);
     void putAll(Map<String, String> properties);

@@ -44,8 +44,7 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
             List<String> dataSubpath = PathUtils.getTreePathComponentsForId(dataBundle.getId());
             Path dataPath = Paths.get(StringUtils.defaultIfBlank(dataBundlePathPrefix, ""), dataSubpath.toArray(new String[dataSubpath.size()]));
             dataBundle.setPath(dataPath.toString());
-            bundleDao.update(dataBundle, ImmutableMap.of("path", new SetFieldValueHandler<>(dataBundle.getPath())));
-            return dataBundle;
+            return bundleDao.update(dataBundle.getId(), ImmutableMap.of("path", new SetFieldValueHandler<>(dataBundle.getPath())));
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
@@ -59,19 +58,15 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
         checkStorageWriteAccess(existingBundle, credentials);
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedFieldsBuilder = ImmutableMap.builder();
         if (dataBundle.hasUsedSpaceSet()) {
-            existingBundle.setUsedSpaceInBytes(dataBundle.getUsedSpaceInBytes());
-            updatedFieldsBuilder.put("usedSpaceInBytes", new IncFieldValueHandler<>(existingBundle.getUsedSpaceInBytes()));
+            updatedFieldsBuilder.put("usedSpaceInBytes", new IncFieldValueHandler<>(dataBundle.getUsedSpaceInBytes()));
         }
         if (StringUtils.isNotBlank(dataBundle.getChecksum())) {
-            existingBundle.setChecksum(dataBundle.getChecksum());
-            updatedFieldsBuilder.put("checksum", new SetFieldValueHandler<>(existingBundle.getChecksum()));
+            updatedFieldsBuilder.put("checksum", new SetFieldValueHandler<>(dataBundle.getChecksum()));
         }
         if (dataBundle.hasMetadata()) {
-            existingBundle.addMetadataFields(dataBundle.getMetadata());
-            updatedFieldsBuilder.put("metadata", new SetFieldValueHandler<>(existingBundle.getMetadata()));
+            updatedFieldsBuilder.put("metadata", new SetFieldValueHandler<>(dataBundle.getMetadata()));
         }
-        bundleDao.update(existingBundle, updatedFieldsBuilder.build());
-        return existingBundle;
+        return bundleDao.update(existingBundle.getId(), updatedFieldsBuilder.build());
     }
 
     @TimedMethod

@@ -1,8 +1,23 @@
 package org.janelia.jacsstorage.cdi;
 
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Disposes;
+import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.InjectionPoint;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacsstorage.cdi.qualifier.PooledResource;
@@ -11,21 +26,9 @@ import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.TimebasedIdGenerator;
-import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.datatransfer.DataTransferService;
 import org.janelia.jacsstorage.datatransfer.impl.DataTransferServiceImpl;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Disposes;
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.InjectionPoint;
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import org.janelia.jacsstorage.io.DataBundleIOProvider;
 
 @ApplicationScoped
 public class ApplicationProducer {
@@ -93,6 +96,12 @@ public class ApplicationProducer {
         } else {
             return applicationConfig.getStringListPropertyValue(property.name(), Splitter.on(',').trimResults().splitToList(defaultValue));
         }
+    }
+
+    @Produces
+    @PropertyValue(name = "")
+    public Set<String> setPropertyValue(@ApplicationProperties ApplicationConfig applicationConfig, InjectionPoint injectionPoint) {
+        return ImmutableSet.copyOf(listPropertyValue(applicationConfig, injectionPoint));
     }
 
     @ApplicationScoped

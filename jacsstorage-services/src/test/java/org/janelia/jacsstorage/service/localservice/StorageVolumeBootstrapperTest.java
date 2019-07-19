@@ -1,7 +1,11 @@
 package org.janelia.jacsstorage.service.localservice;
 
+import java.util.List;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
+import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.Matcher;
 import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
@@ -11,25 +15,40 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
+import org.mockito.Mockito;
 
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class StorageVolumeBootstrapperTest {
+
+    private static final Long TEST_VOLUME_ID = 10L;
+    private static final String TEST_STORAGE_HOST = "TestHost";
 
     private StorageVolumeManager storageVolumeManager;
 
     @Before
     public void setUp() {
         storageVolumeManager = mock(StorageVolumeManager.class);
-        when(storageVolumeManager.updateVolumeInfo(any(JacsStorageVolume.class))).then(invocation -> invocation.getArgument(0));
+        Mockito.when(storageVolumeManager.createStorageVolumeIfNotFound(anyString(), argThat(argument -> true)))
+                .then(invocation -> {
+                    String volumeName = invocation.getArgument(0);
+                    String storageHost = invocation.getArgument(1);
+                    JacsStorageVolume sv = new JacsStorageVolume();
+                    sv.setId(TEST_VOLUME_ID);
+                    sv.setName(volumeName);
+                    sv.setStorageHost(storageHost);
+                    sv.setShared(StringUtils.isBlank(storageHost));
+                    return sv;
+                });
+        when(storageVolumeManager.updateVolumeInfo(any(Number.class), any(JacsStorageVolume.class))).then(invocation -> invocation.getArgument(1));
     }
 
     @Test
@@ -66,7 +85,7 @@ public class StorageVolumeBootstrapperTest {
                         hasItems(
                                 allOf(new HasPropertyWithValue<>("name", equalTo("v1")),
                                         new HasPropertyWithValue<>("storageRootTemplate", equalTo("/data/jadestorage")),
-                                        new HasPropertyWithValue<>("storageVirtualPath", equalTo("/" + NetUtils.getCurrentHostName() + "/jadestorage/otherKeyValue/storage/andAnotherValue")),
+                                        new HasPropertyWithValue<>("storageVirtualPath", equalTo("/" + NetUtils.getCurrentHostName() + "_8080/jadestorage/otherKeyValue/storage/andAnotherValue")),
                                         new HasPropertyWithValue<>("shared", equalTo(false))
                                 ),
                                 allOf(new HasPropertyWithValue<>("name", equalTo("v2")),
@@ -116,10 +135,11 @@ public class StorageVolumeBootstrapperTest {
             StorageVolumeBootstrapper storageVolumeBootstrapper = new StorageVolumeBootstrapper(
                     storageVolumeManager,
                     td.applicationConfig,
-                    td.applicationConfig.getStringPropertyValue("StorageAgent.StorageHost"),
+                    td.applicationConfig.getStringPropertyValue("StorageAgent.StorageHost", NetUtils.getCurrentHostName()),
+                    td.applicationConfig.getStringPropertyValue("StorageAgent.AgentPort", "8080"),
                     ImmutableList.of("v1", "v2")
             );
-            List<JacsStorageVolume> storageVolumes = storageVolumeBootstrapper.initializeStorageVolumes();
+            List<JacsStorageVolume> storageVolumes = storageVolumeBootstrapper.initializeStorageVolumes(TEST_STORAGE_HOST);
             assertThat("Test "+ ti, storageVolumes, td.matcher);
         }
     }

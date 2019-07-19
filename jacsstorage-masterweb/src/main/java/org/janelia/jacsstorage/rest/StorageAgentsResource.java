@@ -76,7 +76,7 @@ public class StorageAgentsResource {
         LOG.info("Register agent - {}", agentInfo);
         StorageAgentInfo registeterdAgentInfo = agentManager.registerAgent(agentInfo);
         return Response
-                .created(resourceURI.getBaseUriBuilder().path("url/{agentURL:.+}").build(registeterdAgentInfo.getAgentHttpURL()))
+                .created(resourceURI.getBaseUriBuilder().path("url/{agentURL:.+}").build(registeterdAgentInfo.getAgentAccessURL()))
                 .entity(registeterdAgentInfo)
                 .build();
     }

@@ -8,8 +8,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface StorageVolumeManager {
+    JacsStorageVolume createNewStorageVolume(JacsStorageVolume storageVolume);
+    JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String storageHost);
     JacsStorageVolume getVolumeById(Number volumeId);
-    Optional<JacsStorageVolume> getFullVolumeInfo(String volumeName);
-    List<JacsStorageVolume> getManagedVolumes(StorageQuery storageQuery);
-    JacsStorageVolume updateVolumeInfo(JacsStorageVolume storageVolume);
+    List<JacsStorageVolume> findVolumes(StorageQuery storageQuery);
+    JacsStorageVolume updateVolumeInfo(Number volumeId, JacsStorageVolume storageVolume);
 }

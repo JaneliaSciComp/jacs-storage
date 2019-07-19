@@ -32,7 +32,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
     )
     @Override
     public List<UsageData> getUsageByVolumeId(Number storageVolumeId) {
-        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setId(storageVolumeId));
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.findVolumes(new StorageQuery().setId(storageVolumeId));
         if (CollectionUtils.isEmpty(storageVolumes)) {
             LOG.warn("No volume found for {}", storageVolumeId);
             throw new IllegalArgumentException("No volume found for " + storageVolumeId);
@@ -47,7 +47,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
     )
     @Override
     public UsageData getUsageByVolumeIdForUser(Number storageVolumeId, String username) {
-        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setId(storageVolumeId));
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.findVolumes(new StorageQuery().setId(storageVolumeId));
         if (CollectionUtils.isEmpty(storageVolumes)) {
             LOG.warn("No volume found for {}", storageVolumeId);
             throw new IllegalArgumentException("No volume found for " + storageVolumeId);
@@ -63,7 +63,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
     )
     @Override
     public List<UsageData> getUsageByVolumeName(String volumeName) {
-        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setStorageName(volumeName));
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.findVolumes(new StorageQuery().setStorageName(volumeName));
         if (CollectionUtils.isEmpty(storageVolumes)) {
             LOG.warn("No volume found for {}", volumeName);
             throw new IllegalArgumentException("No volume found for " + volumeName);
@@ -78,7 +78,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
     )
     @Override
     public UsageData getUsageByVolumeNameForUser(String volumeName, String username) {
-        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setStorageName(volumeName));
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.findVolumes(new StorageQuery().setStorageName(volumeName));
         if (CollectionUtils.isEmpty(storageVolumes)) {
             LOG.warn("No volume found for {}", volumeName);
             throw new IllegalArgumentException("No volume found for " + volumeName);
@@ -94,7 +94,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
     )
     @Override
     public List<UsageData> getUsageByStoragePath(String storagePath) {
-        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(storagePath));
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.findVolumes(new StorageQuery().setDataStoragePath(storagePath));
         if (CollectionUtils.isEmpty(storageVolumes)) {
             LOG.warn("No volume found for {}", storagePath);
             throw new IllegalArgumentException("No volume found for " + storagePath);
@@ -109,7 +109,7 @@ public class DistributedStorageUsageManager implements StorageUsageManager {
     )
     @Override
     public UsageData getUsageByStoragePathForUser(String storagePath, String username) {
-        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(storagePath));
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.findVolumes(new StorageQuery().setDataStoragePath(storagePath));
         if (CollectionUtils.isEmpty(storageVolumes)) {
             LOG.warn("No volume found for {}", storagePath);
             throw new IllegalArgumentException("No volume found for " + storagePath);

@@ -9,6 +9,8 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
@@ -56,9 +58,9 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
     private static final String RECORDS_COUNT_FIELD = "recordsCount";
 
     protected final IdGenerator idGenerator;
-    protected final MongoCollection<T> mongoCollection;
+    final MongoCollection<T> mongoCollection;
 
-    protected AbstractMongoDao(MongoDatabase mongoDatabase, IdGenerator idGenerator) {
+    AbstractMongoDao(MongoDatabase mongoDatabase, IdGenerator idGenerator) {
         this.idGenerator = idGenerator;
         mongoCollection = mongoDatabase.getCollection(getEntityCollectionName(), getEntityType());
     }
@@ -77,7 +79,7 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
 
     @Override
     public T findById(Number id) {
-        Iterator<T> entityDocsItr = findIterable(eq("_id", id), null, 0, 2, getEntityType()).iterator();
+        Iterator<T> entityDocsItr = findIterable(getIdMatchFilter(id), null, 0, 2, getEntityType()).iterator();
         return entityDocsItr.hasNext() ? entityDocsItr.next() : null;
     }
 
@@ -168,6 +170,7 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
         if (length > 0) {
             aggregatePipelineBuilder.add(Aggregates.limit(length));
         }
+        mongoCollection.aggregate(aggregatePipelineBuilder.build(), Document.class).forEach((java.util.function.Consumer<Document>)(d -> System.out.println(d)));
         return mongoCollection.aggregate(aggregatePipelineBuilder.build(), resultType);
     }
 
@@ -225,39 +228,36 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
     }
 
     @Override
-    public void update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
-        UpdateOptions updateOptions = new UpdateOptions();
+    public T update(Number entityId, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+        FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
+        updateOptions.returnDocument(ReturnDocument.AFTER);
         updateOptions.upsert(false);
-        update(entity, fieldsToUpdate, updateOptions);
+
+        if (fieldsToUpdate.isEmpty()) {
+            return findById(entityId);
+        } else {
+            return mongoCollection.findOneAndUpdate(
+                    getIdMatchFilter(entityId),
+                    getUpdates(fieldsToUpdate),
+                    updateOptions
+            );
+        }
     }
 
-    protected long update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate, UpdateOptions updateOptions) {
-        if (fieldsToUpdate.isEmpty())
-            return 0;
-        else
-            return update(getUpdateMatchCriteria(entity), getUpdates(fieldsToUpdate), updateOptions);
-    }
-
-    protected long update(Bson query, Bson toUpdate, UpdateOptions updateOptions) {
-        LOG.trace("Update: {} -> {}", query, toUpdate);
-        UpdateResult result = mongoCollection.updateOne(query, toUpdate, updateOptions);
-        return result.getMatchedCount();
-    }
-
-    protected Bson getUpdates(Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+    private Bson getUpdates(Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
         List<Bson> fieldUpdates = fieldsToUpdate.entrySet().stream()
                 .map(e -> getFieldUpdate(e.getKey(), e.getValue()))
                 .collect(Collectors.toList());
         return Updates.combine(fieldUpdates);
     }
 
-    protected Bson getUpdateMatchCriteria(T entity) {
-        return eq("_id", entity.getId());
+    private Bson getIdMatchFilter(Number id) {
+        return Filters.eq("_id", id);
     }
 
     @Override
     public void delete(T entity) {
-        mongoCollection.deleteOne(eq("_id", entity.getId()));
+        mongoCollection.deleteOne(getIdMatchFilter(entity.getId()));
     }
 
     @SuppressWarnings("unchecked")

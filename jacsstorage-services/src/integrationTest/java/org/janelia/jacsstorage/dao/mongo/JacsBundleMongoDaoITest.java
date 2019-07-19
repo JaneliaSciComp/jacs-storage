@@ -16,8 +16,10 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -169,11 +171,17 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
     public void updateChecksum() {
         String testUser = "user:user";
         JacsBundle te = persistEntity(testDao, createTestEntity(testUser, "d1", null, "/tmp", 100L, 0, ImmutableMap.of("f1", 1, "f2", "v2")));
-        te.setChecksum(createChecksum(256));
-        testDao.update(te, ImmutableMap.of("checksum", new SetFieldValueHandler<>(te.getChecksum())));
+        String checksum = createChecksum(256);
+        JacsBundle updatedEntity = testDao.update(te.getId(), ImmutableMap.of(
+                "checksum", new SetFieldValueHandler<>(checksum),
+                "modified", new SetFieldValueHandler<>(new Date()))
+        );
         JacsBundle retrievedTe = testDao.findById(te.getId());
-        assertThat(retrievedTe.getName(), equalTo(te.getName()));
+        assertThat(retrievedTe.getName(), equalTo(updatedEntity.getName()));
+        assertNull(te.getChecksum());
+        assertThat(retrievedTe.getChecksum(), equalTo(checksum));
         assertNotSame(te, retrievedTe);
+        assertNotSame(updatedEntity, retrievedTe);
     }
 
     private JacsStorageVolume createTestVolume(String host, int port, String volumeName, String storageRootDir, Long available) {

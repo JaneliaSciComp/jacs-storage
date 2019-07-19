@@ -2,6 +2,8 @@ package org.janelia.jacsstorage.service.localservice;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
+import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
@@ -34,6 +36,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -50,63 +53,71 @@ public class LocalStorageVolumeManagerTest {
     public void setUp() {
         storageVolumeDao = mock(JacsStorageVolumeDao.class);
         capacityNotifier = mock(NotificationService.class);
-        storageVolumeManager = new LocalStorageVolumeManager(storageVolumeDao, capacityNotifier, TEST_HOST);
+        storageVolumeManager = new LocalStorageVolumeManager(
+                storageVolumeDao,
+                capacityNotifier);
     }
 
     @Test
     public void mangedVolumes() {
         Mockito.when(storageVolumeDao.findMatchingVolumes(any(StorageQuery.class), any(PageRequest.class)))
-                .then(invocation -> new PageResult<>(invocation.getArgument(1), ImmutableList.of(
-                        new JacsStorageVolumeBuilder()
-                                .storageHost(TEST_HOST)
-                                .storageRootTemplate("/root/testDir")
-                                .addTag("t1").addTag("t2")
-                                .storageServiceURL("http://storageURL")
-                                .percentageFull(20)
-                                .build(),
-                        new JacsStorageVolumeBuilder()
-                                .shared(true)
-                                .storageRootTemplate("/root/testSharedDir")
-                                .addTag("t1").addTag("t2")
-                                .storageServiceURL("http://storageURL")
-                                .percentageFull(20)
-                                .build()
-                        ))
+                .then(invocation -> {
+                            StorageQuery q = invocation.getArgument(0);
+                            if (TEST_HOST.equals(q.getAccessibleOnHost())) {
+                                return new PageResult<>(invocation.getArgument(1), ImmutableList.of(
+                                        new JacsStorageVolumeBuilder()
+                                                .storageHost(TEST_HOST)
+                                                .storageRootTemplate("/root/testDir")
+                                                .addTag("t1").addTag("t2")
+                                                .storageServiceURL("http://storageURL")
+                                                .percentageFull(20)
+                                                .build()
+                                ));
+                            } else {
+                                return new PageResult<>(invocation.getArgument(1), ImmutableList.of(
+                                        new JacsStorageVolumeBuilder()
+                                                .storageHost(TEST_HOST)
+                                                .storageRootTemplate("/root/testDir")
+                                                .addTag("t1").addTag("t2")
+                                                .storageServiceURL("http://storageURL")
+                                                .percentageFull(20)
+                                                .build(),
+                                        new JacsStorageVolumeBuilder()
+                                                .shared(true)
+                                                .storageRootTemplate("/root/testSharedDir")
+                                                .addTag("t1").addTag("t2")
+                                                .storageServiceURL("http://storageURL")
+                                                .percentageFull(20)
+                                                .build()
+                                ));
+                            }
+                        }
                 );
-        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery());
+        StorageQuery storageQuery = new StorageQuery();
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.findVolumes(storageQuery);
         verify(storageVolumeDao).findMatchingVolumes(
-                argThat(argument -> TEST_HOST.equals(argument.getAccessibleOnHost())),
+                eq(storageQuery),
                 any(PageRequest.class));
         assertThat(storageVolumes, hasSize(2));
     }
 
-    @Test
-    public void fullVolumeInfo() {
-        String testVolumeName = "v1";
-        Mockito.when(storageVolumeDao.findMatchingVolumes(any(StorageQuery.class), any(PageRequest.class)))
-                .then(invocation -> new PageResult<>(invocation.getArgument(1), ImmutableList.of(
-                        new JacsStorageVolumeBuilder()
-                                .name(testVolumeName)
-                                .storageHost(TEST_HOST)
-                                .storageRootTemplate("/root/testDir")
-                                .addTag("t1").addTag("t2")
-                                .storageServiceURL("http://storageURL")
-                                .percentageFull(20)
-                                .build()
-                        ))
-                );
-        prepareGetAvailableStorageBytes(199L, 300L);
-        Optional<JacsStorageVolume> storageVolume = storageVolumeManager.getFullVolumeInfo(testVolumeName);
-        verify(storageVolumeDao).findMatchingVolumes(
-                argThat(argument -> testVolumeName.equals(argument.getStorageName()) && TEST_HOST.equals(argument.getAccessibleOnHost())),
-                any(PageRequest.class));
-        assertTrue(storageVolume.isPresent());
-        storageVolume.ifPresent(sv -> {
-            assertEquals(199L, sv.getAvailableSpaceInBytes().longValue());
-        });
+    private static class TestDiskUsage {
+        private final long usableSpace;
+        private final long totalSpace;
+        private final int usagePercentage;
+
+        TestDiskUsage(long usableSpace, long totalSpace) {
+            this.usableSpace = usableSpace;
+            this.totalSpace = totalSpace;
+            if (totalSpace != 0) {
+                usagePercentage = (int) ((totalSpace - usableSpace) * 100 / totalSpace);
+            } else {
+                usagePercentage = 0;
+            }
+        }
     }
 
-    private void prepareGetAvailableStorageBytes(long usableSpace, long totalSpace) {
+    private TestDiskUsage prepareGetAvailableStorageBytes(long usableSpace, long totalSpace) {
         try {
             FileStore testFileStore = mock(FileStore.class);
             PowerMockito.mockStatic(Files.class);
@@ -118,8 +129,10 @@ public class LocalStorageVolumeManagerTest {
                     .then((Answer<FileStore>) invocation -> testFileStore);
             Mockito.when(testFileStore.getUsableSpace()).thenReturn(usableSpace);
             Mockito.when(testFileStore.getTotalSpace()).thenReturn(totalSpace);
+            return new TestDiskUsage(usableSpace, totalSpace);
         } catch (Exception e) {
             fail(e.toString());
+            return null;
         }
     }
 
@@ -139,19 +152,22 @@ public class LocalStorageVolumeManagerTest {
                 .name(testVolume.getName())
                 .build();
 
-        Mockito.when(storageVolumeDao.getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName()))
+        Mockito.when(storageVolumeDao.createStorageVolumeIfNotFound(testHost, testVolume.getName()))
                 .then(invocation -> newlyCreatedTestVolume);
-        prepareGetAvailableStorageBytes(199L, 300L);
+        Mockito.when(storageVolumeDao.findById(newlyCreatedTestVolume.getId()))
+                .thenReturn(newlyCreatedTestVolume);
 
-        storageVolumeManager.updateVolumeInfo(testVolume);
+        TestDiskUsage diskUsage = prepareGetAvailableStorageBytes(199L, 300L);
 
-        Mockito.verify(storageVolumeDao).getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName());
-        Mockito.verify(storageVolumeDao).update(newlyCreatedTestVolume, ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
+        storageVolumeManager.updateVolumeInfo(newlyCreatedTestVolume.getId(), testVolume);
+
+        Mockito.verify(storageVolumeDao).findById(newlyCreatedTestVolume.getId());
+        Mockito.verify(storageVolumeDao).update(newlyCreatedTestVolume.getId(), ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
                 .put("storageRootTemplate", new SetFieldValueHandler<>(testVolume.getStorageRootTemplate()))
                 .put("storageVirtualPath", new SetFieldValueHandler<>(testVolume.getStorageVirtualPath()))
-                .put("availableSpaceInBytes", new SetFieldValueHandler<>(testVolume.getAvailableSpaceInBytes()))
+                .put("availableSpaceInBytes", new SetFieldValueHandler<>(diskUsage.usableSpace))
                 .put("storageServiceURL", new SetFieldValueHandler<>(testVolume.getStorageServiceURL()))
-                .put("percentageFull", new SetFieldValueHandler<>(testVolume.getPercentageFull()))
+                .put("percentageFull", new SetFieldValueHandler<>(diskUsage.usagePercentage))
                 .put("storageTags", new SetFieldValueHandler<>(testVolume.getStorageTags()))
                 .build()
         );
@@ -179,19 +195,17 @@ public class LocalStorageVolumeManagerTest {
                 .storageVirtualPath("/testDir")
                 .addTag("t1").addTag("t2").addTag("t3")
                 .storageServiceURL("http://storageURL")
-                .availableSpace(100L)
-                .percentageFull(90)
                 .build();
 
         Mockito.when(storageVolumeDao.findById(testVolume.getId())).thenReturn(testVolume);
-        prepareGetAvailableStorageBytes(199L, 300L);
+        TestDiskUsage diskUsage = prepareGetAvailableStorageBytes(199L, 300L);
 
-        storageVolumeManager.updateVolumeInfo(updatedTestVolume);
+        storageVolumeManager.updateVolumeInfo(updatedTestVolume.getId(), updatedTestVolume);
 
         Mockito.verify(storageVolumeDao).findById(testVolume.getId());
-        Mockito.verify(storageVolumeDao).update(testVolume, ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
-                .put("availableSpaceInBytes", new SetFieldValueHandler<>(updatedTestVolume.getAvailableSpaceInBytes()))
-                .put("percentageFull", new SetFieldValueHandler<>(updatedTestVolume.getPercentageFull()))
+        Mockito.verify(storageVolumeDao).update(testVolume.getId(), ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
+                .put("availableSpaceInBytes", new SetFieldValueHandler<>(diskUsage.usableSpace))
+                .put("percentageFull", new SetFieldValueHandler<>(diskUsage.usagePercentage))
                 .put("storageTags", new SetFieldValueHandler<>(updatedTestVolume.getStorageTags()))
                 .build()
         );
@@ -208,21 +222,23 @@ public class LocalStorageVolumeManagerTest {
                 .storageServiceURL("http://storageURL")
                 .build();
         testVolume.setShared(true);
+        TestDiskUsage diskUsage = new TestDiskUsage(199L, 300L);
         JacsStorageVolume newlyCreatedTestVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
                 .storageHost(testHost)
+                .availableSpace(diskUsage.usableSpace)
+                .percentageFull(diskUsage.usagePercentage)
                 .name(testVolume.getName())
                 .build();
         newlyCreatedTestVolume.setShared(true);
 
-        Mockito.when(storageVolumeDao.getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName()))
-                .then(invocation -> newlyCreatedTestVolume);
-        prepareGetAvailableStorageBytes(199L, 300L);
+        Mockito.when(storageVolumeDao.findById(newlyCreatedTestVolume.getId())).thenReturn(newlyCreatedTestVolume);
+        prepareGetAvailableStorageBytes(diskUsage.usableSpace, diskUsage.totalSpace);
 
-        storageVolumeManager.updateVolumeInfo(testVolume);
+        storageVolumeManager.updateVolumeInfo(newlyCreatedTestVolume.getId(), testVolume);
 
-        Mockito.verify(storageVolumeDao).getStorageByHostAndNameAndCreateIfNotFound(testHost, testVolume.getName());
-        Mockito.verify(storageVolumeDao).update(newlyCreatedTestVolume, ImmutableMap.of(
+        Mockito.verify(storageVolumeDao).findById(newlyCreatedTestVolume.getId());
+        Mockito.verify(storageVolumeDao).update(newlyCreatedTestVolume.getId(), ImmutableMap.of(
                 "storageRootTemplate", new SetFieldValueHandler<>(testVolume.getStorageRootTemplate()),
                 "storageVirtualPath", new SetFieldValueHandler<>(testVolume.getStorageVirtualPath()),
                 "storageTags", new SetFieldValueHandler<>(testVolume.getStorageTags())
@@ -233,20 +249,22 @@ public class LocalStorageVolumeManagerTest {
     @Test
     public void updateSharedVolumeWhenIdIsKnown() {
         final String testHost = "TheTestHost";
+        TestDiskUsage diskUsage = new TestDiskUsage(199L, 300L);
         JacsStorageVolume testVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
                 .storageHost(testHost)
                 .storageRootTemplate("/root/testDir")
                 .storageVirtualPath("/testDir")
+                .availableSpace(diskUsage.usableSpace)
+                .percentageFull(diskUsage.usagePercentage)
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
                 .build();
         testVolume.setShared(true);
 
         Mockito.when(storageVolumeDao.findById(testVolume.getId())).thenReturn(testVolume);
-        prepareGetAvailableStorageBytes(199L, 300L);
-
-        storageVolumeManager.updateVolumeInfo(testVolume);
+        prepareGetAvailableStorageBytes(diskUsage.usableSpace, diskUsage.totalSpace);
+        storageVolumeManager.updateVolumeInfo(testVolume.getId(), testVolume);
 
         Mockito.verify(storageVolumeDao).findById(testVolume.getId());
         Mockito.verifyNoMoreInteractions(storageVolumeDao);

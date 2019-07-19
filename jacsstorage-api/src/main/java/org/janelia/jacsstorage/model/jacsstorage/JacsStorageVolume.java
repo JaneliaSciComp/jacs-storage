@@ -16,11 +16,23 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Entity for a JACS storage volume.
+ *
+ * A volume can be shared or local.
+ * A local volume corresponds to a local disk that is visible only on the machine where it's installed whereas
+ * a shared volume corresponds to a mountable disk that could potentially be mounted on multiple machines (hosts).
+ *
+ * For local volumes storageHost should be set and shared should be set to false.
+ * For shared volumes storageHost is null, shared is set to true.
+ *
+ */
 @PersistenceInfo(storeName ="jacsStorageVolume", label="JacsStorageVolume")
 public class JacsStorageVolume extends AbstractEntity {
     public static final String OVERFLOW_VOLUME = "OVERFLOW_VOLUME";
 
-    private String storageHost; // storage host
+    private String storageHost; // storage host is set only for volumes that are local to a specific host
+    // if a volume is set to a network disk that could be mounted on multiple hosts
     private String name; // volume name
     private String storageVirtualPath; // storage virtual path
     private String storageRootTemplate; // template for storage real root directory

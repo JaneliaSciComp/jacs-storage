@@ -81,7 +81,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         String testPath = "/volRoot/testPath";
         StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
+        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
                                 .storageVirtualPath("/volPrefix")
@@ -115,7 +115,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         String testPath = "/volPrefix/testPath";
         StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
+        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
                                 .storageVirtualPath("/volPrefix")
@@ -153,7 +153,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         };
         StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/volPrefix/testPath"))))
+        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/volPrefix/testPath"))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
                                 .storageVirtualPath("/volPrefix")
@@ -193,7 +193,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         };
         StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.getManagedVolumes(eq(new StorageQuery().setDataStoragePath("/volPrefix/testPath"))))
+        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/volPrefix/testPath"))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
                                 .storageVirtualPath("/volPrefix")

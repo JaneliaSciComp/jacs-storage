@@ -1,9 +1,18 @@
 package org.janelia.jacsstorage.service.impl;
 
+import java.io.IOException;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Optional;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.dao.JacsStorageAgentDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -13,13 +22,6 @@ import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.nio.file.FileStore;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Map;
-import java.util.Optional;
 
 public abstract class AbstractStorageVolumeManager implements StorageVolumeManager {
 
@@ -36,6 +38,19 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
 
     @TimedMethod
     @Override
+    public JacsStorageVolume createNewStorageVolume(JacsStorageVolume storageVolume) {
+        storageVolumeDao.save(storageVolume);
+        return storageVolume;
+    }
+
+    @TimedMethod
+    @Override
+    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String storageHost) {
+        return storageVolumeDao.createStorageVolumeIfNotFound(volumeName, storageHost);
+    }
+
+    @TimedMethod
+    @Override
     public JacsStorageVolume getVolumeById(Number volumeId) {
         return storageVolumeDao.findById(volumeId);
     }
@@ -44,98 +59,144 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
             logLevel = "trace"
     )
     @Override
-    public JacsStorageVolume updateVolumeInfo(JacsStorageVolume storageVolume) {
-        JacsStorageVolume currentVolumeInfo;
-
+    public JacsStorageVolume updateVolumeInfo(Number volumeId, JacsStorageVolume storageVolume) {
+        JacsStorageVolume currentVolumeInfo = storageVolumeDao.findById(volumeId);
+        Preconditions.checkArgument(currentVolumeInfo != null, "Invalid storage volume ID: " + volumeId);
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedVolumeFieldsBuilder = ImmutableMap.builder();
-        if (storageVolume.hasId()) {
-            currentVolumeInfo = storageVolumeDao.findById(storageVolume.getId());
-            Preconditions.checkArgument(currentVolumeInfo != null, "Invalid storage volume ID: " + storageVolume.getId());
-        } else {
-            currentVolumeInfo = storageVolumeDao.getStorageByHostAndNameAndCreateIfNotFound(
-                    storageVolume.getStorageHost(),
-                    storageVolume.getName()
-            );
-        }
         if (currentVolumeInfo.getStorageRootTemplate() == null ||
                 (StringUtils.isNotBlank(storageVolume.getStorageRootTemplate()) &&
                         !storageVolume.getStorageRootTemplate().equals(currentVolumeInfo.getStorageRootTemplate()))) {
             currentVolumeInfo.setStorageRootTemplate(storageVolume.getStorageRootTemplate());
-            updatedVolumeFieldsBuilder.put("storageRootTemplate", new SetFieldValueHandler<>(currentVolumeInfo.getStorageRootTemplate()));
+            updatedVolumeFieldsBuilder.put("storageRootTemplate", new SetFieldValueHandler<>(storageVolume.getStorageRootTemplate()));
         }
         if (currentVolumeInfo.getStorageVirtualPath() == null ||
                 (StringUtils.isNotBlank(storageVolume.getStorageVirtualPath()) &&
                         !storageVolume.getStorageVirtualPath().equals(currentVolumeInfo.getStorageVirtualPath()))) {
             currentVolumeInfo.setStorageVirtualPath(storageVolume.getStorageVirtualPath());
-            updatedVolumeFieldsBuilder.put("storageVirtualPath", new SetFieldValueHandler<>(currentVolumeInfo.getStorageVirtualPath()));
+            updatedVolumeFieldsBuilder.put("storageVirtualPath", new SetFieldValueHandler<>(storageVolume.getStorageVirtualPath()));
         }
         if (storageVolume.isNotShared()) {
-            storageVolume.setAvailableSpaceInBytes(getAvailableStorageSpaceInBytes(storageVolume.getBaseStorageRootDir()));
-            if (!storageVolume.getAvailableSpaceInBytes().equals(currentVolumeInfo.getAvailableSpaceInBytes())) {
-                LOG.trace("Update availableSpace for volume {} to {} bytes", currentVolumeInfo.getName(), storageVolume.getAvailableSpaceInBytes());
-                currentVolumeInfo.setAvailableSpaceInBytes(storageVolume.getAvailableSpaceInBytes());
-                updatedVolumeFieldsBuilder.put("availableSpaceInBytes", new SetFieldValueHandler<>(currentVolumeInfo.getAvailableSpaceInBytes()));
-                if (storageVolume.hasPercentageAvailable()) {
-                    currentVolumeInfo.setPercentageFull(storageVolume.getPercentageFull());
-                    updatedVolumeFieldsBuilder.put("percentageFull", new SetFieldValueHandler<>(currentVolumeInfo.getPercentageFull()));
-                    if (currentVolumeInfo.getPercentageFull() > FILL_UP_THRESHOLD) {
-                        LOG.warn("Volume {} is {}% full", currentVolumeInfo, currentVolumeInfo.getPercentageFull());
-                        String capacityNotification = "Volume " + currentVolumeInfo.getName() + " is " + currentVolumeInfo.getPercentageFull() + "% full";
-                        capacityNotifier.sendNotification(capacityNotification, capacityNotification);
-                    }
-                }
-            }
             if (StringUtils.isNotBlank(storageVolume.getStorageServiceURL()) &&
                     (StringUtils.isBlank(currentVolumeInfo.getStorageServiceURL()) ||
                             !storageVolume.getStorageServiceURL().equals(currentVolumeInfo.getStorageServiceURL()))) {
+                // if the storage access URLs differ
                 currentVolumeInfo.setStorageServiceURL(storageVolume.getStorageServiceURL());
-                updatedVolumeFieldsBuilder.put("storageServiceURL", new SetFieldValueHandler<>(currentVolumeInfo.getStorageServiceURL()));
+                updatedVolumeFieldsBuilder.put("storageServiceURL", new SetFieldValueHandler<>(storageVolume.getStorageServiceURL()));
             }
         } else if (currentVolumeInfo.isNotShared()) {
             // if somehow the current volume is not shared make it shared
             currentVolumeInfo.setShared(true);
             currentVolumeInfo.setStorageServiceURL(null);
             currentVolumeInfo.setStorageHost(null);
-            updatedVolumeFieldsBuilder.put("shared", new SetFieldValueHandler<>(currentVolumeInfo.isShared()));
-            updatedVolumeFieldsBuilder.put("storageServiceURL", new SetFieldValueHandler<>(currentVolumeInfo.getStorageServiceURL()));
-            updatedVolumeFieldsBuilder.put("storageHost", new SetFieldValueHandler<>(currentVolumeInfo.getStorageHost()));
+            updatedVolumeFieldsBuilder.put("shared", new SetFieldValueHandler<>(true));
+            updatedVolumeFieldsBuilder.put("storageServiceURL", new SetFieldValueHandler<>(null));
+            updatedVolumeFieldsBuilder.put("storageHost", new SetFieldValueHandler<>(null));
         }
+
+        updatedVolumeFieldsBuilder.putAll(handleVolumeFillupStatus(currentVolumeInfo));
+
         if (!currentVolumeInfo.hasTags() && storageVolume.hasTags() ||
                 currentVolumeInfo.hasTags() && !storageVolume.hasTags() ||
                 currentVolumeInfo.hasTags() && storageVolume.hasTags() && !ImmutableSet.copyOf(currentVolumeInfo.getStorageTags()).equals(ImmutableSet.copyOf(storageVolume.getStorageTags()))) {
+            // if the tags differ
             currentVolumeInfo.setStorageTags(storageVolume.getStorageTags());
-            updatedVolumeFieldsBuilder.put("storageTags", new SetFieldValueHandler<>(currentVolumeInfo.getStorageTags()));
+            updatedVolumeFieldsBuilder.put("storageTags", new SetFieldValueHandler<>(storageVolume.getStorageTags()));
         }
         if (!currentVolumeInfo.hasPermissions() && storageVolume.hasPermissions() ||
                 currentVolumeInfo.hasPermissions() && !storageVolume.hasPermissions() ||
                 currentVolumeInfo.hasPermissions() && storageVolume.hasPermissions() && !currentVolumeInfo.getVolumePermissions().equals(storageVolume.getVolumePermissions())) {
+            // if the permissions differ
             currentVolumeInfo.setVolumePermissions(storageVolume.getVolumePermissions());
-            updatedVolumeFieldsBuilder.put("volumePermissions", new SetFieldValueHandler<>(currentVolumeInfo.getVolumePermissions()));
+            updatedVolumeFieldsBuilder.put("volumePermissions", new SetFieldValueHandler<>(storageVolume.getVolumePermissions()));
         }
         if (storageVolume.getQuotaFailPercent() != null && !storageVolume.getQuotaFailPercent().equals(currentVolumeInfo.getQuotaFailPercent())) {
             currentVolumeInfo.setQuotaFailPercent(storageVolume.getQuotaFailPercent());
-            updatedVolumeFieldsBuilder.put("quotaFailPercent", new SetFieldValueHandler<>(currentVolumeInfo.getQuotaFailPercent()));
+            updatedVolumeFieldsBuilder.put("quotaFailPercent", new SetFieldValueHandler<>(storageVolume.getQuotaFailPercent()));
         }
         if (storageVolume.getQuotaWarnPercent() != null && !storageVolume.getQuotaWarnPercent().equals(currentVolumeInfo.getQuotaWarnPercent())) {
             currentVolumeInfo.setQuotaWarnPercent(storageVolume.getQuotaWarnPercent());
-            updatedVolumeFieldsBuilder.put("quotaWarnPercent", new SetFieldValueHandler<>(currentVolumeInfo.getQuotaWarnPercent()));
+            updatedVolumeFieldsBuilder.put("quotaWarnPercent", new SetFieldValueHandler<>(storageVolume.getQuotaWarnPercent()));
         }
         if (StringUtils.isNotBlank(storageVolume.getSystemUsageFile()) && !storageVolume.getSystemUsageFile().equals(currentVolumeInfo.getSystemUsageFile())) {
             currentVolumeInfo.setSystemUsageFile(storageVolume.getSystemUsageFile());
-            updatedVolumeFieldsBuilder.put("systemUsageFile", new SetFieldValueHandler<>(currentVolumeInfo.getSystemUsageFile()));
+            updatedVolumeFieldsBuilder.put("systemUsageFile", new SetFieldValueHandler<>(storageVolume.getSystemUsageFile()));
         }
         if (currentVolumeInfo.isActiveFlag() != storageVolume.isActiveFlag()) {
             currentVolumeInfo.setActiveFlag(storageVolume.isActiveFlag());
-            updatedVolumeFieldsBuilder.put("activeFlag", new SetFieldValueHandler<>(currentVolumeInfo.isActiveFlag()));
+            updatedVolumeFieldsBuilder.put("activeFlag", new SetFieldValueHandler<>(storageVolume.isActiveFlag()));
         }
         Map<String, EntityFieldValueHandler<?>> updatedVolumeFields = updatedVolumeFieldsBuilder.build();
-        if (!updatedVolumeFields.isEmpty()) {
-            storageVolumeDao.update(currentVolumeInfo, updatedVolumeFieldsBuilder.build());
+        if (updatedVolumeFields.isEmpty()) {
+            return currentVolumeInfo;
+        } else {
+            return storageVolumeDao.update(currentVolumeInfo.getId(), updatedVolumeFieldsBuilder.build());
         }
-        return currentVolumeInfo;
     }
 
-    protected long getAvailableStorageSpaceInBytes(String storageDirName) {
+    private Map<String, EntityFieldValueHandler<?>> handleVolumeFillupStatus(JacsStorageVolume storageVolume) {
+        ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedVolumeFieldsBuilder = ImmutableMap.builder();
+
+        long availableSpaceInBytes = calculateAvailableStorageSpaceInBytes(storageVolume.getBaseStorageRootDir());
+        if (!Long.valueOf(availableSpaceInBytes).equals(storageVolume.getAvailableSpaceInBytes())) {
+            LOG.trace("Update availableSpace for volume {}:{} to {} bytes", storageVolume.getId(), storageVolume.getName(), availableSpaceInBytes);
+            storageVolume.setAvailableSpaceInBytes(availableSpaceInBytes);
+            updatedVolumeFieldsBuilder.put("availableSpaceInBytes", new SetFieldValueHandler<>(availableSpaceInBytes));
+        }
+
+        long totalSpaceInBytes = calculateTotalSpaceInBytes(storageVolume.getBaseStorageRootDir());
+        if (totalSpaceInBytes != 0L) {
+            Integer currentPercentage = storageVolume.getPercentageFull();
+            int percentageFull = (int) ((totalSpaceInBytes - availableSpaceInBytes) * 100 / totalSpaceInBytes);
+            if (!Integer.valueOf(percentageFull).equals(currentPercentage)) {
+                LOG.trace("Update percentageFull for volume {}:{} to {}%", storageVolume.getId(), storageVolume.getName(), percentageFull);
+                storageVolume.setPercentageFull(percentageFull);
+                updatedVolumeFieldsBuilder.put("percentageFull", new SetFieldValueHandler<>(percentageFull));
+                String locationMessagePart;
+                if (storageVolume.isShared()) {
+                    locationMessagePart = "";
+                } else {
+                    locationMessagePart = " on " + storageVolume.getStorageHost();
+                }
+                // check if it just crossed the threshold up or down
+                if (percentageFull > FILL_UP_THRESHOLD && currentPercentage != null && currentPercentage <= FILL_UP_THRESHOLD) {
+                    // it just crossed the threshold up
+                    LOG.warn("Volume {} is {}% full and it just passed the threshold of {}%", storageVolume, percentageFull, FILL_UP_THRESHOLD);
+                    String capacityNotification = "Volume " + storageVolume.getName() + "on " + locationMessagePart +
+                            " just passed the fillup percentage threshold of " + FILL_UP_THRESHOLD + " and it currently is at " + percentageFull + "%";
+                    capacityNotifier.sendNotification(
+                            "Volume " + storageVolume.getName() + locationMessagePart + " is above fill up threshold",
+                            capacityNotification);
+                } else if (percentageFull <= FILL_UP_THRESHOLD && currentPercentage != null && currentPercentage > FILL_UP_THRESHOLD) {
+                    // it just crossed the threshold down
+                    LOG.info("Volume {} is {}% full and it just dropped below the threshold of {}%", storageVolume, percentageFull, FILL_UP_THRESHOLD);
+                    String capacityNotification = "Volume " + storageVolume.getName() + locationMessagePart +
+                            " just dropped below percentage threshold of " + FILL_UP_THRESHOLD + " and it currently is at " + percentageFull + "%";
+                    capacityNotifier.sendNotification(
+                            "Volume " + storageVolume.getName() + locationMessagePart + " is below the threshold now",
+                            capacityNotification);
+                }
+            }
+        }
+
+        return updatedVolumeFieldsBuilder.build();
+    }
+
+    private long calculateTotalSpaceInBytes(String storageDirName) {
+        return getFileStore(storageDirName)
+                .map(fs -> {
+                    try {
+                        return fs.getTotalSpace();
+                    } catch (IOException e) {
+                        LOG.error("Error trying to get total storage space {}", storageDirName, e);
+                        return 0L;
+                    }
+                })
+                .orElse(0L)
+                ;
+
+    }
+
+    private long calculateAvailableStorageSpaceInBytes(String storageDirName) {
         return getFileStore(storageDirName)
                 .map(fs -> {
                     try {
@@ -149,7 +210,7 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
                 ;
     }
 
-    protected Optional<FileStore> getFileStore(String storageDirName) {
+    private Optional<FileStore> getFileStore(String storageDirName) {
         try {
             java.nio.file.Path storagePath = Paths.get(storageDirName);
             if (Files.notExists(storagePath)) {

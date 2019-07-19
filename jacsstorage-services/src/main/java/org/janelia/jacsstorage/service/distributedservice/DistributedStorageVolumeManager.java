@@ -26,20 +26,37 @@ public class DistributedStorageVolumeManager extends AbstractStorageVolumeManage
         this.storageHelper = new DistributedStorageHelper(agentManager);
     }
 
-    @TimedMethod
     @Override
-    public Optional<JacsStorageVolume> getFullVolumeInfo(String volumeName) {
-        StorageQuery storageQuery = new StorageQuery().setStorageName(volumeName);
-        return getManagedVolumes(storageQuery).stream().findFirst();
+    public JacsStorageVolume createNewStorageVolume(JacsStorageVolume storageVolume) {
+        JacsStorageVolume newStorageVolume = super.createNewStorageVolume(storageVolume);
+        storageHelper.updateStorageServiceInfo(newStorageVolume);
+        return newStorageVolume;
     }
 
     @TimedMethod
     @Override
-    public List<JacsStorageVolume> getManagedVolumes(StorageQuery storageQuery) {
+    public List<JacsStorageVolume> findVolumes(StorageQuery storageQuery) {
         PageRequest pageRequest = new PageRequest();
         List<JacsStorageVolume> managedVolumes = storageVolumeDao.findMatchingVolumes(storageQuery, pageRequest).getResultList();
         managedVolumes.forEach(storageHelper::updateStorageServiceInfo);
         return managedVolumes;
     }
 
+    @TimedMethod
+    @Override
+    public JacsStorageVolume getVolumeById(Number volumeId) {
+        JacsStorageVolume storageVolume = super.getVolumeById(volumeId);
+        storageHelper.updateStorageServiceInfo(storageVolume);
+        return storageVolume;
+    }
+
+    @TimedMethod(
+            logLevel = "trace"
+    )
+    @Override
+    public JacsStorageVolume updateVolumeInfo(Number volumeId, JacsStorageVolume storageVolume) {
+        JacsStorageVolume updatedStorageVolume = super.updateVolumeInfo(volumeId, storageVolume);
+        storageHelper.updateStorageServiceInfo(updatedStorageVolume);
+        return updatedStorageVolume;
+    }
 }

@@ -1,18 +1,23 @@
 package org.janelia.jacsstorage.agent;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
+import org.janelia.jacsstorage.dao.JacsStorageAgentDao;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageAgent;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.ConnectionChecker;
 import org.janelia.jacsstorage.resilience.ConnectionState;
 import org.janelia.jacsstorage.resilience.PeriodicConnectionChecker;
 import org.janelia.jacsstorage.resilience.ConnectionTester;
+import org.janelia.jacsstorage.service.AgentStatePersistence;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.coreutils.NetUtils;
@@ -23,7 +28,10 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -36,41 +44,42 @@ public class AgentState {
 
     @Inject @LocalInstance
     private StorageVolumeManager storageVolumeManager;
+    @Inject
+    private AgentStatePersistence agentStatePersistence;
     @Inject @ScheduledResource
     private ScheduledExecutorService scheduler;
-    @Inject @PropertyValue(name = "StorageAgent.StorageHost")
-    private String storageHost;
-    @Inject @PropertyValue(name= "StorageAgent.PingPeriodInSeconds")
+    @Inject @PropertyValue(name = "StorageAgent.PingPeriodInSeconds")
     private Integer periodInSeconds;
-    @Inject @PropertyValue(name= "StorageAgent.InitialPingDelayInSeconds")
+    @Inject @PropertyValue(name = "StorageAgent.InitialPingDelayInSeconds")
     private Integer initialDelayInSeconds;
-    @Inject @PropertyValue(name= "StorageAgent.FailureCountTripThreshold")
+    @Inject @PropertyValue(name = "StorageAgent.FailureCountTripThreshold")
     private Integer tripThreshold;
+    @Inject @PropertyValue(name = "StorageAgent.ServedVolumes", defaultValue = "*")
+    private Set<String> configuredVolumesServed;
+
     @Inject
     private NotificationService connectivityNotifier;
     private ConnectionChecker<AgentConnectionState> agentConnectionChecker;
-    private String agentHttpURL;
-    private List<JacsStorageVolume> agentManagedVolumes;
+    private String agentHost;
+    private String agentAccessURL;
+    private JacsStorageAgent jacsStorageAgent;
     private AgentConnectionState connectionState;
 
-    public String getStorageHost() {
-        return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
-    }
-
-
-    public void updateAgentInfo(String agentHttpURL) {
-        LOG.info("Agent URL set to {}", agentHttpURL);
-        this.agentHttpURL = agentHttpURL;
-        updateStorageVolumes(agentManagedVolumes, (JacsStorageVolume sv) -> !sv.isShared());
+    public void initializeAgentInfo(String agentHost, String agentAccessURL, String status) {
+        LOG.info("Agent access set to {} -> {}", agentHost, agentAccessURL);
+        this.agentHost = agentHost;
+        this.agentAccessURL = agentAccessURL;
+        initializeVolumesServed(status);
+        updateStorageOnLocalVolumes();
     }
 
     public synchronized void connectTo(String masterHttpURL) {
-        LOG.info("Register agent on {} with {}", this, masterHttpURL);
+        LOG.info("Register agent on {} available at {} with master at {}", agentHost, agentAccessURL, masterHttpURL);
         Preconditions.checkArgument(StringUtils.isNotBlank(masterHttpURL));
         connectionState = new AgentConnectionState(
-                getStorageHost(),
+                agentHost,
                 masterHttpURL,
-                agentHttpURL,
+                agentAccessURL,
                 ConnectionState.Status.OPEN,
                 0,
                 null);
@@ -80,35 +89,37 @@ public class AgentState {
                 initialDelayInSeconds,
                 tripThreshold);
 
-        ConnectionTester<AgentConnectionState> connectionTester = new AgentConnectionTester();
+        ConnectionTester<AgentConnectionState> connectionTester = new AgentConnectionTester(jacsStorageAgent);
 
         agentConnectionChecker.initialize(
                 () -> connectionState,
                 connectionTester,
-                newConnectionState -> {
-                    LOG.trace("Agent {} registered with {}", newConnectionState, masterHttpURL);
+                agentConnectionState -> {
+                    LOG.trace("Agent {} registered with {}", agentConnectionState, masterHttpURL);
                     connectionState.setConnectStatus(ConnectionState.Status.CLOSED);
+                    updateAgentStorageStatus("CONNECTED");
                     connectionState.setConnectionAttempts(0);
                     if (connectionState.isNotRegistered()) {
-                        connectionState.setRegisteredToken(newConnectionState.getRegisteredToken());
-                    } else if (!newConnectionState.getRegisteredToken().equals(connectionState.getRegisteredToken())) {
+                        connectionState.setRegisteredToken(agentConnectionState.getRegisteredToken());
+                    } else if (!agentConnectionState.getRegisteredToken().equals(connectionState.getRegisteredToken())) {
                         // the new connection has a new token
                         // this means the connection was re-established
-                        connectionState.setRegisteredToken(newConnectionState.getRegisteredToken());
+                        connectionState.setRegisteredToken(agentConnectionState.getRegisteredToken());
                         connectivityNotifier.sendNotification(
-                                "Agent " + agentHttpURL + " reconnected to " + masterHttpURL,
-                                "Agent " + agentHttpURL + " reconnected to " + masterHttpURL);
+                                "Agent on " + agentHost + " reconnected to " + masterHttpURL,
+                                "Agent on " + agentHost + " available at " + agentAccessURL + " reconnected to " + masterHttpURL);
                     }
-                    updateStorageVolumes(agentManagedVolumes, (JacsStorageVolume sv) -> !sv.isShared());
+                    updateStorageOnLocalVolumes();
                 },
-                newConnectionState -> {
-                    if (newConnectionState.getConnectStatus() != connectionState.getConnectStatus()) {
-                        LOG.error("Agent {} got disconnected {}", newConnectionState, masterHttpURL);
+                agentConnectionState -> {
+                    if (agentConnectionState.getConnectStatus() != connectionState.getConnectStatus()) {
+                        LOG.error("Agent {} got disconnected {}", agentConnectionState, masterHttpURL);
+                        updateAgentStorageStatus("DISCONNECTED");
                         connectivityNotifier.sendNotification(
-                                "Agent " + agentHttpURL + " lost connection to " + masterHttpURL,
-                                "Agent " + agentHttpURL + " lost connection to " + masterHttpURL);
+                                "Agent on " + agentHost + " lost connection to " + masterHttpURL,
+                                "Agent on " + agentHost + " available at " + agentAccessURL + " lost connection to " + masterHttpURL);
                     }
-                    connectionState.setConnectStatus(newConnectionState.getConnectStatus());
+                    connectionState.setConnectStatus(agentConnectionState.getConnectStatus());
                 });
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -122,50 +133,57 @@ public class AgentState {
     private synchronized void disconnect() {
         agentConnectionChecker.dispose();
         if (connectionState != null) {
+            LOG.info("Unregister agent on {} available at {} from master at {}", agentHost, agentAccessURL, connectionState.getMasterHttpURL());
             AgentConnectionHelper.deregisterAgent(
                     connectionState.getMasterHttpURL(),
-                    agentHttpURL,
+                    agentAccessURL,
                     connectionState.getRegisteredToken());
+            updateAgentStorageStatus("DISCONNECTED");
             connectionState = null;
         } else {
-            LOG.info("Agent {} was not registered or the registration failed", agentHttpURL);
+            LOG.info("Agent on {} with URL {} was not registered or the registration failed", agentHost, agentAccessURL);
         }
     }
 
     public StorageAgentInfo getLocalAgentInfo() {
         if (connectionState == null) {
-            return new AgentConnectionState(getStorageHost(),
+            return new AgentConnectionState(agentHost,
                     null,
-                    agentHttpURL,
+                    agentAccessURL,
                     ConnectionState.Status.OPEN,
                     0,
-                    null).toStorageAgentInfo();
+                    null).toStorageAgentInfo(Collections.emptySet());
         } else {
-            return connectionState.toStorageAgentInfo();
+            return connectionState.toStorageAgentInfo(jacsStorageAgent.getServedVolumes());
         }
     }
 
-    @PostConstruct
-    public void initialize() {
-        agentManagedVolumes = updateStorageVolumes(storageVolumeManager.getManagedVolumes(
-                new StorageQuery().setLocalToAnyHost(true)), // only interested in local volumes
-                (sv) -> true);
+    private void initializeVolumesServed(String status) {
+        // create persistent agent state if needed
+        jacsStorageAgent = agentStatePersistence.createAgentStorage(agentHost, agentAccessURL, status);
+        if (!configuredVolumesServed.isEmpty()) {
+            LOG.info("Update served volumes for agent running on {} to {}", agentHost, configuredVolumesServed);
+            jacsStorageAgent = agentStatePersistence.updateAgentStorage(jacsStorageAgent.getId(), status, configuredVolumesServed);
+        }
     }
 
-    private List<JacsStorageVolume> updateStorageVolumes(List<JacsStorageVolume> storageVolumes, Predicate<JacsStorageVolume> filter) {
-        return storageVolumes.stream()
-                .filter(filter)
-                .map(storageVolume -> {
-                    storageVolume.setStorageServiceURL(agentHttpURL);
-                    return storageVolumeManager.updateVolumeInfo(storageVolume);
-                })
-                .collect(Collectors.toList());
+    private void updateAgentStorageStatus(String status) {
+        jacsStorageAgent = agentStatePersistence.updateAgentStorage(jacsStorageAgent.getId(), status, Collections.emptySet());
+    }
+
+    private void updateStorageOnLocalVolumes() {
+        storageVolumeManager.findVolumes(new StorageQuery().setLocalToAnyHost(true).setAccessibleOnHost(agentHost))
+                .forEach(sv -> {
+                    sv.setStorageServiceURL(agentAccessURL);
+                    storageVolumeManager.updateVolumeInfo(sv.getId(), sv);
+                });
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("agentHttpURL", agentHttpURL)
+                .append("agentHost", agentHost)
+                .append("agentHttpURL", agentAccessURL)
                 .append("connectionState", connectionState)
                 .build();
     }

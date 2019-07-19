@@ -34,19 +34,20 @@ public abstract class AbstractCacheableEntityByIdDao<T extends BaseEntity>
     @Override
     public void save(T entity) {
         getDelegator().save(entity);
-        invalidateCache(entity);
+        getCache().put(entity.getId(), entity);
     }
 
     @Override
     public void saveAll(List<T> entities) {
         getDelegator().saveAll(entities);
-        entities.forEach(e -> invalidateCache(e));
+        entities.forEach(e -> getCache().put(e.getId(), e));
     }
 
     @Override
-    public void update(T entity, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
-        getDelegator().update(entity, fieldsToUpdate);
-        invalidateCache(entity);
+    public T update(Number entityId, Map<String, EntityFieldValueHandler<?>> fieldsToUpdate) {
+        T entity = getDelegator().update(entityId, fieldsToUpdate);
+        getCache().put(entityId, entity);
+        return entity;
     }
 
     @Override

@@ -21,11 +21,13 @@ public interface JacsStorageVolumeDao extends ReadWriteDao<JacsStorageVolume> {
      */
     PageResult<JacsStorageVolume> findMatchingVolumes(StorageQuery storageQuery, PageRequest pageRequest);
     /**
-     * Search the storage volume by hostName and volumeName and if not found create one.
+     * Create a storage volume on the specified host if none exists.
+     * If such volume exists it will simply return the existing entity.
+     * The hostname can be empty in which case the method will create shared volume if no shared volume exists with the specified name.
      *
-     * @param hostName
      * @param volumeName
+     * @param hostName
      * @return
      */
-    JacsStorageVolume getStorageByHostAndNameAndCreateIfNotFound(String hostName, String volumeName);
+    JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String hostName);
 }

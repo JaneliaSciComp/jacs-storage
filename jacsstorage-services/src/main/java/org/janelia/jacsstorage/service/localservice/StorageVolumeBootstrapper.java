@@ -27,60 +27,63 @@ public class StorageVolumeBootstrapper {
 
     private final StorageVolumeManager storageVolumeManager;
     private final ApplicationConfig applicationConfig;
-    private final String storageHost;
     private final List<String> bootstrappedVolumeNames;
+    private final String storageHostPlaceholderValue;
     private final ApplicationConfigValueResolver configValueResolver = new ApplicationConfigValueResolver();
 
     @Inject
     public StorageVolumeBootstrapper(@LocalInstance StorageVolumeManager storageVolumeManager,
                                      @ApplicationProperties ApplicationConfig applicationConfig,
                                      @PropertyValue(name = "StorageAgent.StorageHost") String storageHost,
+                                     @PropertyValue(name = "StorageAgent.AgentPort") String storageAgentPort,
                                      @PropertyValue(name = "StorageAgent.BootstrappedVolumes") List<String> bootstrappedVolumeNames) {
         this.storageVolumeManager = storageVolumeManager;
         this.applicationConfig = applicationConfig;
-        this.storageHost = StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
         this.bootstrappedVolumeNames = bootstrappedVolumeNames;
+        this.storageHostPlaceholderValue = NetUtils.createStorageHostId(storageHost, storageAgentPort, "_");
     }
 
     @TimedMethod
-    public List<JacsStorageVolume> initializeStorageVolumes() {
+    public List<JacsStorageVolume> initializeStorageVolumes(String storageAgentHost) {
         // initialize the list of specified volumes plus the overflow volume
         return Stream.concat(bootstrappedVolumeNames.stream(), Stream.of(JacsStorageVolume.OVERFLOW_VOLUME))
                 .map(volumeName -> {
-                    LOG.info("Bootstrap volume {}", volumeName);
-                    JacsStorageVolume storageVolume = createVolumeInfo(volumeName);
-                    return storageVolumeManager.updateVolumeInfo(storageVolume);
+                    boolean shared;
+                    if (JacsStorageVolume.OVERFLOW_VOLUME.equals(volumeName)) {
+                        shared = true;
+                    } else {
+                        shared = applicationConfig.getBooleanPropertyValue(
+                                getVolumeConfigPropertyName(volumeName, "Shared"));
+                    }
+                    LOG.info("Bootstrap {} volume {}", shared ? "shared" : "local", volumeName);
+
+                    JacsStorageVolume storageVolume;
+                    if (shared) {
+                        storageVolume = storageVolumeManager.createStorageVolumeIfNotFound(volumeName, null);
+                    } else {
+                        storageVolume = storageVolumeManager.createStorageVolumeIfNotFound(volumeName, storageAgentHost);
+                    }
+                    fillVolumeInfo(storageVolume);
+                    return storageVolumeManager.updateVolumeInfo(storageVolume.getId(), storageVolume);
                 })
                 .collect(Collectors.toList());
     }
 
-    private JacsStorageVolume createVolumeInfo(String volumeName) {
-        JacsStorageVolume storageVolume = new JacsStorageVolume();
-        boolean shared;
-        if (JacsStorageVolume.OVERFLOW_VOLUME.equals(volumeName)) {
-            shared = true;
-        } else {
-            shared = applicationConfig.getBooleanPropertyValue(
-                    getVolumeConfigPropertyName(volumeName, "Shared"));
-        }
-        storageVolume.setName(volumeName);
-        storageVolume.setShared(shared);
-        storageVolume.setStorageHost(shared ? null : storageHost);
+    private void fillVolumeInfo(JacsStorageVolume storageVolume) {
         storageVolume.setStorageRootTemplate(applicationConfig.getStringPropertyValue(
-                getVolumeConfigPropertyName(volumeName, "RootDir")));
-        storageVolume.setStorageVirtualPath(getStorageVirtualPath(volumeName));
+                getVolumeConfigPropertyName(storageVolume.getName(), "RootDir")));
+        storageVolume.setStorageVirtualPath(getStorageVirtualPath(storageVolume.getName()));
         storageVolume.setQuotaFailPercent(applicationConfig.getDoublePropertyValue(
-                getVolumeConfigPropertyName(volumeName, "QuotaFailPercent")));
+                getVolumeConfigPropertyName(storageVolume.getName(), "QuotaFailPercent")));
         storageVolume.setQuotaWarnPercent(applicationConfig.getDoublePropertyValue(
-                getVolumeConfigPropertyName(volumeName, "QuotaWarnPercent")));
+                getVolumeConfigPropertyName(storageVolume.getName(), "QuotaWarnPercent")));
         storageVolume.setSystemUsageFile(applicationConfig.getStringPropertyValue(
-                getVolumeConfigPropertyName(volumeName, "SystemUsageFile")));
-        storageVolume.setStorageTags(getStorageVolumeTags(volumeName));
-        storageVolume.setVolumePermissions(getStorageVolumePermissions(volumeName));
+                getVolumeConfigPropertyName(storageVolume.getName(), "SystemUsageFile")));
+        storageVolume.setStorageTags(getStorageVolumeTags(storageVolume.getName()));
+        storageVolume.setVolumePermissions(getStorageVolumePermissions(storageVolume.getName()));
         storageVolume.setActiveFlag(applicationConfig.getBooleanPropertyValue(
-                getVolumeConfigPropertyName(volumeName, "ActiveFlag"),
+                getVolumeConfigPropertyName(storageVolume.getName(), "ActiveFlag"),
                 true));
-        return storageVolume;
     }
 
     private String getVolumeConfigPropertyName(String volumeName, String configProperty) {
@@ -93,7 +96,7 @@ public class StorageVolumeBootstrapper {
         String resolvedStoragePathPrefix = configValueResolver.resolve(
                 storagePathPrefix,
                 (k) -> ImmutableMap.<String, String>builder()
-                        .put("storageHost", storageHost)
+                        .put("storageHost", storageHostPlaceholderValue)
                         .build().get(k));
         return StringUtils.prependIfMissing(resolvedStoragePathPrefix, "/");
     }

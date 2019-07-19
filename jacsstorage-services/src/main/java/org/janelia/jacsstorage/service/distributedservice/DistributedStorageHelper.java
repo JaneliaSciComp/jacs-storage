@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 
 class DistributedStorageHelper {
@@ -12,13 +11,11 @@ class DistributedStorageHelper {
 
     void updateStorageServiceInfo(JacsStorageVolume storageVolume) {
         if (storageVolume.isShared()) {
-            if (StringUtils.isBlank(storageVolume.getStorageHost())) {
-                agentManager.findRandomRegisteredAgent((StorageAgentConnection ac) -> ac.isConnected())
-                        .ifPresent(ai -> {
-                            storageVolume.setStorageHost(ai.getStorageHost());
-                            storageVolume.setStorageServiceURL(ai.getAgentHttpURL());
-                        });
-            }
+            agentManager.findRandomRegisteredAgent((StorageAgentConnection ac) -> ac.isConnected() && ac.getAgentInfo().canServe(storageVolume))
+                    .ifPresent(ai -> {
+                        storageVolume.setStorageHost(ai.getAgentHost());
+                        storageVolume.setStorageServiceURL(ai.getAgentAccessURL());
+                    });
         }
     }
 }

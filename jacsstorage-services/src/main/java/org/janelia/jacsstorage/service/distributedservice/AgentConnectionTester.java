@@ -8,7 +8,7 @@ public class AgentConnectionTester implements ConnectionTester<StorageAgentConne
 
     @Override
     public StorageAgentConnection testConnection(StorageAgentConnection agentConnection) {
-        StorageAgentInfo updatedAgentInfo = AgentConnectionHelper.getAgentStatus(agentConnection.getAgentInfo().getAgentHttpURL());
+        StorageAgentInfo updatedAgentInfo = AgentConnectionHelper.getAgentStatus(agentConnection.getAgentInfo().getAgentAccessURL());
         StorageAgentConnection updatedAgentConnection;
         if (updatedAgentInfo != null) {
             updatedAgentConnection = new StorageAgentConnection(updatedAgentInfo, agentConnection.getConnectionChecker());

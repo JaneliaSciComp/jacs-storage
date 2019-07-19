@@ -149,7 +149,7 @@ public class StorageResourceHelper {
     }
 
     private JacsStorageVolume retrieveStorageVolumeForDir(String dirName) {
-        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(new StorageQuery().setDataStoragePath(dirName));
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.findVolumes(new StorageQuery().setDataStoragePath(dirName));
         if (storageVolumes.isEmpty()) {
             LOG.warn("No volume found to match {}", dirName);
         } else if (storageVolumes.size() > 1) {

@@ -53,7 +53,7 @@ public class MasterStorageQuotaResource {
         LOG.info("Retrieve all quota(s) for {}", subjectName);
         StorageQuery storageQuery = new StorageQuery()
                 .setIncludeInactiveVolumes(false);
-        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.findVolumes(storageQuery);
         if (StringUtils.isBlank(subjectName)) {
             Map<String, List<UsageData>> usageDataMap = storageVolumes.stream()
                     .map(sv -> ImmutablePair.of(

@@ -148,7 +148,7 @@ public class StorageVolumesResource {
                 .setDataStoragePath(StoragePathURI.createAbsolutePathURI(dataStoragePathParam).getStoragePath())
                 .setIncludeInactiveVolumes(includeInactive);
         LOG.info("List storage volumes filtered with: {}", storageQuery);
-        List<JacsStorageVolume> storageVolumes = storageVolumeManager.getManagedVolumes(storageQuery);
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.findVolumes(storageQuery);
         PageResult<JacsStorageVolume> results = new PageResult<>();
         results.setPageSize(storageVolumes.size());
         results.setResultList(storageVolumes);
@@ -177,9 +177,17 @@ public class StorageVolumesResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response postUpdateStorageVolume(@ApiParam(value = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
-                                        @Context SecurityContext securityContext) {
+                                            @Context SecurityContext securityContext) {
         LOG.info("Create storage: {} with credentials {}", jacsStorageVolume, securityContext.getUserPrincipal());
-        return updateStorageVolume(jacsStorageVolume);
+        if (jacsStorageVolume.hasId()) {
+            return updateStorageVolume(jacsStorageVolume.getId(), jacsStorageVolume);
+        } else {
+            JacsStorageVolume newStorageVolume = storageVolumeManager.createNewStorageVolume(jacsStorageVolume);
+            return Response
+                    .created(resourceURI.getBaseUriBuilder().path(newStorageVolume.getId().toString()).build())
+                    .entity(newStorageVolume)
+                    .build();
+        }
     }
 
     @ApiOperation(
@@ -201,15 +209,17 @@ public class StorageVolumesResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response putUpdateStorageVolume(@ApiParam(value = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
+    @Path("{id}")
+    public Response putUpdateStorageVolume(@PathParam("id") Long storageVolumeId,
+                                           @ApiParam(value = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
                                            @Context SecurityContext securityContext) {
         LOG.info("Update storage: {} with credentials {}", jacsStorageVolume, securityContext.getUserPrincipal());
-        return updateStorageVolume(jacsStorageVolume);
+        return updateStorageVolume(storageVolumeId, jacsStorageVolume);
     }
 
-    private Response updateStorageVolume(JacsStorageVolume jacsStorageVolume) {
+    private Response updateStorageVolume(Number jacsStorageVolumeId, JacsStorageVolume jacsStorageVolume) {
         long currentTime = System.currentTimeMillis();
-        JacsStorageVolume updatedStorageVolume = storageVolumeManager.updateVolumeInfo(jacsStorageVolume);
+        JacsStorageVolume updatedStorageVolume = storageVolumeManager.updateVolumeInfo(jacsStorageVolumeId, jacsStorageVolume);
         long volumeCreatedTimestamp = updatedStorageVolume.getCreated().getTime();
         if (volumeCreatedTimestamp - currentTime > 0) {
             return Response

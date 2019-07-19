@@ -1,6 +1,8 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.ConnectionState;
 import org.janelia.jacsstorage.service.NotificationService;
@@ -21,6 +23,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -94,13 +97,13 @@ public class StorageAgentManagerImplTest {
         String testAgentURL = "http://agentURL";
 
         prepareConnectionTester(true);
-        registerAgent(testAgentHost, testAgentURL);
+        registerAgent(testAgentHost, testAgentURL, ImmutableSet.of("v1", "v2"));
 
         Mockito.verify(scheduler).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
     }
 
-    private StorageAgentInfo registerAgent(String agentHost, String agentURL) {
-        StorageAgentInfo agentInfo = new StorageAgentInfo(agentHost, agentURL);
+    private StorageAgentInfo registerAgent(String agentHost, String agentURL, Set<String> servedVolumes) {
+        StorageAgentInfo agentInfo = new StorageAgentInfo(agentHost, agentURL, servedVolumes);
         return testStorageAgentManager.registerAgent(agentInfo);
     }
 
@@ -108,10 +111,11 @@ public class StorageAgentManagerImplTest {
     public void reRegisterAgent() {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
+        Set<String> testServedVolumes = ImmutableSet.of("v1", "v2");
 
         prepareConnectionTester(true);
-        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL);
-        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL);
+        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes);
+        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes);
 
         assertNotNull(firstRegistration);
         assertNotNull(secondRegistration);
@@ -124,13 +128,14 @@ public class StorageAgentManagerImplTest {
     public void reRegisterAgentAfterDeregistration() {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
+        Set<String> testServedVolumes = ImmutableSet.of("v1", "v2");
 
         prepareConnectionTester(true);
-        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL);
+        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes);
         assertNotNull(firstRegistration);
         assertNotNull(testStorageAgentManager.deregisterAgent(testAgentURL, firstRegistration.getAgentToken()));
 
-        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL);
+        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes);
         assertNotNull(secondRegistration);
 
         Mockito.verify(scheduler, Mockito.times(2)).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
@@ -185,7 +190,7 @@ public class StorageAgentManagerImplTest {
         prepareConnectionTester(true);
         List<StorageAgentInfo> registeredAgents = registerMultipleAgents();
         registeredAgents.forEach(ai -> {
-            assertThat(testStorageAgentManager.findRegisteredAgent(ai.getAgentHttpURL()).orElse(null), equalTo(ai));
+            assertThat(testStorageAgentManager.findRegisteredAgent(ai.getAgentAccessURL()).orElse(null), equalTo(ai));
         });
         assertNull(testStorageAgentManager.findRegisteredAgent("badLocation").orElse(null));
     }
@@ -208,7 +213,7 @@ public class StorageAgentManagerImplTest {
                 .orElse(null);
         assertNull(agentInfo);
         registeredAgents.forEach(ai -> {
-            StorageAgentInfo agentInfoByLocation = testStorageAgentManager.findRegisteredAgent(ai.getAgentHttpURL()).orElse(null);
+            StorageAgentInfo agentInfoByLocation = testStorageAgentManager.findRegisteredAgent(ai.getAgentAccessURL()).orElse(null);
             assertNotNull(agentInfoByLocation);
             assertThat(agentInfoByLocation.getConnectionStatus(), equalTo("DISCONNECTED"));
         });
@@ -246,8 +251,12 @@ public class StorageAgentManagerImplTest {
     private StorageAgentInfo prepareTestAgentInfo(int index) {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
-        StorageAgentInfo agentInfo = new StorageAgentInfo(testAgentHost + "_" + index,
-                testAgentURL + "_" + index);
+        Set<String> testServedVolumes = ImmutableSet.of("v1", "v2");
+
+        StorageAgentInfo agentInfo = new StorageAgentInfo(
+                testAgentHost + "_" + index,
+                testAgentURL + "_" + index,
+                testServedVolumes);
         return agentInfo;
     }
 }

@@ -1,5 +1,7 @@
 package org.janelia.jacsstorage.agent;
 
+import java.util.Set;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
@@ -77,8 +79,8 @@ public class AgentConnectionState implements ConnectionState {
         this.registeredToken = registeredToken;
     }
 
-    StorageAgentInfo toStorageAgentInfo() {
-        StorageAgentInfo agentInfo = new StorageAgentInfo(storageHost, agentHttpURL);
+    StorageAgentInfo toStorageAgentInfo(Set<String> servedVolumes) {
+        StorageAgentInfo agentInfo = new StorageAgentInfo(storageHost, agentHttpURL, servedVolumes);
         if (this.isConnected()) {
             agentInfo.setConnectionStatus("CONNECTED");
         } else {
