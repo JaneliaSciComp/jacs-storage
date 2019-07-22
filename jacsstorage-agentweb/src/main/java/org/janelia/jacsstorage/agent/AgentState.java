@@ -65,11 +65,26 @@ public class AgentState {
     private JacsStorageAgent jacsStorageAgent;
     private AgentConnectionState connectionState;
 
-    public void initializeAgentInfo(String agentHost, String agentAccessURL, String status) {
+    /**
+     * Create and persist storage agent state, i.e. agent host, agent's access URL and agent's status
+     * @param agentHost
+     * @param agentAccessURL
+     * @param status
+     */
+    public void initializeAgentState(String agentHost, String agentAccessURL, String status) {
         LOG.info("Agent access set to {} -> {}", agentHost, agentAccessURL);
         this.agentHost = agentHost;
         this.agentAccessURL = agentAccessURL;
-        initializeVolumesServed(status);
+        // create persistent agent state if needed
+        jacsStorageAgent = agentStatePersistence.createAgentStorage(agentHost, agentAccessURL, status);
+    }
+
+    public void configureAgentServedVolumes() {
+        if (!configuredVolumesServed.isEmpty()) {
+            LOG.info("Update served volumes for agent running on {} to {}", agentHost, configuredVolumesServed);
+            JacsStorageAgent updatedStorageAgent = agentStatePersistence.updateAgentServedVolumes(jacsStorageAgent.getId(), configuredVolumesServed);
+            jacsStorageAgent.setServedVolumes(updatedStorageAgent.getServedVolumes());
+        }
         updateStorageOnLocalVolumes();
     }
 
@@ -158,17 +173,9 @@ public class AgentState {
         }
     }
 
-    private void initializeVolumesServed(String status) {
-        // create persistent agent state if needed
-        jacsStorageAgent = agentStatePersistence.createAgentStorage(agentHost, agentAccessURL, status);
-        if (!configuredVolumesServed.isEmpty()) {
-            LOG.info("Update served volumes for agent running on {} to {}", agentHost, configuredVolumesServed);
-            jacsStorageAgent = agentStatePersistence.updateAgentStorage(jacsStorageAgent.getId(), status, configuredVolumesServed);
-        }
-    }
-
     private void updateAgentStorageStatus(String status) {
-        jacsStorageAgent = agentStatePersistence.updateAgentStorage(jacsStorageAgent.getId(), status, Collections.emptySet());
+        JacsStorageAgent updatedStorageAgent = agentStatePersistence.updateAgentStatus(jacsStorageAgent.getId(), status);
+        jacsStorageAgent.setStatus(updatedStorageAgent.getStatus());
     }
 
     private void updateStorageOnLocalVolumes() {

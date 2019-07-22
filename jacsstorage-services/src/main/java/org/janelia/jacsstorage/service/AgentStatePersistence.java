@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.service;
 
-import java.util.Date;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -34,14 +33,18 @@ public class AgentStatePersistence {
         return jacsStorageAgentDao.createStorageAgentIfNotFound(agentHost, agentAccessURL, status, ImmutableSet.of("*"));
     }
 
-    public JacsStorageAgent updateAgentStorage(Number agentStorageId, String status, Set<String> servedVolumes) {
+    public JacsStorageAgent updateAgentServedVolumes(Number agentStorageId, Set<String> servedVolumes) {
+        ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedFieldsBulder = ImmutableMap.builder();
+        if (CollectionUtils.isNotEmpty(servedVolumes)) {
+            updatedFieldsBulder.put("servedVolumes", new SetFieldValueHandler<>(servedVolumes));
+        }
+        return jacsStorageAgentDao.update(agentStorageId, updatedFieldsBulder.build());
+    }
+
+    public JacsStorageAgent updateAgentStatus(Number agentStorageId, String status) {
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedFieldsBulder = ImmutableMap.builder();
         if (StringUtils.isNotBlank(status)) {
             updatedFieldsBulder.put("status", new SetFieldValueHandler<>(status));
-            updatedFieldsBulder.put("lastStatusCheck", new SetFieldValueHandler<>(new Date()));
-        }
-        if (CollectionUtils.isNotEmpty(servedVolumes)) {
-            updatedFieldsBulder.put("servedVolumes", new SetFieldValueHandler<>(servedVolumes));
         }
         return jacsStorageAgentDao.update(agentStorageId, updatedFieldsBulder.build());
     }

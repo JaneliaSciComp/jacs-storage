@@ -65,14 +65,9 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
 
             String configuredAgentHost = appConfig.getStringPropertyValue("StorageAgent.StorageHost", NetUtils.getCurrentHostName());
 
-                // bootstrap storage volumes if needed
-            if (agentArgs.bootstrapStorageVolumes) {
-                StorageVolumeBootstrapper volumeBootstrapper = container.select(StorageVolumeBootstrapper.class).get();
-                volumeBootstrapper.initializeStorageVolumes(configuredAgentHost);
-            }
-            AgentState agentState = container.select(AgentState.class).get();
             // update agent info
-            agentState.initializeAgentInfo(
+            AgentState agentState = container.select(AgentState.class).get();
+            agentState.initializeAgentState(
                     configuredAgentHost,
                     UriBuilder.fromPath(new ContextPathBuilder()
                             .path(agentArgs.baseContextPath)
@@ -85,6 +80,14 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
                             .build()
                             .toString(),
                     "RUNNING");
+
+            // bootstrap storage volumes if needed
+            if (agentArgs.bootstrapStorageVolumes) {
+                StorageVolumeBootstrapper volumeBootstrapper = container.select(StorageVolumeBootstrapper.class).get();
+                volumeBootstrapper.initializeStorageVolumes(configuredAgentHost);
+            }
+            // update agent state
+            agentState.configureAgentServedVolumes();
             // register agent
             agentState.connectTo(agentArgs.masterHttpUrl);
             // start the HTTP application
