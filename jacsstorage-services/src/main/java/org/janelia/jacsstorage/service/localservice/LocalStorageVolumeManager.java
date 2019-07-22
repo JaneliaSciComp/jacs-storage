@@ -104,7 +104,8 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
             if (StringUtils.isNotBlank(storageVolume.getStorageHost())) {
                 return storageVolume.getStorageHost().equals(localStorageAgent.getAgentHost());
             } else {
-                return localStorageAgent.canServe(storageVolume.getName());
+                return JacsStorageVolume.OVERFLOW_VOLUME.equals(storageVolume.getName()) ||
+                        localStorageAgent.canServe(storageVolume.getName());
             }
         };
     }

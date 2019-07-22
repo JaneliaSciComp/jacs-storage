@@ -63,9 +63,14 @@ public class StorageVolumeBootstrapper {
                     } else {
                         storageVolume = storageVolumeManager.createStorageVolumeIfNotFound(volumeName, storageAgentHost);
                     }
-                    fillVolumeInfo(storageVolume);
-                    return storageVolumeManager.updateVolumeInfo(storageVolume.getId(), storageVolume);
+                    if (storageVolume != null) {
+                        fillVolumeInfo(storageVolume);
+                        return storageVolumeManager.updateVolumeInfo(storageVolume.getId(), storageVolume);
+                    } else {
+                        return storageVolume;
+                    }
                 })
+                .filter(storageVolume -> storageVolume != null)
                 .collect(Collectors.toList());
     }
 
