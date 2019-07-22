@@ -57,20 +57,17 @@ public class StorageVolumeBootstrapper {
                     }
                     LOG.info("Bootstrap {} volume {}", shared ? "shared" : "local", volumeName);
 
-                    JacsStorageVolume storageVolume;
                     if (shared) {
-                        storageVolume = storageVolumeManager.createStorageVolumeIfNotFound(volumeName, null);
+                        return storageVolumeManager.createStorageVolumeIfNotFound(volumeName, null);
                     } else {
-                        storageVolume = storageVolumeManager.createStorageVolumeIfNotFound(volumeName, storageAgentHost);
-                    }
-                    if (storageVolume != null) {
-                        fillVolumeInfo(storageVolume);
-                        return storageVolumeManager.updateVolumeInfo(storageVolume.getId(), storageVolume);
-                    } else {
-                        return storageVolume;
+                        return storageVolumeManager.createStorageVolumeIfNotFound(volumeName, storageAgentHost);
                     }
                 })
                 .filter(storageVolume -> storageVolume != null)
+                .map(storageVolume -> {
+                    fillVolumeInfo(storageVolume);
+                    return storageVolumeManager.updateVolumeInfo(storageVolume.getId(), storageVolume);
+                })
                 .collect(Collectors.toList());
     }
 

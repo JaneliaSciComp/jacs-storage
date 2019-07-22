@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.service.localservice;
 
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,7 @@ import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageAgent;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.service.AgentStatePersistence;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.impl.AbstractStorageVolumeManager;
@@ -40,7 +42,13 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     )
     @Override
     public JacsStorageVolume createNewStorageVolume(JacsStorageVolume storageVolume) {
-        return validateStorageVolume(super.createNewStorageVolume(storageVolume));
+        JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
+        Predicate<JacsStorageVolume> canServeVolumePredicate = canServeVolume(localStorageAgent);
+        if (validateStorageVolume(storageVolume, canServeVolumePredicate, Function.identity()) != null) {
+            return super.createNewStorageVolume(storageVolume);
+        } else {
+            return null;
+        }
     }
 
     @TimedMethod(
@@ -48,7 +56,19 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     )
     @Override
     public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String storageHost) {
-        return validateStorageVolume(super.createStorageVolumeIfNotFound(volumeName, storageHost));
+        JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
+        Predicate<JacsStorageVolume> canServeVolumePredicate = canServeVolume(localStorageAgent);
+        if (validateStorageVolume(new JacsStorageVolumeBuilder()
+                .name(volumeName)
+                .shared(StringUtils.isBlank(storageHost))
+                .storageHost(storageHost)
+                .build(),
+                canServeVolumePredicate,
+                Function.identity()) != null) {
+            return super.createStorageVolumeIfNotFound(volumeName, storageHost);
+        } else {
+            return null;
+        }
     }
 
     @TimedMethod(
@@ -56,7 +76,11 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     )
     @Override
     public JacsStorageVolume getVolumeById(Number volumeId) {
-        return validateStorageVolume(super.getVolumeById(volumeId));
+        JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
+        Predicate<JacsStorageVolume> canServeVolumePredicate = canServeVolume(localStorageAgent);
+        return validateStorageVolume(super.getVolumeById(volumeId),
+                canServeVolumePredicate,
+                sv -> fillAccessInfo(sv, localStorageAgent));
     }
 
     @TimedMethod(
@@ -74,16 +98,21 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     )
     @Override
     public JacsStorageVolume updateVolumeInfo(Number volumeId, JacsStorageVolume storageVolume) {
-        return validateStorageVolume(super.updateVolumeInfo(volumeId, storageVolume));
+        JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
+        Predicate<JacsStorageVolume> canServeVolumePredicate = canServeVolume(localStorageAgent);
+        return validateStorageVolume(super.updateVolumeInfo(volumeId, storageVolume),
+                canServeVolumePredicate,
+                sv -> fillAccessInfo(sv, localStorageAgent));
     }
 
-    private JacsStorageVolume validateStorageVolume(JacsStorageVolume storageVolume) {
+    private JacsStorageVolume validateStorageVolume(JacsStorageVolume storageVolume,
+                                                    Predicate<JacsStorageVolume> canServeTest,
+                                                    Function<JacsStorageVolume, JacsStorageVolume> canServeAction) {
         if (storageVolume == null) {
             return null;
         } else {
-            JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
-            if (canServeVolume(localStorageAgent).test(storageVolume)) {
-                return fillAccessInfo(storageVolume, localStorageAgent);
+            if (canServeTest.test(storageVolume)) {
+                return canServeAction.apply(storageVolume);
             } else {
                 return null;
             }
