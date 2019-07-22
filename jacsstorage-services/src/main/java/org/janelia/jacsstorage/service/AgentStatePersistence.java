@@ -25,10 +25,9 @@ public class AgentStatePersistence {
 
     @Inject
     public AgentStatePersistence(JacsStorageAgentDao jacsStorageAgentDao,
-                                 @PropertyValue(name = "StorageAgent.StorageHost") String storageAgentHost,
-                                 @PropertyValue(name = "StorageAgent.AgentPort") String storageAgentPort) {
+                                 @PropertyValue(name = "StorageAgent.StorageHost") String storageHost) {
         this.jacsStorageAgentDao = jacsStorageAgentDao;
-        this.storageAgentHost = NetUtils.createStorageHostId(storageAgentHost, storageAgentPort);
+        this.storageAgentHost = StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
     }
 
     public JacsStorageAgent createAgentStorage(String agentHost, String agentAccessURL, String status) {

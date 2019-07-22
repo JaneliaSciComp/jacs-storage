@@ -85,7 +85,7 @@ public class StorageVolumeBootstrapperTest {
                         hasItems(
                                 allOf(new HasPropertyWithValue<>("name", equalTo("v1")),
                                         new HasPropertyWithValue<>("storageRootTemplate", equalTo("/data/jadestorage")),
-                                        new HasPropertyWithValue<>("storageVirtualPath", equalTo("/" + NetUtils.getCurrentHostName() + "_8080/jadestorage/otherKeyValue/storage/andAnotherValue")),
+                                        new HasPropertyWithValue<>("storageVirtualPath", equalTo("/" + NetUtils.getCurrentHostName() + "/jadestorage/otherKeyValue/storage/andAnotherValue")),
                                         new HasPropertyWithValue<>("shared", equalTo(false))
                                 ),
                                 allOf(new HasPropertyWithValue<>("name", equalTo("v2")),
@@ -136,7 +136,6 @@ public class StorageVolumeBootstrapperTest {
                     storageVolumeManager,
                     td.applicationConfig,
                     td.applicationConfig.getStringPropertyValue("StorageAgent.StorageHost", NetUtils.getCurrentHostName()),
-                    td.applicationConfig.getStringPropertyValue("StorageAgent.AgentPort", "8080"),
                     ImmutableList.of("v1", "v2")
             );
             List<JacsStorageVolume> storageVolumes = storageVolumeBootstrapper.initializeStorageVolumes(TEST_STORAGE_HOST);

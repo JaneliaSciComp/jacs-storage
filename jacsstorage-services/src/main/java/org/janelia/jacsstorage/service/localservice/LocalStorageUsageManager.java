@@ -39,11 +39,10 @@ public class LocalStorageUsageManager implements StorageUsageManager {
 
     @Inject
     public LocalStorageUsageManager(@LocalInstance StorageVolumeManager storageVolumeManager,
-                                    @PropertyValue(name = "StorageAgent.StorageHost") String storageAgentHost,
-                                    @PropertyValue(name = "StorageAgent.AgentPort") String storageAgentPort,
+                                    @PropertyValue(name = "StorageAgent.StorageHost") String storageHost,
                                     @PropertyValue(name = "Storage.QuotaProxyUser", defaultValue = "jacs") String quotaProxyUser) {
         this.storageVolumeManager = storageVolumeManager;
-        this.storageAgentHost = NetUtils.createStorageHostId(storageAgentHost, storageAgentPort);
+        this.storageAgentHost = StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
         this.quotaProxyUser = quotaProxyUser;
     }
 
