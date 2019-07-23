@@ -62,10 +62,10 @@ public class VolumeStorageResource {
     public Response checkDataPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                    @PathParam("storageRelativePath") String storageRelativeFilePath,
                                                    @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
-        LOG.info("Check data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
+        LOG.debug("Check data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
-            LOG.error("No volume found for {}", storageVolumeId);
+            LOG.warn("No volume found for {}", storageVolumeId);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .header("Content-Length", 0)
@@ -93,10 +93,10 @@ public class VolumeStorageResource {
     public Response retrieveDataContentFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                          @PathParam("storageRelativePath") String storageRelativeFilePath,
                                                          @Context UriInfo requestURI) {
-        LOG.info("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
+        LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
-            LOG.error("No volume found for {}", storageVolumeId);
+            LOG.warn("No volume found for {}", storageVolumeId);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
@@ -128,10 +128,10 @@ public class VolumeStorageResource {
     @Path("storage_volume/{storageVolumeId}/data_info/{storageRelativePath:.+}")
     public Response retrieveDataInfoFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                       @PathParam("storageRelativePath") String storageRelativeFilePath) {
-        LOG.info("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
+        LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
-            LOG.error("No volume found for {}", storageVolumeId);
+            LOG.warn("No volume found for {}", storageVolumeId);
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
@@ -162,7 +162,7 @@ public class VolumeStorageResource {
     public Response listPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                               @PathParam("storageRelativePath") String storageRelativeFilePath,
                                               @QueryParam("depth") Integer depthParam) {
-        LOG.info("Check data from volume {}:{} with a depthParameter {}", storageVolumeId, storageRelativeFilePath, depthParam);
+        LOG.debug("Check data from volume {}:{} with a depthParameter {}", storageVolumeId, storageRelativeFilePath, depthParam);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
             return Response
