@@ -20,13 +20,17 @@ import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 public class AgentStatePersistence {
 
     private final JacsStorageAgentDao jacsStorageAgentDao;
-    private final String storageAgentHost;
+    private final String storageAgentId;
 
     @Inject
     public AgentStatePersistence(JacsStorageAgentDao jacsStorageAgentDao,
-                                 @PropertyValue(name = "StorageAgent.StorageHost") String storageHost) {
+                                 @PropertyValue(name = "StorageAgent.StorageHost") String storageHost,
+                                 @PropertyValue(name = "StorageAgent.StoragePortNumber") String storagePort) {
         this.jacsStorageAgentDao = jacsStorageAgentDao;
-        this.storageAgentHost = StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
+        this.storageAgentId = NetUtils.createStorageHostId(
+                StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName()),
+                storagePort
+        );
     }
 
     public JacsStorageAgent createAgentStorage(String agentHost, String agentAccessURL, String status) {
@@ -50,8 +54,8 @@ public class AgentStatePersistence {
     }
 
     public JacsStorageAgent getLocalStorageAgentInfo() {
-        JacsStorageAgent storageAgent = jacsStorageAgentDao.findStorageAgentByHost(storageAgentHost);
-        Preconditions.checkState(storageAgent != null, "No storage agent found for " + storageAgentHost);
+        JacsStorageAgent storageAgent = jacsStorageAgentDao.findStorageAgentByHost(storageAgentId);
+        Preconditions.checkState(storageAgent != null, "No storage agent found for " + storageAgentId);
         return storageAgent;
     }
 }

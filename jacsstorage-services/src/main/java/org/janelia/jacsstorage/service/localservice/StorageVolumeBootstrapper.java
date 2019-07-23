@@ -35,12 +35,16 @@ public class StorageVolumeBootstrapper {
     public StorageVolumeBootstrapper(@LocalInstance StorageVolumeManager storageVolumeManager,
                                      @ApplicationProperties ApplicationConfig applicationConfig,
                                      @PropertyValue(name = "StorageAgent.StorageHost") String storageHost,
+                                     @PropertyValue(name = "StorageAgent.StoragePortNumber") String storagePort,
                                      @PropertyValue(name = "StorageAgent.BootstrappedVolumes") List<String> bootstrappedVolumeNames) {
         this.storageVolumeManager = storageVolumeManager;
         this.applicationConfig = applicationConfig;
         this.bootstrappedVolumeNames = bootstrappedVolumeNames;
-        this.storageHostPlaceholderValue = StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
-
+        this.storageHostPlaceholderValue = NetUtils.createStorageHostId(
+                StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName()),
+                storagePort,
+                "_"
+        );
     }
 
     @TimedMethod

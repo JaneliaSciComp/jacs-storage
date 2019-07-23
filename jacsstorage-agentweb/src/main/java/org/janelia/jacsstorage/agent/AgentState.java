@@ -60,28 +60,28 @@ public class AgentState {
     @Inject
     private NotificationService connectivityNotifier;
     private ConnectionChecker<AgentConnectionState> agentConnectionChecker;
-    private String agentHost;
+    private String agentId;
     private String agentAccessURL;
     private JacsStorageAgent jacsStorageAgent;
     private AgentConnectionState connectionState;
 
     /**
      * Create and persist storage agent state, i.e. agent host, agent's access URL and agent's status
-     * @param agentHost
+     * @param agentId
      * @param agentAccessURL
      * @param status
      */
-    public void initializeAgentState(String agentHost, String agentAccessURL, String status) {
-        LOG.info("Agent access set to {} -> {}", agentHost, agentAccessURL);
-        this.agentHost = agentHost;
+    public void initializeAgentState(String agentId, String agentAccessURL, String status) {
+        LOG.info("Agent access set to {} -> {}", agentId, agentAccessURL);
+        this.agentId = agentId;
         this.agentAccessURL = agentAccessURL;
         // create persistent agent state if needed
-        jacsStorageAgent = agentStatePersistence.createAgentStorage(agentHost, agentAccessURL, status);
+        jacsStorageAgent = agentStatePersistence.createAgentStorage(agentId, agentAccessURL, status);
     }
 
     public void configureAgentServedVolumes() {
         if (!configuredVolumesServed.isEmpty()) {
-            LOG.info("Update served volumes for agent running on {} to {}", agentHost, configuredVolumesServed);
+            LOG.info("Update served volumes for agent running on {} to {}", agentId, configuredVolumesServed);
             JacsStorageAgent updatedStorageAgent = agentStatePersistence.updateAgentServedVolumes(jacsStorageAgent.getId(), configuredVolumesServed);
             jacsStorageAgent.setServedVolumes(updatedStorageAgent.getServedVolumes());
         }
@@ -89,10 +89,10 @@ public class AgentState {
     }
 
     public synchronized void connectTo(String masterHttpURL) {
-        LOG.info("Register agent on {} available at {} with master at {}", agentHost, agentAccessURL, masterHttpURL);
+        LOG.info("Register agent on {} available at {} with master at {}", agentId, agentAccessURL, masterHttpURL);
         Preconditions.checkArgument(StringUtils.isNotBlank(masterHttpURL));
         connectionState = new AgentConnectionState(
-                agentHost,
+                agentId,
                 masterHttpURL,
                 agentAccessURL,
                 ConnectionState.Status.OPEN,
@@ -121,8 +121,8 @@ public class AgentState {
                         // this means the connection was re-established
                         connectionState.setRegisteredToken(agentConnectionState.getRegisteredToken());
                         connectivityNotifier.sendNotification(
-                                "Agent on " + agentHost + " reconnected to " + masterHttpURL,
-                                "Agent on " + agentHost + " available at " + agentAccessURL + " reconnected to " + masterHttpURL);
+                                "Agent " + agentId + " reconnected to " + masterHttpURL,
+                                "Agent " + agentId + " available at " + agentAccessURL + " reconnected to " + masterHttpURL);
                     }
                     updateStorageOnLocalVolumes();
                 },
@@ -131,8 +131,8 @@ public class AgentState {
                         LOG.error("Agent {} got disconnected {}", agentConnectionState, masterHttpURL);
                         updateAgentStorageStatus("DISCONNECTED");
                         connectivityNotifier.sendNotification(
-                                "Agent on " + agentHost + " lost connection to " + masterHttpURL,
-                                "Agent on " + agentHost + " available at " + agentAccessURL + " lost connection to " + masterHttpURL);
+                                "Agent " + agentId + " lost connection to " + masterHttpURL,
+                                "Agent " + agentId + " available at " + agentAccessURL + " lost connection to " + masterHttpURL);
                     }
                     connectionState.setConnectStatus(agentConnectionState.getConnectStatus());
                 });
@@ -148,7 +148,7 @@ public class AgentState {
     private synchronized void disconnect() {
         agentConnectionChecker.dispose();
         if (connectionState != null) {
-            LOG.info("Unregister agent on {} available at {} from master at {}", agentHost, agentAccessURL, connectionState.getMasterHttpURL());
+            LOG.info("Unregister agent {} available at {} from master at {}", agentId, agentAccessURL, connectionState.getMasterHttpURL());
             AgentConnectionHelper.deregisterAgent(
                     connectionState.getMasterHttpURL(),
                     agentAccessURL,
@@ -156,13 +156,14 @@ public class AgentState {
             updateAgentStorageStatus("DISCONNECTED");
             connectionState = null;
         } else {
-            LOG.info("Agent on {} with URL {} was not registered or the registration failed", agentHost, agentAccessURL);
+            LOG.info("Agent {} with URL {} was not registered or the registration failed", agentId, agentAccessURL);
         }
     }
 
     public StorageAgentInfo getLocalAgentInfo() {
         if (connectionState == null) {
-            return new AgentConnectionState(agentHost,
+            return new AgentConnectionState(
+                    agentId,
                     null,
                     agentAccessURL,
                     ConnectionState.Status.OPEN,
@@ -179,7 +180,7 @@ public class AgentState {
     }
 
     private void updateStorageOnLocalVolumes() {
-        storageVolumeManager.findVolumes(new StorageQuery().setLocalToAnyHost(true).setAccessibleOnHost(agentHost))
+        storageVolumeManager.findVolumes(new StorageQuery().setLocalToAnyHost(true).setAccessibleOnHost(agentId))
                 .forEach(sv -> {
                     sv.setStorageServiceURL(agentAccessURL);
                     storageVolumeManager.updateVolumeInfo(sv.getId(), sv);
@@ -189,7 +190,7 @@ public class AgentState {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("agentHost", agentHost)
+                .append("agentId", agentId)
                 .append("agentHttpURL", agentAccessURL)
                 .append("connectionState", connectionState)
                 .build();

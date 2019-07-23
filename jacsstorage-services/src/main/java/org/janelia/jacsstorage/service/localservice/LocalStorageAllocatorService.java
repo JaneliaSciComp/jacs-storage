@@ -29,14 +29,18 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
     private static final Logger LOG = LoggerFactory.getLogger(LocalStorageAllocatorService.class);
 
     private final JacsStorageVolumeDao storageVolumeDao;
-    private final String storageHost;
+    private final String storageAgentId;
 
     @Inject
     public LocalStorageAllocatorService(JacsStorageVolumeDao storageVolumeDao, JacsBundleDao bundleDao,
-                                        @PropertyValue(name = "StorageAgent.StorageHost") String storageHost) {
+                                        @PropertyValue(name = "StorageAgent.StorageHost") String storageHost,
+                                        @PropertyValue(name = "StorageAgent.StoragePortNumber") String storagePort) {
         super(bundleDao);
         this.storageVolumeDao = storageVolumeDao;
-        this.storageHost = storageHost;
+        this.storageAgentId = NetUtils.createStorageHostId(
+                StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName()),
+                storagePort
+        );
     }
 
     @Override
@@ -78,7 +82,7 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
     @Override
     public Optional<JacsStorageVolume> selectStorageVolume(JacsBundle dataBundle) {
         StorageVolumeSelector[] volumeSelectors = new StorageVolumeSelector[] {
-                new LocalStorageVolumeSelector(storageVolumeDao, getStorageHost()),
+                new LocalStorageVolumeSelector(storageVolumeDao, storageAgentId),
                 new OverflowStorageVolumeSelector(storageVolumeDao)
         };
         JacsStorageVolume storageVolume = null;
@@ -96,8 +100,5 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
         }
     }
 
-    private String getStorageHost() {
-        return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
-    }
 
 }

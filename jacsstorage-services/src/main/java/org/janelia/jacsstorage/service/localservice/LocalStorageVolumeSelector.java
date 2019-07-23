@@ -12,17 +12,17 @@ import org.janelia.jacsstorage.coreutils.NetUtils;
 
 public class LocalStorageVolumeSelector implements StorageVolumeSelector {
     private final JacsStorageVolumeDao storageVolumeDao;
-    private final String storageHost;
+    private final String storageAgentId;
 
-    public LocalStorageVolumeSelector(JacsStorageVolumeDao storageVolumeDao, String storageHost) {
+    public LocalStorageVolumeSelector(JacsStorageVolumeDao storageVolumeDao, String storageAgentId) {
         this.storageVolumeDao = storageVolumeDao;
-        this.storageHost = storageHost;
+        this.storageAgentId = storageAgentId;
     }
 
     @Override
     public JacsStorageVolume selectStorageVolume(JacsBundle storageRequest) {
         StorageQuery storageQuery = new StorageQuery()
-                .addStorageHost(getStorageHost())
+                .addStorageHost(storageAgentId)
                 .setLocalToAnyHost(true);
         storageRequest.getStorageVolume()
                 .ifPresent(sv -> {
@@ -40,10 +40,6 @@ public class LocalStorageVolumeSelector implements StorageVolumeSelector {
         } else {
             return storageVolumeResults.getResultList().get(0);
         }
-    }
-
-    private String getStorageHost() {
-        return StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName());
     }
 
 }

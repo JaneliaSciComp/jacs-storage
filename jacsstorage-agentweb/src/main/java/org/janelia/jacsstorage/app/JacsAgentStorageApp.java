@@ -6,9 +6,11 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.UriBuilder;
 
 import com.beust.jcommander.Parameter;
+import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.agent.AgentState;
+import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.coreutils.NetUtils;
@@ -55,6 +57,9 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
 
             SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
             SeContainer container = containerInit.initialize();
+
+            ApplicationConfigProvider.setAppDynamicArgs(ImmutableMap.of("StorageAgent.StoragePortNumber", String.valueOf(agentPortNumber)));
+
             JacsAgentStorageApp app = container.select(JacsAgentStorageApp.class).get();
             ApplicationConfig appConfig = container.select(ApplicationConfig.class, new ApplicationProperties() {
                 @Override
@@ -64,11 +69,12 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
             }).get();
 
             String configuredAgentHost = appConfig.getStringPropertyValue("StorageAgent.StorageHost", NetUtils.getCurrentHostName());
+            String storageAgentId = NetUtils.createStorageHostId(configuredAgentHost, String.valueOf(agentPortNumber));
 
             // update agent info
             AgentState agentState = container.select(AgentState.class).get();
             agentState.initializeAgentState(
-                    configuredAgentHost,
+                    storageAgentId,
                     UriBuilder.fromPath(new ContextPathBuilder()
                             .path(agentArgs.baseContextPath)
                             .path(app.getRestApiContext())
