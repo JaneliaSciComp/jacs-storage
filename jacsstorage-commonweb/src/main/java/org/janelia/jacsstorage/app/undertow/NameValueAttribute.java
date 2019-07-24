@@ -30,7 +30,7 @@ public class NameValueAttribute implements ExchangeAttribute {
     private final String name;
     private final ExchangeAttribute valueAttr;
 
-    public NameValueAttribute(String name, ExchangeAttribute valueAttr) {
+    NameValueAttribute(String name, ExchangeAttribute valueAttr) {
         this.name = name;
         this.valueAttr = valueAttr;
     }

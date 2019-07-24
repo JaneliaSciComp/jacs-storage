@@ -128,17 +128,17 @@ public class UndertowAppContainer implements AppContainer {
                 "ignored",
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {
                         RemoteHostAttribute.INSTANCE, // <RemoteIP>
-                        RemoteUserAttribute.INSTANCE, // <RemoteUser>
+                        new AuthenticatedUserAttribute(), // <RemoteUser>
                         new RequestHeaderAttribute(new HttpString("Application-Id")), // <Application-Id>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         new RequestFullURLAttribute(), // <Request URL>
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
-                        new NameValueAttribute("requestHeaders", new RequestHeadersAttribute(getOmittedHeaders())),
                         new NameValueAttribute("location", new ResponseHeaderAttribute(new HttpString("Location"))), // location=<ResponseLocation>
                         new NameValueAttribute("status", ResponseCodeAttribute.INSTANCE), // status=<ResponseStatus>
                         new NameValueAttribute("response_bytes", new BytesSentAttribute(false)), // response_bytes=<ResponseBytes>
                         new NameValueAttribute("rt", new ResponseTimeAttribute()), // rt=<ResponseTimeInSeconds>
                         new NameValueAttribute("tp", new ThroughputAttribute()), // tp=<Throughput>
+                        new NameValueAttribute("requestHeaders", new RequestHeadersAttribute(getOmittedHeaders())),
                         new RequestBodyAttribute() // Request Body
                 }, " "),
                 getAccessLogFilter()
