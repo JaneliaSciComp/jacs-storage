@@ -18,6 +18,7 @@ import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.attribute.QueryStringAttribute;
 import io.undertow.attribute.RemoteHostAttribute;
 import io.undertow.attribute.RemoteUserAttribute;
+import io.undertow.attribute.RequestHeaderAttribute;
 import io.undertow.attribute.RequestMethodAttribute;
 import io.undertow.attribute.ResponseCodeAttribute;
 import io.undertow.attribute.ResponseHeaderAttribute;
@@ -128,8 +129,7 @@ public class UndertowAppContainer implements AppContainer {
                 new JoinedExchangeAttribute(new ExchangeAttribute[] {
                         RemoteHostAttribute.INSTANCE, // <RemoteIP>
                         RemoteUserAttribute.INSTANCE, // <RemoteUser>
-                        new ConstantExchangeAttribute(applicationId), // <Application-Id>
-                        DateTimeAttribute.INSTANCE, // <timestamp>
+                        new RequestHeaderAttribute(new HttpString("Application-Id")), // <Application-Id>
                         RequestMethodAttribute.INSTANCE, // <HttpVerb>
                         new RequestFullURLAttribute(), // <Request URL>
                         QueryStringAttribute.INSTANCE, // <RequestQuery>
