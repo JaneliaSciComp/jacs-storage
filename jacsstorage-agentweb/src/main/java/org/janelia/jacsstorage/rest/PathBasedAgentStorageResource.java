@@ -67,7 +67,7 @@ public class PathBasedAgentStorageResource {
     @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response checkPath(@PathParam("dataPath") String dataPathParam, @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
-        LOG.info("Check path {}", dataPathParam);
+        LOG.debug("Check path {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
@@ -88,7 +88,7 @@ public class PathBasedAgentStorageResource {
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response retrieveData(@PathParam("dataPath") String dataPathParam,
                                  @Context UriInfo requestURI) {
-        LOG.info("Retrieve data from {}", dataPathParam);
+        LOG.debug("Retrieve data from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
         return storageResourceHelper.handleResponseForFullDataPathParam(
@@ -114,7 +114,7 @@ public class PathBasedAgentStorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response removeData(@PathParam("dataPath") String dataPathParam, @Context SecurityContext securityContext) {
-        LOG.info("Remove data from {}", dataPathParam);
+        LOG.debug("Remove data from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         JacsCredentials credentials = SecurityUtils.getUserPrincipal(securityContext);
         return storageResourceHelper.handleResponseForFullDataPathParam(
@@ -148,7 +148,7 @@ public class PathBasedAgentStorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response storeData(@PathParam("dataPath") String dataPathParam, @Context SecurityContext securityContext, InputStream contentStream) {
-        LOG.info("Retrieve data from {}", dataPathParam);
+        LOG.debug("Retrieve data from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
@@ -184,7 +184,7 @@ public class PathBasedAgentStorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path/data_info/{dataPath:.+}")
     public Response retrieveDataInfo(@PathParam("dataPath") String dataPathParam) {
-        LOG.info("Retrieve data info from {}", dataPathParam);
+        LOG.debug("Retrieve data info from {}", dataPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
@@ -209,7 +209,7 @@ public class PathBasedAgentStorageResource {
     public Response listContent(@PathParam("dataPath") String dataPathParam,
                                 @QueryParam("depth") Integer depthParam,
                                 @Context SecurityContext securityContext) {
-        LOG.info("List content from location {} with a depthParameter {}", dataPathParam, depthParam);
+        LOG.debug("List content from location {} with a depthParameter {}", dataPathParam, depthParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
         URI baseURI = resourceURI.getBaseUri();
