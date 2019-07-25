@@ -130,10 +130,11 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
 
     private Predicate<JacsStorageVolume> canServeVolume(JacsStorageAgent localStorageAgent) {
         return storageVolume -> {
-            if (StringUtils.isNotBlank(storageVolume.getStorageHost())) {
-                return storageVolume.getStorageHost().equals(localStorageAgent.getAgentHost());
-            } else {
+            if (storageVolume.isShared()) {
                 return JacsStorageVolume.OVERFLOW_VOLUME.equals(storageVolume.getName()) ||
+                        localStorageAgent.canServe(storageVolume.getName());
+            } else {
+                return storageVolume.getStorageHost().equals(localStorageAgent.getAgentHost()) &&
                         localStorageAgent.canServe(storageVolume.getName());
             }
         };
