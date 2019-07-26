@@ -18,8 +18,6 @@
 
 package org.janelia.jacsstorage.app.undertow;
 
-import java.util.concurrent.TimeUnit;
-
 import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.attribute.ReadOnlyAttributeException;
 import io.undertow.server.HttpServerExchange;
