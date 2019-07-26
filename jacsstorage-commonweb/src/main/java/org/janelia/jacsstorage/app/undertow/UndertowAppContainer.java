@@ -139,7 +139,7 @@ public class UndertowAppContainer implements AppContainer {
                         new NameValueAttribute("rt", new ResponseTimeAttribute()), // rt=<ResponseTimeInSeconds>
                         new NameValueAttribute("tp", new ThroughputAttribute()), // tp=<Throughput>
                         new NameValueAttribute("requestHeaders", new RequestHeadersAttribute(getOmittedHeaders())),
-                        new RequestBodyAttribute() // Request Body
+                        new RequestBodyAttribute(applicationConfig.getIntegerPropertyValue("AccessLog.MaxRequestBody")) // Request Body
                 }, " "),
                 getAccessLogFilter()
         );
