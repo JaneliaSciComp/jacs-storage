@@ -160,7 +160,7 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
                 if (percentageFull > FILL_UP_THRESHOLD && currentPercentage != null && currentPercentage <= FILL_UP_THRESHOLD) {
                     // it just crossed the threshold up
                     LOG.warn("Volume {} is {}% full and it just passed the threshold of {}%", storageVolume, percentageFull, FILL_UP_THRESHOLD);
-                    String capacityNotification = "Volume " + storageVolume.getName() + "on " + locationMessagePart +
+                    String capacityNotification = "Volume " + storageVolume.getName() + locationMessagePart +
                             " just passed the fillup percentage threshold of " + FILL_UP_THRESHOLD + " and it currently is at " + percentageFull + "%";
                     capacityNotifier.sendNotification(
                             "Volume " + storageVolume.getName() + locationMessagePart + " is above fill up threshold",
