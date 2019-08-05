@@ -67,13 +67,17 @@ public class PathBasedAgentStorageResource {
     @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response checkPath(@PathParam("dataPath") String dataPathParam, @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
-        LOG.debug("Check path {}", dataPathParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-        return storageResourceHelper.handleResponseForFullDataPathParam(
-                StoragePathURI.createAbsolutePathURI(dataPathParam),
-                (dataBundle, dataEntryPath) -> storageResourceHelper.checkContentFromDataBundle(dataBundle, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam),
-                (storageVolume, dataEntryPath) -> storageResourceHelper.checkContentFromFile(storageVolume, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam)
-        ).build();
+        try {
+            LOG.debug("Start check path {}", dataPathParam);
+            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+            return storageResourceHelper.handleResponseForFullDataPathParam(
+                    StoragePathURI.createAbsolutePathURI(dataPathParam),
+                    (dataBundle, dataEntryPath) -> storageResourceHelper.checkContentFromDataBundle(dataBundle, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam),
+                    (storageVolume, dataEntryPath) -> storageResourceHelper.checkContentFromFile(storageVolume, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam)
+            ).build();
+        } finally {
+            LOG.debug("Complete check path {}", dataPathParam);
+        }
     }
 
     @ApiOperation(value = "Retrieve the content of the specified data path.")
@@ -88,14 +92,18 @@ public class PathBasedAgentStorageResource {
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response retrieveData(@PathParam("dataPath") String dataPathParam,
                                  @Context UriInfo requestURI) {
-        LOG.debug("Retrieve data from {}", dataPathParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-        ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
-        return storageResourceHelper.handleResponseForFullDataPathParam(
-                StoragePathURI.createAbsolutePathURI(dataPathParam),
-                (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, filterParams, dataEntryPath),
-                (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, dataEntryPath)
-        ).build();
+        try {
+            LOG.debug("Start retrieve data from {}", dataPathParam);
+            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+            ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
+            return storageResourceHelper.handleResponseForFullDataPathParam(
+                    StoragePathURI.createAbsolutePathURI(dataPathParam),
+                    (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, filterParams, dataEntryPath),
+                    (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, dataEntryPath)
+            ).build();
+        } finally {
+            LOG.debug("Complete retrieve data from {}", dataPathParam);
+        }
     }
 
     @ApiOperation(value = "Retrieve the content of the specified data path.")

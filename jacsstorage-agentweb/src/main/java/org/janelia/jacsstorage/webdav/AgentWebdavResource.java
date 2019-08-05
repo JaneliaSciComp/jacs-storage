@@ -129,7 +129,7 @@ public class AgentWebdavResource {
                                               @HeaderParam("Depth") String depthParam,
                                               Propfind propfindRequest,
                                               @Context SecurityContext securityContext) {
-        LOG.info("PROPFIND data storage by path: {}, Depth: {} for {}", dataPathParam, depthParam, securityContext.getUserPrincipal());
+        LOG.debug("PROPFIND data storage by path: {}, Depth: {} for {}", dataPathParam, depthParam, securityContext.getUserPrincipal());
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         int depth = WebdavUtils.getDepth(depthParam);
         Supplier<Response.ResponseBuilder> storageNotFoundHandler = () -> {
@@ -226,7 +226,7 @@ public class AgentWebdavResource {
     public Response createDataStorageDir(@PathParam("dataBundleId") Long dataBundleId,
                                          @PathParam("dataDirPath") String dataDirPath,
                                          @Context SecurityContext securityContext) {
-        LOG.info("MKCOL {} : {}", dataBundleId, dataDirPath);
+        LOG.debug("MKCOL {} : {} for {}", dataBundleId, dataDirPath, securityContext.getUserPrincipal());
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         long dirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getRealStoragePath(), dataDirPath, dataBundle.getStorageFormat());

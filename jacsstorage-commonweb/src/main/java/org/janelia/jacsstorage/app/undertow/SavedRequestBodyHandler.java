@@ -26,7 +26,7 @@ public class SavedRequestBodyHandler implements HttpHandler {
     SavedRequestBodyHandler(HttpHandler next, boolean enabled) {
         this.next = next;
         this.enabled = enabled;
-        this.supportedMethods = ImmutableSet.of("PUT", "POST");
+        this.supportedMethods = ImmutableSet.of("PUT", "POST", "PROPFIND", "MKCOL");
         this.supportedMimeTypes = ImmutableSet.of("application/json", "application/xml", "multipart/");
     }
 

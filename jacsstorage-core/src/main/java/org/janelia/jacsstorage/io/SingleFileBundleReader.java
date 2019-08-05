@@ -80,7 +80,7 @@ public class SingleFileBundleReader extends AbstractBundleReader {
     }
 
     @TimedMethod(
-            argList = {0, 1},
+            argList = {0, 1, 2},
             logResult = true
     )
     @Override
