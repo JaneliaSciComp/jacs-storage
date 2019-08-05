@@ -170,7 +170,6 @@ public abstract class AbstractMongoDao<T extends BaseEntity> extends AbstractDao
         if (length > 0) {
             aggregatePipelineBuilder.add(Aggregates.limit(length));
         }
-        mongoCollection.aggregate(aggregatePipelineBuilder.build(), Document.class).forEach((java.util.function.Consumer<Document>)(d -> System.out.println(d)));
         return mongoCollection.aggregate(aggregatePipelineBuilder.build(), resultType);
     }
 
