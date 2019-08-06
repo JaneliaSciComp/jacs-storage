@@ -10,7 +10,7 @@ buildscript {
 plugins {
     id 'application'
     id 'distribution'
-    id 'nebula.rpm' version '4.8.0'
+    id 'nebula.rpm' version '6.1.1'
 }
 
 mainClassName = 'org.janelia.jacsstorage.client.StorageClientApp'
@@ -18,15 +18,16 @@ mainClassName = 'org.janelia.jacsstorage.client.StorageClientApp'
 project(":jacsstorage-clients") {
     dependencies {
         implementation project(":jacsstorage-core"),
-                       BENCHMARK_CORE_LIB,
-                       BENCHMARK_ANN_PROCESSOR_LIB,
                        CDI_API_LIB,
                        CDI_SE_CORE_LIB,
                        CMDLINE_ARG_LIB,
                        JAX_RS_JERSEY_CLIENT_LIB,
-                       JAX_RS_JERSEY_APACHE_CONNECTOR_LIB,
                        JAX_RS_JERSEY_INJECT_LIB,
                        JAX_RS_JERSEY_MEDIA_JSON_LIB
+
+        perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
+
+        perfImplementation project
     }
 
     task createStorageClientApp(type: CreateStartScripts) {
@@ -36,23 +37,23 @@ project(":jacsstorage-clients") {
         applicationName = "storageClientApp"
     }
 
-    task createStoragePersistBenchmark(type: CreateStartScripts) {
+    task createStoragePersistBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
         mainClassName = "org.janelia.jacsstorage.benchmarks.StoragePersistBenchmark"
-        classpath = startScripts.classpath
+        classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
         outputDir = startScripts.outputDir
         applicationName = "storagePersistBenchmarks"
     }
 
-    task createStorageRetrieveBenchmark(type: CreateStartScripts) {
+    task createStorageRetrieveBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
         mainClassName = "org.janelia.jacsstorage.benchmarks.StorageRetrieveBenchmark"
-        classpath = startScripts.classpath
+        classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
         outputDir = startScripts.outputDir
         applicationName = "storageRetrieveBenchmarks"
     }
 
-    task createStorageUpdateBenchmark(type: CreateStartScripts) {
+    task createStorageUpdateBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
         mainClassName = "org.janelia.jacsstorage.benchmarks.StorageUpdateBenchmark"
-        classpath = startScripts.classpath
+        classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
         outputDir = startScripts.outputDir
         applicationName = "storageUpdateBenchmarks"
     }
@@ -61,11 +62,14 @@ project(":jacsstorage-clients") {
         benchmarks {
             contents {
                 into("bin") {
-                    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
                     from(createStoragePersistBenchmark)
                     from(createStorageRetrieveBenchmark)
                     from(createStorageUpdateBenchmark)
                     fileMode = 0755
+                }
+                into("lib") {
+                    from(project.perfJar.outputs.files)
+                    from(project.configurations.perfRuntimeClasspath)
                 }
             }
         }

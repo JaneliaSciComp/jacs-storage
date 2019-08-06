@@ -16,6 +16,8 @@ project(":jacsstorage-services") {
                        MONGODB_DRIVER_LIB,
                        REFLECTIONS_LIB
 
+        perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
+
         perfApi project,
                 CDI_API_LIB,
                 CDI_SE_CORE_LIB,

@@ -27,8 +27,10 @@ project(":jacsstorage-agentweb") {
         testImplementation JAX_RS_JERSEY_TEST_LIB,
                            JAX_RS_JERSEY_TEST_PROVIDER_LIB
 
+        perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
+
         perfImplementation project,
-                           project(path: ":jacsstorage-services", configuration: "perf"),
+                           project(path: ":jacsstorage-services", configuration: "perfRuntime"),
                            JAX_RS_JERSEY_TEST_LIB,
                            JAX_RS_JERSEY_TEST_PROVIDER_LIB
     }

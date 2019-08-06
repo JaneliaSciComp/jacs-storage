@@ -6,25 +6,27 @@ allprojects {
 }
 
 subprojects {
-    apply from: "${rootDir}/deps.gradle"
-
     configurations {
         provided
         implementation.extendsFrom(provided)
         integrationTestCompileOnly.extendsFrom(testCompileOnly)
         integrationTestImplementation.extendsFrom(testImplementation)
         integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
-        perf
         perfApi.extendsFrom(api)
-        perfCompileOnly.extendsFrom(compileOnly)
         perfImplementation.extendsFrom(perfApi, implementation)
-        perfRuntimeOnly.extendsFrom(runtimeOnly, perfImplementation)
+        perfRuntimeOnly.extendsFrom(perfImplementation, runtimeOnly)
     }
+
+    apply from: "${rootDir}/deps.gradle"
 
     sourceSets {
         perf {
             java {
-                runtimeClasspath += perf.output
+                runtimeClasspath += main.output + perf.output
+                srcDir file('src/perf/java')
+            }
+            resources {
+                srcDir file('src/perf/resources')
             }
         }
         integrationTest {
@@ -37,11 +39,6 @@ subprojects {
                 srcDir file('src/integrationTest/resources')
             }
         }
-    }
-
-    dependencies {
-        perfImplementation BENCHMARK_CORE_LIB,
-                           BENCHMARK_ANN_PROCESSOR_LIB
     }
 
     afterEvaluate {
@@ -98,7 +95,9 @@ subprojects {
                 downloadJavadoc = true
                 scopes.TEST.plus += [
                     configurations.integrationTestCompileOnly,
-                    configurations.integrationTestRuntime
+                    configurations.integrationTestRuntime,
+                    configurations.perfApi,
+                    configurations.perfRuntime
                 ]
             }
         }
@@ -108,7 +107,7 @@ subprojects {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
-    task perfJar(type: Jar, dependsOn: configurations.perf) {
+    task perfJar(type: Jar, dependsOn: configurations.perfRuntime) {
         from sourceSets.perf.output
         classifier = "perf"
     }
@@ -119,7 +118,7 @@ subprojects {
     }
 
     artifacts {
-        perf perfJar
+        perfRuntime perfJar
     }
 }
 
