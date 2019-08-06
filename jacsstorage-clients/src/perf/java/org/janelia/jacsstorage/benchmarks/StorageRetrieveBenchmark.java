@@ -23,6 +23,7 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
+import org.openjdk.jmh.runner.options.VerboseMode;
 import org.openjdk.jmh.util.NullOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -306,7 +307,9 @@ public class StorageRetrieveBenchmark {
         } else {
             benchmarks = StorageRetrieveBenchmark.class.getSimpleName();
         }
+        System.out.println("include " + benchmarks);
         ChainedOptionsBuilder optBuilder = new OptionsBuilder()
+                .verbosity(VerboseMode.EXTRA)
                 .include(benchmarks)
                 .warmupIterations(cmdLineParams.warmupIterations)
                 .warmupTime(cmdLineParams.getWarmupTime())

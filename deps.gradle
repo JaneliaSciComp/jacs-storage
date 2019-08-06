@@ -36,10 +36,9 @@ dependencies {
 
         // JAX-RS API
         JAX_RS_API_LIB = "javax.ws.rs:javax.ws.rs-api:2.1"
-        JERSEY_VERSION = "2.28"
+        JERSEY_VERSION = "2.29"
         JAX_RS_JERSEY_CORE_LIB = "org.glassfish.jersey.core:jersey-common:${JERSEY_VERSION}"
         JAX_RS_JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_APACHE_CONNECTOR_LIB = "org.glassfish.jersey.connectors:jersey-apache-connector:${JERSEY_VERSION}"
         JAX_RS_JERSEY_SERVER_LIB = "org.glassfish.jersey.core:jersey-server:${JERSEY_VERSION}"
         JAX_RS_JERSEY_MEDIA_LIB = "org.glassfish.jersey.media:jersey-media-multipart:${JERSEY_VERSION}"
         JAX_RS_JERSEY_MEDIA_JSON_LIB = "org.glassfish.jersey.media:jersey-media-json-jackson:${JERSEY_VERSION}"
@@ -133,4 +132,8 @@ dependencies {
                     MOCKITO_LIB,
                     POWERMOCK_API_MOCKITO_LIB,
                     POWERMOCK_JUNIT4_LIB
+
+    perfApi BENCHMARK_CORE_LIB,
+            BENCHMARK_ANN_PROCESSOR_LIB
+
 }
