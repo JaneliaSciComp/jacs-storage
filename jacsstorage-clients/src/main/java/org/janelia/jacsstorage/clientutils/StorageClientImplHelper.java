@@ -427,6 +427,7 @@ public class StorageClientImplHelper {
                     .get();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
+                LOG.debug("Stream data returned with status {} for {}", responseStatus, target);
                 return Optional.of(response.readEntity(InputStream.class));
             } else {
                 LOG.warn("Stream data returned with status {} for {}", responseStatus, target);
@@ -460,7 +461,8 @@ public class StorageClientImplHelper {
             };
             sslContext.init(null, trustManagers, new SecureRandom());
             return ClientBuilder.newBuilder()
-                    .connectTimeout(10, TimeUnit.SECONDS)
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(0, TimeUnit.SECONDS)
                     .sslContext(sslContext)
                     .hostnameVerifier((s, sslSession) -> true)
                     .register(new JacksonFeature())

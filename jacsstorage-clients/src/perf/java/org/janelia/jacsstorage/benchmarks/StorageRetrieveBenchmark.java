@@ -168,7 +168,8 @@ public class StorageRetrieveBenchmark {
 
     private void streamPathContentFromAgentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         OutputStream targetStream = new NullOutputStream();
-        long nbytes = trialParams.storageClientHelper.streamPathContentFromAgent(trialParams.agentURL, trialParams.getRandomEntry(), trialParams.authToken)
+        String entry = trialParams.getRandomEntry();
+        long nbytes = trialParams.storageClientHelper.streamPathContentFromAgent(trialParams.agentURL, entry, trialParams.authToken)
                 .map(is -> {
                     try {
                         if (StringUtils.isBlank(trialParams.dataLocation)) {
@@ -178,13 +179,13 @@ public class StorageRetrieveBenchmark {
                             Files.createDirectories(dataLocation.getParent());
                             return Files.copy(is, dataLocation);
                         }
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
+                    } catch (Exception e) {
+                        LOG.error("Error retrieving {}", entry, e);
+                        return -1L;
                     } finally {
                         try {
                             is.close();
-                        } catch (IOException ignore) {
-                            // ignore
+                        } catch (Exception ignore) {
                         }
                     }
                 })
@@ -215,7 +216,8 @@ public class StorageRetrieveBenchmark {
 
     private void streamPathContentFromMasterImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         OutputStream targetStream = new NullOutputStream();
-        long nbytes = trialParams.storageClientHelper.streamPathContentFromMaster(trialParams.serverURL, trialParams.getRandomEntry(), trialParams.authToken)
+        String entry = trialParams.getRandomEntry();
+        long nbytes = trialParams.storageClientHelper.streamPathContentFromMaster(trialParams.serverURL, entry, trialParams.authToken)
                 .map(is -> {
                     try {
                         if (StringUtils.isBlank(trialParams.dataLocation)) {
@@ -225,13 +227,13 @@ public class StorageRetrieveBenchmark {
                             Files.createDirectories(dataLocation.getParent());
                             return Files.copy(is, dataLocation);
                         }
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
+                    } catch (Exception e) {
+                        LOG.error("Error retrieving {}", entry, e);
+                        return -1L;
                     } finally {
                         try {
                             is.close();
-                        } catch (IOException ignore) {
-                            // ignore
+                        } catch (Exception ignore) {
                         }
                     }
                 })

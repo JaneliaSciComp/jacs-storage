@@ -39,21 +39,21 @@ project(":jacsstorage-clients") {
 
     task createStoragePersistBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
         mainClassName = "org.janelia.jacsstorage.benchmarks.StoragePersistBenchmark"
-        classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
+        classpath = project.perfJar.outputs.files + startScripts.classpath + configurations.perfRuntimeClasspath
         outputDir = startScripts.outputDir
         applicationName = "storagePersistBenchmarks"
     }
 
     task createStorageRetrieveBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
         mainClassName = "org.janelia.jacsstorage.benchmarks.StorageRetrieveBenchmark"
-        classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
+        classpath = project.perfJar.outputs.files + startScripts.classpath + configurations.perfRuntimeClasspath
         outputDir = startScripts.outputDir
         applicationName = "storageRetrieveBenchmarks"
     }
 
     task createStorageUpdateBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
         mainClassName = "org.janelia.jacsstorage.benchmarks.StorageUpdateBenchmark"
-        classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
+        classpath = project.perfJar.outputs.files + startScripts.classpath + configurations.perfRuntimeClasspath
         outputDir = startScripts.outputDir
         applicationName = "storageUpdateBenchmarks"
     }
