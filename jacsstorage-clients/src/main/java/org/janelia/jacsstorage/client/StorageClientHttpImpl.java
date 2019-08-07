@@ -30,7 +30,7 @@ public class StorageClientHttpImpl implements StorageClient {
 
     public StorageClientHttpImpl(DataTransferService clientStorageProxy) {
         this.clientStorageProxy = clientStorageProxy;
-        clientImplHelper = new StorageClientImplHelper();
+        clientImplHelper = new StorageClientImplHelper("JadeClient");
     }
 
     @Override

@@ -64,7 +64,7 @@ public class BenchmarkTrialParams {
             storageTags = storageTagsParam;
         }
         updatedDataPath = params.getParam("updatedDataPath");
-        storageClientHelper = new StorageClientImplHelper();
+        storageClientHelper = new StorageClientImplHelper("Benchmarks");
     }
 
     List<String> getStorageTags() {

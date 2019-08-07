@@ -302,7 +302,7 @@ public class StorageRetrieveBenchmark {
             System.out.println("No Auth");
         }
         String dataOwnerKey = cmdLineParams.getUserKey();
-        long nStorageRecords = new StorageClientImplHelper().countStorageRecords(cmdLineParams.serverURL, cmdLineParams.bundleId, authToken);
+        long nStorageRecords = new StorageClientImplHelper("Benchmarks").countStorageRecords(cmdLineParams.serverURL, cmdLineParams.bundleId, authToken);
         String benchmarks;
         if (StringUtils.isNotBlank(cmdLineParams.benchmarksRegex)) {
             benchmarks = StorageRetrieveBenchmark.class.getSimpleName() + "\\." + cmdLineParams.benchmarksRegex;

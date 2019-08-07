@@ -163,7 +163,7 @@ public class StorageClientApp {
         StorageClient storageClient = new StorageClientHttpImpl(
                 container.select(DataTransferService.class).get()
         );
-        StorageClientImplHelper storageClientHelper = new StorageClientImplHelper();
+        StorageClientImplHelper storageClientHelper = new StorageClientImplHelper("JadeClient");
         DataStorageInfo storageInfo;
         switch (jc.getParsedCommand()) {
             case "allocate":

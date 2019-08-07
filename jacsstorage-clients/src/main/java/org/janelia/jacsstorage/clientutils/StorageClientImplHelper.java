@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
+import java.time.temporal.TemporalUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -42,9 +44,11 @@ import org.slf4j.LoggerFactory;
 public class StorageClientImplHelper {
     private static final Logger LOG = LoggerFactory.getLogger(StorageClientImplHelper.class);
 
+    private final String applicationId;
     private final Client httpClient;
 
-    public StorageClientImplHelper() {
+    public StorageClientImplHelper(String applicationId) {
+        this.applicationId = applicationId;
         this.httpClient = createHttpClient();
     }
 
@@ -419,6 +423,7 @@ public class StorageClientImplHelper {
 
     public Optional<InputStream> streamPathContentFromAgent(String connectionURL, String dataPath, String authToken) {
         try {
+            long startTime = System.currentTimeMillis();
             WebTarget target = httpClient.target(connectionURL)
                     .path("/agent_storage/storage_path/data_content")
                     .path(dataPath);
@@ -427,7 +432,8 @@ public class StorageClientImplHelper {
                     .get();
             int responseStatus = response.getStatus();
             if (responseStatus == Response.Status.OK.getStatusCode()) {
-                LOG.debug("Stream data returned with status {} for {}", responseStatus, target);
+                long endTime = System.currentTimeMillis();
+                LOG.debug("Stream data returned with status {} for {} in {}", responseStatus, target, Duration.ofMillis(endTime - startTime));
                 return Optional.of(response.readEntity(InputStream.class));
             } else {
                 LOG.warn("Stream data returned with status {} for {}", responseStatus, target);
@@ -480,7 +486,7 @@ public class StorageClientImplHelper {
                     "Authorization",
                     "Bearer " + authToken);
         }
-        return requestWithCredentialsBuilder;
+        return requestWithCredentialsBuilder.header("Application-Id", applicationId);
     }
 
 }

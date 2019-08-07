@@ -17,7 +17,7 @@ public class StorageClientImpl implements StorageClient {
 
     public StorageClientImpl(StorageClient storageClient) {
         this.storageClient = storageClient;
-        clientImplHelper = new StorageClientImplHelper();
+        clientImplHelper = new StorageClientImplHelper("JadeClient");
     }
 
     @Override
