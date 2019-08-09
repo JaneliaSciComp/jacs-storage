@@ -112,4 +112,46 @@ public class TiffROIPixelsContentConverter implements ContentConverter {
         }
     }
 
+    @Override
+    public long estimateContentSize(DataContent dataContent) {
+        List<DataNodeInfo> dataNodes = dataContent.listDataNodes();
+        Integer xCenter = dataContent.getContentFilterParams().getAsInt("xCenter", 0);
+        Integer yCenter = dataContent.getContentFilterParams().getAsInt("yCenter", 0);
+        Integer zCenter = dataContent.getContentFilterParams().getAsInt("zCenter", 0);
+        Integer dimX = dataContent.getContentFilterParams().getAsInt("dimX", -1);
+        Integer dimY = dataContent.getContentFilterParams().getAsInt("dimY", -1);
+        Integer dimZ = dataContent.getContentFilterParams().getAsInt("dimZ", -1);
+        if (CollectionUtils.isEmpty(dataNodes)) {
+            return 0L;
+        } else if (dataNodes.size() == 1) {
+            if (!dataNodes.get(0).isCollectionFlag()) {
+                return ImageUtils.sizeImagePixelBytesFromTiffStream(
+                        dataContent.streamDataNode(dataNodes.get(0)),
+                        xCenter, yCenter, zCenter,
+                        dimX, dimY, dimZ
+                );
+            } else {
+                return 0L;
+            }
+        } else {
+            return dataNodes.stream()
+                    .sorted(DataContentUtils.getDataNodePathComparator())
+                    .reduce(
+                            0L,
+                            (size, dn) -> {
+                                long entrySize;
+                                if (dn.isCollectionFlag()) {
+                                    entrySize = 0L;
+                                } else {
+                                    entrySize = ImageUtils.sizeImagePixelBytesFromTiffStream(
+                                            dataContent.streamDataNode(dataNodes.get(0)),
+                                            xCenter, yCenter, zCenter,
+                                            dimX, dimY, dimZ
+                                    );
+                                }
+                                return size + entrySize;
+                            },
+                            (s1, s2) -> s1 + s2);
+        }
+    }
 }

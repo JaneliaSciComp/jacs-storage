@@ -55,4 +55,23 @@ public class TiffMergeBandsContentConverter implements ContentConverter {
         }
     }
 
+    @Override
+    public long estimateContentSize(DataContent dataContent) {
+        List<DataNodeInfo> dataNodes = dataContent.listDataNodes();
+        if (CollectionUtils.isEmpty(dataNodes)) {
+            return 0L;
+        } else {
+            Integer pageNumber = dataContent.getContentFilterParams().getAsInt("z", 0);
+            return ImageUtils.sizeBandMergedTextureBytesFromImageStreams(
+                    dataNodes.stream()
+                            .sorted(DataContentUtils.getDataNodePathComparator())
+                            .filter(dn -> !dn.isCollectionFlag())
+                            .sorted(Comparator.comparing(DataNodeInfo::getNodeRelativePath))
+                            .map(dn -> NamedSupplier.namedSupplier(
+                                    dn.getNodeAccessURL(),
+                                    () -> dataContent.streamDataNode(dn))),
+                    pageNumber
+            );
+        }
+    }
 }

@@ -96,34 +96,15 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
     )
     @Override
     public long estimateDataEntrySize(String source, String entryName, ContentFilterParams filterParams) {
-        Path sourcePath = getSourcePath(source);
-        Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
-        Path entryPath = StringUtils.isBlank(entryName) ? sourcePath : sourcePath.resolve(entryName);
-        if (Files.notExists(entryPath)) {
-            throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
-        }
+        Path sourceEntryPath = getSourceEntryPath(source, entryName);
         try {
-            if (Files.isDirectory(entryPath)) {
-                int traverseDepth = filterParams.getMaxDepth() >= 0 ? filterParams.getMaxDepth() : Integer.MAX_VALUE;
-                return Files.walk(entryPath, traverseDepth)
-                        .filter(p -> Files.isRegularFile(p))
-                        .filter(p -> filterParams.matchEntry(p.toString()))
-                        .map(p -> PathUtils.getSize(p, filterParams.getMaxDepth()))
-                        .reduce((s1, s2) -> s1 + s2)
-                        .orElse(0L)
-                        ;
-            } else {
-                if (filterParams.matchEntry(entryPath.toString())) {
-                    return PathUtils.getSize(entryPath, 0);
-                } else {
-                    return 0L;
-                }
-            }
+            ContentConverter contentConverter = contentHandlerProvider.getContentConverter(filterParams);
+            DataContent dataContent = getDataContent(sourceEntryPath, filterParams);
+            return dataContent == null ? 0L : contentConverter.estimateContentSize(dataContent);
         } catch (Exception e) {
             LOG.error("Error copying data from {}:{}", source, entryName, e);
             throw new IllegalStateException(e);
         }
-
     }
 
     @TimedMethod(
@@ -132,29 +113,11 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
     )
     @Override
     public long readDataEntry(String source, String entryName, ContentFilterParams filterParams, OutputStream outputStream) {
-        Path sourcePath = getSourcePath(source);
-        Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
-        Path entryPath = StringUtils.isBlank(entryName) ? sourcePath : sourcePath.resolve(entryName);
-        if (Files.notExists(entryPath)) {
-            throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
-        }
+        Path sourceEntryPath = getSourceEntryPath(source, entryName);
         try {
             ContentConverter contentConverter = contentHandlerProvider.getContentConverter(filterParams);
-            DataContent dataContent;
-            if (Files.isDirectory(entryPath)) {
-                int traverseDepth = filterParams.getMaxDepth() >= 0 ? filterParams.getMaxDepth() : Integer.MAX_VALUE;
-                List<Path> selectedEntries = Files.walk(entryPath, traverseDepth)
-                        .filter(p -> Files.isDirectory(p) || filterParams.matchEntry(p.toString()))
-                        .collect(Collectors.toList());
-                dataContent = new FileListDataContent(filterParams, entryPath, ImageUtils.getImagePathHandler(), selectedEntries);
-            } else {
-                if (filterParams.matchEntry(entryPath.toString())) {
-                    dataContent = new SingleFileDataContent(filterParams, entryPath, ImageUtils.getImagePathHandler());
-                } else {
-                    return 0L;
-                }
-            }
-            return contentConverter.convertContent(dataContent, outputStream);
+            DataContent dataContent = getDataContent(sourceEntryPath, filterParams);
+            return dataContent == null ? 0L : contentConverter.convertContent(dataContent, outputStream);
         } catch (Exception e) {
             LOG.error("Error copying data from {}:{}", source, entryName, e);
             throw new IllegalStateException(e);
@@ -175,4 +138,31 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
         }
     }
 
+    private Path getSourceEntryPath(String source, String entryName) {
+        Path sourcePath = getSourcePath(source);
+        Preconditions.checkArgument(Files.exists(sourcePath), "No path found for " + source);
+        Path entryPath = StringUtils.isBlank(entryName) ? sourcePath : sourcePath.resolve(entryName);
+        if (Files.notExists(entryPath)) {
+            throw new IllegalArgumentException("No entry " + entryName + " found under " + source + " - " + entryPath + " does not exist");
+        }
+        return entryPath;
+    }
+
+    private DataContent getDataContent(Path entryPath, ContentFilterParams filterParams) throws IOException {
+        DataContent dataContent;
+        if (Files.isDirectory(entryPath)) {
+            int traverseDepth = filterParams.getMaxDepth() >= 0 ? filterParams.getMaxDepth() : Integer.MAX_VALUE;
+            List<Path> selectedEntries = Files.walk(entryPath, traverseDepth)
+                    .filter(p -> Files.isDirectory(p) || filterParams.matchEntry(p.toString()))
+                    .collect(Collectors.toList());
+            dataContent = new FileListDataContent(filterParams, entryPath, ImageUtils.getImagePathHandler(), selectedEntries);
+        } else {
+            if (filterParams.matchEntry(entryPath.toString())) {
+                dataContent = new SingleFileDataContent(filterParams, entryPath, ImageUtils.getImagePathHandler());
+            } else {
+                dataContent = null;
+            }
+        }
+        return dataContent;
+    }
 }
