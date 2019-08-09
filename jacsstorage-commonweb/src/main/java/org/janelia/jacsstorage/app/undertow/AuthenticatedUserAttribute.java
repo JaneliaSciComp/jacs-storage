@@ -41,19 +41,16 @@ public class AuthenticatedUserAttribute implements ExchangeAttribute {
         String authenticatedUser;
         if (sc != null && sc.isAuthenticated()) {
             authenticatedUser = sc.getAuthenticatedAccount().getPrincipal().getName();
-        }
-        else {
+        } else {
             HeaderValues usernameHeader = exchange.getRequestHeaders().get(USERNAME_ATTRIBUTE);
             if (usernameHeader == null || usernameHeader.size() == 0) {
                 HeaderValues subjectHeader = exchange.getRequestHeaders().get(JACS_SUBJECT_ATTRIBUTE);
                 if (subjectHeader == null || subjectHeader.size() == 0) {
                     authenticatedUser = "unknown";
-                }
-                else {
+                } else {
                     authenticatedUser = subjectHeader.getFirst();
                 }
-            }
-            else {
+            } else {
                 authenticatedUser = usernameHeader.getFirst();
             }
         }
@@ -74,12 +71,14 @@ public class AuthenticatedUserAttribute implements ExchangeAttribute {
         throw new ReadOnlyAttributeException("Authenticated user", newValue);
     }
 
-    /** Copied from SubjectUtils in jacs-model */
+    /**
+     * Copied from SubjectUtils in jacs-model
+     */
     private String getSubjectName(String subjectNameOrKey) {
         if (StringUtils.isBlank(subjectNameOrKey)) return "";
         if (subjectNameOrKey.contains(":")) {
             String[] s = subjectNameOrKey.split(":");
-            if (s.length>1) {
+            if (s.length > 1) {
                 return s[1];
             } else {
                 return "";
