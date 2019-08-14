@@ -14,7 +14,6 @@ import io.undertow.UndertowOptions;
 import io.undertow.attribute.BytesSentAttribute;
 import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.attribute.QueryStringAttribute;
-import io.undertow.attribute.QuotingExchangeAttribute;
 import io.undertow.attribute.RemoteHostAttribute;
 import io.undertow.attribute.RequestHeaderAttribute;
 import io.undertow.attribute.RequestMethodAttribute;
