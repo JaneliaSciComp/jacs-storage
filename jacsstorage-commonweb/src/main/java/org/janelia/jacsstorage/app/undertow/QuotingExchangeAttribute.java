@@ -18,11 +18,11 @@ public class QuotingExchangeAttribute implements ExchangeAttribute {
     private final ExchangeAttribute exchangeAttribute;
     private final char quoteChar;
 
-    public QuotingExchangeAttribute(ExchangeAttribute exchangeAttribute) {
+    QuotingExchangeAttribute(ExchangeAttribute exchangeAttribute) {
         this(exchangeAttribute, '\'');
     }
 
-    public QuotingExchangeAttribute(ExchangeAttribute exchangeAttribute, char quoteChar) {
+    QuotingExchangeAttribute(ExchangeAttribute exchangeAttribute, char quoteChar) {
         this.exchangeAttribute = exchangeAttribute;
         this.quoteChar = quoteChar;
     }
