@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.io;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +15,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class FileListDataContent extends AbstractDataContent {
-
-    private final static Logger LOG = LoggerFactory.getLogger(FileListDataContent.class);
 
     private final List<DataNodeInfo> dataNodeList;
     private final Function<Path, InputStream> pathToStreamHandler;
@@ -40,5 +39,12 @@ public class FileListDataContent extends AbstractDataContent {
         } else {
             return pathToStreamHandler.apply(Paths.get(URI.create(dn.getNodeAccessURL())));
         }
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("dataNodeList", dataNodeList)
+                .toString();
     }
 }

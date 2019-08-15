@@ -1,6 +1,8 @@
 package org.janelia.jacsstorage.io;
 
 import com.google.common.collect.ImmutableList;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,5 +45,12 @@ public class SingleFileDataContent extends AbstractDataContent {
         } else {
             return pathToStreamHandler.apply(Paths.get(URI.create(dn.getNodeAccessURL())));
         }
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("dataPath", dataPath)
+                .toString();
     }
 }
