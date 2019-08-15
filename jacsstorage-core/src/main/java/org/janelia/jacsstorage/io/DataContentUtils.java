@@ -10,10 +10,10 @@ import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 
 public class DataContentUtils {
 
-    public static DataNodeInfo createDataNodeInfo(Path rootPath,
-                                                  Path nodePath,
-                                                  boolean collectionFlag,
-                                                  long size) {
+    static DataNodeInfo createDataNodeInfo(Path rootPath,
+                                           Path nodePath,
+                                           boolean collectionFlag,
+                                           long size) {
         DataNodeInfo ni = new DataNodeInfo();
         ni.setStorageRootPathURI(StoragePathURI.createAbsolutePathURI(rootPath.toString().replace(File.separatorChar, '/')));
         ni.setNodeAccessURL(nodePath.toUri().toString());

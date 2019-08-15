@@ -1,7 +1,6 @@
 package org.janelia.jacsstorage.io.contenthandlers.tiff;
 
 import java.io.OutputStream;
-import java.util.Comparator;
 import java.util.List;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -39,9 +38,9 @@ public class TiffMergeBandsContentConverter implements ContentConverter {
             Integer pageNumber = dataContent.getContentFilterParams().getAsInt("z", 0);
             byte[] contentBytes = ImageUtils.bandMergedTextureBytesFromImageStreams(
                     dataNodes.stream()
-                            .sorted(DataContentUtils.getDataNodePathComparator())
                             .filter(dn -> !dn.isCollectionFlag())
-                            .sorted(Comparator.comparing(DataNodeInfo::getNodeRelativePath))
+                            .sorted(DataContentUtils.getDataNodePathComparator()
+                                    .thenComparing(DataNodeInfo::getNodeRelativePath))
                             .map(dn -> NamedSupplier.namedSupplier(
                                     dn.getNodeAccessURL(),
                                     () -> dataContent.streamDataNode(dn))),
