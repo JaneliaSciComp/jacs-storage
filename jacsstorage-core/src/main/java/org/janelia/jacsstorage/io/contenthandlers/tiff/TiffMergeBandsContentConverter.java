@@ -56,22 +56,21 @@ public class TiffMergeBandsContentConverter implements ContentConverter {
 
     @Override
     public long estimateContentSize(DataContent dataContent) {
-        return -1L; // !!!!!
-//        List<DataNodeInfo> dataNodes = dataContent.listDataNodes();
-//        if (CollectionUtils.isEmpty(dataNodes)) {
-//            return 0L;
-//        } else {
-//            Integer pageNumber = dataContent.getContentFilterParams().getAsInt("z", 0);
-//            return ImageUtils.sizeBandMergedTextureBytesFromImageStreams(
-//                    dataNodes.stream()
-//                            .sorted(DataContentUtils.getDataNodePathComparator())
-//                            .filter(dn -> !dn.isCollectionFlag())
-//                            .sorted(Comparator.comparing(DataNodeInfo::getNodeRelativePath))
-//                            .map(dn -> NamedSupplier.namedSupplier(
-//                                    dn.getNodeAccessURL(),
-//                                    () -> dataContent.streamDataNode(dn))),
-//                    pageNumber
-//            );
-//        }
+        List<DataNodeInfo> dataNodes = dataContent.listDataNodes();
+        if (CollectionUtils.isEmpty(dataNodes)) {
+            return 0L;
+        } else {
+            // for size always estimate it for page 0 since it should be the same size.
+            return ImageUtils.sizeBandMergedTextureBytesFromImageStreams(
+                    dataNodes.stream()
+                            .filter(dn -> !dn.isCollectionFlag())
+                            .sorted(DataContentUtils.getDataNodePathComparator()
+                                    .thenComparing(DataNodeInfo::getNodeRelativePath))
+                            .map(dn -> NamedSupplier.namedSupplier(
+                                    dn.getNodeAccessURL(),
+                                    () -> dataContent.streamDataNode(dn))),
+                    0
+            );
+        }
     }
 }
