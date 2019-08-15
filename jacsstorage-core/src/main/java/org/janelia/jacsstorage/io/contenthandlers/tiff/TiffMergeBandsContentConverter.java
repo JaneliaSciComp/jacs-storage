@@ -57,7 +57,7 @@ public class TiffMergeBandsContentConverter implements ContentConverter {
 
     @Override
     public long estimateContentSize(DataContent dataContent) {
-        return 0L; // !!!!!
+        return -1L; // !!!!!
 //        List<DataNodeInfo> dataNodes = dataContent.listDataNodes();
 //        if (CollectionUtils.isEmpty(dataNodes)) {
 //            return 0L;
