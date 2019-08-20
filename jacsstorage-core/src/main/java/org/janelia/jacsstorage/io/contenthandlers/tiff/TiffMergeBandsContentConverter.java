@@ -60,7 +60,7 @@ public class TiffMergeBandsContentConverter implements ContentConverter {
         if (CollectionUtils.isEmpty(dataNodes)) {
             return 0L;
         } else {
-            // for size always estimate it for page 0 since it should be the same size.
+            Integer pageNumber = dataContent.getContentFilterParams().getAsInt("z", 0);
             return ImageUtils.sizeBandMergedTextureBytesFromImageStreams(
                     dataNodes.stream()
                             .filter(dn -> !dn.isCollectionFlag())
@@ -69,7 +69,7 @@ public class TiffMergeBandsContentConverter implements ContentConverter {
                             .map(dn -> NamedSupplier.namedSupplier(
                                     dn.getNodeAccessURL(),
                                     () -> dataContent.streamDataNode(dn))),
-                    0
+                    pageNumber
             );
         }
     }
