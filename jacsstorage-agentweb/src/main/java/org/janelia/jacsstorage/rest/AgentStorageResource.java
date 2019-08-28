@@ -55,6 +55,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -163,6 +165,8 @@ public class AgentStorageResource {
     public Response listContent(@PathParam("dataBundleId") Long dataBundleId,
                                 @QueryParam("entry") String entry,
                                 @QueryParam("depth") Integer depthParam,
+                                @QueryParam("offset") Long offsetParam,
+                                @QueryParam("offset") Long lengthParam,
                                 @Context SecurityContext securityContext) {
         LOG.info("List bundle content {} with a depthParameter {}", dataBundleId, depthParam);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
@@ -171,38 +175,46 @@ public class AgentStorageResource {
                 ? entry.trim()
                 : null;
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
-        List<DataNodeInfo> dataBundleContent = listDataEntries(dataBundle, entryName, depth);
+        long offset = offsetParam != null ? offsetParam : 0;
+        long length = lengthParam != null ? lengthParam : -1;
+        Stream<DataNodeInfo> dataBundleContent = streamDataEntries(dataBundle, entryName, depth, offset, length);
         return Response
-                .ok(dataBundleContent, MediaType.APPLICATION_JSON)
+                .ok(dataBundleContent.collect(Collectors.toList()), MediaType.APPLICATION_JSON)
                 .build();
     }
 
-    private List<DataNodeInfo> listDataEntries(JacsBundle dataBundle, String entryName, int depth) {
-        List<DataNodeInfo> dataBundleContent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depth);
-        if (CollectionUtils.isNotEmpty(dataBundleContent)) {
-            dataBundleContent.forEach(dn -> {
-                dn.setNumericStorageId(dataBundle.getId());
-                dn.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
-                dn.setStorageRootPathURI(dataBundle.getStorageURI());
-                dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                        .path(Constants.AGENTSTORAGE_URI_PATH)
-                        .path(dataBundle.getId().toString())
-                        .path("data_content")
-                        .path(dn.getNodeRelativePath())
-                        .build()
-                        .toString()
-                );
-                dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
-                        .path(Constants.AGENTSTORAGE_URI_PATH)
-                        .path(dataBundle.getId().toString())
-                        .path("data_info")
-                        .path(dn.getNodeRelativePath())
-                        .build()
-                        .toString()
-                );
-            });
+    private Stream<DataNodeInfo> streamDataEntries(JacsBundle dataBundle, String entryName, int depth, long offset, long length) {
+        Stream<DataNodeInfo> dataEntriesStream;
+        if (length > 0) {
+            dataEntriesStream = dataStorageService.streamDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depth)
+                    .skip(offset > 0 ? offset : 0)
+                    .limit(length);
+        } else {
+            dataEntriesStream = dataStorageService.streamDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depth)
+                    .skip(offset > 0 ? offset : 0);
         }
-        return dataBundleContent;
+        return dataEntriesStream
+                .peek(dn -> {
+                    dn.setNumericStorageId(dataBundle.getId());
+                    dn.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
+                    dn.setStorageRootPathURI(dataBundle.getStorageURI());
+                    dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
+                            .path(Constants.AGENTSTORAGE_URI_PATH)
+                            .path(dataBundle.getId().toString())
+                            .path("data_content")
+                            .path(dn.getNodeRelativePath())
+                            .build()
+                            .toString()
+                    );
+                    dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+                            .path(Constants.AGENTSTORAGE_URI_PATH)
+                            .path(dataBundle.getId().toString())
+                            .path("data_info")
+                            .path(dn.getNodeRelativePath())
+                            .build()
+                            .toString()
+                    );
+                });
     }
 
     @ApiOperation(
@@ -343,22 +355,13 @@ public class AgentStorageResource {
         LOG.info("Create new directory {} under {} ", dataEntryPath, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path(dataBundleId.toString())
                 .path("data_content")
                 .path(dataEntryPath)
                 .build();
-        if (CollectionUtils.isNotEmpty(existingEntries)) {
-            // if an entry already exists return ACCEPTED(202) instead of CREATED (201)
-            return Response
-                    .status(Response.Status.ACCEPTED)
-                    .location(dataNodeAccessURI)
-                    .entity(existingEntries.get(0))
-                    .build();
-        }
-
+        // this also does not check if a folder exists already
         long newDirEntrySize = dataStorageService.createDirectoryEntry(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat());
         storageAllocatorService.updateStorage(
                 new JacsBundleBuilder()
@@ -465,7 +468,6 @@ public class AgentStorageResource {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         String dataEntryPath = StringUtils.removeStart(dataEntryPathParam, "/");
-        List<DataNodeInfo> existingEntries = listDataEntries(dataBundle, dataEntryPath, 0);
         URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path(dataBundleId.toString())
@@ -473,13 +475,7 @@ public class AgentStorageResource {
                 .path(dataEntryPath)
                 .build()
                 ;
-        if (CollectionUtils.isNotEmpty(existingEntries)) {
-            return Response
-                    .status(Response.Status.CONFLICT)
-                    .location(dataNodeAccessURI)
-                    .entity(existingEntries.get(0))
-                    .build();
-        }
+        // not handling any conflict - the new entry will override an existing one
         long newFileEntrySize = dataStorageService.writeDataEntryStream(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), contentStream);
         storageAllocatorService.updateStorage(
                 new JacsBundleBuilder()

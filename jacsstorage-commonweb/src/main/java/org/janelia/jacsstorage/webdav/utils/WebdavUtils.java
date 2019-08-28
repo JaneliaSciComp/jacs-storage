@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class WebdavUtils {
     private static int MAX_ALLOWED_DEPTH = 20;
@@ -68,9 +69,9 @@ public class WebdavUtils {
         return ms;
     }
 
-    public static Multistatus convertNodeList(List<DataNodeInfo> nodeInfoList, Function<DataNodeInfo, DataNodeInfo> nodeInfoUpdater, Function<DataNodeInfo, String> nodeInfoToUriMapper) {
+    public static Multistatus convertNodeList(Stream<DataNodeInfo> nodeInfoStream, Function<DataNodeInfo, DataNodeInfo> nodeInfoUpdater, Function<DataNodeInfo, String> nodeInfoToUriMapper) {
         Multistatus ms = new Multistatus();
-        ms.getResponse().addAll(nodeInfoList.stream()
+        ms.getResponse().addAll(nodeInfoStream
                 .map(nodeInfoUpdater)
                 .map(nodeInfo -> {
                     PropContainer propContainer = new PropContainer();

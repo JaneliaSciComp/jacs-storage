@@ -48,6 +48,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 @Timed
 @RequireAuthentication
@@ -55,6 +56,7 @@ import java.util.function.Supplier;
 public class AgentWebdavResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(AgentWebdavResource.class);
+    private static final long MAX_NODE_ENTRIES = 100000L;
 
     @Inject @LocalInstance
     private StorageAllocatorService storageAllocatorService;
@@ -86,8 +88,8 @@ public class AgentWebdavResource {
                 ? entry.substring("/entry/".length())
                 : null;
         int depthValue = WebdavUtils.getDepth(depth);
-        List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depthValue);
-        Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree,
+        Stream<DataNodeInfo> dataBundleNodesStream = dataStorageService.streamDataEntries(dataBundle.getRealStoragePath(), entryName, dataBundle.getStorageFormat(), depthValue).limit(MAX_NODE_ENTRIES);
+        Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleNodesStream,
                 (nodeInfo) -> {
                     String nodeInfoRelPath = nodeInfo.isCollectionFlag()
                             ? StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
@@ -152,7 +154,7 @@ public class AgentWebdavResource {
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryName) -> {
-                    List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataEntryName, dataBundle.getStorageFormat(), depth);
+                    Stream<DataNodeInfo> dataBundleTree = dataStorageService.streamDataEntries(dataBundle.getRealStoragePath(), dataEntryName, dataBundle.getStorageFormat(), depth);
                     Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree,
                             (nodeInfo) -> {
                                 String nodeInfoRelPath = nodeInfo.isCollectionFlag()
@@ -188,8 +190,8 @@ public class AgentWebdavResource {
                         .filter(dataEntryPath -> Files.exists(dataEntryPath))
                         .map(dataEntryPath -> {
                             JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
-                            List<DataNodeInfo> dataBundleTree = dataStorageService.listDataEntries(dataEntryPath, null, storageFormat, depth);
-                            Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree,
+                            Stream<DataNodeInfo> dataBundleNodesStream = dataStorageService.streamDataEntries(dataEntryPath, null, storageFormat, depth).limit(MAX_NODE_ENTRIES);
+                            Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleNodesStream,
                                     (nodeInfo) -> {
                                         nodeInfo.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
                                         nodeInfo.setStorageRootPathURI(StoragePathURI.createPathURI(dataEntryPath.toString()));

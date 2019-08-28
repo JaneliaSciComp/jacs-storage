@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public class SingleFileBundleReader extends AbstractBundleReader {
 
@@ -59,13 +60,13 @@ public class SingleFileBundleReader extends AbstractBundleReader {
             logResult = true
     )
     @Override
-    public List<DataNodeInfo> listBundleContent(String source, String entryName, int depth) {
+    public Stream<DataNodeInfo> streamBundleContent(String source, String entryName, int depth) {
         Path sourcePath = getSourcePath(source);
         if (Files.notExists(sourcePath)) {
-            return Collections.emptyList();
+            return Stream.of();
         }
         Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
-        return ImmutableList.of(pathToDataNodeInfo(sourcePath, sourcePath, (rootPath, nodePath) -> rootPath.toString()));
+        return Stream.of(pathToDataNodeInfo(sourcePath, sourcePath, (rootPath, nodePath) -> rootPath.toString()));
     }
 
     @TimedMethod(

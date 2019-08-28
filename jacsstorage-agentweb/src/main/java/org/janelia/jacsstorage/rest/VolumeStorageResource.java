@@ -32,6 +32,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Api(value = "Agent storage API on a particular volume")
 @Timed
@@ -161,7 +163,9 @@ public class VolumeStorageResource {
     @Path("storage_volume/{storageVolumeId}/list/{storageRelativePath:.+}")
     public Response listPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                               @PathParam("storageRelativePath") String storageRelativeFilePath,
-                                              @QueryParam("depth") Integer depthParam) {
+                                              @QueryParam("depth") Integer depthParam,
+                                              @QueryParam("offset") Long offsetParam,
+                                              @QueryParam("length") Long lengthParam) {
         LOG.debug("Check data from volume {}:{} with a depthParameter {}", storageVolumeId, storageRelativeFilePath, depthParam);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
@@ -174,38 +178,48 @@ public class VolumeStorageResource {
                     .build();
         }
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
+        long offset = offsetParam != null ? offsetParam : 0L;
+        long length = lengthParam != null ? lengthParam : -1;
         return storageVolume.getDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath))
                 .filter(dataEntryPath -> Files.exists(dataEntryPath))
                 .map(dataEntryPath -> {
                     JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
-                    List<DataNodeInfo> contentInfoList = dataStorageService.listDataEntries(dataEntryPath, "", storageFormat, depth);
-                    contentInfoList.forEach(dn -> {
-                        String dataNodeAbsolutePath = dataEntryPath.resolve(dn.getNodeRelativePath()).toString();
-                        java.nio.file.Path dataNodeVolumeRelativePath = storageVolume.getPathRelativeToBaseStorageRoot(dataNodeAbsolutePath);
-                        dn.setNumericStorageId(storageVolume.getId());
-                        dn.setStorageRootLocation(storageVolume.getStorageVirtualPath());
-                        dn.setStorageRootPathURI(storageVolume.getStorageURI());
-                        dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                                .path(Constants.AGENTSTORAGE_URI_PATH)
-                                .path("storage_volume")
-                                .path(storageVolume.getId().toString())
-                                .path("data_content")
-                                .path(dataNodeVolumeRelativePath.toString())
-                                .build()
-                                .toString()
-                        );
-                        dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
-                                .path(Constants.AGENTSTORAGE_URI_PATH)
-                                .path("storage_volume")
-                                .path(storageVolume.getId().toString())
-                                .path("data_info")
-                                .path(dataNodeVolumeRelativePath.toString())
-                                .build()
-                                .toString()
-                        );
-                    });
+                    Stream<DataNodeInfo> contentInfoStream;
+                    if (length > 0) {
+                        contentInfoStream = dataStorageService.streamDataEntries(dataEntryPath, "", storageFormat, depth)
+                                .skip(offset > 0 ? offset : 0)
+                                .skip(length);
+                    } else {
+                        contentInfoStream = dataStorageService.streamDataEntries(dataEntryPath, "", storageFormat, depth)
+                                .skip(offset > 0 ? offset : 0);
+                    }
                     return Response
-                            .ok(contentInfoList, MediaType.APPLICATION_JSON)
+                            .ok(contentInfoStream.peek(dn -> {
+                                String dataNodeAbsolutePath = dataEntryPath.resolve(dn.getNodeRelativePath()).toString();
+                                java.nio.file.Path dataNodeVolumeRelativePath = storageVolume.getPathRelativeToBaseStorageRoot(dataNodeAbsolutePath);
+                                dn.setNumericStorageId(storageVolume.getId());
+                                dn.setStorageRootLocation(storageVolume.getStorageVirtualPath());
+                                dn.setStorageRootPathURI(storageVolume.getStorageURI());
+                                dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
+                                        .path(Constants.AGENTSTORAGE_URI_PATH)
+                                        .path("storage_volume")
+                                        .path(storageVolume.getId().toString())
+                                        .path("data_content")
+                                        .path(dataNodeVolumeRelativePath.toString())
+                                        .build()
+                                        .toString()
+                                );
+                                dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+                                        .path(Constants.AGENTSTORAGE_URI_PATH)
+                                        .path("storage_volume")
+                                        .path(storageVolume.getId().toString())
+                                        .path("data_info")
+                                        .path(dataNodeVolumeRelativePath.toString())
+                                        .build()
+                                        .toString()
+                                );
+                            }).collect(Collectors.toList()),
+                                    MediaType.APPLICATION_JSON)
                             .build();
                 })
                 .orElseGet(() -> Response

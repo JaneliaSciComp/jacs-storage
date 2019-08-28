@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class DataStorageServiceImpl implements DataStorageService {
 
@@ -61,9 +62,9 @@ public class DataStorageServiceImpl implements DataStorageService {
             logResult = true
     )
     @Override
-    public List<DataNodeInfo> listDataEntries(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, int depth) {
+    public Stream<DataNodeInfo> streamDataEntries(Path dataPath, String entryName, JacsStorageFormat dataStorageFormat, int depth) {
         BundleReader bundleReader = dataIOProvider.getBundleReader(dataStorageFormat);
-        return bundleReader.listBundleContent(dataPath.toString(), entryName, depth);
+        return bundleReader.streamBundleContent(dataPath.toString(), entryName, depth);
     }
 
     @TimedMethod(

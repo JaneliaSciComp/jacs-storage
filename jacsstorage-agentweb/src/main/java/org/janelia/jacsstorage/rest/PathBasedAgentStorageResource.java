@@ -216,15 +216,19 @@ public class PathBasedAgentStorageResource {
     @Path("storage_path/list/{dataPath:.*}")
     public Response listContent(@PathParam("dataPath") String dataPathParam,
                                 @QueryParam("depth") Integer depthParam,
+                                @QueryParam("offset") Integer offsetParam,
+                                @QueryParam("length") Integer lengthParam,
                                 @Context SecurityContext securityContext) {
         LOG.debug("List content from location {} with a depthParameter {}", dataPathParam, depthParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
+        long offset = offsetParam != null ? offsetParam : 0;
+        long length = lengthParam != null ? lengthParam : -1;
         URI baseURI = resourceURI.getBaseUri();
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
-                (dataBundle, dataEntryName) -> storageResourceHelper.listContentFromDataBundle(dataBundle, baseURI, dataEntryName, depth),
-                (storageVolume, dataEntryName) -> storageResourceHelper.listContentFromPath(storageVolume, baseURI, dataEntryName, depth)
+                (dataBundle, dataEntryName) -> storageResourceHelper.listContentFromDataBundle(dataBundle, baseURI, dataEntryName, depth, offset, length),
+                (storageVolume, dataEntryName) -> storageResourceHelper.listContentFromPath(storageVolume, baseURI, dataEntryName, depth, offset, length)
         ).build();
     }
 

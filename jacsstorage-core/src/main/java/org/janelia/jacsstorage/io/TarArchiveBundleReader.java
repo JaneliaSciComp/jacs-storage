@@ -15,6 +15,10 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
@@ -82,63 +86,100 @@ public class TarArchiveBundleReader extends AbstractBundleReader {
             logResult = true
     )
     @Override
-    public List<DataNodeInfo> listBundleContent(String source, String entryName, int depth) {
+    public Stream<DataNodeInfo> streamBundleContent(String source, String entryName, int depth) {
         Path sourcePath = getSourcePath(source);
         if (Files.notExists(sourcePath)) {
-            return Collections.emptyList();
+            return Stream.of();
         }
-        TarArchiveInputStream inputStream;
-        try {
-            inputStream = new TarArchiveInputStream(new FileInputStream(sourcePath.toFile()));
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-        try {
-            List<DataNodeInfo> dataNodeList = new ArrayList<>();
+        Spliterator<DataNodeInfo> dataNodeSupplier = new Spliterator<DataNodeInfo>() {
             String normalizedEntryName = normalizeEntryName(entryName);
             int normalizedEntryNameLength = normalizedEntryName.length();
-            for (ArchiveEntry sourceEntry = inputStream.getNextEntry(); sourceEntry != null; sourceEntry = inputStream.getNextEntry()) {
-                String currentEntryName = normalizeEntryName(sourceEntry.getName());
-                if (currentEntryName.equals(normalizedEntryName)) {
-                    if (!sourceEntry.isDirectory()) {
+            TarArchiveInputStream inputStream;
+
+            @Override
+            public boolean tryAdvance(Consumer<? super DataNodeInfo> action) {
+                if (inputStream == null) {
+                    try {
+                        inputStream = new TarArchiveInputStream(new FileInputStream(sourcePath.toFile()));
+                    } catch (IOException e) {
+                        LOG.error("Error opening entry {} from {} ({})", entryName, source, sourcePath, e);
+                        throw new IllegalStateException(e);
+                    }
+                }
+                for(;;) {
+                    ArchiveEntry sourceEntry;
+                    try {
+                        sourceEntry = inputStream.getNextEntry();
+                    } catch (Exception e) {
+                        LOG.error("Error getting the next node from {} at {} ({})", entryName, source, sourcePath);
+                        try {
+                            inputStream.close();
+                        } catch (IOException ignore) {
+                        } finally {
+                            inputStream = null;
+                        }
+                        throw new IllegalStateException(e);
+                    }
+                    if (sourceEntry == null) {
+                        // reached the end
+                        try {
+                            inputStream.close();
+                        } catch (IOException ignore) {
+                        } finally {
+                            inputStream = null;
+                        }
+                        return false;
+                    }
+                    String currentEntryName = normalizeEntryName(sourceEntry.getName());
+                    if (currentEntryName.equals(normalizedEntryName)) {
+                        if (!sourceEntry.isDirectory()) {
+                            DataNodeInfo dataNodeInfo = new DataNodeInfo();
+                            dataNodeInfo.setStorageRootLocation(sourcePath.toString());
+                            dataNodeInfo.setCollectionFlag(false);
+                            dataNodeInfo.setNodeRelativePath(currentEntryName);
+                            dataNodeInfo.setSize(sourceEntry.getSize());
+                            dataNodeInfo.setCreationTime(sourceEntry.getLastModifiedDate());
+                            dataNodeInfo.setLastModified(sourceEntry.getLastModifiedDate());
+                            action.accept(dataNodeInfo);
+                            return true;
+                        }
+                    }
+                    if (currentEntryName.startsWith(normalizedEntryName)) {
+                        int currentDepth = Splitter.on('/').omitEmptyStrings().splitToList(currentEntryName.substring(normalizedEntryNameLength)).size();
+                        if (currentDepth > depth) {
+                            continue;
+                        }
                         DataNodeInfo dataNodeInfo = new DataNodeInfo();
-                        dataNodeInfo.setStorageRootLocation(sourcePath.toString());
-                        dataNodeInfo.setCollectionFlag(false);
-                        dataNodeInfo.setNodeRelativePath(currentEntryName);
+                        if (sourceEntry.isDirectory()) {
+                            dataNodeInfo.setCollectionFlag(true);
+                            dataNodeInfo.setNodeRelativePath(StringUtils.appendIfMissing(currentEntryName, "/"));
+                        } else {
+                            dataNodeInfo.setNodeRelativePath(currentEntryName);
+                        }
                         dataNodeInfo.setSize(sourceEntry.getSize());
                         dataNodeInfo.setCreationTime(sourceEntry.getLastModifiedDate());
                         dataNodeInfo.setLastModified(sourceEntry.getLastModifiedDate());
-                        dataNodeList.add(dataNodeInfo);
-                        break;
+                        action.accept(dataNodeInfo);
                     }
                 }
-                if (currentEntryName.startsWith(normalizedEntryName)) {
-                    int currentDepth = Splitter.on('/').omitEmptyStrings().splitToList(currentEntryName.substring(normalizedEntryNameLength)).size();
-                    if (currentDepth > depth) {
-                        continue;
-                    }
-                    DataNodeInfo dataNodeInfo = new DataNodeInfo();
-                    if (sourceEntry.isDirectory()) {
-                        dataNodeInfo.setCollectionFlag(true);
-                        dataNodeInfo.setNodeRelativePath(StringUtils.appendIfMissing(currentEntryName, "/"));
-                    }  else {
-                        dataNodeInfo.setNodeRelativePath(currentEntryName);
-                    }
-                    dataNodeInfo.setSize(sourceEntry.getSize());
-                    dataNodeInfo.setCreationTime(sourceEntry.getLastModifiedDate());
-                    dataNodeInfo.setLastModified(sourceEntry.getLastModifiedDate());
-                    dataNodeList.add(dataNodeInfo);
-                }
             }
-            return dataNodeList;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            try {
-                inputStream.close();
-            } catch (IOException ignore) {
+
+            @Override
+            public Spliterator<DataNodeInfo> trySplit() {
+                return null; // not supported
             }
-        }
+
+            @Override
+            public long estimateSize() {
+                return 0;
+            }
+
+            @Override
+            public int characteristics() {
+                return ORDERED;
+            }
+        };
+        return StreamSupport.stream(dataNodeSupplier, false);
     }
 
     @TimedMethod(

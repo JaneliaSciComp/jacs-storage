@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
@@ -69,10 +70,10 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
             logResult = true
     )
     @Override
-    public List<DataNodeInfo> listBundleContent(String source, String entryName, int depth) {
+    public Stream<DataNodeInfo> streamBundleContent(String source, String entryName, int depth) {
         Path sourcePath = getSourcePath(source);
         if (Files.notExists(sourcePath)) {
-            return Collections.emptyList();
+            return Stream.of();
         }
         Path startPath;
         if (StringUtils.isBlank(entryName)) {
@@ -80,12 +81,12 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
         } else {
             startPath = sourcePath.resolve(entryName);
             if (Files.notExists(startPath)) {
-                return Collections.emptyList();
+                return Stream.of();
             }
         }
         try {
             // start to collect the files from the startPath but return the data relative to sourcePath
-            return Files.walk(startPath, depth).map(p -> pathToDataNodeInfo(sourcePath, p, (rootPath, nodePath) -> rootPath.relativize(nodePath).toString().replace(File.separatorChar, '/'))).collect(Collectors.toList());
+            return Files.walk(startPath, depth).map(p -> pathToDataNodeInfo(sourcePath, p, (rootPath, nodePath) -> rootPath.relativize(nodePath).toString().replace(File.separatorChar, '/')));
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

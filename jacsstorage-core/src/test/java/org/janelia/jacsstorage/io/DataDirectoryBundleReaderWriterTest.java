@@ -132,7 +132,7 @@ public class DataDirectoryBundleReaderWriterTest {
                 ImmutableList.of()
         );
         for (int depth = 1; depth < expectedResults.size(); depth++) {
-            List<DataNodeInfo> nodeList = dataDirectoryBundleReader.listBundleContent(testDataDir.toString(), null, depth);
+            List<DataNodeInfo> nodeList = dataDirectoryBundleReader.streamBundleContent(testDataDir.toString(), null, depth).collect(Collectors.toList());
             List<String> currentExpectedResults = IntStream.rangeClosed(0, depth)
                     .mapToObj(i -> expectedResults.get(i))
                     .flatMap(l -> l.stream())
@@ -163,7 +163,7 @@ public class DataDirectoryBundleReaderWriterTest {
                 new TestData("d_1_3", 2, ImmutableList.of("d_1_3", "d_1_3/f_1_3_1", "d_1_3/f_1_3_2"))
         );
         for (TestData td : testData) {
-            List<DataNodeInfo> nodeList = dataDirectoryBundleReader.listBundleContent(testDataDir.toString(), td.entryName, td.depth);
+            List<DataNodeInfo> nodeList = dataDirectoryBundleReader.streamBundleContent(testDataDir.toString(), td.entryName, td.depth).collect(Collectors.toList());
             List<String> currentExpectedResults = td.expectedResults.stream().sorted().collect(Collectors.toList());
             assertEquals("For entry " + td.entryName + " depth " + td.depth, currentExpectedResults, nodeList.stream().map(ni -> ni.getNodeRelativePath()).sorted().collect(Collectors.toList()));
         }
@@ -229,7 +229,7 @@ public class DataDirectoryBundleReaderWriterTest {
             long size = dataDirectoryBundleWriter.createDirectoryEntry(testDataDir.toString(), td);
             assertTrue(size >= 0);
         }
-        List<String> tarEntryNames = dataDirectoryBundleReader.listBundleContent(testDataDir.toString(), "", 10).stream()
+        List<String> tarEntryNames = dataDirectoryBundleReader.streamBundleContent(testDataDir.toString(), "", 10)
                 .map(ni -> ni.getNodeRelativePath())
                 .collect(Collectors.toList());
         testData.forEach(td -> {
@@ -255,7 +255,7 @@ public class DataDirectoryBundleReaderWriterTest {
             long size = dataDirectoryBundleWriter.createDirectoryEntry(testDataDir.toString(), td);
             assertTrue(size >= 0);
         }
-        List<String> tarEntryNames = dataDirectoryBundleReader.listBundleContent(testDataDir.toString(), "", 10).stream()
+        List<String> tarEntryNames = dataDirectoryBundleReader.streamBundleContent(testDataDir.toString(), "", 10)
                 .map(ni -> ni.getNodeRelativePath())
                 .collect(Collectors.toList());
         testData.forEach(td -> {

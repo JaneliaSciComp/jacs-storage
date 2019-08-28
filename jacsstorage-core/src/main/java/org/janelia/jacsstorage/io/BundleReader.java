@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public interface BundleReader {
     Set<JacsStorageFormat> getSupportedFormats();
@@ -24,9 +25,11 @@ public interface BundleReader {
      * @param source bundle
      * @param entryName
      * @param depth
+     * @param offet
+     * @param length
      * @return
      */
-    List<DataNodeInfo> listBundleContent(String source, String entryName, int depth);
+    Stream<DataNodeInfo> streamBundleContent(String source, String entryName, int depth);
 
     /**
      * Estimate the specified entry size from the bundle.

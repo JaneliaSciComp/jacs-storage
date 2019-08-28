@@ -39,6 +39,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Timed
 public class StorageResourceHelper {
@@ -249,8 +250,7 @@ public class StorageResourceHelper {
     }
 
     public Response.ResponseBuilder checkContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath, boolean collectionOnly) {
-        List<DataNodeInfo> dataBundleContent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), 1);
-        return dataBundleContent.stream()
+        return dataStorageService.streamDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), 1)
                 .findFirst()
                 .filter(dn -> !collectionOnly || dn.isCollectionFlag())
                 .map(dn -> Response.ok().header("Content-Length", dn.getSize()))
@@ -286,34 +286,39 @@ public class StorageResourceHelper {
                 ;
     }
 
-    public Response.ResponseBuilder listContentFromDataBundle(JacsBundle dataBundle, URI baseURI, String dataEntryPath, int depth) {
-        List<DataNodeInfo> dataBundleContent = dataStorageService.listDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), depth);
-        if (CollectionUtils.isNotEmpty(dataBundleContent)) {
-            dataBundleContent.forEach(dn -> {
-                dn.setNumericStorageId(dataBundle.getId());
-                dn.setStorageRootPathURI(dataBundle.getStorageURI());
-                dn.setNodeAccessURL(UriBuilder.fromUri(baseURI)
-                        .path(Constants.AGENTSTORAGE_URI_PATH)
-                        .path(dataBundle.getId().toString())
-                        .path("data_content")
-                        .path(dn.getNodeRelativePath())
-                        .build()
-                        .toString());
-                dn.setNodeInfoURL(UriBuilder.fromUri(baseURI)
-                        .path(Constants.AGENTSTORAGE_URI_PATH)
-                        .path(dataBundle.getId().toString())
-                        .path("data_info")
-                        .path(dn.getNodeRelativePath())
-                        .build()
-                        .toString());
-            });
+    public Response.ResponseBuilder listContentFromDataBundle(JacsBundle dataBundle, URI baseURI, String dataEntryPath, int depth, long offset, long length) {
+        Stream<DataNodeInfo> dataBundleContentStream;
+        if (length > 0) {
+            dataBundleContentStream = dataStorageService.streamDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), depth)
+                    .skip(offset >= 0 ? offset : 0)
+                    .limit(length);
+        } else {
+            dataBundleContentStream = dataStorageService.streamDataEntries(dataBundle.getRealStoragePath(), dataEntryPath, dataBundle.getStorageFormat(), depth)
+                    .skip(offset >= 0 ? offset : 0);
         }
         return Response
-                .ok(dataBundleContent, MediaType.APPLICATION_JSON)
+                .ok(dataBundleContentStream.peek(dn -> {
+                    dn.setNumericStorageId(dataBundle.getId());
+                    dn.setStorageRootPathURI(dataBundle.getStorageURI());
+                    dn.setNodeAccessURL(UriBuilder.fromUri(baseURI)
+                            .path(Constants.AGENTSTORAGE_URI_PATH)
+                            .path(dataBundle.getId().toString())
+                            .path("data_content")
+                            .path(dn.getNodeRelativePath())
+                            .build()
+                            .toString());
+                    dn.setNodeInfoURL(UriBuilder.fromUri(baseURI)
+                            .path(Constants.AGENTSTORAGE_URI_PATH)
+                            .path(dataBundle.getId().toString())
+                            .path("data_info")
+                            .path(dn.getNodeRelativePath())
+                            .build()
+                            .toString());
+                }).collect(Collectors.toList()), MediaType.APPLICATION_JSON)
                 ;
     }
 
-    public Response.ResponseBuilder listContentFromPath(JacsStorageVolume storageVolume, URI baseURI, StorageRelativePath dataEntryName, int depth) {
+    public Response.ResponseBuilder listContentFromPath(JacsStorageVolume storageVolume, URI baseURI, StorageRelativePath dataEntryName, int depth, long offset, long length) {
         if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
             return Response
                     .status(Response.Status.FORBIDDEN)
@@ -325,9 +330,17 @@ public class StorageResourceHelper {
                 .filter(dataEntryPath -> Files.exists(dataEntryPath))
                 .map(dataEntryPath -> {
                     JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
-                    List<DataNodeInfo> entries = dataStorageService.listDataEntries(dataEntryPath, "", storageFormat, depth);
+                    Stream<DataNodeInfo> entriesStream;
+                    if (length > 0) {
+                        entriesStream = dataStorageService.streamDataEntries(dataEntryPath, "", storageFormat, depth)
+                                .skip(offset >= 0 ? offset : 0)
+                                .limit(length);
+                    } else {
+                        entriesStream = dataStorageService.streamDataEntries(dataEntryPath, "", storageFormat, depth)
+                                .skip(offset >= 0 ? offset : 0);
+                    }
                     return Response
-                            .ok(entries.stream()
+                            .ok(entriesStream
                                             .map(dn -> {
                                                 String dataNodeAbsolutePath = dataEntryPath.resolve(dn.getNodeRelativePath()).toString();
                                                 Path dataNodeRelativePath = storageVolume.getPathRelativeToBaseStorageRoot(dataNodeAbsolutePath);
