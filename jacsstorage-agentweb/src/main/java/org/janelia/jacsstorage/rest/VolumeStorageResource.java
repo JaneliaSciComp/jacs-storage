@@ -188,7 +188,7 @@ public class VolumeStorageResource {
                     if (length > 0) {
                         contentInfoStream = dataStorageService.streamDataEntries(dataEntryPath, "", storageFormat, depth)
                                 .skip(offset > 0 ? offset : 0)
-                                .skip(length);
+                                .limit(length);
                     } else {
                         contentInfoStream = dataStorageService.streamDataEntries(dataEntryPath, "", storageFormat, depth)
                                 .skip(offset > 0 ? offset : 0);
