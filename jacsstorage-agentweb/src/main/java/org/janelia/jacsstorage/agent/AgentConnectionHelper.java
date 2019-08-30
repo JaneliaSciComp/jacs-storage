@@ -56,7 +56,7 @@ class AgentConnectionHelper {
             if (responseStatus < Response.Status.BAD_REQUEST.getStatusCode()) {
                 return response.readEntity(StorageAgentInfo.class);
             } else {
-                LOG.warn("Register agent returned {}", responseStatus);
+                LOG.warn("Register agent with {} returned {}", target, responseStatus);
                 response.close();
             }
         } catch (Exception e) {
