@@ -44,8 +44,8 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
 
     @TimedMethod
     @Override
-    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String storageHost) {
-        return storageVolumeDao.createStorageVolumeIfNotFound(volumeName, storageHost);
+    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String storageAgentId) {
+        return storageVolumeDao.createStorageVolumeIfNotFound(volumeName, storageAgentId);
     }
 
     @TimedMethod
@@ -86,7 +86,7 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
             // if somehow the current volume is not shared make it shared
             currentVolumeInfo.setShared(true);
             currentVolumeInfo.setStorageServiceURL(null);
-            currentVolumeInfo.setStorageHost(null);
+            currentVolumeInfo.setStorageAgentId(null);
             updatedVolumeFieldsBuilder.put("shared", new SetFieldValueHandler<>(true));
             updatedVolumeFieldsBuilder.put("storageServiceURL", new SetFieldValueHandler<>(null));
             updatedVolumeFieldsBuilder.put("storageHost", new SetFieldValueHandler<>(null));
@@ -154,7 +154,7 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
                 if (storageVolume.isShared()) {
                     locationMessagePart = "";
                 } else {
-                    locationMessagePart = " on " + storageVolume.getStorageHost();
+                    locationMessagePart = " on " + storageVolume.getStorageAgentId();
                 }
                 // check if it just crossed the threshold up or down
                 if (percentageFull > FILL_UP_THRESHOLD && currentPercentage != null && currentPercentage <= FILL_UP_THRESHOLD) {

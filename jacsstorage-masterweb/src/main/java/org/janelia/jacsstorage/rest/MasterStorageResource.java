@@ -97,7 +97,7 @@ public class MasterStorageResource {
     @Path("size")
     public Response countBundleInfo(@ApiParam(value = "search by storage id parameter") @QueryParam("id") Long dataBundleId,
                                     @ApiParam(value = "search by storage storage owner parameter") @QueryParam("ownerKey") String ownerKey,
-                                    @ApiParam(value = "search by storage storage host parameter") @QueryParam("storageHost") String storageHost,
+                                    @ApiParam(value = "search by storage storage host parameter") @QueryParam("storageAgent") String storageHost,
                                     @ApiParam(value = "search by storage storage tags parameter") @QueryParam("storageTags") String storageTags,
                                     @ApiParam(value = "search by storage storage volume parameter") @QueryParam("volumeName") String volumeName,
                                     @Context SecurityContext securityContext) {
@@ -112,7 +112,7 @@ public class MasterStorageResource {
         JacsBundle dataBundle = new JacsBundleBuilder()
                 .dataBundleId(dataBundleId)
                 .ownerKey(dataOwnerKey)
-                .storageHost(storageHost)
+                .storageAgentId(storageHost)
                 .storageTags(storageTags)
                 .volumeName(volumeName)
                 .build();
@@ -202,7 +202,7 @@ public class MasterStorageResource {
     public Response listBundleInfo(@QueryParam("id") Long dataBundleId,
                                    @QueryParam("name") String dataBundleName,
                                    @QueryParam("ownerKey") String ownerKey,
-                                   @QueryParam("storageHost") String storageHost,
+                                   @QueryParam("storageAgent") String storageAgent,
                                    @QueryParam("storageTags") List<String> storageTags,
                                    @QueryParam("volumeName") String volumeName,
                                    @QueryParam("storagePath") String storagePath,
@@ -221,7 +221,7 @@ public class MasterStorageResource {
                 .dataBundleId(dataBundleId)
                 .name(dataBundleName)
                 .ownerKey(dataOwnerKey)
-                .storageHost(storageHost)
+                .storageAgentId(storageAgent)
                 .storageTagsAsList(storageTags)
                 .volumeName(volumeName)
                 .path(storagePath)

@@ -84,7 +84,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
         List<JacsStorageVolume> localVolumes = storageVolumeManager.findVolumes(
                 new StorageQuery()
                         .setStorageName(volumeName)
-                        .setAccessibleOnHost(storageAgentId)
+                        .setAccessibleOnAgent(storageAgentId)
         );
         if (localVolumes.isEmpty()) {
             LOG.warn("No storage volume found for {}", volumeName);
@@ -104,7 +104,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
         List<JacsStorageVolume> localVolumes = storageVolumeManager.findVolumes(
                 new StorageQuery()
                         .setStorageName(volumeName)
-                        .setAccessibleOnHost(storageAgentId)
+                        .setAccessibleOnAgent(storageAgentId)
         );
         if (localVolumes.isEmpty()) {
             LOG.warn("No storage volume found for {}", volumeName);
@@ -124,7 +124,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
         List<JacsStorageVolume> localVolumes = storageVolumeManager.findVolumes(
                 new StorageQuery()
                         .setDataStoragePath(storagePath)
-                        .setAccessibleOnHost(storageAgentId)
+                        .setAccessibleOnAgent(storageAgentId)
         );
         if (localVolumes.isEmpty()) {
             LOG.warn("No storage volume found for {}", storagePath);
@@ -144,7 +144,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
         List<JacsStorageVolume> localVolumes = storageVolumeManager.findVolumes(
                 new StorageQuery()
                         .setDataStoragePath(storagePath)
-                        .setAccessibleOnHost(storageAgentId)
+                        .setAccessibleOnAgent(storageAgentId)
         );
         if (localVolumes.isEmpty()) {
             LOG.warn("No storage volume found for {}", storagePath);

@@ -180,7 +180,7 @@ public class AgentState {
     }
 
     private void updateStorageOnLocalVolumes() {
-        storageVolumeManager.findVolumes(new StorageQuery().setLocalToAnyHost(true).setAccessibleOnHost(agentId))
+        storageVolumeManager.findVolumes(new StorageQuery().setLocalToAnyAgent(true).setAccessibleOnAgent(agentId))
                 .forEach(sv -> {
                     sv.setStorageServiceURL(agentAccessURL);
                     storageVolumeManager.updateVolumeInfo(sv.getId(), sv);

@@ -80,9 +80,9 @@ public class JacsBundleBuilder {
         return this;
     }
 
-    public JacsBundleBuilder storageHost(String v) {
+    public JacsBundleBuilder storageAgentId(String v) {
         updateBundleStorageVolume(sv -> {
-            sv.setStorageHost(v);
+            sv.setStorageAgentId(v);
         });
         return this;
     }

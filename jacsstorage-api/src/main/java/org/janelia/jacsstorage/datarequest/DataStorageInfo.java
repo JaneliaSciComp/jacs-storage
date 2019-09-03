@@ -32,7 +32,7 @@ public class DataStorageInfo {
     private Set<String> writersKeys = new HashSet<>();
     private StoragePathURI storageRootPathURI;
     private String storageRootDir;
-    private String storageHost;
+    private String storageAgentId;
     private List<String> storageTags;
     private String connectionURL;
     private JacsStorageFormat storageFormat;
@@ -55,7 +55,7 @@ public class DataStorageInfo {
                 ;
         dataBundle.getStorageVolume()
                 .ifPresent(sv -> {
-                    dsi.setStorageHost(sv.getStorageHost());
+                    dsi.setStorageAgentId(sv.getStorageAgentId());
                     dsi.setStorageTags(sv.getStorageTags());
                     dsi.setStorageRootDir(sv.evalStorageRootDir(dataBundle.asStorageContext()));
                     dsi.setDataVirtualPath(Paths.get(sv.getStorageVirtualPath(), dataBundle.getId().toString()).toString());
@@ -211,12 +211,12 @@ public class DataStorageInfo {
     @ApiModelProperty(
             value = "storage host"
     )
-    public String getStorageHost() {
-        return storageHost;
+    public String getStorageAgentId() {
+        return storageAgentId;
     }
 
-    public DataStorageInfo setStorageHost(String storageHost) {
-        this.storageHost = storageHost;
+    public DataStorageInfo setStorageAgentId(String storageAgentId) {
+        this.storageAgentId = storageAgentId;
         return this;
     }
 
@@ -297,7 +297,7 @@ public class DataStorageInfo {
                 .usedSpaceInBytes(this.requestedSpaceInBytes)
                 .checksum(this.checksum)
                 .metadata(this.metadata)
-                .storageHost(this.storageHost)
+                .storageAgentId(this.storageAgentId)
                 .storageRootPath(this.storageRootDir)
                 .storageTagsAsList(this.storageTags)
                 .build();
@@ -309,7 +309,7 @@ public class DataStorageInfo {
                 .append("id", id)
                 .append("name", name)
                 .append("path", path)
-                .append("storageHost", storageHost)
+                .append("storageAgentId", storageAgentId)
                 .append("connectionURL", connectionURL)
                 .append("storageFormat", storageFormat)
                 .toString();

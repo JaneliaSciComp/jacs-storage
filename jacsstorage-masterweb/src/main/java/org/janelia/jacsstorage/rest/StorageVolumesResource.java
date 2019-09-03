@@ -132,7 +132,7 @@ public class StorageVolumesResource {
     public Response listStorageVolumes(@QueryParam("id") Long storageVolumeId,
                                        @QueryParam("name") String volumeName,
                                        @QueryParam("shared") boolean shared,
-                                       @QueryParam("storageHost") String storageHost,
+                                       @QueryParam("storageAgent") String storageAgent,
                                        @QueryParam("storageTags") List<String> storageTags,
                                        @QueryParam("storageVirtualPath") String storageVirtualPath,
                                        @QueryParam("dataStoragePath") String dataStoragePathParam,
@@ -142,7 +142,7 @@ public class StorageVolumesResource {
                 .setId(storageVolumeId)
                 .setStorageName(volumeName)
                 .setShared(shared)
-                .setAccessibleOnHost(storageHost)
+                .setAccessibleOnAgent(storageAgent)
                 .setStorageTags(storageTags)
                 .setStorageVirtualPath(storageVirtualPath)
                 .setDataStoragePath(StoragePathURI.createAbsolutePathURI(dataStoragePathParam).getStoragePath())

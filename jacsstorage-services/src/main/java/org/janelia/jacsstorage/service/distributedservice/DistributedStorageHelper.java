@@ -13,7 +13,7 @@ class DistributedStorageHelper {
         if (storageVolume.isShared()) {
             agentManager.findRandomRegisteredAgent((StorageAgentConnection ac) -> ac.isConnected() && ac.getAgentInfo().canServe(storageVolume))
                     .ifPresent(ai -> {
-                        storageVolume.setStorageHost(ai.getAgentHost());
+                        storageVolume.setStorageAgentId(ai.getAgentId());
                         storageVolume.setStorageServiceURL(ai.getAgentAccessURL());
                     });
         }

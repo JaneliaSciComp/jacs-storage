@@ -59,7 +59,7 @@ public class StorageRetrieveBenchmark {
     }
 
     private void listStorageImpl(RetrieveBenchmarkTrialParams trialParams, ListContentBenchmarkInvocationParams invocationParams) {
-        PageResult<DataStorageInfo> storageRecords = trialParams.storageClientHelper.listStorageRecords(trialParams.serverURL, trialParams.storageHost, trialParams.getStorageTags(), invocationParams.storageBundleId, invocationParams.pageRequest, trialParams.authToken);
+        PageResult<DataStorageInfo> storageRecords = trialParams.storageClientHelper.listStorageRecords(trialParams.serverURL, trialParams.storageAgentId, trialParams.getStorageTags(), invocationParams.storageBundleId, invocationParams.pageRequest, trialParams.authToken);
         for (DataStorageInfo storageInfo : storageRecords.getResultList()) {
             trialParams.storageClientHelper.listStorageContent(storageInfo.getConnectionURL(), storageInfo.getNumericId(), trialParams.authToken);
         }

@@ -11,10 +11,9 @@ import java.util.List;
 public class StorageQuery {
     private Number id;
     private boolean shared;
-    private boolean localToAnyHost;
+    private boolean localToAnyAgent;
     private String dataStoragePath;
-    private String accessibleOnHost;
-    private List<String> storageHosts;
+    private String accessibleOnAgent;
     private List<String> storageAgents;
     private String storageName;
     private String storageVirtualPath;
@@ -40,12 +39,12 @@ public class StorageQuery {
         return this;
     }
 
-    public boolean isLocalToAnyHost() {
-        return localToAnyHost;
+    public boolean isLocalToAnyAgent() {
+        return localToAnyAgent;
     }
 
-    public StorageQuery setLocalToAnyHost(boolean localToAnyHost) {
-        this.localToAnyHost = localToAnyHost;
+    public StorageQuery setLocalToAnyAgent(boolean localToAnyAgent) {
+        this.localToAnyAgent = localToAnyAgent;
         return this;
     }
 
@@ -58,29 +57,12 @@ public class StorageQuery {
         return this;
     }
 
-    public String getAccessibleOnHost() {
-        return accessibleOnHost;
+    public String getAccessibleOnAgent() {
+        return accessibleOnAgent;
     }
 
-    public StorageQuery setAccessibleOnHost(String accessibleOnHost) {
-        this.accessibleOnHost = accessibleOnHost;
-        return this;
-    }
-
-    public List<String> getStorageHosts() {
-        return storageHosts;
-    }
-
-    public StorageQuery setStorageHosts(List<String> storageHosts) {
-        this.storageHosts = storageHosts;
-        return this;
-    }
-
-    public StorageQuery addStorageHost(String storageHost) {
-        if (storageHosts == null) {
-            storageHosts = new ArrayList<>();
-        }
-        if (StringUtils.isNotBlank(storageHost)) storageHosts.add(storageHost);
+    public StorageQuery setAccessibleOnAgent(String accessibleOnAgent) {
+        this.accessibleOnAgent = accessibleOnAgent;
         return this;
     }
 
@@ -93,7 +75,7 @@ public class StorageQuery {
         return this;
     }
 
-    public StorageQuery addStorageAgents(String storageAgent) {
+    public StorageQuery addStorageAgent(String storageAgent) {
         if (storageAgents == null) {
             storageAgents = new ArrayList<>();
         }
@@ -160,10 +142,10 @@ public class StorageQuery {
 
         return new EqualsBuilder()
                 .append(shared, that.shared)
-                .append(localToAnyHost, that.localToAnyHost)
+                .append(localToAnyAgent, that.localToAnyAgent)
                 .append(id, that.id)
                 .append(dataStoragePath, that.dataStoragePath)
-                .append(storageHosts, that.storageHosts)
+                .append(accessibleOnAgent, that.accessibleOnAgent)
                 .append(storageAgents, that.storageAgents)
                 .append(storageName, that.storageName)
                 .append(storageVirtualPath, that.storageVirtualPath)
@@ -177,9 +159,9 @@ public class StorageQuery {
         return new HashCodeBuilder(17, 37)
                 .append(id)
                 .append(shared)
-                .append(localToAnyHost)
+                .append(localToAnyAgent)
                 .append(dataStoragePath)
-                .append(storageHosts)
+                .append(accessibleOnAgent)
                 .append(storageAgents)
                 .append(storageName)
                 .append(storageVirtualPath)
@@ -193,9 +175,9 @@ public class StorageQuery {
         return new ToStringBuilder(this)
                 .append("id", id)
                 .append("shared", shared)
-                .append("localToAnyHost", localToAnyHost)
+                .append("localToAnyAgent", localToAnyAgent)
                 .append("dataStoragePath", dataStoragePath)
-                .append("storageHosts", storageHosts)
+                .append("accessibleOnAgent", accessibleOnAgent)
                 .append("storageAgents", storageAgents)
                 .append("storageName", storageName)
                 .append("storageVirtualPath", storageVirtualPath)

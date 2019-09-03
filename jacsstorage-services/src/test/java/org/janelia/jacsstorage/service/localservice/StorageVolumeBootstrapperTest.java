@@ -41,12 +41,12 @@ public class StorageVolumeBootstrapperTest {
         Mockito.when(storageVolumeManager.createStorageVolumeIfNotFound(anyString(), argThat(argument -> true)))
                 .then(invocation -> {
                     String volumeName = invocation.getArgument(0);
-                    String storageHost = invocation.getArgument(1);
+                    String storageAgentId = invocation.getArgument(1);
                     JacsStorageVolume sv = new JacsStorageVolume();
                     sv.setId(TEST_VOLUME_ID);
                     sv.setName(volumeName);
-                    sv.setStorageHost(storageHost);
-                    sv.setShared(StringUtils.isBlank(storageHost));
+                    sv.setStorageAgentId(storageAgentId);
+                    sv.setShared(StringUtils.isBlank(storageAgentId));
                     return sv;
                 });
         when(storageVolumeManager.updateVolumeInfo(any(Number.class), any(JacsStorageVolume.class))).then(invocation -> invocation.getArgument(1));

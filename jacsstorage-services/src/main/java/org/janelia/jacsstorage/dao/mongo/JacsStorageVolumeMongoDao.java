@@ -49,7 +49,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
 
     @Override
     protected void createDocumentIndexes() {
-        mongoCollection.createIndex(Indexes.ascending("storageHost", "name"),
+        mongoCollection.createIndex(Indexes.ascending("storageAgentId", "name"),
                 new IndexOptions()
                         .unique(true)
                         .sparse(true));
@@ -104,30 +104,30 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         if (storageQuery.getId() != null) {
             filtersBuilder.add(Filters.eq("_id", storageQuery.getId()));
         }
-        if (StringUtils.isNotBlank(storageQuery.getAccessibleOnHost())) {
-            if (storageQuery.isLocalToAnyHost()) {
-                filtersBuilder.add(Filters.eq("storageHost", storageQuery.getAccessibleOnHost())); // select volumes accessible ONLY from the specified host
+        if (StringUtils.isNotBlank(storageQuery.getAccessibleOnAgent())) {
+            if (storageQuery.isLocalToAnyAgent()) {
+                filtersBuilder.add(Filters.eq("storageAgentId", storageQuery.getAccessibleOnAgent())); // select volumes accessible ONLY from the specified host
             } else {
                 filtersBuilder.add(Filters.or(
-                        Filters.eq("storageHost", storageQuery.getAccessibleOnHost()), // the storage host equals the one set
-                        Filters.exists("storageHost", false), // or the storage host is not set
-                        Filters.eq("storageHost", null)
+                        Filters.eq("storageAgentId", storageQuery.getAccessibleOnAgent()), // the storage host equals the one set
+                        Filters.exists("storageAgentId", false), // or the storage host is not set
+                        Filters.eq("storageAgentId", null)
                 ));
             }
-        } else if (storageQuery.isLocalToAnyHost() || CollectionUtils.isNotEmpty(storageQuery.getStorageHosts())) {
-            if (CollectionUtils.isNotEmpty(storageQuery.getStorageHosts())) {
+        } else if (storageQuery.isLocalToAnyAgent() || CollectionUtils.isNotEmpty(storageQuery.getStorageAgents())) {
+            if (CollectionUtils.isNotEmpty(storageQuery.getStorageAgents())) {
                 // this queries for volumes accessible only locally on the specified hosts
-                filtersBuilder.add(Filters.in("storageHost", storageQuery.getStorageHosts()));
+                filtersBuilder.add(Filters.in("storageAgentId", storageQuery.getStorageAgents()));
             } else {
                 // this queries for volumes accessible only locally on the corresponding hosts
-                filtersBuilder.add(Filters.exists("storageHost", true)); // the storageHost must be set
-                filtersBuilder.add(Filters.ne("storageHost", null));
+                filtersBuilder.add(Filters.exists("storageAgentId", true)); // the storageAgentId must be set
+                filtersBuilder.add(Filters.ne("storageAgentId", null));
             }
         } else if (storageQuery.isShared()) {
             filtersBuilder.add(Filters.or(
-                    Filters.exists("storageHost", false), // the storage host should not be set
-                    Filters.eq("storageHost", null)
-            )); // the storageHost must not be set
+                    Filters.exists("storageAgentId", false), // the storage host should not be set
+                    Filters.eq("storageAgentId", null)
+            )); // the storageAgentId must not be set
         }
         if (StringUtils.isNotBlank(storageQuery.getStorageName())) {
             filtersBuilder.add(Filters.eq("name", storageQuery.getStorageName()));
@@ -166,7 +166,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
                         Filters.exists("storageServiceURL", false), // the storage host should not be set
                         Filters.eq("storageServiceURL", null)
                 )); // the storageServiceURL must not be set
-            } else if (storageQuery.isLocalToAnyHost()) {
+            } else if (storageQuery.isLocalToAnyAgent()) {
                 filtersBuilder.add(Filters.in("storageServiceURL", storageQuery.getStorageAgents()));
             }
         }
@@ -192,7 +192,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
     }
 
     @Override
-    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String hostName) {
+    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String agentId) {
         Preconditions.checkArgument(StringUtils.isNotBlank(volumeName));
 
         FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
@@ -200,16 +200,16 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         updateOptions.upsert(true);
 
         ImmutableList.Builder<Bson> filtersBuilder = new ImmutableList.Builder<>();
-        String storageHost;
+        String storageAgentId;
         boolean sharedVolume;
-        if (StringUtils.isBlank(hostName)) {
+        if (StringUtils.isBlank(agentId)) {
             sharedVolume = true;
-            storageHost = null;
-            filtersBuilder.add(Filters.or(Filters.exists("storageHost", false), Filters.eq("storageHost", null)));
+            storageAgentId = null;
+            filtersBuilder.add(Filters.or(Filters.exists("storageAgentId", false), Filters.eq("storageAgentId", null)));
         } else {
             sharedVolume = false;
-            storageHost = hostName;
-            filtersBuilder.add(Filters.eq("storageHost", hostName));
+            storageAgentId = agentId;
+            filtersBuilder.add(Filters.eq("storageAgentId", agentId));
         }
         filtersBuilder.add(Filters.eq("name", volumeName));
 
@@ -217,7 +217,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         Bson fieldsToInsert = Updates.combine(
                 Updates.setOnInsert("_id", idGenerator.generateId()),
                 Updates.setOnInsert("name", volumeName),
-                Updates.setOnInsert("storageHost", storageHost),
+                Updates.setOnInsert("storageAgentId", storageAgentId),
                 Updates.setOnInsert("shared", sharedVolume),
                 Updates.setOnInsert("created", changedTimestamp),
                 Updates.set("modified", changedTimestamp),

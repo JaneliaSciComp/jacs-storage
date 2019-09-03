@@ -18,20 +18,20 @@ public class RandomLocalStorageVolumeSelector implements StorageVolumeSelector {
     private static final Random RANDOM_SELECTOR = new Random(System.currentTimeMillis());
 
     private final JacsStorageVolumeDao storageVolumeDao;
-    private final List<String> availableHosts;
+    private final List<String> availableAgents;
     private final List<String> availableServicesURLs;
 
-    RandomLocalStorageVolumeSelector(JacsStorageVolumeDao storageVolumeDao, List<String> availableHosts, List<String> availableServicesURLs) {
+    RandomLocalStorageVolumeSelector(JacsStorageVolumeDao storageVolumeDao, List<String> availableAgents, List<String> availableServicesURLs) {
         this.storageVolumeDao = storageVolumeDao;
-        this.availableHosts = availableHosts;
+        this.availableAgents = availableAgents;
         this.availableServicesURLs = availableServicesURLs;
     }
 
     @Override
     public JacsStorageVolume selectStorageVolume(JacsBundle storageRequest) {
         StorageQuery storageQuery = new StorageQuery()
-                .setStorageHosts(availableHosts)
-                .setLocalToAnyHost(true)
+                .setStorageAgents(availableAgents)
+                .setLocalToAnyAgent(true)
                 .setStorageAgents(availableServicesURLs);
         storageRequest.getStorageVolume()
                 .ifPresent(sv -> {
@@ -39,7 +39,7 @@ public class RandomLocalStorageVolumeSelector implements StorageVolumeSelector {
                     storageQuery.setStorageName(sv.getName());
                     storageQuery.setStorageVirtualPath(sv.getStorageVirtualPath());
                     storageQuery.setStorageTags(sv.getStorageTags());
-                    storageQuery.setAccessibleOnHost(sv.getStorageHost());
+                    storageQuery.setAccessibleOnAgent(sv.getStorageAgentId());
                 });
         if (storageRequest.hasUsedSpaceSet()) {
             storageQuery.setMinAvailableSpaceInBytes(storageRequest.getUsedSpaceInBytes());

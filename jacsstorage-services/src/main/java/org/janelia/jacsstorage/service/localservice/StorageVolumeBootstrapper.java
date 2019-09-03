@@ -28,7 +28,7 @@ public class StorageVolumeBootstrapper {
     private final StorageVolumeManager storageVolumeManager;
     private final ApplicationConfig applicationConfig;
     private final List<String> bootstrappedVolumeNames;
-    private final String storageHostPlaceholderValue;
+    private final String storageAgentPlaceholderValue;
     private final ApplicationConfigValueResolver configValueResolver = new ApplicationConfigValueResolver();
 
     @Inject
@@ -40,7 +40,7 @@ public class StorageVolumeBootstrapper {
         this.storageVolumeManager = storageVolumeManager;
         this.applicationConfig = applicationConfig;
         this.bootstrappedVolumeNames = bootstrappedVolumeNames;
-        this.storageHostPlaceholderValue = NetUtils.createStorageHostId(
+        this.storageAgentPlaceholderValue = NetUtils.createStorageHostId(
                 StringUtils.defaultIfBlank(storageHost, NetUtils.getCurrentHostName()),
                 storagePort,
                 "_"
@@ -48,7 +48,7 @@ public class StorageVolumeBootstrapper {
     }
 
     @TimedMethod
-    public List<JacsStorageVolume> initializeStorageVolumes(String storageAgentHost) {
+    public List<JacsStorageVolume> initializeStorageVolumes(String storageAgentId) {
         // initialize the list of specified volumes plus the overflow volume
         return Stream.concat(bootstrappedVolumeNames.stream(), Stream.of(JacsStorageVolume.OVERFLOW_VOLUME))
                 .map(volumeName -> {
@@ -64,7 +64,7 @@ public class StorageVolumeBootstrapper {
                     if (shared) {
                         return storageVolumeManager.createStorageVolumeIfNotFound(volumeName, null);
                     } else {
-                        return storageVolumeManager.createStorageVolumeIfNotFound(volumeName, storageAgentHost);
+                        return storageVolumeManager.createStorageVolumeIfNotFound(volumeName, storageAgentId);
                     }
                 })
                 .filter(storageVolume -> storageVolume != null)
@@ -102,7 +102,7 @@ public class StorageVolumeBootstrapper {
         String resolvedStoragePathPrefix = configValueResolver.resolve(
                 storagePathPrefix,
                 (k) -> ImmutableMap.<String, String>builder()
-                        .put("storageHost", storageHostPlaceholderValue)
+                        .put("storageHost", storageAgentPlaceholderValue)
                         .build().get(k));
         return StringUtils.prependIfMissing(resolvedStoragePathPrefix, "/");
     }

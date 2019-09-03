@@ -31,7 +31,7 @@ import java.util.Set;
 public class JacsStorageVolume extends AbstractEntity {
     public static final String OVERFLOW_VOLUME = "OVERFLOW_VOLUME";
 
-    private String storageHost; // storage host is set only for volumes that are local to a specific host
+    private String storageAgentId; // storage agentId
     // if a volume is set to a network disk that could be mounted on multiple hosts
     private String name; // volume name
     private String storageVirtualPath; // storage virtual path
@@ -49,12 +49,12 @@ public class JacsStorageVolume extends AbstractEntity {
     private Date created = new Date();
     private Date modified = new Date();
 
-    public String getStorageHost() {
-        return storageHost;
+    public String getStorageAgentId() {
+        return storageAgentId;
     }
 
-    public void setStorageHost(String storageHost) {
-        this.storageHost = storageHost;
+    public void setStorageAgentId(String storageAgentId) {
+        this.storageAgentId = storageAgentId;
     }
 
     public String getName() {
@@ -258,7 +258,7 @@ public class JacsStorageVolume extends AbstractEntity {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("entityRefId", getEntityRefId())
-                .append("storageHost", storageHost)
+                .append("storageAgentId", storageAgentId)
                 .append("name", name)
                 .append("storageTags", storageTags)
                 .append("storageRootTemplate", storageRootTemplate)

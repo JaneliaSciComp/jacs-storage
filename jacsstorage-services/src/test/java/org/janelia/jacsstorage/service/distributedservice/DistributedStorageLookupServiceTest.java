@@ -46,7 +46,7 @@ public class DistributedStorageLookupServiceTest {
     public void useBadIdToGoodBundle() {
         Long goodBundleId = 1L;
         Long volumeId = 2L;
-        String testHost = "volHost";
+        String testAgentId = "volHost";
         when(bundleDao.findById(goodBundleId))
                 .thenReturn(new JacsBundleBuilder()
                         .dataBundleId(goodBundleId)
@@ -55,7 +55,7 @@ public class DistributedStorageLookupServiceTest {
         when(storageVolumeDao.findById(volumeId))
                 .thenReturn(new JacsStorageVolumeBuilder()
                         .storageVolumeId(volumeId)
-                        .storageHost(testHost)
+                        .storageAgentId(testAgentId)
                         .build());
         JacsBundle dataBundle = testStorageManagementService.getDataBundleById(goodBundleId);
         assertNotNull(dataBundle);

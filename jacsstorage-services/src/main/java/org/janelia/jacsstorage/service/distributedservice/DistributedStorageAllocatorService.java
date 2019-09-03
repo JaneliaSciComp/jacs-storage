@@ -56,7 +56,7 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
         List<StorageAgentInfo> availableAgents = agentManager.getCurrentRegisteredAgents(ac -> ac.isConnected());
         StorageVolumeSelector[] volumeSelectors = new StorageVolumeSelector[] {
                 new RandomLocalStorageVolumeSelector(storageVolumeDao,
-                        availableAgents.stream().map(ai -> ai.getAgentHost()).collect(Collectors.toList()),
+                        availableAgents.stream().map(ai -> ai.getAgentId()).collect(Collectors.toList()),
                         availableAgents.stream().map(ai -> ai.getAgentAccessURL()).collect(Collectors.toList())),
                 new RandomSharedStorageVolumeSelector(storageVolumeDao,
                         availableAgents.stream().map(ai -> ai.getAgentAccessURL()).collect(Collectors.toList())),
@@ -78,7 +78,7 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
             // find any connected agent that can serve selected volume
             return agentManager.findRandomRegisteredAgent((StorageAgentConnection ac) -> ac.isConnected() && ac.getAgentInfo().canServe(selectedVolume))
                     .map((StorageAgentInfo ai) -> {
-                        selectedVolume.setStorageHost(ai.getAgentHost());
+                        selectedVolume.setStorageAgentId(ai.getAgentId());
                         selectedVolume.setStorageServiceURL(ai.getAgentAccessURL());
                         return selectedVolume;
                     });

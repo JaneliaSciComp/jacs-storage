@@ -33,7 +33,7 @@ public class StreamContentBenchmarkInvocationParams {
         if (storageBundleId == null || storageBundleId.toString().equals("0") || storageContent == null) {
             storageInfoMap = new HashMap<>();
             PageRequest pageRequest = pageRequestBuilder.build();
-            PageResult<DataStorageInfo> storageRecords = params.storageClientHelper.listStorageRecords(params.serverURL, params.storageHost, params.getStorageTags(), storageBundleId, pageRequest, params.authToken);
+            PageResult<DataStorageInfo> storageRecords = params.storageClientHelper.listStorageRecords(params.serverURL, params.storageAgentId, params.getStorageTags(), storageBundleId, pageRequest, params.authToken);
             storageContent = storageRecords.getResultList().stream()
                     .flatMap(storageInfo -> params.storageClientHelper.listStorageContent(storageInfo.getConnectionURL(),
                             storageInfo.getNumericId(),

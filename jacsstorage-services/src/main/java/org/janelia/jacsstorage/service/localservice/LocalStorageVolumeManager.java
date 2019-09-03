@@ -55,17 +55,17 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
             logLevel = "info"
     )
     @Override
-    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String storageHost) {
+    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String storageAgentId) {
         JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
         Predicate<JacsStorageVolume> canServeVolumePredicate = canServeVolume(localStorageAgent);
         if (validateStorageVolume(new JacsStorageVolumeBuilder()
                 .name(volumeName)
-                .shared(StringUtils.isBlank(storageHost))
-                .storageHost(storageHost)
+                .shared(StringUtils.isBlank(storageAgentId))
+                .storageAgentId(storageAgentId)
                 .build(),
                 canServeVolumePredicate,
                 Function.identity()) != null) {
-            return super.createStorageVolumeIfNotFound(volumeName, storageHost);
+            return super.createStorageVolumeIfNotFound(volumeName, storageAgentId);
         } else {
             return null;
         }
@@ -134,7 +134,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
                 return JacsStorageVolume.OVERFLOW_VOLUME.equals(storageVolume.getName()) ||
                         localStorageAgent.canServe(storageVolume.getName());
             } else {
-                return storageVolume.getStorageHost().equals(localStorageAgent.getAgentHost()) &&
+                return storageVolume.getStorageAgentId().equals(localStorageAgent.getAgentHost()) &&
                         localStorageAgent.canServe(storageVolume.getName());
             }
         };

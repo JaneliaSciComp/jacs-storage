@@ -55,7 +55,7 @@ public class DistributedStorageLookupService implements StorageLookupService {
     public PageResult<JacsBundle> findMatchingDataBundles(JacsBundle pattern, PageRequest pageRequest) {
         PageResult<JacsBundle> matchingBundles = bundleDao.findMatchingDataBundles(pattern, pageRequest);
         matchingBundles.getResultList().stream()
-                .filter(db -> !db.hasStorageHost())
+                .filter(db -> !db.hasStorageAgent())
                 .forEach(this::updateStorageVolume)
         ;
         return matchingBundles;

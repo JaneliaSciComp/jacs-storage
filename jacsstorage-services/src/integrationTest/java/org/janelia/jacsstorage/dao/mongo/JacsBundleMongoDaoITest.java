@@ -92,39 +92,40 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
     @Test
     public void findMatchingDataBundlesUsingAggregationOps() {
         String testHost = "testHost";
+        int testPort = 1000;
         String testUser = "user:user";
         String testName = "test";
         String testVolumeRootDir = "/mountPoint";
-        JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume(testHost, 1000,"vol", testVolumeRootDir, 100L));
+        JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume(testHost, testPort,"vol", testVolumeRootDir, 100L));
         JacsBundle testBundle1 = persistEntity(testDao, createTestEntity(testUser, testName + "1", storageVolume.getId(), "/tmp", 100L, 512, ImmutableMap.of("f1", 1, "f2", "v2")));
         JacsBundle testBundle2 = persistEntity(testDao, createTestEntity(testUser, testName + "2", storageVolume.getId(), "/tmp", 100L, 512, ImmutableMap.of("f1", 1, "f2", "v2")));
         ImmutableMap.Builder<JacsBundle, Integer> testDataBuilder = ImmutableMap.<JacsBundle, Integer>builder()
                 .put(new JacsBundleBuilder()
-                        .storageHost(testHost).build(), 2)
+                        .storageAgentId(testHost + ":" + testPort).build(), 2)
                 .put(new JacsBundleBuilder()
                         .path(testVolumeRootDir + "/" + testBundle1.getId().toString()).build(), 1)
                 .put(new JacsBundleBuilder()
                         .path(testVolumeRootDir + "/" + testBundle2.getId().toString()).build(), 1)
                 .put(new JacsBundleBuilder()
-                        .storageHost(testHost)
+                        .storageAgentId(testHost + ":" + testPort)
                         .name(testName + "1")
                         .path(testVolumeRootDir + "/" + testBundle1.getId().toString()).build(), 1)
                 .put(new JacsBundleBuilder()
                         .dataBundleId(testBundle2.getId())
-                        .storageHost(testHost)
+                        .storageAgentId(testHost + ":" + testPort)
                         .name(testName + "2")
                         .path(testVolumeRootDir + "/" + testBundle2.getId().toString()).build(), 1)
                 .put(new JacsBundleBuilder()
                         .dataBundleId(testBundle1.getId())
                         .name(testName + "1").build(), 1)
                 .put(new JacsBundleBuilder()
-                        .storageHost(testHost)
+                        .storageAgentId(testHost + ":" + testPort)
                         .name(testName + "1")
                         .path(testVolumeRootDir + "/" + testBundle2.getId().toString()).build(), 0)
                 ;
 
         testDataBuilder.build().forEach((filter, expectedResult) -> {
-            assertThat(testDao.findMatchingDataBundles(
+            assertThat(filter.toString(), testDao.findMatchingDataBundles(
                     filter,
                     new PageRequestBuilder().build()
             ).getResultList(), hasSize(expectedResult));
@@ -134,31 +135,32 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
     @Test
     public void countMatchingDataBundlesUsingAggregationOps() {
         String testHost = "testHost";
+        int testPort = 1000;
         String testUser = "user:user";
         String testName = "test";
         String testVolumeRootDir = "/mountPoint";
-        JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume(testHost, 1000,"vol", testVolumeRootDir, 100L));
+        JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume(testHost, testPort,"vol", testVolumeRootDir, 100L));
         JacsBundle testBundle1 = persistEntity(testDao, createTestEntity(testUser, testName + "1", storageVolume.getId(), "/tmp", 100L, 512, ImmutableMap.of("f1", 1, "f2", "v2")));
         JacsBundle testBundle2 = persistEntity(testDao, createTestEntity(testUser, testName + "2", storageVolume.getId(), "/tmp", 100L, 512, ImmutableMap.of("f1", 1, "f2", "v2")));
         ImmutableMap.Builder<JacsBundle, Long> testDataBuilder = ImmutableMap.<JacsBundle, Long>builder()
                 .put(new JacsBundleBuilder()
-                        .storageHost(testHost).build(), 2L)
+                        .storageAgentId(testHost + ":" + testPort).build(), 2L)
                 .put(new JacsBundleBuilder()
                         .path(testVolumeRootDir + "/" + testBundle1.getId().toString()).build(), 1L)
                 .put(new JacsBundleBuilder()
                         .path(testVolumeRootDir + "/" + testBundle2.getId().toString()).build(), 1L)
                 .put(new JacsBundleBuilder()
-                        .storageHost(testHost)
+                        .storageAgentId(testHost + ":" + testPort)
                         .name(testName + "1")
                         .path(testVolumeRootDir + "/" + testBundle1.getId().toString()).build(), 1L)
                 .put(new JacsBundleBuilder()
-                        .storageHost(testHost)
+                        .storageAgentId(testHost + ":" + testPort)
                         .name(testName + "2")
                         .path(testVolumeRootDir + "/" + testBundle2.getId().toString()).build(), 1L)
                 .put(new JacsBundleBuilder()
                         .name(testName + "1").build(), 1L)
                 .put(new JacsBundleBuilder()
-                        .storageHost(testHost)
+                        .storageAgentId(testHost + ":" + testPort)
                         .name(testName + "1")
                         .path(testVolumeRootDir + "/" + testBundle2.getId().toString()).build(), 0L);
 
@@ -186,7 +188,7 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
 
     private JacsStorageVolume createTestVolume(String host, int port, String volumeName, String storageRootDir, Long available) {
         JacsStorageVolume v = new JacsStorageVolume();
-        v.setStorageHost(host);
+        if (host != null) v.setStorageAgentId(host + ":" + port);
         v.setName(volumeName);
         v.setStorageRootTemplate(storageRootDir);
         v.setStorageVirtualPath(storageRootDir);

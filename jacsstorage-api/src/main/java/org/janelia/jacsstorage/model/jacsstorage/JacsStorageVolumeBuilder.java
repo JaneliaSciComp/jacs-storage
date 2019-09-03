@@ -17,8 +17,8 @@ public class JacsStorageVolumeBuilder {
         return this;
     }
 
-    public JacsStorageVolumeBuilder storageHost(String v) {
-        jacsStorageVolume.setStorageHost(v);
+    public JacsStorageVolumeBuilder storageAgentId(String v) {
+        jacsStorageVolume.setStorageAgentId(v);
         return this;
     }
 

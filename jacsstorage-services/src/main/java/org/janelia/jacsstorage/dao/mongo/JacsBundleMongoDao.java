@@ -139,15 +139,15 @@ public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements 
 
                     if (sv.isShared()) {
                         localPipelineBuilder.add(Aggregates.match(Filters.or(
-                                Filters.exists("storageVolume.storageHost", false),
-                                Filters.eq("storageVolume.storageHost", null)))
+                                Filters.exists("storageVolume.storageAgentId", false),
+                                Filters.eq("storageVolume.storageAgentId", null)))
                         );
-                    } else if (sv.getStorageHost() != null) {
-                        if (StringUtils.isBlank(sv.getStorageHost())) {
-                            localPipelineBuilder.add(Aggregates.match(Filters.exists("storageVolume.storageHost", true)));
-                            localPipelineBuilder.add(Aggregates.match(Filters.ne("storageVolume.storageHost", null)));
+                    } else if (sv.getStorageAgentId() != null) {
+                        if (StringUtils.isBlank(sv.getStorageAgentId())) {
+                            localPipelineBuilder.add(Aggregates.match(Filters.exists("storageVolume.storageAgentId", true)));
+                            localPipelineBuilder.add(Aggregates.match(Filters.ne("storageVolume.storageAgentId", null)));
                         } else {
-                            localPipelineBuilder.add(Aggregates.match(Filters.eq("storageVolume.storageHost", sv.getStorageHost())));
+                            localPipelineBuilder.add(Aggregates.match(Filters.eq("storageVolume.storageAgentId", sv.getStorageAgentId())));
                         }
                     }
                     if (StringUtils.isNotBlank(sv.getName())) {

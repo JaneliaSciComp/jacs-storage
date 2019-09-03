@@ -96,18 +96,18 @@ public class StorageClientImplHelper {
         }
     }
 
-    public PageResult<DataStorageInfo> listStorageRecords(String connectionURL, String storageHost, List<String> storageTags, Number bundleId, PageRequest request, String authToken) {
+    public PageResult<DataStorageInfo> listStorageRecords(String connectionURL, String storageAgent, List<String> storageTags, Number bundleId, PageRequest request, String authToken) {
         String storageEndpoint = "/storage";
         try {
             WebTarget target = httpClient.target(connectionURL).path(storageEndpoint);
             if (bundleId != null && !"0".equals(bundleId.toString())) {
                 target = target.queryParam("id", bundleId);
             }
-            if (StringUtils.isNotBlank(storageHost)) {
-                target = target.queryParam("storageHost", storageHost);
+            if (StringUtils.isNotBlank(storageAgent)) {
+                target = target.queryParam("storageAgent", storageAgent);
             }
             if (CollectionUtils.isNotEmpty(storageTags)) {
-                target = target.queryParam("storageTags", storageHost);
+                target = target.queryParam("storageTags", storageTags);
             }
             if (request.getPageNumber() > 0) {
                 target = target.queryParam("page", request.getPageNumber());

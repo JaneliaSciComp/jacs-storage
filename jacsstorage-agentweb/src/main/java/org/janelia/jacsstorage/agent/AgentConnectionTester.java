@@ -18,7 +18,7 @@ public class AgentConnectionTester implements ConnectionTester<AgentConnectionSt
     public AgentConnectionState testConnection(AgentConnectionState agentConnectionState) {
         if (StringUtils.isBlank(agentConnectionState.getMasterHttpURL())) {
             return new AgentConnectionState(
-                    agentConnectionState.getStorageHost(),
+                    agentConnectionState.getStorageAgentId(),
                     agentConnectionState.getMasterHttpURL(),
                     agentConnectionState.getAgentHttpURL(),
                     ConnectionState.Status.OPEN,
@@ -29,7 +29,7 @@ public class AgentConnectionTester implements ConnectionTester<AgentConnectionSt
             StorageAgentInfo registeredAgentInfo = AgentConnectionHelper.registerAgent(agentConnectionState.getMasterHttpURL(), agentConnectionState.toStorageAgentInfo(jacsStorageAgent.getServedVolumes()));
             if (registeredAgentInfo == null) {
                 return new AgentConnectionState(
-                        agentConnectionState.getStorageHost(),
+                        agentConnectionState.getStorageAgentId(),
                         agentConnectionState.getMasterHttpURL(),
                         agentConnectionState.getAgentHttpURL(),
                         ConnectionState.Status.OPEN,
@@ -37,7 +37,7 @@ public class AgentConnectionTester implements ConnectionTester<AgentConnectionSt
                         agentConnectionState.getRegisteredToken());
             } else {
                 return new AgentConnectionState(
-                        agentConnectionState.getStorageHost(),
+                        agentConnectionState.getStorageAgentId(),
                         agentConnectionState.getMasterHttpURL(),
                         agentConnectionState.getAgentHttpURL(),
                         ConnectionState.Status.CLOSED,
@@ -46,7 +46,7 @@ public class AgentConnectionTester implements ConnectionTester<AgentConnectionSt
             }
         } else {
             if (AgentConnectionHelper.findRegisteredAgent(agentConnectionState.getMasterHttpURL(), agentConnectionState.getAgentHttpURL()) == null) {
-                return new AgentConnectionState(agentConnectionState.getStorageHost(),
+                return new AgentConnectionState(agentConnectionState.getStorageAgentId(),
                         agentConnectionState.getMasterHttpURL(),
                         agentConnectionState.getAgentHttpURL(),
                         ConnectionState.Status.OPEN,

@@ -9,20 +9,20 @@ import org.janelia.jacsstorage.resilience.ConnectionState;
 
 public class AgentConnectionState implements ConnectionState {
 
-    private final String storageHost;
+    private final String storageAgentId;
     private final String masterHttpURL;
     private final String agentHttpURL;
     private Status connectStatus;
     private int connectionAttempts;
     private String registeredToken;
 
-    AgentConnectionState(String storageHost,
+    AgentConnectionState(String storageAgentId,
                          String masterHttpURL,
                          String agentHttpURL,
                          Status connectStatus,
                          int connectionAttempts,
                          String registeredToken) {
-        this.storageHost = storageHost;
+        this.storageAgentId = storageAgentId;
         this.masterHttpURL = masterHttpURL;
         this.agentHttpURL = agentHttpURL;
         this.connectStatus = connectStatus;
@@ -50,8 +50,8 @@ public class AgentConnectionState implements ConnectionState {
         this.connectionAttempts = connectionAttempts;
     }
 
-    String getStorageHost() {
-        return storageHost;
+    String getStorageAgentId() {
+        return storageAgentId;
     }
 
     String getMasterHttpURL() {
@@ -80,7 +80,7 @@ public class AgentConnectionState implements ConnectionState {
     }
 
     StorageAgentInfo toStorageAgentInfo(Set<String> servedVolumes) {
-        StorageAgentInfo agentInfo = new StorageAgentInfo(storageHost, agentHttpURL, servedVolumes);
+        StorageAgentInfo agentInfo = new StorageAgentInfo(storageAgentId, agentHttpURL, servedVolumes);
         if (this.isConnected()) {
             agentInfo.setConnectionStatus("CONNECTED");
         } else {

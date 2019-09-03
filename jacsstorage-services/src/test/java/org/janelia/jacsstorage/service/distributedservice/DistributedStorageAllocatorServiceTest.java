@@ -100,7 +100,7 @@ public class DistributedStorageAllocatorServiceTest {
                         new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .name("testVolumeName")
-                                .storageHost("testHost")
+                                .storageAgentId("testHost")
                                 .storageRootTemplate("/storage/${owner}")
                                 .storageServiceURL("http://agentURL")
                                 .build(),
@@ -129,7 +129,7 @@ public class DistributedStorageAllocatorServiceTest {
                         "",
                         new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
-                                .storageHost("testHost")
+                                .storageAgentId("testHost")
                                 .storageRootTemplate("/storage")
                                 .storageServiceURL("http://agentURL")
                                 .build(),

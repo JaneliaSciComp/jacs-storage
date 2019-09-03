@@ -40,8 +40,8 @@ public class DistributedStorageVolumeManager extends AbstractStorageVolumeManage
             logLevel = "info"
     )
     @Override
-    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String storageHost) {
-        JacsStorageVolume newStorageVolume = super.createStorageVolumeIfNotFound(volumeName, storageHost);
+    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String storageAgentId) {
+        JacsStorageVolume newStorageVolume = super.createStorageVolumeIfNotFound(volumeName, storageAgentId);
         storageHelper.updateStorageServiceInfo(newStorageVolume);
         return newStorageVolume;
     }

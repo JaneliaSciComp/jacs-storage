@@ -9,23 +9,23 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 
 public class StorageAgentInfo {
 
-    private final String agentHost;
+    private final String agentId;
     private final String agentAccessURL;
     private String connectionStatus;
     private String agentToken;
     private Set<String> servedVolumes;
 
     @JsonCreator
-    public StorageAgentInfo(@JsonProperty("agentHost") String agentHost,
+    public StorageAgentInfo(@JsonProperty("agentId") String agentId,
                             @JsonProperty("agentAccessURL") String agentAccessURL,
                             @JsonProperty("servedVolumes") Set<String> servedVolumes) {
-        this.agentHost = agentHost;
+        this.agentId = agentId;
         this.agentAccessURL = agentAccessURL;
         this.servedVolumes = servedVolumes;
     }
 
-    public String getAgentHost() {
-        return agentHost;
+    public String getAgentId() {
+        return agentId;
     }
 
     public String getAgentAccessURL() {
@@ -56,14 +56,14 @@ public class StorageAgentInfo {
         if (storageVolume.isShared()) {
             return servedVolumes.contains("*") || servedVolumes.contains(storageVolume.getName());
         } else {
-            return agentHost.equals(storageVolume.getStorageHost());
+            return agentId.equals(storageVolume.getStorageAgentId());
         }
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("agentHost", agentHost)
+                .append("agentId", agentId)
                 .append("agentAccessURL", agentAccessURL)
                 .append("agentToken", agentToken)
                 .append("connectionStatus", connectionStatus)

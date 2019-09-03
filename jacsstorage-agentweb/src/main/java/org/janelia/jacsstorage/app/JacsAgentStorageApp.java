@@ -90,7 +90,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
             // bootstrap storage volumes if needed
             if (agentArgs.bootstrapStorageVolumes) {
                 StorageVolumeBootstrapper volumeBootstrapper = container.select(StorageVolumeBootstrapper.class).get();
-                volumeBootstrapper.initializeStorageVolumes(configuredAgentHost);
+                volumeBootstrapper.initializeStorageVolumes(storageAgentId);
             }
             // update agent state
             agentState.configureAgentServedVolumes();

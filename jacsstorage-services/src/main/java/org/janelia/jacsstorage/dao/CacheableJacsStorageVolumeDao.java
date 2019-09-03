@@ -37,8 +37,8 @@ public class CacheableJacsStorageVolumeDao extends AbstractCacheableEntityByIdDa
     }
 
     @Override
-    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String hostName) {
-        return getDelegator().createStorageVolumeIfNotFound(volumeName, hostName);
+    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String agentId) {
+        return getDelegator().createStorageVolumeIfNotFound(volumeName, agentId);
     }
 
     @Override

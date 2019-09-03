@@ -240,8 +240,8 @@ public class JacsBundle extends AbstractEntity {
         return getStorageVolume();
     }
 
-    public boolean hasStorageHost() {
-        return storageVolume != null && StringUtils.isNotBlank(storageVolume.getStorageHost());
+    public boolean hasStorageAgent() {
+        return storageVolume != null && StringUtils.isNotBlank(storageVolume.getStorageAgentId());
     }
 
     @JsonProperty("referencedVolumes")

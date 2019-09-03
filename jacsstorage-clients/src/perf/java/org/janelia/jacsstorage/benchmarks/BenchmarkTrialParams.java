@@ -33,7 +33,7 @@ public class BenchmarkTrialParams {
     @Param({""})
     String storageContext;
     @Param({""})
-    String storageHost;
+    String storageAgentId;
     @Param({""})
     private String storageTags;
     @Param({""})
@@ -55,9 +55,9 @@ public class BenchmarkTrialParams {
         if (StringUtils.isNotBlank(storageContextParam)) {
             storageContext = storageContextParam;
         }
-        String storageHostParam = params.getParam("storageHost");
-        if (StringUtils.isNotBlank(storageHostParam)) {
-            storageHost = storageHostParam;
+        String storageAgentIdParam = params.getParam("storageAgentId");
+        if (StringUtils.isNotBlank(storageAgentIdParam)) {
+            storageAgentId = storageAgentIdParam;
         }
         String storageTagsParam = params.getParam("storageTags");
         if (StringUtils.isNotBlank(storageTagsParam)) {

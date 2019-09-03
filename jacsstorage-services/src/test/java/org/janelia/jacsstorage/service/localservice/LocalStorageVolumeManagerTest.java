@@ -64,11 +64,11 @@ public class LocalStorageVolumeManagerTest {
         Mockito.when(storageVolumeDao.findMatchingVolumes(any(StorageQuery.class), any(PageRequest.class)))
                 .then(invocation -> {
                             StorageQuery q = invocation.getArgument(0);
-                            if (TEST_HOST.equals(q.getAccessibleOnHost())) {
+                            if (TEST_HOST.equals(q.getAccessibleOnAgent())) {
                                 return new PageResult<>(invocation.getArgument(1), ImmutableList.of(
                                         new JacsStorageVolumeBuilder()
                                                 .name("v1")
-                                                .storageHost(TEST_HOST)
+                                                .storageAgentId(TEST_HOST)
                                                 .storageRootTemplate("/root/testDir")
                                                 .addTag("t1").addTag("t2")
                                                 .storageServiceURL("http://storageURL")
@@ -79,7 +79,7 @@ public class LocalStorageVolumeManagerTest {
                                 return new PageResult<>(invocation.getArgument(1), ImmutableList.of(
                                         new JacsStorageVolumeBuilder()
                                                 .name("v1")
-                                                .storageHost(TEST_HOST)
+                                                .storageAgentId(TEST_HOST)
                                                 .storageRootTemplate("/root/testDir")
                                                 .addTag("t1").addTag("t2")
                                                 .storageServiceURL("http://storageURL")
@@ -151,7 +151,7 @@ public class LocalStorageVolumeManagerTest {
     public void updateVolumeWhenIdIsNotKnown() {
         final String testHost = "TheTestHost";
         JacsStorageVolume testVolume = new JacsStorageVolumeBuilder()
-                .storageHost(testHost)
+                .storageAgentId(testHost)
                 .storageRootTemplate("/root/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
@@ -159,7 +159,7 @@ public class LocalStorageVolumeManagerTest {
                 .build();
         JacsStorageVolume newlyCreatedTestVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
-                .storageHost(testHost)
+                .storageAgentId(testHost)
                 .name(testVolume.getName())
                 .build();
 
@@ -187,10 +187,10 @@ public class LocalStorageVolumeManagerTest {
 
     @Test
     public void updateVolumeWhenIdIsKnown() {
-        final String testHost = "TheTestHost";
+        final String testAgentId = "TheTestHost";
         JacsStorageVolume testVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
-                .storageHost(testHost)
+                .storageAgentId(testAgentId)
                 .storageRootTemplate("/root/testDir")
                 .storageVirtualPath("/testDir")
                 .addTag("t1").addTag("t2")
@@ -201,7 +201,7 @@ public class LocalStorageVolumeManagerTest {
 
         JacsStorageVolume updatedTestVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
-                .storageHost(testHost)
+                .storageAgentId(testAgentId)
                 .storageRootTemplate("/root/testDir")
                 .storageVirtualPath("/testDir")
                 .addTag("t1").addTag("t2").addTag("t3")
@@ -225,9 +225,9 @@ public class LocalStorageVolumeManagerTest {
 
     @Test
     public void updateSharedVolumeWhenIdIsNotKnown() {
-        final String testHost = "TheTestHost";
+        final String testAgentId = "TheTestHost";
         JacsStorageVolume testVolume = new JacsStorageVolumeBuilder()
-                .storageHost(testHost)
+                .storageAgentId(testAgentId)
                 .storageRootTemplate("/root/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
@@ -236,7 +236,7 @@ public class LocalStorageVolumeManagerTest {
         TestDiskUsage diskUsage = new TestDiskUsage(199L, 300L);
         JacsStorageVolume newlyCreatedTestVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
-                .storageHost(testHost)
+                .storageAgentId(testAgentId)
                 .availableSpace(diskUsage.usableSpace)
                 .percentageFull(diskUsage.usagePercentage)
                 .name(testVolume.getName())
@@ -259,12 +259,12 @@ public class LocalStorageVolumeManagerTest {
 
     @Test
     public void updateSharedVolumeWhenIdIsKnown() {
-        final String testHost = "TheTestHost";
+        final String testAgentId = "TheTestHost";
         TestDiskUsage diskUsage = new TestDiskUsage(199L, 300L);
         JacsStorageVolume testVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
                 .name("v1")
-                .storageHost(testHost)
+                .storageAgentId(testAgentId)
                 .storageRootTemplate("/root/testDir")
                 .storageVirtualPath("/testDir")
                 .availableSpace(diskUsage.usableSpace)
