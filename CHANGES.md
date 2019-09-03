@@ -1,3 +1,5 @@
+* use host and port to lookup local storage
+# 1.12.1.RELEASE
 # 1.10.0.RELEASE
 
 * added /authenticated and /unauthenticated mappings for the REST servlet
