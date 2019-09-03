@@ -114,10 +114,10 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
                         Filters.eq("storageAgentId", null)
                 ));
             }
-        } else if (storageQuery.isLocalToAnyAgent() || CollectionUtils.isNotEmpty(storageQuery.getStorageAgents())) {
-            if (CollectionUtils.isNotEmpty(storageQuery.getStorageAgents())) {
+        } else if (storageQuery.isLocalToAnyAgent() || CollectionUtils.isNotEmpty(storageQuery.getStorageAgentIds())) {
+            if (CollectionUtils.isNotEmpty(storageQuery.getStorageAgentIds())) {
                 // this queries for volumes accessible only locally on the specified hosts
-                filtersBuilder.add(Filters.in("storageAgentId", storageQuery.getStorageAgents()));
+                filtersBuilder.add(Filters.in("storageAgentId", storageQuery.getStorageAgentIds()));
             } else {
                 // this queries for volumes accessible only locally on the corresponding hosts
                 filtersBuilder.add(Filters.exists("storageAgentId", true)); // the storageAgentId must be set
@@ -160,14 +160,14 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         if (StringUtils.isNotBlank(storageQuery.getStorageVirtualPath())) {
             filtersBuilder.add(Filters.eq("storageVirtualPath", storageQuery.getStorageVirtualPath()));
         }
-        if (CollectionUtils.isNotEmpty(storageQuery.getStorageAgents())) {
+        if (CollectionUtils.isNotEmpty(storageQuery.getStorageAgentURLs())) {
             if (storageQuery.isShared()) {
                 filtersBuilder.add(Filters.or(
                         Filters.exists("storageServiceURL", false), // the storage host should not be set
                         Filters.eq("storageServiceURL", null)
                 )); // the storageServiceURL must not be set
             } else if (storageQuery.isLocalToAnyAgent()) {
-                filtersBuilder.add(Filters.in("storageServiceURL", storageQuery.getStorageAgents()));
+                filtersBuilder.add(Filters.in("storageServiceURL", storageQuery.getStorageAgentURLs()));
             }
         }
         if (CollectionUtils.isNotEmpty(storageQuery.getStorageTags())) {

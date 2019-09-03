@@ -29,7 +29,7 @@ public class RandomSharedStorageVolumeSelector implements StorageVolumeSelector 
     public JacsStorageVolume selectStorageVolume(JacsBundle storageRequest) {
         StorageQuery storageQuery = new StorageQuery()
                 .setShared(true)
-                .setStorageAgents(availableServicesURLs);
+                .setStorageAgentURLs(availableServicesURLs);
         storageRequest.getStorageVolume()
                 .ifPresent(sv -> {
                     storageQuery.setId(sv.getId());

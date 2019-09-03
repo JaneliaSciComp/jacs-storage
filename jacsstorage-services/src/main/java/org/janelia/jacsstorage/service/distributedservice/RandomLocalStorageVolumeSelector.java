@@ -18,21 +18,21 @@ public class RandomLocalStorageVolumeSelector implements StorageVolumeSelector {
     private static final Random RANDOM_SELECTOR = new Random(System.currentTimeMillis());
 
     private final JacsStorageVolumeDao storageVolumeDao;
-    private final List<String> availableAgents;
+    private final List<String> availableAgentIds;
     private final List<String> availableServicesURLs;
 
-    RandomLocalStorageVolumeSelector(JacsStorageVolumeDao storageVolumeDao, List<String> availableAgents, List<String> availableServicesURLs) {
+    RandomLocalStorageVolumeSelector(JacsStorageVolumeDao storageVolumeDao, List<String> availableAgentIds, List<String> availableServicesURLs) {
         this.storageVolumeDao = storageVolumeDao;
-        this.availableAgents = availableAgents;
+        this.availableAgentIds = availableAgentIds;
         this.availableServicesURLs = availableServicesURLs;
     }
 
     @Override
     public JacsStorageVolume selectStorageVolume(JacsBundle storageRequest) {
         StorageQuery storageQuery = new StorageQuery()
-                .setStorageAgents(availableAgents)
+                .setStorageAgentIds(availableAgentIds)
                 .setLocalToAnyAgent(true)
-                .setStorageAgents(availableServicesURLs);
+                .setStorageAgentURLs(availableServicesURLs);
         storageRequest.getStorageVolume()
                 .ifPresent(sv -> {
                     storageQuery.setId(sv.getId());

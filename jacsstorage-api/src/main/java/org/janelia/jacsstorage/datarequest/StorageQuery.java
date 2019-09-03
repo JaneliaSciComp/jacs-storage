@@ -14,7 +14,8 @@ public class StorageQuery {
     private boolean localToAnyAgent;
     private String dataStoragePath;
     private String accessibleOnAgent;
-    private List<String> storageAgents;
+    private List<String> storageAgentIds;
+    private List<String> storageAgentURLs;
     private String storageName;
     private String storageVirtualPath;
     private List<String> storageTags;
@@ -66,20 +67,37 @@ public class StorageQuery {
         return this;
     }
 
-    public List<String> getStorageAgents() {
-        return storageAgents;
+    public List<String> getStorageAgentIds() {
+        return storageAgentIds;
     }
 
-    public StorageQuery setStorageAgents(List<String> storageAgents) {
-        this.storageAgents = storageAgents;
+    public StorageQuery setStorageAgentIds(List<String> storageAgentIds) {
+        this.storageAgentIds = storageAgentIds;
         return this;
     }
 
-    public StorageQuery addStorageAgent(String storageAgent) {
-        if (storageAgents == null) {
-            storageAgents = new ArrayList<>();
+    public StorageQuery addStorageAgentId(String storageAgentId) {
+        if (storageAgentIds == null) {
+            storageAgentIds = new ArrayList<>();
         }
-        if (StringUtils.isNotBlank(storageAgent)) storageAgents.add(storageAgent);
+        if (StringUtils.isNotBlank(storageAgentId)) storageAgentIds.add(storageAgentId);
+        return this;
+    }
+
+    public List<String> getStorageAgentURLs() {
+        return storageAgentURLs;
+    }
+
+    public StorageQuery setStorageAgentURLs(List<String> storageAgentURLs) {
+        this.storageAgentURLs = storageAgentURLs;
+        return this;
+    }
+
+    public StorageQuery addStorageAgentURL(String storageAgentURL) {
+        if (storageAgentURLs == null) {
+            storageAgentURLs = new ArrayList<>();
+        }
+        if (StringUtils.isNotBlank(storageAgentURL)) storageAgentURLs.add(storageAgentURL);
         return this;
     }
 
@@ -146,7 +164,8 @@ public class StorageQuery {
                 .append(id, that.id)
                 .append(dataStoragePath, that.dataStoragePath)
                 .append(accessibleOnAgent, that.accessibleOnAgent)
-                .append(storageAgents, that.storageAgents)
+                .append(storageAgentIds, that.storageAgentIds)
+                .append(storageAgentURLs, that.storageAgentURLs)
                 .append(storageName, that.storageName)
                 .append(storageVirtualPath, that.storageVirtualPath)
                 .append(storageTags, that.storageTags)
@@ -162,7 +181,8 @@ public class StorageQuery {
                 .append(localToAnyAgent)
                 .append(dataStoragePath)
                 .append(accessibleOnAgent)
-                .append(storageAgents)
+                .append(storageAgentIds)
+                .append(storageAgentURLs)
                 .append(storageName)
                 .append(storageVirtualPath)
                 .append(storageTags)
@@ -178,7 +198,8 @@ public class StorageQuery {
                 .append("localToAnyAgent", localToAnyAgent)
                 .append("dataStoragePath", dataStoragePath)
                 .append("accessibleOnAgent", accessibleOnAgent)
-                .append("storageAgents", storageAgents)
+                .append("storageAgentIds", storageAgentIds)
+                .append("storageAgentURLs", storageAgentURLs)
                 .append("storageName", storageName)
                 .append("storageVirtualPath", storageVirtualPath)
                 .append("storageTags", storageTags)

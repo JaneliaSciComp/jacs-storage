@@ -152,7 +152,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
                                 new String[]{"sv1", "sv2", "sv3"})
                         .put(new StorageQuery().setLocalToAnyAgent(true),
                                 new String[]{"v1", "v2", "v3"})
-                        .put(new StorageQuery().addStorageAgent("h1:10").addStorageAgent("h3:10"),
+                        .put(new StorageQuery().addStorageAgentId("h1:10").addStorageAgentId("h3:10"),
                                 new String[]{"v1", "v3"})
                         .put(new StorageQuery().setDataStoragePath("/sv1/folder"),
                                 new String[]{"sv1"})
