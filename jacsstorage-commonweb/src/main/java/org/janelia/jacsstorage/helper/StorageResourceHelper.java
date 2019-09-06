@@ -183,7 +183,7 @@ public class StorageResourceHelper {
                         fileSize = 0;
                     }
                     return Response.ok()
-                            .header("Content-Length", fileSize);
+                            .header("Content-Length", fileSize > 0 ? fileSize : null);
                 })
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND)
@@ -214,7 +214,7 @@ public class StorageResourceHelper {
                     };
                     return Response
                             .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-                            .header("Content-Length", fileSize)
+                            .header("Content-Length", fileSize > 0 ? fileSize : null)
                             .header("Content-Disposition", "attachment; filename = " + dataEntryPath.getFileName())
                             ;
                 })
@@ -275,7 +275,7 @@ public class StorageResourceHelper {
         };
         return Response
                 .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)
-                .header("Content-Length", fileSize)
+                .header("Content-Length", fileSize > 0 ? fileSize : null)
                 .header("Content-Disposition", "attachment; filename = " + JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()) + "-" + dataBundle.getName() + "/" + dataEntryPath)
                 ;
     }
