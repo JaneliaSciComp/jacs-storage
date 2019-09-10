@@ -93,6 +93,9 @@ project(":jacsstorage-masterweb") {
         from(new File(project(':jacsstorage-commonweb').projectDir, 'src/main/install/etc')) {
             into "etc"
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
+            if (project.hasProperty('externalConfig')) {
+                rename '(.*)config.properties', '$1default-config.bak'
+            }
         }
 
         from ("${buildDir}/install/${project.name}/bin") {
