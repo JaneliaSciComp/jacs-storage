@@ -119,6 +119,17 @@ project(":jacsstorage-masterweb") {
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
+        if (project.hasProperty('externalConfig')) {
+            def externalConfigFile = new File("${externalConfig}")
+            from (externalConfigFile) {
+                into "etc"
+                filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
+                rename { fileName ->
+                    'config.properties'
+                }
+            }
+        }
+
         link("${systemServiceDir}/multi-user.target.wants/${project.name}.service", "${systemServiceDir}/${project.name}.service")
     }
 }
