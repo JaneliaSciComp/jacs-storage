@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.Path;
@@ -226,4 +227,39 @@ public class VolumeStorageResource {
                         .status(Response.Status.NOT_FOUND).build())
                 ;
     }
+
+    @ApiOperation(value = "Delete specified data file identified by the relative path to the volume mount point.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 204, message = "The delete was successfull"),
+            @ApiResponse(code = 404, message = "Invalid volume identifier or invalid file path"),
+            @ApiResponse(code = 500, message = "Data delete error")
+    })
+    @DELETE
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
+    public Response deleteDataContentFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
+                                                       @PathParam("storageRelativePath") String storageRelativeFilePath) {
+        LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
+        JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
+        if (storageVolume == null) {
+            LOG.warn("No volume found for {}", storageVolumeId);
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+        if (storageVolume.hasPermission(JacsStoragePermission.DELETE)) {
+            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+            return storageResourceHelper.removeFileContentFromVolume(storageVolume, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).build();
+        } else {
+            LOG.warn("Attempt to read {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
+            return Response
+                    .status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+    }
+
 }

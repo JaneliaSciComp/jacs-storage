@@ -188,7 +188,7 @@ public class ContentStorageResource {
                 .map(storageVolume -> {
                     URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
                             .path("agent_storage")
-                            .path("storage_path")
+                            .path("storage_path/data_content")
                             .path(storagePathURI.toString())
                             .build();
                     LOG.info("Redirect to {} to delete {}", redirectURI, filePathParam);
