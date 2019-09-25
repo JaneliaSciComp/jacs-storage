@@ -119,9 +119,7 @@ public class ContentStorageResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @Path("storage_path_redirect/{filePath:.+}")
-    public Response redirectForContent(@PathParam("filePath") String filePathParam,
-                                       @Context UriInfo requestURI,
-                                       @Context SecurityContext securityContext) {
+    public Response redirectForContent(@PathParam("filePath") String filePathParam, @Context UriInfo requestURI) {
         LOG.info("Redirecting to agent for getting content of {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
