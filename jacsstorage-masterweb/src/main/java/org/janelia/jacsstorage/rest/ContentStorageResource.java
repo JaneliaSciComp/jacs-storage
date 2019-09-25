@@ -9,6 +9,7 @@ import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
@@ -177,6 +178,7 @@ public class ContentStorageResource {
             @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
             @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
     })
+    @RequireAuthentication
     @DELETE
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path_redirect/{filePath:.+}")
