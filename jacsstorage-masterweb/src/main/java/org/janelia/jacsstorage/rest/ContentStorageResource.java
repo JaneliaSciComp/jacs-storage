@@ -182,7 +182,7 @@ public class ContentStorageResource {
     @DELETE
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path_redirect/{filePath:.+}")
-    public Response redirectForDeleteContent(@PathParam("filePath") String filePathParam) {
+    public Response redirectForDeleteContent(@PathParam("filePath") String filePathParam, @Context SecurityContext securityContext) {
         LOG.info("Redirect to agent for deleting content of {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
         StoragePathURI storagePathURI = StoragePathURI.createAbsolutePathURI(filePathParam);
