@@ -62,8 +62,7 @@ public class ContentStorageResource {
     @Path("storage_path_redirect/{filePath:.+}")
     public Response redirectForContentCheck(@PathParam("filePath") String filePathParam,
                                             @QueryParam("directoryOnly") Boolean directoryOnlyParam,
-                                            @Context UriInfo requestURI,
-                                            @Context SecurityContext securityContext) {
+                                            @Context UriInfo requestURI) {
         LOG.info("Check {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
@@ -180,7 +179,7 @@ public class ContentStorageResource {
     @DELETE
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path_redirect/{filePath:.+}")
-    public Response redirectForDeleteContent(@PathParam("filePath") String filePathParam, @Context SecurityContext securityContext) {
+    public Response redirectForDeleteContent(@PathParam("filePath") String filePathParam, @Context UriInfo requestURI) {
         LOG.info("Redirect to agent for deleting content of {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
         StoragePathURI storagePathURI = StoragePathURI.createAbsolutePathURI(filePathParam);
@@ -190,6 +189,7 @@ public class ContentStorageResource {
                             .path("agent_storage")
                             .path("storage_path/data_content")
                             .path(storagePathURI.toString())
+                            .replaceQuery(requestURI.getRequestUri().getRawQuery())
                             .build();
                     LOG.info("Redirect to {} to delete {}", redirectURI, filePathParam);
                     return Response.temporaryRedirect(redirectURI).build();
