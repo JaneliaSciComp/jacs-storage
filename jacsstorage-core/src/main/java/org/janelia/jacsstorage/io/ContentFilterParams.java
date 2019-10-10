@@ -13,11 +13,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ContentFilterParams {
+
+    private static final int DEFAULT_DEPTH = 1;
+
     private String filterType;
     private Set<String> selectedEntries = new HashSet<>();
     private String entryNamePattern;
     private Pattern regexEntryNamePattern;
-    private int maxDepth = -1;
+    private int maxDepth = DEFAULT_DEPTH;
     private Map<String, String> filterTypeSpecificParams = new HashMap<>();
 
     public String getFilterType() {
@@ -33,33 +36,37 @@ public class ContentFilterParams {
         return selectedEntries;
     }
 
-    public void addSelectedEntries(Collection<String> selectedEntries) {
+    public ContentFilterParams addSelectedEntries(Collection<String> selectedEntries) {
         this.selectedEntries.addAll(selectedEntries);
+        return this;
     }
 
     public String getEntryNamePattern() {
         return entryNamePattern;
     }
 
-    public void setEntryNamePattern(String entryNamePattern) {
+    public ContentFilterParams setEntryNamePattern(String entryNamePattern) {
         this.entryNamePattern = entryNamePattern;
         if (StringUtils.isNotBlank(entryNamePattern)) {
             regexEntryNamePattern = Pattern.compile(entryNamePattern);
         }
+        return this;
     }
 
     public int getMaxDepth() {
         return maxDepth;
     }
 
-    public void setMaxDepth(int maxDepth) {
+    public ContentFilterParams setMaxDepth(int maxDepth) {
         this.maxDepth = maxDepth;
+        return this;
     }
 
-    public void addFilterTypeSpecificParam(String name, String value) {
+    public ContentFilterParams addFilterTypeSpecificParam(String name, String value) {
         if (StringUtils.isNotBlank(value)) {
             filterTypeSpecificParams.put(name, value);
         }
+        return this;
     }
 
     public String getAsString(String filterParam, String defaultValue) {

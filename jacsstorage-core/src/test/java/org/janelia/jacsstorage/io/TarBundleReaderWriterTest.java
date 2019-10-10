@@ -84,7 +84,7 @@ public class TarBundleReaderWriterTest {
     private Path createTestTarFile() throws IOException {
         Path testTarFilePath = testDirectory.resolve("tarBundle.tar");
         try(OutputStream testOutputStream = new FileOutputStream(testTarFilePath.toFile())) {
-            dataDirectoryBundleReader.readBundle(TEST_DATA_DIRECTORY, new ContentFilterParams(), testOutputStream);
+            dataDirectoryBundleReader.readBundle(TEST_DATA_DIRECTORY, new ContentFilterParams().setMaxDepth(10), testOutputStream);
         }
         return testTarFilePath;
     }
@@ -148,9 +148,9 @@ public class TarBundleReaderWriterTest {
         );
         for (String td : testData) {
             ByteArrayOutputStream referenceOutputStream = new ByteArrayOutputStream();
-            dataDirectoryBundleReader.readBundle(TEST_DATA_DIRECTORY + "/" + td, new ContentFilterParams(), referenceOutputStream);
+            dataDirectoryBundleReader.readBundle(TEST_DATA_DIRECTORY + "/" + td, new ContentFilterParams().setMaxDepth(5), referenceOutputStream);
             ByteArrayOutputStream testDataEntryStream = new ByteArrayOutputStream();
-            tarBundleReader.readDataEntry(testTarFile.toString(), td, new ContentFilterParams(), testDataEntryStream);
+            tarBundleReader.readDataEntry(testTarFile.toString(), td, new ContentFilterParams().setMaxDepth(5), testDataEntryStream);
             assertEquals("Expected arrays to have the same length for " + td, referenceOutputStream.toByteArray().length, testDataEntryStream.toByteArray().length);
             assertArrayEquals("Expected condition not met for " + td, referenceOutputStream.toByteArray(), testDataEntryStream.toByteArray());
         }
@@ -171,7 +171,7 @@ public class TarBundleReaderWriterTest {
             ByteArrayOutputStream referenceOutputStream = new ByteArrayOutputStream();
             Files.copy(Paths.get(TEST_DATA_DIRECTORY, td), referenceOutputStream);
             ByteArrayOutputStream testDataEntryStream = new ByteArrayOutputStream();
-            tarBundleReader.readDataEntry(testTarFile.toString(), td, new ContentFilterParams(), testDataEntryStream);
+            tarBundleReader.readDataEntry(testTarFile.toString(), td, new ContentFilterParams().setMaxDepth(10), testDataEntryStream);
             assertArrayEquals("Expected condition not met for " + td, referenceOutputStream.toByteArray(), testDataEntryStream.toByteArray());
         }
     }

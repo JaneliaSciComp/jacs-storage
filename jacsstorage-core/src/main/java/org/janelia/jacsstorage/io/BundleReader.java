@@ -25,8 +25,6 @@ public interface BundleReader {
      * @param source bundle
      * @param entryName
      * @param depth
-     * @param offet
-     * @param length
      * @return
      */
     Stream<DataNodeInfo> streamBundleContent(String source, String entryName, int depth);

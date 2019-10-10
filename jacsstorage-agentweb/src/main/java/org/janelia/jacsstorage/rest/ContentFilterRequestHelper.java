@@ -19,7 +19,7 @@ class ContentFilterRequestHelper {
                     filterParams.addSelectedEntries(vs);
             } else if ("maxDepth".equalsIgnoreCase(k)) {
                 if (CollectionUtils.isNotEmpty(vs)) {
-                    filterParams.setMaxDepth(vs.stream().filter(s -> StringUtils.isNotBlank(s)).map(s -> Integer.valueOf(s)).findFirst().orElse(-1));
+                    filterParams.setMaxDepth(vs.stream().filter(s -> StringUtils.isNotBlank(s)).map(s -> Integer.valueOf(s)).findFirst().orElse(1));
                 }
             } else if ("entryPattern".equalsIgnoreCase(k)) {
                 if (CollectionUtils.isNotEmpty(vs))
