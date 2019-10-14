@@ -146,7 +146,7 @@ public class UndertowAppContainer implements AppContainer {
                 .addHttpListener(serverAppArgs.portNumber, serverAppArgs.host)
                 .setIoThreads(serverAppArgs.nIOThreads)
                 .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, true)
-                .setSocketOption(Options.WRITE_TIMEOUT, serverAppArgs.serverResponseTimeoutInMillis)
+                .setSocketOption(Options.WRITE_TIMEOUT, serverAppArgs.serverResponseTimeoutInSeconds * 1000)
                 .setWorkerThreads(serverAppArgs.nWorkers)
                 .setHandler(storageHandler)
                 .build();

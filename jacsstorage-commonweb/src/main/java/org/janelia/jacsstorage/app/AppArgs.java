@@ -20,8 +20,8 @@ public class AppArgs {
     public int nIOThreads = 64;
     @Parameter(names = "-nworkers", description = "Number of worker threads")
     public int nWorkers = 64 * 8;
-    @Parameter(names = "-responseTimeout", description = "Server response write timeout in milliseconds")
-    public int serverResponseTimeoutInMillis = 120 * 1000;
+    @Parameter(names = "-responseTimeout", description = "Server response write timeout in seconds")
+    public int serverResponseTimeoutInSeconds = 120;
     @Parameter(names = "-appId", description = "application ID")
     String applicationId;
     @Parameter(names = "-h", description = "Display help", arity = 0)
