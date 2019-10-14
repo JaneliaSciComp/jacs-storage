@@ -41,6 +41,7 @@ import org.jboss.weld.module.web.servlet.WeldInitialListener;
 import org.jboss.weld.module.web.servlet.WeldTerminalListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xnio.Options;
 
 import static io.undertow.Handlers.resource;
 import static io.undertow.servlet.Servlets.servlet;
@@ -145,6 +146,7 @@ public class UndertowAppContainer implements AppContainer {
                 .addHttpListener(serverAppArgs.portNumber, serverAppArgs.host)
                 .setIoThreads(serverAppArgs.nIOThreads)
                 .setServerOption(UndertowOptions.RECORD_REQUEST_START_TIME, true)
+                .setSocketOption(Options.WRITE_TIMEOUT, serverAppArgs.serverResponseTimeoutInMillis)
                 .setWorkerThreads(serverAppArgs.nWorkers)
                 .setHandler(storageHandler)
                 .build();
