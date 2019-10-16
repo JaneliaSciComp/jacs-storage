@@ -105,7 +105,7 @@ public class ContentStorageResource {
      * Redirect to the agent URL for retrieving the content using the file path.
      *
      * @param filePathParam
-     * @param securityContext
+     * @param requestURI
      * @return
      */
     @ApiOperation(value = "Get file content",
