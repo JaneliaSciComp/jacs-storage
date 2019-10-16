@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service.localservice;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
@@ -61,6 +62,11 @@ public class LocalStorageVolumeManagerTest {
 
     @Test
     public void mangedVolumes() {
+        PowerMockito.mockStatic(Files.class);
+        Mockito.when(Files.exists(Paths.get("/root/testDir"))).thenReturn(true);
+        Mockito.when(Files.exists(Paths.get("/root/testSharedDir"))).thenReturn(true);
+        Mockito.when(Files.exists(Paths.get("/root/notAccessible"))).thenReturn(false);
+
         Mockito.when(storageVolumeDao.findMatchingVolumes(any(StorageQuery.class), any(PageRequest.class)))
                 .then(invocation -> {
                             StorageQuery q = invocation.getArgument(0);
@@ -89,6 +95,14 @@ public class LocalStorageVolumeManagerTest {
                                                 .name("v1")
                                                 .shared(true)
                                                 .storageRootTemplate("/root/testSharedDir")
+                                                .addTag("t1").addTag("t2")
+                                                .storageServiceURL("http://storageURL")
+                                                .percentageFull(20)
+                                                .build(),
+                                        new JacsStorageVolumeBuilder()
+                                                .name("v1")
+                                                .storageAgentId(TEST_HOST)
+                                                .storageRootTemplate("/root/notAccessible")
                                                 .addTag("t1").addTag("t2")
                                                 .storageServiceURL("http://storageURL")
                                                 .percentageFull(20)
