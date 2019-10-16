@@ -63,8 +63,9 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
                 .shared(StringUtils.isBlank(storageAgentId))
                 .storageAgentId(storageAgentId)
                 .build(),
-                canServeVolume(localStorageAgent).and(canAccessVolume()),
+                canServeVolume(localStorageAgent),
                 Function.identity()) != null) {
+            // only create the volume if it can be served by this agent instance
             return super.createStorageVolumeIfNotFound(volumeName, storageAgentId);
         } else {
             return null;
@@ -139,7 +140,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     }
 
     private Predicate<JacsStorageVolume> canAccessVolume() {
-        return storageVolume -> Files.exists(Paths.get(storageVolume.getBaseStorageRootDir()));
+        return storageVolume -> StringUtils.isNotBlank(storageVolume.getBaseStorageRootDir()) && Files.exists(Paths.get(storageVolume.getBaseStorageRootDir()));
     }
 
     private JacsStorageVolume fillAccessInfo(JacsStorageVolume storageVolume, JacsStorageAgent storageAgent) {
