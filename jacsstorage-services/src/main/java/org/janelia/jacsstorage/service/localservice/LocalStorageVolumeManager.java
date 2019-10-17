@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalStorageVolumeManager.class);
+    private static final JacsStorageAgent NO_STORAGE_AGENT = new JacsStorageAgent();
 
     private final AgentStatePersistence storageAgentPersistence;
 
@@ -123,6 +124,8 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         JacsStorageVolume updatedStorageVolume = super.updateVolumeInfo(volumeId, storageVolume);
         if (canServeVolume(localStorageAgent).and(canAccessVolume()).test(updatedStorageVolume)) {
             fillAccessInfo(updatedStorageVolume, localStorageAgent);
+        } else {
+            fillAccessInfo(updatedStorageVolume, NO_STORAGE_AGENT);
         }
         return updatedStorageVolume;
     }
