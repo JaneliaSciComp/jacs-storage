@@ -79,8 +79,7 @@ public class AgentState {
 
         if (!configuredVolumesServed.isEmpty() || !unreachableVolumeIds.isEmpty()) {
             LOG.info("Update served volumes for agent running on {} to {} and unreachable volume ids {}", agentId, configuredVolumesServed, unreachableVolumeIds);
-            JacsStorageAgent updatedStorageAgent = agentStatePersistence.updateAgentServedVolumes(jacsStorageAgent.getId(), configuredVolumesServed, unreachableVolumeIds);
-            jacsStorageAgent.setServedVolumes(updatedStorageAgent.getServedVolumes());
+            jacsStorageAgent = agentStatePersistence.updateAgentServedVolumes(jacsStorageAgent.getId(), configuredVolumesServed, unreachableVolumeIds);
         }
         updateStorageOnLocalVolumes(candidateVolumesForThisAgent);
     }
