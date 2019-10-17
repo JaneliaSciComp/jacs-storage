@@ -15,7 +15,9 @@ public class StorageAgentInfo {
     private final String agentAccessURL;
     private String connectionStatus;
     private String agentToken;
+    @JsonProperty
     private Set<String> servedVolumes;
+    @JsonProperty
     private Set<String> unavailableVolumeIds;
 
     @JsonCreator
@@ -35,10 +37,6 @@ public class StorageAgentInfo {
 
     public String getAgentAccessURL() {
         return agentAccessURL;
-    }
-
-    public Set<String> getServedVolumes() {
-        return servedVolumes;
     }
 
     public String getConnectionStatus() {
