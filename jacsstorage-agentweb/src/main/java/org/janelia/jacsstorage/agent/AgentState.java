@@ -78,7 +78,7 @@ public class AgentState {
                 .collect(Collectors.toSet());
 
         if (!configuredVolumesServed.isEmpty() || !unreachableVolumeIds.isEmpty()) {
-            LOG.info("Update served volumes for agent running on {} to {}", agentId, configuredVolumesServed);
+            LOG.info("Update served volumes for agent running on {} to {} and unreachable volume ids", agentId, configuredVolumesServed, unreachableVolumeIds);
             JacsStorageAgent updatedStorageAgent = agentStatePersistence.updateAgentServedVolumes(jacsStorageAgent.getId(), configuredVolumesServed, unreachableVolumeIds);
             jacsStorageAgent.setServedVolumes(updatedStorageAgent.getServedVolumes());
         }
@@ -86,7 +86,7 @@ public class AgentState {
     }
 
     public synchronized void connectTo(String masterHttpURL) {
-        LOG.info("Register agent on {} available at {} with master at {}", agentId, agentAccessURL, masterHttpURL);
+        LOG.info("Register agent on {}:{} available at {} with master at {}", agentId, jacsStorageAgent, agentAccessURL, masterHttpURL);
         Preconditions.checkArgument(StringUtils.isNotBlank(masterHttpURL));
         connectionState = new AgentConnectionState(
                 agentId,
