@@ -3,7 +3,6 @@ package org.janelia.jacsstorage.service.localservice;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -45,9 +44,10 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     @Override
     public JacsStorageVolume createNewStorageVolume(JacsStorageVolume storageVolume) {
         JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
-        if (validateStorageVolume(storageVolume, canServeVolume(localStorageAgent).and(canAccessVolume()), Function.identity()) != null) {
+        if (canServeVolume(localStorageAgent).and(canAccessVolume()).test(storageVolume)) {
             return super.createNewStorageVolume(storageVolume);
         } else {
+            LOG.warn("Didn't create new storage volume for {} because the volume either cannot be served or is not accessible by the local agent {}", storageVolume, localStorageAgent);
             return null;
         }
     }
@@ -58,16 +58,15 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     @Override
     public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String storageAgentId) {
         JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
-        if (validateStorageVolume(new JacsStorageVolumeBuilder()
+        if (canServeVolume(localStorageAgent).test(new JacsStorageVolumeBuilder()
                 .name(volumeName)
                 .shared(StringUtils.isBlank(storageAgentId))
                 .storageAgentId(storageAgentId)
-                .build(),
-                canServeVolume(localStorageAgent),
-                Function.identity()) != null) {
+                .build())) {
             // only create the volume if it can be served by this agent instance
             return super.createStorageVolumeIfNotFound(volumeName, storageAgentId);
         } else {
+            LOG.info("Did not try to check or create a new volume {} because it cannot be served by local agent {}", volumeName, localStorageAgent);
             return null;
         }
     }
@@ -78,9 +77,24 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     @Override
     public JacsStorageVolume getVolumeById(Number volumeId) {
         JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
-        return validateStorageVolume(super.getVolumeById(volumeId),
-                canServeVolume(localStorageAgent).and(canAccessVolume()),
-                sv -> fillAccessInfo(sv, localStorageAgent));
+        JacsStorageVolume storageVolume = storageVolumeDao.findById(volumeId);
+        if (storageVolume == null) {
+            LOG.error("No volume found for {}", volumeId);
+            return null;
+        } else {
+            if (canServeVolume(localStorageAgent).test(storageVolume)) {
+                if (canAccessVolume().test(storageVolume)) {
+                    fillAccessInfo(storageVolume, localStorageAgent);
+                    return storageVolume;
+                } else {
+                    LOG.warn("Volume {} is not accessible by agent {}", storageVolume, localStorageAgent);
+                    return null;
+                }
+            } else {
+                LOG.warn("Volume {} cannot be served by agent {}", storageVolume, localStorageAgent);
+                return null;
+            }
+        }
     }
 
     @TimedMethod(
@@ -90,7 +104,14 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     public List<JacsStorageVolume> findVolumes(StorageQuery storageQuery) {
         LOG.trace("Query managed volumes using {}", storageQuery);
         PageRequest pageRequest = new PageRequest();
-        return filterServedVolumes(storageVolumeDao.findMatchingVolumes(storageQuery, pageRequest).getResultList());
+        List<JacsStorageVolume> storageVolumes = storageVolumeDao.findMatchingVolumes(storageQuery, pageRequest).getResultList();
+        JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
+        Predicate<JacsStorageVolume> canAccessVolumePredicate = canAccessVolume();
+        Predicate<JacsStorageVolume> canServeAndAccessVolumePredicate = canServeVolume(localStorageAgent).and(canAccessVolumePredicate.or(sv -> storageQuery.isIncludeInaccessibleVolumes()));
+        return storageVolumes.stream()
+                .filter(canServeAndAccessVolumePredicate)
+                .peek(storageVolume -> fillAccessInfo(storageVolume, localStorageAgent))
+                .collect(Collectors.toList());
     }
 
     @TimedMethod(
@@ -99,42 +120,21 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     @Override
     public JacsStorageVolume updateVolumeInfo(Number volumeId, JacsStorageVolume storageVolume) {
         JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
-        return validateStorageVolume(super.updateVolumeInfo(volumeId, storageVolume),
-                canServeVolume(localStorageAgent).and(canAccessVolume()),
-                sv -> fillAccessInfo(sv, localStorageAgent));
-    }
-
-    private JacsStorageVolume validateStorageVolume(JacsStorageVolume storageVolume,
-                                                    Predicate<JacsStorageVolume> canServeTest,
-                                                    Function<JacsStorageVolume, JacsStorageVolume> canServeAction) {
-        if (storageVolume == null) {
-            return null;
-        } else {
-            if (canServeTest.test(storageVolume)) {
-                return canServeAction.apply(storageVolume);
-            } else {
-                return null;
-            }
+        JacsStorageVolume updatedStorageVolume = super.updateVolumeInfo(volumeId, storageVolume);
+        if (canServeVolume(localStorageAgent).and(canAccessVolume()).test(updatedStorageVolume)) {
+            fillAccessInfo(updatedStorageVolume, localStorageAgent);
         }
-    }
-
-    private List<JacsStorageVolume> filterServedVolumes(List<JacsStorageVolume> storageVolumes) {
-        JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
-        Predicate<JacsStorageVolume> canServeAndAccessVolumePredicate = canServeVolume(localStorageAgent).and(canAccessVolume());
-        return storageVolumes.stream()
-                .filter(canServeAndAccessVolumePredicate)
-                .map(storageVolume -> fillAccessInfo(storageVolume, localStorageAgent))
-                .collect(Collectors.toList());
+        return updatedStorageVolume;
     }
 
     private Predicate<JacsStorageVolume> canServeVolume(JacsStorageAgent localStorageAgent) {
         return storageVolume -> {
             if (storageVolume.isShared()) {
                 return JacsStorageVolume.OVERFLOW_VOLUME.equals(storageVolume.getName()) ||
-                        localStorageAgent.canServe(storageVolume.getName());
+                        localStorageAgent.canServe(storageVolume);
             } else {
                 return localStorageAgent.getAgentHost().equals(storageVolume.getStorageAgentId()) &&
-                        localStorageAgent.canServe(storageVolume.getName());
+                        localStorageAgent.canServe(storageVolume);
             }
         };
     }
@@ -143,8 +143,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         return storageVolume -> StringUtils.isNotBlank(storageVolume.getBaseStorageRootDir()) && Files.exists(Paths.get(storageVolume.getBaseStorageRootDir()));
     }
 
-    private JacsStorageVolume fillAccessInfo(JacsStorageVolume storageVolume, JacsStorageAgent storageAgent) {
+    private void fillAccessInfo(JacsStorageVolume storageVolume, JacsStorageAgent storageAgent) {
         storageVolume.setStorageServiceURL(storageAgent.getAgentAccessURL());
-        return storageVolume;
     }
 }

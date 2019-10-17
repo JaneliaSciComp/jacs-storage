@@ -48,12 +48,6 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
         return storageVolumeDao.createStorageVolumeIfNotFound(volumeName, storageAgentId);
     }
 
-    @TimedMethod
-    @Override
-    public JacsStorageVolume getVolumeById(Number volumeId) {
-        return storageVolumeDao.findById(volumeId);
-    }
-
     @TimedMethod(
             logLevel = "trace"
     )

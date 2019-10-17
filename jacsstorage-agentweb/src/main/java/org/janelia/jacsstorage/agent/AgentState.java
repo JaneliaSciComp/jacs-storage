@@ -1,41 +1,33 @@
 package org.janelia.jacsstorage.agent;
 
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.stream.Collectors;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
-import org.janelia.jacsstorage.dao.JacsStorageAgentDao;
+import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageAgent;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.ConnectionChecker;
 import org.janelia.jacsstorage.resilience.ConnectionState;
-import org.janelia.jacsstorage.resilience.PeriodicConnectionChecker;
 import org.janelia.jacsstorage.resilience.ConnectionTester;
+import org.janelia.jacsstorage.resilience.PeriodicConnectionChecker;
 import org.janelia.jacsstorage.service.AgentStatePersistence;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.jacsstorage.coreutils.NetUtils;
-import org.janelia.jacsstorage.service.localservice.StorageVolumeBootstrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class AgentState {
@@ -80,12 +72,17 @@ public class AgentState {
     }
 
     public void configureAgentServedVolumes() {
-        if (!configuredVolumesServed.isEmpty()) {
+        List<JacsStorageVolume> candidateVolumesForThisAgent = storageVolumeManager.findVolumes(new StorageQuery().setAccessibleOnAgent(agentId).setIncludeInaccessibleVolumes(true));
+        Set<String> unreachableVolumeIds = candidateVolumesForThisAgent.stream().filter(sv -> StringUtils.isNotBlank(sv.getStorageServiceURL()))
+                .map(sv -> sv.getId().toString())
+                .collect(Collectors.toSet());
+
+        if (!configuredVolumesServed.isEmpty() || !unreachableVolumeIds.isEmpty()) {
             LOG.info("Update served volumes for agent running on {} to {}", agentId, configuredVolumesServed);
-            JacsStorageAgent updatedStorageAgent = agentStatePersistence.updateAgentServedVolumes(jacsStorageAgent.getId(), configuredVolumesServed);
+            JacsStorageAgent updatedStorageAgent = agentStatePersistence.updateAgentServedVolumes(jacsStorageAgent.getId(), configuredVolumesServed, unreachableVolumeIds);
             jacsStorageAgent.setServedVolumes(updatedStorageAgent.getServedVolumes());
         }
-        updateStorageOnLocalVolumes();
+        updateStorageOnLocalVolumes(candidateVolumesForThisAgent);
     }
 
     public synchronized void connectTo(String masterHttpURL) {
@@ -124,7 +121,8 @@ public class AgentState {
                                 "Agent " + agentId + " reconnected to " + masterHttpURL,
                                 "Agent " + agentId + " available at " + agentAccessURL + " reconnected to " + masterHttpURL);
                     }
-                    updateStorageOnLocalVolumes();
+
+                    updateStorageOnLocalVolumes(storageVolumeManager.findVolumes(new StorageQuery().setLocalToAnyAgent(true).setAccessibleOnAgent(agentId)));
                 },
                 agentConnectionState -> {
                     if (agentConnectionState.getConnectStatus() != connectionState.getConnectStatus()) {
@@ -168,9 +166,9 @@ public class AgentState {
                     agentAccessURL,
                     ConnectionState.Status.OPEN,
                     0,
-                    null).toStorageAgentInfo(Collections.emptySet());
+                    null).toStorageAgentInfo(jacsStorageAgent);
         } else {
-            return connectionState.toStorageAgentInfo(jacsStorageAgent.getServedVolumes());
+            return connectionState.toStorageAgentInfo(jacsStorageAgent);
         }
     }
 
@@ -179,10 +177,11 @@ public class AgentState {
         jacsStorageAgent.setStatus(updatedStorageAgent.getStatus());
     }
 
-    private void updateStorageOnLocalVolumes() {
-        storageVolumeManager.findVolumes(new StorageQuery().setLocalToAnyAgent(true).setAccessibleOnAgent(agentId))
+    private void updateStorageOnLocalVolumes(List<JacsStorageVolume> volumeList) {
+        volumeList.stream()
+                .filter(v -> !v.isShared())
+                .filter(v -> StringUtils.isNotBlank(v.getStorageServiceURL()))
                 .forEach(sv -> {
-                    sv.setStorageServiceURL(agentAccessURL);
                     storageVolumeManager.updateVolumeInfo(sv.getId(), sv);
                 });
     }

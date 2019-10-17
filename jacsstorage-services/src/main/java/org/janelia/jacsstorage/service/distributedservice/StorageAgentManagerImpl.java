@@ -1,19 +1,5 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
-import com.google.common.collect.ImmutableList;
-import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
-import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
-import org.janelia.jacsstorage.dao.JacsStorageAgentDao;
-import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
-import org.janelia.jacsstorage.resilience.ConnectionChecker;
-import org.janelia.jacsstorage.resilience.ConnectionState;
-import org.janelia.jacsstorage.resilience.PeriodicConnectionChecker;
-import org.janelia.jacsstorage.service.NotificationService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +10,22 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+
+import com.google.common.collect.ImmutableList;
+
+import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
+import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
+import org.janelia.jacsstorage.dao.JacsStorageAgentDao;
+import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
+import org.janelia.jacsstorage.resilience.ConnectionChecker;
+import org.janelia.jacsstorage.resilience.ConnectionState;
+import org.janelia.jacsstorage.resilience.PeriodicConnectionChecker;
+import org.janelia.jacsstorage.service.NotificationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class StorageAgentManagerImpl implements StorageAgentManager {

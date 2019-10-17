@@ -63,6 +63,7 @@ public class DistributedStorageAllocatorServiceTest {
         final JacsBundle testBundle;
         final JacsStorageVolume testVolume;
         final Set<String> testAgentServedVolumes;
+        final Set<String> testAgentUnavailableVolumes;
 
         TestAllocateData(Long testBundleId,
                          Long testVolumeId,
@@ -73,7 +74,8 @@ public class DistributedStorageAllocatorServiceTest {
                          String testBundlePrefix,
                          JacsBundle testBundle,
                          JacsStorageVolume testVolume,
-                         Set<String> testAgentServedVolumes) {
+                         Set<String> testAgentServedVolumes,
+                         Set<String> testAgentUnavailableVolumes) {
             this.testBundleId = testBundleId;
             this.testVolumeId = testVolumeId;
             this.testVolumentName = testVolumentName;
@@ -84,6 +86,7 @@ public class DistributedStorageAllocatorServiceTest {
             this.testBundle = testBundle;
             this.testVolume = testVolume;
             this.testAgentServedVolumes = testAgentServedVolumes;
+            this.testAgentUnavailableVolumes = testAgentUnavailableVolumes;
         }
     }
 
@@ -104,7 +107,8 @@ public class DistributedStorageAllocatorServiceTest {
                                 .storageRootTemplate("/storage/${owner}")
                                 .storageServiceURL("http://agentURL")
                                 .build(),
-                        ImmutableSet.of("testVolumeName")
+                        ImmutableSet.of("testVolumeName"),
+                        ImmutableSet.of()
                 ),
                 new TestAllocateData(10L,
                         20L,
@@ -118,7 +122,8 @@ public class DistributedStorageAllocatorServiceTest {
                                 .name(JacsStorageVolume.OVERFLOW_VOLUME)
                                 .storageRootTemplate("/overflowStorage")
                                 .build(),
-                        ImmutableSet.of("testVolumeName")
+                        ImmutableSet.of("testVolumeName"),
+                        ImmutableSet.of()
                 ),
                 new TestAllocateData(10L,
                         20L,
@@ -133,7 +138,8 @@ public class DistributedStorageAllocatorServiceTest {
                                 .storageRootTemplate("/storage")
                                 .storageServiceURL("http://agentURL")
                                 .build(),
-                        ImmutableSet.of("testVolumeName")
+                        ImmutableSet.of("testVolumeName"),
+                        ImmutableSet.of()
                 )
         };
         for (TestAllocateData td : testData) {
@@ -150,7 +156,8 @@ public class DistributedStorageAllocatorServiceTest {
         StorageAgentInfo testAgentInfo = new StorageAgentInfo(
                 testData.testHost,
                 testData.testAgentURL,
-                testData.testAgentServedVolumes);
+                testData.testAgentServedVolumes,
+                testData.testAgentUnavailableVolumes);
         testAgentInfo.setConnectionStatus("CONNECTED");
         when(storageAgentManager.findRandomRegisteredAgent(any(Predicate.class)))
                 .thenReturn(Optional.of(testAgentInfo));

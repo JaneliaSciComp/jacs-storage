@@ -9,7 +9,7 @@ class DistributedStorageHelper {
         this.agentManager = agentManager;
     }
 
-    void updateStorageServiceInfo(JacsStorageVolume storageVolume) {
+    void fillStorageAccessInfo(JacsStorageVolume storageVolume) {
         if (storageVolume.isShared()) {
             agentManager.findRandomRegisteredAgent((StorageAgentConnection ac) -> ac.isConnected() && ac.getAgentInfo().canServe(storageVolume))
                     .ifPresent(ai -> {

@@ -1,12 +1,12 @@
 package org.janelia.jacsstorage.datarequest;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class StorageQuery {
     private Number id;
@@ -21,6 +21,7 @@ public class StorageQuery {
     private List<String> storageTags;
     private Long minAvailableSpaceInBytes;
     private boolean includeInactiveVolumes;
+    private boolean includeInaccessibleVolumes;
 
     public Number getId() {
         return id;
@@ -147,6 +148,15 @@ public class StorageQuery {
 
     public StorageQuery setIncludeInactiveVolumes(boolean includeInactiveVolumes) {
         this.includeInactiveVolumes = includeInactiveVolumes;
+        return this;
+    }
+
+    public boolean isIncludeInaccessibleVolumes() {
+        return includeInaccessibleVolumes;
+    }
+
+    public StorageQuery setIncludeInaccessibleVolumes(boolean includeInaccessibleVolumes) {
+        this.includeInaccessibleVolumes = includeInaccessibleVolumes;
         return this;
     }
 

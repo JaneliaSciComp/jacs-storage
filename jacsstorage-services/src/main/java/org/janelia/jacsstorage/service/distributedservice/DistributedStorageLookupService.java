@@ -68,6 +68,6 @@ public class DistributedStorageLookupService implements StorageLookupService {
                     bundle.setStorageVolume(sv);
                     return sv;
                 });
-        storageHelper.updateStorageServiceInfo(bundleVol);
+        storageHelper.fillStorageAccessInfo(bundleVol);
     }
 }

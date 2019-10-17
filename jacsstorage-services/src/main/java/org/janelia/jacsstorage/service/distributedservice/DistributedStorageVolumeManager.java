@@ -1,5 +1,9 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
+import java.util.List;
+
+import javax.inject.Inject;
+
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
@@ -8,10 +12,6 @@ import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.impl.AbstractStorageVolumeManager;
-
-import javax.inject.Inject;
-import java.util.List;
-import java.util.Optional;
 
 @RemoteInstance
 public class DistributedStorageVolumeManager extends AbstractStorageVolumeManager {
@@ -32,7 +32,7 @@ public class DistributedStorageVolumeManager extends AbstractStorageVolumeManage
     @Override
     public JacsStorageVolume createNewStorageVolume(JacsStorageVolume storageVolume) {
         JacsStorageVolume newStorageVolume = super.createNewStorageVolume(storageVolume);
-        storageHelper.updateStorageServiceInfo(newStorageVolume);
+        storageHelper.fillStorageAccessInfo(newStorageVolume);
         return newStorageVolume;
     }
 
@@ -42,7 +42,7 @@ public class DistributedStorageVolumeManager extends AbstractStorageVolumeManage
     @Override
     public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String storageAgentId) {
         JacsStorageVolume newStorageVolume = super.createStorageVolumeIfNotFound(volumeName, storageAgentId);
-        storageHelper.updateStorageServiceInfo(newStorageVolume);
+        storageHelper.fillStorageAccessInfo(newStorageVolume);
         return newStorageVolume;
     }
 
@@ -51,8 +51,8 @@ public class DistributedStorageVolumeManager extends AbstractStorageVolumeManage
     )
     @Override
     public JacsStorageVolume getVolumeById(Number volumeId) {
-        JacsStorageVolume storageVolume = super.getVolumeById(volumeId);
-        storageHelper.updateStorageServiceInfo(storageVolume);
+        JacsStorageVolume storageVolume = storageVolumeDao.findById(volumeId);
+        storageHelper.fillStorageAccessInfo(storageVolume);
         return storageVolume;
     }
 
@@ -63,7 +63,7 @@ public class DistributedStorageVolumeManager extends AbstractStorageVolumeManage
     public List<JacsStorageVolume> findVolumes(StorageQuery storageQuery) {
         PageRequest pageRequest = new PageRequest();
         List<JacsStorageVolume> managedVolumes = storageVolumeDao.findMatchingVolumes(storageQuery, pageRequest).getResultList();
-        managedVolumes.forEach(storageHelper::updateStorageServiceInfo);
+        managedVolumes.forEach(storageHelper::fillStorageAccessInfo);
         return managedVolumes;
     }
 
@@ -73,7 +73,7 @@ public class DistributedStorageVolumeManager extends AbstractStorageVolumeManage
     @Override
     public JacsStorageVolume updateVolumeInfo(Number volumeId, JacsStorageVolume storageVolume) {
         JacsStorageVolume updatedStorageVolume = super.updateVolumeInfo(volumeId, storageVolume);
-        storageHelper.updateStorageServiceInfo(updatedStorageVolume);
+        storageHelper.fillStorageAccessInfo(updatedStorageVolume);
         return updatedStorageVolume;
     }
 }

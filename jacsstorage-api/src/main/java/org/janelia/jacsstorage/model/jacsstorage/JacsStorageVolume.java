@@ -1,12 +1,5 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.jacsstorage.expr.ExprHelper;
-import org.janelia.jacsstorage.model.AbstractEntity;
-import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -15,6 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacsstorage.expr.ExprHelper;
+import org.janelia.jacsstorage.model.AbstractEntity;
+import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 
 /**
  * Entity for a JACS storage volume.

@@ -1,9 +1,9 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.AbstractEntity;
 import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
@@ -16,6 +16,7 @@ public class JacsStorageAgent extends AbstractEntity {
     private String agentHost; // storage agent host and port on which this agent is running
     private String agentAccessURL; // agent access URL
     private Set<String> servedVolumes; // list of volumes served by this agent
+    private Set<String> unavailableVolumeIds; // list of volume ids that cannot be accessed because of various reasons even though they are configured as servable
     private String status;
     private Date lastStatusCheck = new Date();
 
@@ -43,8 +44,18 @@ public class JacsStorageAgent extends AbstractEntity {
         this.servedVolumes = servedVolumes;
     }
 
-    public boolean canServe(String volumeName) {
-        return servedVolumes != null && (servedVolumes.contains("*") || servedVolumes.contains(volumeName));
+    public Set<String> getUnavailableVolumeIds() {
+        return unavailableVolumeIds;
+    }
+
+    public void setUnavailableVolumeIds(Set<String> unavailableVolumeIds) {
+        this.unavailableVolumeIds = unavailableVolumeIds;
+    }
+
+    public boolean canServe(JacsStorageVolume storageVolume) {
+        return servedVolumes != null && (servedVolumes.contains("*") || servedVolumes.contains(storageVolume.getName())) &&
+                (CollectionUtils.isEmpty(unavailableVolumeIds) || !storageVolume.hasId() || !unavailableVolumeIds.contains(storageVolume.getId().toString()))
+                ;
     }
 
     public String getStatus() {

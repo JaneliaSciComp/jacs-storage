@@ -35,6 +35,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -54,6 +55,13 @@ public class LocalStorageVolumeManagerTest {
         storageVolumeDao = mock(JacsStorageVolumeDao.class);
         capacityNotifier = mock(NotificationService.class);
         agentStatePersistence = mock(AgentStatePersistence.class);
+        Mockito.when(agentStatePersistence.getLocalStorageAgentInfo())
+                .then(invocation -> {
+                    JacsStorageAgent jacsStorageAgent = new JacsStorageAgent();
+                    jacsStorageAgent.setAgentHost(TEST_HOST);
+                    jacsStorageAgent.setServedVolumes(ImmutableSet.of("v1"));
+                    return jacsStorageAgent;
+                });
         storageVolumeManager = new LocalStorageVolumeManager(
                 storageVolumeDao,
                 agentStatePersistence,
@@ -111,13 +119,6 @@ public class LocalStorageVolumeManagerTest {
                             }
                         }
                 );
-        Mockito.when(agentStatePersistence.getLocalStorageAgentInfo())
-                .then(invocation -> {
-                    JacsStorageAgent jacsStorageAgent = new JacsStorageAgent();
-                    jacsStorageAgent.setAgentHost(TEST_HOST);
-                    jacsStorageAgent.setServedVolumes(ImmutableSet.of("v1"));
-                    return jacsStorageAgent;
-                });
         StorageQuery storageQuery = new StorageQuery();
         List<JacsStorageVolume> storageVolumes = storageVolumeManager.findVolumes(storageQuery);
         verify(storageVolumeDao).findMatchingVolumes(
@@ -181,6 +182,8 @@ public class LocalStorageVolumeManagerTest {
                 .then(invocation -> newlyCreatedTestVolume);
         Mockito.when(storageVolumeDao.findById(newlyCreatedTestVolume.getId()))
                 .thenReturn(newlyCreatedTestVolume);
+        Mockito.when(storageVolumeDao.update(eq(newlyCreatedTestVolume.getId()), anyMap()))
+                .thenReturn(newlyCreatedTestVolume);
 
         TestDiskUsage diskUsage = prepareGetAvailableStorageBytes(199L, 300L);
 
@@ -223,6 +226,7 @@ public class LocalStorageVolumeManagerTest {
                 .build();
 
         Mockito.when(storageVolumeDao.findById(testVolume.getId())).thenReturn(testVolume);
+        Mockito.when(storageVolumeDao.update(eq(testVolume.getId()), anyMap())).thenReturn(testVolume);
         TestDiskUsage diskUsage = prepareGetAvailableStorageBytes(199L, 300L);
 
         storageVolumeManager.updateVolumeInfo(updatedTestVolume.getId(), updatedTestVolume);
@@ -258,6 +262,7 @@ public class LocalStorageVolumeManagerTest {
         newlyCreatedTestVolume.setShared(true);
 
         Mockito.when(storageVolumeDao.findById(newlyCreatedTestVolume.getId())).thenReturn(newlyCreatedTestVolume);
+        Mockito.when(storageVolumeDao.update(eq(newlyCreatedTestVolume.getId()), anyMap())).thenReturn(newlyCreatedTestVolume);
         prepareGetAvailableStorageBytes(diskUsage.usableSpace, diskUsage.totalSpace);
 
         storageVolumeManager.updateVolumeInfo(newlyCreatedTestVolume.getId(), testVolume);
@@ -287,14 +292,6 @@ public class LocalStorageVolumeManagerTest {
                 .storageServiceURL("http://storageURL")
                 .build();
         testVolume.setShared(true);
-
-        Mockito.when(agentStatePersistence.getLocalStorageAgentInfo())
-                .then(invocation -> {
-                    JacsStorageAgent jacsStorageAgent = new JacsStorageAgent();
-                    jacsStorageAgent.setAgentHost(TEST_HOST);
-                    jacsStorageAgent.setServedVolumes(ImmutableSet.of("v1"));
-                    return jacsStorageAgent;
-                });
 
         Mockito.when(storageVolumeDao.findById(testVolume.getId())).thenReturn(testVolume);
         prepareGetAvailableStorageBytes(diskUsage.usableSpace, diskUsage.totalSpace);

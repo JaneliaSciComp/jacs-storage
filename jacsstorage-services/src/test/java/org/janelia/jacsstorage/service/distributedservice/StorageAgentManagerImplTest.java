@@ -1,26 +1,5 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-
-import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
-import org.janelia.jacsstorage.resilience.ConnectionState;
-import org.janelia.jacsstorage.service.NotificationService;
-import org.janelia.jacsstorage.service.distributedservice.AgentConnectionTester;
-import org.janelia.jacsstorage.service.distributedservice.StorageAgentManagerImpl;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +7,24 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+
+import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
+import org.janelia.jacsstorage.resilience.ConnectionState;
+import org.janelia.jacsstorage.service.NotificationService;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
@@ -97,13 +94,13 @@ public class StorageAgentManagerImplTest {
         String testAgentURL = "http://agentURL";
 
         prepareConnectionTester(true);
-        registerAgent(testAgentHost, testAgentURL, ImmutableSet.of("v1", "v2"));
+        registerAgent(testAgentHost, testAgentURL, ImmutableSet.of("v1", "v2"), ImmutableSet.of("1"));
 
         Mockito.verify(scheduler).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
     }
 
-    private StorageAgentInfo registerAgent(String agentHost, String agentURL, Set<String> servedVolumes) {
-        StorageAgentInfo agentInfo = new StorageAgentInfo(agentHost, agentURL, servedVolumes);
+    private StorageAgentInfo registerAgent(String agentHost, String agentURL, Set<String> servedVolumes, Set<String> unavailableVolumes) {
+        StorageAgentInfo agentInfo = new StorageAgentInfo(agentHost, agentURL, servedVolumes, unavailableVolumes);
         return testStorageAgentManager.registerAgent(agentInfo);
     }
 
@@ -112,10 +109,11 @@ public class StorageAgentManagerImplTest {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
         Set<String> testServedVolumes = ImmutableSet.of("v1", "v2");
+        Set<String> testUnavailableVolumes = ImmutableSet.of("1");
 
         prepareConnectionTester(true);
-        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes);
-        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes);
+        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes, testUnavailableVolumes);
+        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes, testUnavailableVolumes);
 
         assertNotNull(firstRegistration);
         assertNotNull(secondRegistration);
@@ -129,13 +127,14 @@ public class StorageAgentManagerImplTest {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
         Set<String> testServedVolumes = ImmutableSet.of("v1", "v2");
+        Set<String> testUnavailableVolumes = ImmutableSet.of("1");
 
         prepareConnectionTester(true);
-        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes);
+        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes, testUnavailableVolumes);
         assertNotNull(firstRegistration);
         assertNotNull(testStorageAgentManager.deregisterAgent(testAgentURL, firstRegistration.getAgentToken()));
 
-        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes);
+        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes, testUnavailableVolumes);
         assertNotNull(secondRegistration);
 
         Mockito.verify(scheduler, Mockito.times(2)).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
@@ -252,11 +251,13 @@ public class StorageAgentManagerImplTest {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
         Set<String> testServedVolumes = ImmutableSet.of("v1", "v2");
+        Set<String> testUnavailableVolumes = ImmutableSet.of("1");
 
         StorageAgentInfo agentInfo = new StorageAgentInfo(
                 testAgentHost + "_" + index,
                 testAgentURL + "_" + index,
-                testServedVolumes);
+                testServedVolumes,
+                testUnavailableVolumes);
         return agentInfo;
     }
 }

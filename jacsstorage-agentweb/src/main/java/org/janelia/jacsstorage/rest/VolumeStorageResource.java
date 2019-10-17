@@ -1,5 +1,22 @@
 package org.janelia.jacsstorage.rest;
 
+import java.nio.file.Files;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -18,23 +35,6 @@ import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HEAD;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import java.nio.file.Files;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Api(value = "Agent storage API on a particular volume")
 @Timed
@@ -68,16 +68,18 @@ public class VolumeStorageResource {
         LOG.debug("Check data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
-            LOG.warn("No volume found for {}", storageVolumeId);
+            LOG.warn("No accessible volume found for {}", storageVolumeId);
             return Response
                     .status(Response.Status.NOT_FOUND)
-                    .header("Content-Length", 0)
+                    .entity(new ErrorResponse("No accessible volume found for " + storageVolumeId))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         } else if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
             LOG.warn("Attempt to check {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
             return Response
                     .status(Response.Status.FORBIDDEN)
-                    .header("Content-Length", 0)
+                    .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
+                    .type(MediaType.APPLICATION_JSON)
                     .build();
         }
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
@@ -99,10 +101,10 @@ public class VolumeStorageResource {
         LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
-            LOG.warn("No volume found for {}", storageVolumeId);
+            LOG.warn("No accessible volume found for {}", storageVolumeId);
             return Response
                     .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
+                    .entity(new ErrorResponse("No accessible volume found for " + storageVolumeId))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
@@ -134,10 +136,10 @@ public class VolumeStorageResource {
         LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
-            LOG.warn("No volume found for {}", storageVolumeId);
+            LOG.warn("No accessible volume found for {}", storageVolumeId);
             return Response
                     .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
+                    .entity(new ErrorResponse("No accessible volume found for " + storageVolumeId))
                     .build();
         }
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
@@ -170,12 +172,16 @@ public class VolumeStorageResource {
         LOG.debug("Check data from volume {}:{} with a depthParameter {}", storageVolumeId, storageRelativeFilePath, depthParam);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
+            LOG.warn("No accessible volume found for {}", storageVolumeId);
             return Response
                     .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No accessible volume found for " + storageVolumeId))
                     .build();
         } else if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
+            LOG.warn("Attempt to list content of {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
             return Response
                     .status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
                     .build();
         }
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
@@ -242,10 +248,10 @@ public class VolumeStorageResource {
         LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
-            LOG.warn("No volume found for {}", storageVolumeId);
+            LOG.warn("No accessible volume found for {}", storageVolumeId);
             return Response
                     .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No managed volume found for " + storageVolumeId))
+                    .entity(new ErrorResponse("No accessible volume found for " + storageVolumeId))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }

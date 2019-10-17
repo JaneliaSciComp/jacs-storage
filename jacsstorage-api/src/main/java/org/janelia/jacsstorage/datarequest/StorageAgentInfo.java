@@ -4,6 +4,8 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 
@@ -14,14 +16,17 @@ public class StorageAgentInfo {
     private String connectionStatus;
     private String agentToken;
     private Set<String> servedVolumes;
+    private Set<String> unavailableVolumeIds;
 
     @JsonCreator
     public StorageAgentInfo(@JsonProperty("agentId") String agentId,
                             @JsonProperty("agentAccessURL") String agentAccessURL,
-                            @JsonProperty("servedVolumes") Set<String> servedVolumes) {
+                            @JsonProperty("servedVolumes") Set<String> servedVolumes,
+                            @JsonProperty("unavailableVolumeIds") Set<String> unavailableVolumeIds) {
         this.agentId = agentId;
         this.agentAccessURL = agentAccessURL;
         this.servedVolumes = servedVolumes;
+        this.unavailableVolumeIds = unavailableVolumeIds;
     }
 
     public String getAgentId() {
@@ -53,10 +58,11 @@ public class StorageAgentInfo {
     }
 
     public boolean canServe(JacsStorageVolume storageVolume) {
+        boolean volumeIsNotUnavailable = CollectionUtils.isEmpty(unavailableVolumeIds) || !unavailableVolumeIds.contains(storageVolume.getId().toString());
         if (storageVolume.isShared()) {
-            return servedVolumes.contains("*") || servedVolumes.contains(storageVolume.getName());
+            return volumeIsNotUnavailable && (servedVolumes.contains("*") || servedVolumes.contains(storageVolume.getName()));
         } else {
-            return agentId.equals(storageVolume.getStorageAgentId());
+            return volumeIsNotUnavailable && agentId.equals(storageVolume.getStorageAgentId());
         }
     }
 

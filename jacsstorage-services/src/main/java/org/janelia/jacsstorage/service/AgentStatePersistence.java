@@ -37,10 +37,13 @@ public class AgentStatePersistence {
         return jacsStorageAgentDao.createStorageAgentIfNotFound(agentHost, agentAccessURL, status, ImmutableSet.of("*"));
     }
 
-    public JacsStorageAgent updateAgentServedVolumes(Number agentStorageId, Set<String> servedVolumes) {
+    public JacsStorageAgent updateAgentServedVolumes(Number agentStorageId, Set<String> servedVolumes, Set<String> unavailableVolumeIds) {
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedFieldsBulder = ImmutableMap.builder();
         if (CollectionUtils.isNotEmpty(servedVolumes)) {
             updatedFieldsBulder.put("servedVolumes", new SetFieldValueHandler<>(servedVolumes));
+        }
+        if (CollectionUtils.isNotEmpty(unavailableVolumeIds)) {
+            updatedFieldsBulder.put("unavailableVolumeIds", new SetFieldValueHandler<>(unavailableVolumeIds));
         }
         return jacsStorageAgentDao.update(agentStorageId, updatedFieldsBulder.build());
     }

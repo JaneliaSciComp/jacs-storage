@@ -26,7 +26,7 @@ public class AgentConnectionTester implements ConnectionTester<AgentConnectionSt
                     null);
         }
         if (!agentConnectionState.isConnected()) {
-            StorageAgentInfo registeredAgentInfo = AgentConnectionHelper.registerAgent(agentConnectionState.getMasterHttpURL(), agentConnectionState.toStorageAgentInfo(jacsStorageAgent.getServedVolumes()));
+            StorageAgentInfo registeredAgentInfo = AgentConnectionHelper.registerAgent(agentConnectionState.getMasterHttpURL(), agentConnectionState.toStorageAgentInfo(jacsStorageAgent));
             if (registeredAgentInfo == null) {
                 return new AgentConnectionState(
                         agentConnectionState.getStorageAgentId(),

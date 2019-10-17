@@ -1,6 +1,14 @@
 package org.janelia.jacsstorage.service.localservice;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+
 import com.google.common.collect.ImmutableMap;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
@@ -14,12 +22,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class StorageVolumeBootstrapper {
 
@@ -60,12 +62,7 @@ public class StorageVolumeBootstrapper {
                                 getVolumeConfigPropertyName(volumeName, "Shared"));
                     }
                     LOG.info("Bootstrap {} volume {}", shared ? "shared" : "local", volumeName);
-
-                    if (shared) {
-                        return storageVolumeManager.createStorageVolumeIfNotFound(volumeName, null);
-                    } else {
-                        return storageVolumeManager.createStorageVolumeIfNotFound(volumeName, storageAgentId);
-                    }
+                    return storageVolumeManager.createStorageVolumeIfNotFound(volumeName, shared ? null : storageAgentId);
                 })
                 .filter(storageVolume -> storageVolume != null)
                 .map(storageVolume -> {
