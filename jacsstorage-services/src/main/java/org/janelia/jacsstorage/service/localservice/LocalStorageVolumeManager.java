@@ -111,7 +111,13 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         Predicate<JacsStorageVolume> canServeAndAccessVolumePredicate = canServeVolume(localStorageAgent).and(canAccessVolumePredicate.or(sv -> storageQuery.isIncludeInaccessibleVolumes()));
         return storageVolumes.stream()
                 .filter(canServeAndAccessVolumePredicate)
-                .peek(storageVolume -> fillAccessInfo(storageVolume, localStorageAgent))
+                .peek(storageVolume -> {
+                    if (canAccessVolumePredicate.test(storageVolume)) {
+                        fillAccessInfo(storageVolume, localStorageAgent);
+                    } else {
+                        fillAccessInfo(storageVolume, NO_STORAGE_AGENT);
+                    }
+                })
                 .collect(Collectors.toList());
     }
 
