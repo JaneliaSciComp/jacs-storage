@@ -113,8 +113,10 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
                 .filter(canServeAndAccessVolumePredicate)
                 .peek(storageVolume -> {
                     if (canAccessVolumePredicate.test(storageVolume)) {
+                        LOG.info("Set access info for {} -> {}", storageVolume, localStorageAgent);
                         fillAccessInfo(storageVolume, localStorageAgent);
                     } else {
+                        LOG.info("Volume {} is not accessible on {}", storageVolume, localStorageAgent);
                         fillAccessInfo(storageVolume, NO_STORAGE_AGENT);
                     }
                 })
