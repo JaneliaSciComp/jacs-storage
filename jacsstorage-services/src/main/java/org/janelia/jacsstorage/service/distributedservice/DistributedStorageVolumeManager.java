@@ -1,6 +1,8 @@
 package org.janelia.jacsstorage.service.distributedservice;
 
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -63,8 +65,16 @@ public class DistributedStorageVolumeManager extends AbstractStorageVolumeManage
     public List<JacsStorageVolume> findVolumes(StorageQuery storageQuery) {
         PageRequest pageRequest = new PageRequest();
         List<JacsStorageVolume> managedVolumes = storageVolumeDao.findMatchingVolumes(storageQuery, pageRequest).getResultList();
-        managedVolumes.forEach(storageHelper::fillStorageAccessInfo);
-        return managedVolumes;
+        Predicate<JacsStorageVolume> filteringPredicate;
+        if (!storageQuery.isIncludeInaccessibleVolumes()) {
+            filteringPredicate = sv -> storageHelper.isAccessible(sv);
+        } else {
+            filteringPredicate = sv -> true;
+        }
+        return managedVolumes.stream()
+                .filter(filteringPredicate)
+                .peek(storageHelper::fillStorageAccessInfo)
+                .collect(Collectors.toList());
     }
 
     @TimedMethod(

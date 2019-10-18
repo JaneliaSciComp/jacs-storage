@@ -157,6 +157,10 @@ public class AgentState {
         }
     }
 
+    public String getLocalAgentId() {
+        return agentId;
+    }
+
     public StorageAgentInfo getLocalAgentInfo() {
         if (connectionState == null) {
             return new AgentConnectionState(

@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.rest;
 
 import java.nio.file.Files;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -15,20 +16,25 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.model.jacsstorage.StorageRelativePath;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageLookupService;
@@ -49,6 +55,8 @@ public class VolumeStorageResource {
     private StorageLookupService storageLookupService;
     @Inject @LocalInstance
     private StorageVolumeManager storageVolumeManager;
+    @Inject
+    private AgentState agentState;
     @Context
     private UriInfo resourceURI;
 
@@ -266,6 +274,58 @@ public class VolumeStorageResource {
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
+    }
+
+    @ApiOperation(
+            value = "List storage volumes. The volumes could be filtered by {id, storageHost, storageTags, volumeName}."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    code = 200,
+                    message = "The list of storage entries that match the given filters",
+                    response = JacsStorageVolume.class
+            ),
+            @ApiResponse(
+                    code = 401,
+                    message = "If user is not authenticated",
+                    response = ErrorResponse.class
+            ),
+            @ApiResponse(
+                    code = 500,
+                    message = "Data read error",
+                    response = ErrorResponse.class
+            )
+    })
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("storage_volumes")
+    public Response listStorageVolumes(@QueryParam("id") Long storageVolumeId,
+                                       @QueryParam("name") String volumeName,
+                                       @QueryParam("shared") boolean shared,
+                                       @QueryParam("storageTags") List<String> storageTags,
+                                       @QueryParam("storageVirtualPath") String storageVirtualPath,
+                                       @QueryParam("dataStoragePath") String dataStoragePathParam,
+                                       @QueryParam("includeInactive") boolean includeInactive,
+                                       @QueryParam("includeInaccessibleVolumes") boolean includeInaccessibleVolumes,
+                                       @Context SecurityContext securityContext) {
+        StorageQuery storageQuery = new StorageQuery()
+                .setId(storageVolumeId)
+                .setStorageName(volumeName)
+                .setShared(shared)
+                .setAccessibleOnAgent(agentState.getLocalAgentId())
+                .setStorageTags(storageTags)
+                .setStorageVirtualPath(storageVirtualPath)
+                .setDataStoragePath(StoragePathURI.createAbsolutePathURI(dataStoragePathParam).getStoragePath())
+                .setIncludeInactiveVolumes(includeInactive)
+                .setIncludeInaccessibleVolumes(includeInaccessibleVolumes);
+        LOG.info("List storage volumes filtered with: {}", storageQuery);
+        List<JacsStorageVolume> storageVolumes = storageVolumeManager.findVolumes(storageQuery);
+        PageResult<JacsStorageVolume> results = new PageResult<>();
+        results.setPageSize(storageVolumes.size());
+        results.setResultList(storageVolumes);
+        return Response
+                .ok(results)
+                .build();
     }
 
 }

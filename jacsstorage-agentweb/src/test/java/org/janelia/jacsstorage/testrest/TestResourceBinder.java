@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.testrest;
 
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
@@ -34,5 +35,6 @@ public class TestResourceBinder extends AbstractBinder {
         bind(dependenciesProducer.getStorageLookupService()).qualifiedBy(localInstanceAnnotation).to(StorageLookupService.class);
         bind(dependenciesProducer.getStorageVolumeManager()).qualifiedBy(localInstanceAnnotation).to(StorageVolumeManager.class);
         bind(dependenciesProducer.getStorageUsageManager()).qualifiedBy(localInstanceAnnotation).to(StorageUsageManager.class);
+        bind(dependenciesProducer.getAgentState()).to(AgentState.class);
     }
 }
