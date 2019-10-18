@@ -33,27 +33,23 @@ public class AgentStatePersistence {
         );
     }
 
-    public JacsStorageAgent createAgentStorage(String agentHost, String agentAccessURL, String status) {
-        return jacsStorageAgentDao.createStorageAgentIfNotFound(agentHost, agentAccessURL, status, ImmutableSet.of("*"));
+    public JacsStorageAgent createAgentStorage(String storageAgentId, String agentAccessURL, String status) {
+        return jacsStorageAgentDao.createStorageAgentIfNotFound(storageAgentId, agentAccessURL, status, ImmutableSet.of("*"));
     }
 
-    public JacsStorageAgent updateAgentServedVolumes(Number agentStorageId, Set<String> servedVolumes, Set<String> unavailableVolumeIds) {
+    public void updateAgentServedVolumes(JacsStorageAgent jacsStorageAgent) {
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedFieldsBulder = ImmutableMap.builder();
-        if (CollectionUtils.isNotEmpty(servedVolumes)) {
-            updatedFieldsBulder.put("servedVolumes", new SetFieldValueHandler<>(servedVolumes));
-        }
-        if (CollectionUtils.isNotEmpty(unavailableVolumeIds)) {
-            updatedFieldsBulder.put("unavailableVolumeIds", new SetFieldValueHandler<>(unavailableVolumeIds));
-        }
-        return jacsStorageAgentDao.update(agentStorageId, updatedFieldsBulder.build());
+        updatedFieldsBulder.put("servedVolumes", new SetFieldValueHandler<>(jacsStorageAgent.getServedVolumes()));
+        updatedFieldsBulder.put("unavailableVolumeIds", new SetFieldValueHandler<>(jacsStorageAgent.getUnavailableVolumeIds()));
+        jacsStorageAgentDao.update(jacsStorageAgent.getId(), updatedFieldsBulder.build());
     }
 
-    public JacsStorageAgent updateAgentStatus(Number agentStorageId, String status) {
+    public void updateAgentStatus(JacsStorageAgent jacsStorageAgent) {
         ImmutableMap.Builder<String, EntityFieldValueHandler<?>> updatedFieldsBulder = ImmutableMap.builder();
-        if (StringUtils.isNotBlank(status)) {
-            updatedFieldsBulder.put("status", new SetFieldValueHandler<>(status));
+        if (StringUtils.isNotBlank(jacsStorageAgent.getStatus())) {
+            updatedFieldsBulder.put("status", new SetFieldValueHandler<>(jacsStorageAgent.getStatus()));
         }
-        return jacsStorageAgentDao.update(agentStorageId, updatedFieldsBulder.build());
+        jacsStorageAgentDao.update(jacsStorageAgent.getId(), updatedFieldsBulder.build());
     }
 
     public JacsStorageAgent getLocalStorageAgentInfo() {

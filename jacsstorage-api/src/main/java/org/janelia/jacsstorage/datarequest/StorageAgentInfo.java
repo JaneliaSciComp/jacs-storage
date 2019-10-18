@@ -56,11 +56,12 @@ public class StorageAgentInfo {
     }
 
     public boolean canServe(JacsStorageVolume storageVolume) {
-        boolean volumeIsNotUnavailable = CollectionUtils.isEmpty(unavailableVolumeIds) || !unavailableVolumeIds.contains(storageVolume.getId().toString());
+        boolean volumeIsAccessible = CollectionUtils.isEmpty(unavailableVolumeIds) || !unavailableVolumeIds.contains(storageVolume.getId().toString());
+        boolean volumeIsServable = CollectionUtils.isNotEmpty(servedVolumes) && (servedVolumes.contains("*") || servedVolumes.contains(storageVolume.getName()));
         if (storageVolume.isShared()) {
-            return volumeIsNotUnavailable && (servedVolumes.contains("*") || servedVolumes.contains(storageVolume.getName()));
+            return volumeIsAccessible && volumeIsServable;
         } else {
-            return volumeIsNotUnavailable && agentId.equals(storageVolume.getStorageAgentId());
+            return volumeIsAccessible && volumeIsServable && agentId.equals(storageVolume.getStorageAgentId());
         }
     }
 

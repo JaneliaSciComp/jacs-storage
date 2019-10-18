@@ -80,6 +80,7 @@ public class JacsStorageAgent extends AbstractEntity {
                 .append("agentHost", agentHost)
                 .append("agentAccessURL", agentAccessURL)
                 .append("servedVolumes", servedVolumes)
+                .append("unavailableVolumeIds", unavailableVolumeIds)
                 .append("status", status)
                 .append("lastStatusCheck", lastStatusCheck)
                 .toString();

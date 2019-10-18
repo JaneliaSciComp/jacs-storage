@@ -93,7 +93,7 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
                 volumeBootstrapper.initializeStorageVolumes(storageAgentId);
             }
             // update agent state
-            agentState.configureAgentServedVolumes();
+            agentState.setAgentAvailableStorageVolumes();
             // register agent
             agentState.connectTo(agentArgs.masterHttpUrl);
             // start the HTTP application

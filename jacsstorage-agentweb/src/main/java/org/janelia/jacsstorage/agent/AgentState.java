@@ -71,17 +71,18 @@ public class AgentState {
         jacsStorageAgent = agentStatePersistence.createAgentStorage(agentId, agentAccessURL, status);
     }
 
-    public void configureAgentServedVolumes() {
+    public void setAgentAvailableStorageVolumes() {
         List<JacsStorageVolume> candidateVolumesForThisAgent = storageVolumeManager.findVolumes(new StorageQuery().setAccessibleOnAgent(agentId).setIncludeInaccessibleVolumes(true));
         Set<String> unreachableVolumeIds = candidateVolumesForThisAgent.stream()
                 .filter(sv -> StringUtils.isBlank(sv.getStorageServiceURL())) // the unreachable volumes do not have a storageServiceURL set
                 .map(sv -> sv.getId().toString())
                 .collect(Collectors.toSet());
 
-        if (!configuredVolumesServed.isEmpty() || !unreachableVolumeIds.isEmpty()) {
-            LOG.info("Update served volumes for agent running on {} to {} and unreachable volume ids {}", agentId, configuredVolumesServed, unreachableVolumeIds);
-            jacsStorageAgent = agentStatePersistence.updateAgentServedVolumes(jacsStorageAgent.getId(), configuredVolumesServed, unreachableVolumeIds);
-        }
+        jacsStorageAgent.setServedVolumes(configuredVolumesServed);
+        jacsStorageAgent.setUnavailableVolumeIds(unreachableVolumeIds);
+        LOG.info("Update served volumes for agent {}", jacsStorageAgent);
+        agentStatePersistence.updateAgentServedVolumes(jacsStorageAgent);
+
         updateStorageOnLocalVolumes(candidateVolumesForThisAgent);
     }
 
@@ -122,7 +123,7 @@ public class AgentState {
                                 "Agent " + agentId + " available at " + agentAccessURL + " reconnected to " + masterHttpURL);
                     }
 
-                    updateStorageOnLocalVolumes(storageVolumeManager.findVolumes(new StorageQuery().setLocalToAnyAgent(true).setAccessibleOnAgent(agentId)));
+                    setAgentAvailableStorageVolumes(); // this should probably not be done as often as the connection check
                 },
                 agentConnectionState -> {
                     if (agentConnectionState.getConnectStatus() != connectionState.getConnectStatus()) {
@@ -177,8 +178,8 @@ public class AgentState {
     }
 
     private void updateAgentStorageStatus(String status) {
-        JacsStorageAgent updatedStorageAgent = agentStatePersistence.updateAgentStatus(jacsStorageAgent.getId(), status);
-        jacsStorageAgent.setStatus(updatedStorageAgent.getStatus());
+        jacsStorageAgent.setStatus(status);
+        agentStatePersistence.updateAgentStatus(jacsStorageAgent);
     }
 
     private void updateStorageOnLocalVolumes(List<JacsStorageVolume> volumeList) {
