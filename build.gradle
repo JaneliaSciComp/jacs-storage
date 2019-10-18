@@ -2,7 +2,7 @@ allprojects {
     apply plugin: 'java-library'
     apply plugin: 'idea'
     group = 'org.janelia.jacsstorage'
-    version = '1.13.13.SNAPSHOT'
+    version = '1.13.12.RELEASE'
 }
 
 subprojects {
