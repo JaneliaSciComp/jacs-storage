@@ -125,8 +125,9 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             }
         } else if (storageQuery.isShared()) {
             filtersBuilder.add(Filters.or(
-                    Filters.exists("storageAgentId", false), // the storage host should not be set
-                    Filters.eq("storageAgentId", null)
+                    Filters.exists("storageAgentId", false), // the storage agent should not be set
+                    Filters.eq("storageAgentId", null),
+                    Filters.eq("shared", true)
             )); // the storageAgentId must not be set
         }
         if (StringUtils.isNotBlank(storageQuery.getStorageName())) {

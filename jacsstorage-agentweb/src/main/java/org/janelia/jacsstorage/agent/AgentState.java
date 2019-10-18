@@ -73,7 +73,8 @@ public class AgentState {
 
     public void configureAgentServedVolumes() {
         List<JacsStorageVolume> candidateVolumesForThisAgent = storageVolumeManager.findVolumes(new StorageQuery().setAccessibleOnAgent(agentId).setIncludeInaccessibleVolumes(true));
-        Set<String> unreachableVolumeIds = candidateVolumesForThisAgent.stream().filter(sv -> StringUtils.isNotBlank(sv.getStorageServiceURL()))
+        Set<String> unreachableVolumeIds = candidateVolumesForThisAgent.stream()
+                .filter(sv -> StringUtils.isBlank(sv.getStorageServiceURL())) // the unreachable volumes do not have a storageServiceURL set
                 .map(sv -> sv.getId().toString())
                 .collect(Collectors.toSet());
 
