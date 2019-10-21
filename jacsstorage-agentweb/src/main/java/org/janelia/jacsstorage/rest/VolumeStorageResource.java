@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.rest;
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,6 +10,7 @@ import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -36,9 +38,11 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.model.jacsstorage.StorageRelativePath;
+import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.service.DataStorageService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -240,6 +244,52 @@ public class VolumeStorageResource {
                 .orElseGet(() -> Response
                         .status(Response.Status.NOT_FOUND).build())
                 ;
+    }
+
+    @ApiOperation(value = "Store the content on the specified volume at the specified data path.")
+    @ApiResponses(value = {
+            @ApiResponse(code = 201, message = "The data was saved successfully"),
+            @ApiResponse(code = 404, message = "Invalid volume identifier"),
+            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(code = 500, message = "Data write error")
+    })
+    @LogStorageEvent(
+            eventName = "CREATE_STORAGE_FILE",
+            argList = {0, 1}
+    )
+    @RequireAuthentication
+    @PUT
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
+    public Response storeDataContentOnStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
+                                                    @PathParam("storageRelativePath") String storageRelativePathParam,
+                                                    @Context SecurityContext securityContext,
+                                                    InputStream contentStream) {
+        JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
+        if (storageVolume == null) {
+            LOG.warn("No accessible volume found for {}", storageVolumeId);
+            return Response
+                    .status(Response.Status.NOT_FOUND)
+                    .entity(new ErrorResponse("No accessible volume found for " + storageVolumeId))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+        if (storageVolume.hasPermission(JacsStoragePermission.WRITE)) {
+            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+            return storageResourceHelper.storeFileContent(storageVolume,
+                    resourceURI.getBaseUri(),
+                    StorageRelativePath.pathRelativeToBaseRoot(storageRelativePathParam),
+                    contentStream)
+                    .build();
+        } else {
+            LOG.warn("Attempt to write {} on volume {} but the volume does not allow WRITE", storageRelativePathParam, storageVolumeId);
+            return Response
+                    .status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse("No write permission for volume " + storageVolumeId))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+
     }
 
     @ApiOperation(value = "Delete specified data file identified by the relative path to the volume mount point.")
