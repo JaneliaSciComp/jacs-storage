@@ -60,11 +60,11 @@ public class SingleFileBundleWriter implements BundleWriter {
     public long createFileEntry(String dataPath, String entryName, InputStream contentStream) {
         Path filePath = Paths.get(dataPath);
         if (Files.exists(filePath)) {
-            throw new DataAlreadyExistException("File path " + filePath + " already exists");
+            LOG.info("File {} already exist and it will be overwritten", dataPath);
         }
         try {
             Files.createDirectories(filePath.getParent());
-            return Files.copy(contentStream, filePath);
+            return Files.copy(contentStream, filePath, StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
