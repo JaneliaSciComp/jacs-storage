@@ -34,11 +34,11 @@ public class SingleFileBundleWriter implements BundleWriter {
     public long writeBundle(InputStream stream, String target) {
         Path targetPath = Paths.get(target);
         if (Files.exists(targetPath)) {
-            throw new DataAlreadyExistException("Target path " + target + " already exists");
+            LOG.info("File {} already exist and it will be overwritten", targetPath);
         }
         try {
             Files.createDirectories(targetPath.getParent());
-            return Files.copy(stream, targetPath);
+            return Files.copy(stream, targetPath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
