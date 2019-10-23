@@ -219,6 +219,9 @@ public class VolumeStorageResource {
                                 dn.setNumericStorageId(storageVolume.getId());
                                 dn.setStorageRootLocation(storageVolume.getStorageVirtualPath());
                                 dn.setStorageRootPathURI(storageVolume.getStorageURI());
+                                if (storageFormat == JacsStorageFormat.SINGLE_DATA_FILE) {
+                                    dn.setNodeRelativePath(dataNodeVolumeRelativePath.toString().replace('\\', '/'));
+                                }
                                 dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
                                         .path(Constants.AGENTSTORAGE_URI_PATH)
                                         .path("storage_volume")
