@@ -66,7 +66,7 @@ public class DistributedStorageVolumeManager extends AbstractStorageVolumeManage
         PageRequest pageRequest = new PageRequest();
         List<JacsStorageVolume> managedVolumes = storageVolumeDao.findMatchingVolumes(storageQuery, pageRequest).getResultList();
         Predicate<JacsStorageVolume> filteringPredicate;
-        if (!storageQuery.isIncludeInaccessibleVolumes()) {
+        if (storageQuery.isIncludeInaccessibleVolumes()) {
             filteringPredicate = sv -> true;
         } else {
             filteringPredicate = sv -> storageHelper.isAccessible(sv);
