@@ -115,19 +115,26 @@ public class NoOPContentConverter implements ContentConverter {
 
     @Override
     public long estimateContentSize(DataContent dataContent) {
-        return dataContent.streamDataNodes()
+        List<DataNodeInfo> peekDataNodes = dataContent.streamDataNodes().filter(dn -> !dn.isCollectionFlag()).limit(2).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(peekDataNodes)) {
+            return 0L;
+        } else if (peekDataNodes.size() == 1) {
+           return peekDataNodes.get(0).getSize();
+        } else {
+            return dataContent.streamDataNodes()
                 .sorted(DataContentUtils.getDataNodePathComparator())
                 .reduce(
-                        0L,
+                        (long) TarConstants.DEFAULT_RCDSIZE,
                         (size, dn) -> {
                             long entrySize;
                             if (dn.isCollectionFlag()) {
-                                entrySize = 0L;
+                                entrySize = TarConstants.DEFAULT_RCDSIZE;
                             } else {
-                                entrySize = dn.getSize();
+                                entrySize = dn.getSize() + TarConstants.DEFAULT_RCDSIZE;
                             }
                             return size + entrySize;
                         },
                         (s1, s2) -> s1 + s2);
+        }
     }
 }
