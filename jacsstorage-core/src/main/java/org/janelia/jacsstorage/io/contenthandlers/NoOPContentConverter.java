@@ -121,7 +121,7 @@ public class NoOPContentConverter implements ContentConverter {
         } else if (peekDataNodes.size() == 1) {
            return peekDataNodes.get(0).getSize();
         } else {
-            return 2* dataContent.streamDataNodes()
+            return dataContent.streamDataNodes()
                 .sorted(DataContentUtils.getDataNodePathComparator())
                 .reduce(
                         (long) TarConstants.DEFAULT_RCDSIZE,
@@ -130,7 +130,7 @@ public class NoOPContentConverter implements ContentConverter {
                             if (dn.isCollectionFlag()) {
                                 entrySize = TarConstants.DEFAULT_RCDSIZE;
                             } else {
-                                entrySize = dn.getSize();
+                                entrySize = dn.getSize() + TarConstants.DEFAULT_RCDSIZE;
                                 if (entrySize % TarConstants.DEFAULT_RCDSIZE != 0) {
                                     // tar entry size should be an exact multiple of the record size
                                     entrySize = ((entrySize + TarConstants.DEFAULT_RCDSIZE) / TarConstants.DEFAULT_RCDSIZE) * TarConstants.DEFAULT_RCDSIZE;
