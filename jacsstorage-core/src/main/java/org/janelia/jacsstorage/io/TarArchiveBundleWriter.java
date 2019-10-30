@@ -284,11 +284,7 @@ public class TarArchiveBundleWriter implements BundleWriter {
             if (currentEntryName.equals(normalizedEntryName) ||
                     currentEntryName.startsWith(normalizedEntryName + "/")) {
                 long entryPos = currentEntryPos - TarConstants.DEFAULT_RCDSIZE;
-                long entrySize = sourceEntry.getSize() + TarConstants.DEFAULT_RCDSIZE;
-                if (entrySize % TarConstants.DEFAULT_RCDSIZE != 0) {
-                    // tar entry size should be an exact multiple of the record size
-                    entrySize = ((entrySize + TarConstants.DEFAULT_RCDSIZE) / TarConstants.DEFAULT_RCDSIZE) * TarConstants.DEFAULT_RCDSIZE;
-                }
+                long entrySize = DataContentUtils.calculateTarEntrySize(sourceEntry.getSize());
                 deletedEntriesPos.add(new StreamChunk(entryPos, entrySize));
             }
         }

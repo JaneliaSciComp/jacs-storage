@@ -128,13 +128,9 @@ public class NoOPContentConverter implements ContentConverter {
                         (size, dn) -> {
                             long entrySize;
                             if (dn.isCollectionFlag()) {
-                                entrySize = TarConstants.DEFAULT_RCDSIZE;
+                                entrySize = DataContentUtils.calculateTarEntrySize(0L);
                             } else {
-                                entrySize = dn.getSize() + TarConstants.DEFAULT_RCDSIZE;
-                                if (entrySize % TarConstants.DEFAULT_RCDSIZE != 0) {
-                                    // tar entry size should be an exact multiple of the record size
-                                    entrySize = ((entrySize + TarConstants.DEFAULT_RCDSIZE) / TarConstants.DEFAULT_RCDSIZE) * TarConstants.DEFAULT_RCDSIZE;
-                                }
+                                entrySize = DataContentUtils.calculateTarEntrySize(dn.getSize());
                             }
                             return size + entrySize;
                         },

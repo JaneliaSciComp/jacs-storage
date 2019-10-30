@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 
+import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 
@@ -41,5 +42,15 @@ public class DataContentUtils {
                 }
             }
         };
+    }
+
+    public static long calculateTarEntrySize(long physicalDataNodeSize) {
+        long entrySize = physicalDataNodeSize + TarConstants.DEFAULT_RCDSIZE;
+        if (entrySize % TarConstants.DEFAULT_RCDSIZE != 0) {
+            // tar entry size should be an exact multiple of the record size
+            return ((entrySize + TarConstants.DEFAULT_RCDSIZE) / TarConstants.DEFAULT_RCDSIZE) * TarConstants.DEFAULT_RCDSIZE;
+        } else {
+            return entrySize;
+        }
     }
 }
