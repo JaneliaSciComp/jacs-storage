@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class ArchiveEntryListDataContent extends AbstractDataContent {
 
@@ -28,8 +29,8 @@ public class ArchiveEntryListDataContent extends AbstractDataContent {
     }
 
     @Override
-    public List<DataNodeInfo> listDataNodes() {
-        return ImmutableList.copyOf(dataNodeList.keySet());
+    public Stream<DataNodeInfo> streamDataNodes() {
+        return dataNodeList.keySet().stream();
     }
 
     @Override

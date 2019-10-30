@@ -1,35 +1,37 @@
 package org.janelia.jacsstorage.io;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 
 public class FileListDataContent extends AbstractDataContent {
 
-    private final List<DataNodeInfo> dataNodeList;
+    private final Path rootPath;
+    private final Supplier<Stream<DataNodeInfo>> dataNodeStreamProvider;
     private final Function<Path, InputStream> pathToStreamHandler;
 
-    FileListDataContent(ContentFilterParams contentFilterParams, Path rootPath, Function<Path, InputStream> pathToStreamHandler, List<Path> fileList) {
+    FileListDataContent(ContentFilterParams contentFilterParams,
+                        Path rootPath,
+                        Function<Path, InputStream> pathToStreamHandler,
+                        Supplier<Stream<Path>> fileListProvider) {
         super(contentFilterParams);
+        this.rootPath = rootPath;
         this.pathToStreamHandler = pathToStreamHandler;
-        this.dataNodeList = fileList.stream()
-                .map(p -> DataContentUtils.createDataNodeInfo(rootPath, p, Files.isDirectory(p), p.toFile().length()))
-                .collect(Collectors.toList());
+        this.dataNodeStreamProvider = () -> fileListProvider.get()
+                .map(p -> DataContentUtils.createDataNodeInfo(rootPath, p, Files.isDirectory(p), p.toFile().length()));
     }
 
     @Override
-    public List<DataNodeInfo> listDataNodes() {
-        return dataNodeList;
+    public Stream<DataNodeInfo> streamDataNodes() {
+        return dataNodeStreamProvider.get();
     }
 
     @Override
@@ -44,7 +46,7 @@ public class FileListDataContent extends AbstractDataContent {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("dataNodeList", dataNodeList)
+                .append("rootPath", rootPath)
                 .toString();
     }
 }

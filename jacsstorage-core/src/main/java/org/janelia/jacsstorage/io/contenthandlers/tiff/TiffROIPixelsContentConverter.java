@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TiffROIPixelsContentConverter implements ContentConverter {
 
@@ -39,27 +40,24 @@ public class TiffROIPixelsContentConverter implements ContentConverter {
     )
     @Override
     public long convertContent(DataContent dataContent, OutputStream outputStream) {
-        List<DataNodeInfo> dataNodes = dataContent.listDataNodes();
         Integer xCenter = dataContent.getContentFilterParams().getAsInt("xCenter", 0);
         Integer yCenter = dataContent.getContentFilterParams().getAsInt("yCenter", 0);
         Integer zCenter = dataContent.getContentFilterParams().getAsInt("zCenter", 0);
         Integer dimX = dataContent.getContentFilterParams().getAsInt("dimX", -1);
         Integer dimY = dataContent.getContentFilterParams().getAsInt("dimY", -1);
         Integer dimZ = dataContent.getContentFilterParams().getAsInt("dimZ", -1);
-        if (CollectionUtils.isEmpty(dataNodes)) {
+
+        List<DataNodeInfo> peekDataNodes = dataContent.streamDataNodes().filter(dn -> !dn.isCollectionFlag()).limit(2).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(peekDataNodes)) {
             return 0L;
-        } else if (dataNodes.size() == 1) {
-            if (!dataNodes.get(0).isCollectionFlag()) {
-                return IOStreamUtils.copyFrom(ImageUtils.loadImagePixelBytesFromTiffStream(
-                        dataContent.streamDataNode(dataNodes.get(0)),
-                        xCenter, yCenter, zCenter,
-                        dimX, dimY, dimZ
-                ), outputStream);
-            } else {
-                return 0L;
-            }
+        } else if (peekDataNodes.size() == 1) {
+            return IOStreamUtils.copyFrom(ImageUtils.loadImagePixelBytesFromTiffStream(
+                    dataContent.streamDataNode(peekDataNodes.get(0)),
+                    xCenter, yCenter, zCenter,
+                    dimX, dimY, dimZ
+            ), outputStream);
         } else {
-            Pair<TarArchiveOutputStream, Long> streamWithLength = dataNodes.stream()
+            Pair<TarArchiveOutputStream, Long> streamWithLength = dataContent.streamDataNodes()
                     .sorted(DataContentUtils.getDataNodePathComparator())
                     .reduce(
                             Pair.of(new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE), 0L),
@@ -78,7 +76,7 @@ public class TiffROIPixelsContentConverter implements ContentConverter {
                                             StringUtils.prependIfMissing(entryPath.toString(), "/"),
                                             ".");
                                     entryBytes = ImageUtils.loadImagePixelBytesFromTiffStream(
-                                            dataContent.streamDataNode(dataNodes.get(0)),
+                                            dataContent.streamDataNode(dn),
                                             xCenter, yCenter, zCenter,
                                             dimX, dimY, dimZ
                                     );
@@ -114,44 +112,29 @@ public class TiffROIPixelsContentConverter implements ContentConverter {
 
     @Override
     public long estimateContentSize(DataContent dataContent) {
-        List<DataNodeInfo> dataNodes = dataContent.listDataNodes();
         Integer xCenter = dataContent.getContentFilterParams().getAsInt("xCenter", 0);
         Integer yCenter = dataContent.getContentFilterParams().getAsInt("yCenter", 0);
         Integer zCenter = dataContent.getContentFilterParams().getAsInt("zCenter", 0);
         Integer dimX = dataContent.getContentFilterParams().getAsInt("dimX", -1);
         Integer dimY = dataContent.getContentFilterParams().getAsInt("dimY", -1);
         Integer dimZ = dataContent.getContentFilterParams().getAsInt("dimZ", -1);
-        if (CollectionUtils.isEmpty(dataNodes)) {
-            return 0L;
-        } else if (dataNodes.size() == 1) {
-            if (!dataNodes.get(0).isCollectionFlag()) {
-                return ImageUtils.sizeImagePixelBytesFromTiffStream(
-                        dataContent.streamDataNode(dataNodes.get(0)),
-                        xCenter, yCenter, zCenter,
-                        dimX, dimY, dimZ
-                );
-            } else {
-                return 0L;
-            }
-        } else {
-            return dataNodes.stream()
-                    .sorted(DataContentUtils.getDataNodePathComparator())
-                    .reduce(
-                            0L,
-                            (size, dn) -> {
-                                long entrySize;
-                                if (dn.isCollectionFlag()) {
-                                    entrySize = 0L;
-                                } else {
-                                    entrySize = ImageUtils.sizeImagePixelBytesFromTiffStream(
-                                            dataContent.streamDataNode(dataNodes.get(0)),
-                                            xCenter, yCenter, zCenter,
-                                            dimX, dimY, dimZ
-                                    );
-                                }
-                                return size + entrySize;
-                            },
-                            (s1, s2) -> s1 + s2);
-        }
+        return dataContent.streamDataNodes()
+                .sorted(DataContentUtils.getDataNodePathComparator())
+                .reduce(
+                        0L,
+                        (size, dn) -> {
+                            long entrySize;
+                            if (dn.isCollectionFlag()) {
+                                entrySize = 0L;
+                            } else {
+                                entrySize = ImageUtils.sizeImagePixelBytesFromTiffStream(
+                                        dataContent.streamDataNode(dn),
+                                        xCenter, yCenter, zCenter,
+                                        dimX, dimY, dimZ
+                                );
+                            }
+                            return size + entrySize;
+                        },
+                        (s1, s2) -> s1 + s2);
     }
 }

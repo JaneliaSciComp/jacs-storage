@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.io;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -153,10 +154,18 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
         DataContent dataContent;
         if (Files.isDirectory(entryPath)) {
             int traverseDepth = filterParams.getMaxDepth() >= 0 ? filterParams.getMaxDepth() : Integer.MAX_VALUE;
-            List<Path> selectedEntries = Files.walk(entryPath, traverseDepth)
-                    .filter(p -> Files.isDirectory(p) || filterParams.matchEntry(p.toString()))
-                    .collect(Collectors.toList());
-            dataContent = new FileListDataContent(filterParams, entryPath, ImageUtils.getImagePathHandler(), selectedEntries);
+            dataContent = new FileListDataContent(
+                    filterParams,
+                    entryPath,
+                    ImageUtils.getImagePathHandler(),
+                    () -> {
+                        try {
+                            return Files.walk(entryPath, traverseDepth)
+                                    .filter(p -> Files.isDirectory(p) || filterParams.matchEntry(p.toString()));
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
         } else {
             if (filterParams.matchEntry(entryPath.toString())) {
                 dataContent = new SingleFileDataContent(filterParams, entryPath, ImageUtils.getImagePathHandler());

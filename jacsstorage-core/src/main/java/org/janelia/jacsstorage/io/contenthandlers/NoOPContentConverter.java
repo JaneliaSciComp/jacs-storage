@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Vetoed
 public class NoOPContentConverter implements ContentConverter {
@@ -39,26 +40,22 @@ public class NoOPContentConverter implements ContentConverter {
     )
     @Override
     public long convertContent(DataContent dataContent, OutputStream outputStream) {
-        List<DataNodeInfo> dataNodes = dataContent.listDataNodes();
-        if (CollectionUtils.isEmpty(dataNodes)) {
+        List<DataNodeInfo> peekDataNodes = dataContent.streamDataNodes().filter(dn -> !dn.isCollectionFlag()).limit(2).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(peekDataNodes)) {
             return 0L;
-        } else if (dataNodes.size() == 1) {
-            if (!dataNodes.get(0).isCollectionFlag()) {
-                InputStream dataStream = dataContent.streamDataNode(dataNodes.get(0));
+        } else if (peekDataNodes.size() == 1) {
+            InputStream dataStream = dataContent.streamDataNode(peekDataNodes.get(0));
+            try {
+                return IOStreamUtils.copyFrom(dataStream, outputStream);
+            } finally {
                 try {
-                    return IOStreamUtils.copyFrom(dataStream, outputStream);
-                } finally {
-                    try {
-                        dataStream.close();
-                    } catch (Exception e) {
-                        LOG.warn("Error closing data stream for {}", dataNodes.get(0), e);
-                    }
+                    dataStream.close();
+                } catch (Exception e) {
+                    LOG.warn("Error closing data stream for {}", peekDataNodes.get(0), e);
                 }
-            } else {
-                return 0L;
             }
         } else {
-            Pair<TarArchiveOutputStream, Long> streamWithLength = dataNodes.stream()
+            Pair<TarArchiveOutputStream, Long> streamWithLength = dataContent.streamDataNodes()
                     .sorted(DataContentUtils.getDataNodePathComparator())
                     .reduce(
                             Pair.of(new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE), 0L),
@@ -118,30 +115,19 @@ public class NoOPContentConverter implements ContentConverter {
 
     @Override
     public long estimateContentSize(DataContent dataContent) {
-        List<DataNodeInfo> dataNodes = dataContent.listDataNodes();
-        if (CollectionUtils.isEmpty(dataNodes)) {
-            return 0L;
-        } else if (dataNodes.size() == 1) {
-            if (!dataNodes.get(0).isCollectionFlag()) {
-                return dataNodes.get(0).getSize();
-            } else {
-                return 0L;
-            }
-        } else {
-            return dataNodes.stream()
-                    .sorted(DataContentUtils.getDataNodePathComparator())
-                    .reduce(
-                            0L,
-                            (size, dn) -> {
-                                long entrySize;
-                                if (dn.isCollectionFlag()) {
-                                    entrySize = 0L;
-                                } else {
-                                    entrySize = dn.getSize();
-                                }
-                                return size + entrySize;
-                            },
-                            (s1, s2) -> s1 + s2);
-        }
+        return dataContent.streamDataNodes()
+                .sorted(DataContentUtils.getDataNodePathComparator())
+                .reduce(
+                        0L,
+                        (size, dn) -> {
+                            long entrySize;
+                            if (dn.isCollectionFlag()) {
+                                entrySize = 0L;
+                            } else {
+                                entrySize = dn.getSize();
+                            }
+                            return size + entrySize;
+                        },
+                        (s1, s2) -> s1 + s2);
     }
 }

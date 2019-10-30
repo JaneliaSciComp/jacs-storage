@@ -1,21 +1,17 @@
 package org.janelia.jacsstorage.io;
 
-import com.google.common.collect.ImmutableList;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SingleFileDataContent extends AbstractDataContent {
 
@@ -31,8 +27,8 @@ public class SingleFileDataContent extends AbstractDataContent {
     }
 
     @Override
-    public List<DataNodeInfo> listDataNodes() {
-        return ImmutableList.of(DataContentUtils.createDataNodeInfo(dataPath, dataPath, Files.isDirectory(dataPath), dataPath.toFile().length()));
+    public Stream<DataNodeInfo> streamDataNodes() {
+        return Stream.of(DataContentUtils.createDataNodeInfo(dataPath, dataPath, Files.isDirectory(dataPath), dataPath.toFile().length()));
     }
 
     @Override

@@ -1,33 +1,32 @@
 package org.janelia.jacsstorage.io;
 
-import com.google.common.collect.ImmutableList;
-import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.stream.Stream;
+
+import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SingleArchiveEntryDataContent extends AbstractDataContent {
 
     private final static Logger LOG = LoggerFactory.getLogger(SingleArchiveEntryDataContent.class);
 
     private final String entryName;
-    private final List<DataNodeInfo> dataNodeList;
+    private final DataNodeInfo dataNode;
     private final InputStream contentStream;
 
     SingleArchiveEntryDataContent(ContentFilterParams contentFilterParams, String entryName, long size, InputStream contentStream) {
         super(contentFilterParams);
         this.entryName = entryName;
         this.contentStream = contentStream;
-        this.dataNodeList = ImmutableList.of(DataContentUtils.createDataNodeInfo(getEntryNameAsPath(), getEntryNameAsPath(), false, size));
+        this.dataNode = DataContentUtils.createDataNodeInfo(getEntryNameAsPath(), getEntryNameAsPath(), false, size);
     }
 
     @Override
-    public List<DataNodeInfo> listDataNodes() {
-        return dataNodeList;
+    public Stream<DataNodeInfo> streamDataNodes() {
+        return Stream.of(dataNode);
     }
 
     @Override

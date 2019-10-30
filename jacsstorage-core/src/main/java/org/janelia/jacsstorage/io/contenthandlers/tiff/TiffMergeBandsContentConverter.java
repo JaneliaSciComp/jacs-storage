@@ -31,46 +31,36 @@ public class TiffMergeBandsContentConverter implements ContentConverter {
     )
     @Override
     public long convertContent(DataContent dataContent, OutputStream outputStream) {
-        List<DataNodeInfo> dataNodes = dataContent.listDataNodes();
-        if (CollectionUtils.isEmpty(dataNodes)) {
+        Integer pageNumber = dataContent.getContentFilterParams().getAsInt("z", 0);
+        byte[] contentBytes = ImageUtils.bandMergedTextureBytesFromImageStreams(
+                dataContent.streamDataNodes()
+                        .filter(dn -> !dn.isCollectionFlag())
+                        .sorted(DataContentUtils.getDataNodePathComparator()
+                                .thenComparing(DataNodeInfo::getNodeRelativePath))
+                        .map(dn -> NamedSupplier.namedSupplier(
+                                dn.getNodeAccessURL(),
+                                () -> dataContent.streamDataNode(dn))),
+                pageNumber
+        );
+        if (contentBytes == null) {
             return 0L;
         } else {
-            Integer pageNumber = dataContent.getContentFilterParams().getAsInt("z", 0);
-            byte[] contentBytes = ImageUtils.bandMergedTextureBytesFromImageStreams(
-                    dataNodes.stream()
-                            .filter(dn -> !dn.isCollectionFlag())
-                            .sorted(DataContentUtils.getDataNodePathComparator()
-                                    .thenComparing(DataNodeInfo::getNodeRelativePath))
-                            .map(dn -> NamedSupplier.namedSupplier(
-                                    dn.getNodeAccessURL(),
-                                    () -> dataContent.streamDataNode(dn))),
-                    pageNumber
-            );
-            if (contentBytes == null) {
-                return 0L;
-            } else {
-                return IOStreamUtils.copyFrom(contentBytes, outputStream);
-            }
+            return IOStreamUtils.copyFrom(contentBytes, outputStream);
         }
     }
 
     @Override
     public long estimateContentSize(DataContent dataContent) {
-        List<DataNodeInfo> dataNodes = dataContent.listDataNodes();
-        if (CollectionUtils.isEmpty(dataNodes)) {
-            return 0L;
-        } else {
-            Integer pageNumber = dataContent.getContentFilterParams().getAsInt("z", 0);
-            return ImageUtils.sizeBandMergedTextureBytesFromImageStreams(
-                    dataNodes.stream()
-                            .filter(dn -> !dn.isCollectionFlag())
-                            .sorted(DataContentUtils.getDataNodePathComparator()
-                                    .thenComparing(DataNodeInfo::getNodeRelativePath))
-                            .map(dn -> NamedSupplier.namedSupplier(
-                                    dn.getNodeAccessURL(),
-                                    () -> dataContent.streamDataNode(dn))),
-                    pageNumber
-            );
-        }
+        Integer pageNumber = dataContent.getContentFilterParams().getAsInt("z", 0);
+        return ImageUtils.sizeBandMergedTextureBytesFromImageStreams(
+                dataContent.streamDataNodes()
+                        .filter(dn -> !dn.isCollectionFlag())
+                        .sorted(DataContentUtils.getDataNodePathComparator()
+                                .thenComparing(DataNodeInfo::getNodeRelativePath))
+                        .map(dn -> NamedSupplier.namedSupplier(
+                                dn.getNodeAccessURL(),
+                                () -> dataContent.streamDataNode(dn))),
+                pageNumber
+        );
     }
 }
