@@ -121,7 +121,7 @@ public class NoOPContentConverter implements ContentConverter {
         } else if (peekDataNodes.size() == 1) {
            return peekDataNodes.get(0).getSize();
         } else {
-            return dataContent.streamDataNodes()
+            return 2* dataContent.streamDataNodes()
                 .sorted(DataContentUtils.getDataNodePathComparator())
                 .reduce(
                         (long) TarConstants.DEFAULT_RCDSIZE,
