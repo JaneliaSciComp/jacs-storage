@@ -204,7 +204,7 @@ public class StorageResourceHelper {
                 .map(dataEntryPath -> {
                     JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
                     long fileSize = dataStorageService.estimateDataEntrySize(dataEntryPath, "", storageFormat, filterParams);
-                    LOG.info("!!!!!!!!!!!!!!!!!!!!!!!! FILESIZE {} -> {}", dataEntryPath, fileSize);
+                    LOG.info("{} file size is: {}", dataEntryPath, fileSize);
                     StreamingOutput fileStream = output -> {
                         try {
                             dataStorageService.retrieveDataStream(dataEntryPath, storageFormat, filterParams, output);
