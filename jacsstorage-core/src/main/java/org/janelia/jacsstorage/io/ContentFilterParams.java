@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ContentFilterParams {
@@ -21,6 +20,9 @@ public class ContentFilterParams {
     private String entryNamePattern;
     private Pattern regexEntryNamePattern;
     private int maxDepth = DEFAULT_DEPTH;
+    private boolean naturalSort;
+    private int startEntryIndex;
+    private int entriesCount;
     private Map<String, String> filterTypeSpecificParams = new HashMap<>();
 
     public String getFilterType() {
@@ -84,6 +86,30 @@ public class ContentFilterParams {
         } else {
             return defaultValue;
         }
+    }
+
+    public boolean isNaturalSort() {
+        return naturalSort;
+    }
+
+    public void setNaturalSort(boolean naturalSort) {
+        this.naturalSort = naturalSort;
+    }
+
+    public int getStartEntryIndex() {
+        return startEntryIndex;
+    }
+
+    public void setStartEntryIndex(int startEntryIndex) {
+        this.startEntryIndex = startEntryIndex;
+    }
+
+    public int getEntriesCount() {
+        return entriesCount;
+    }
+
+    public void setEntriesCount(int entriesCount) {
+        this.entriesCount = entriesCount;
     }
 
     boolean matchEntry(String entryName) {

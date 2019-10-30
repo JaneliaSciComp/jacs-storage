@@ -24,6 +24,20 @@ class ContentFilterRequestHelper {
             } else if ("entryPattern".equalsIgnoreCase(k)) {
                 if (CollectionUtils.isNotEmpty(vs))
                     filterParams.setEntryNamePattern(vs.get(0));
+            } else if ("startEntryIndex".equalsIgnoreCase(k)) {
+                if (CollectionUtils.isNotEmpty(vs)) {
+                    String startEntryIndeParamValue = vs.get(0);
+                    if (StringUtils.isNotBlank(startEntryIndeParamValue)) {
+                        filterParams.setStartEntryIndex(Integer.parseInt(startEntryIndeParamValue.trim()));
+                    }
+                }
+            } else if ("entriesCount".equalsIgnoreCase(k)) {
+                if (CollectionUtils.isNotEmpty(vs)) {
+                    String entriesCountParamValue = vs.get(0);
+                    if (StringUtils.isNotBlank(entriesCountParamValue)) {
+                        filterParams.setEntriesCount(Integer.parseInt(entriesCountParamValue.trim()));
+                    }
+                }
             } else if (StringUtils.isNotBlank(k) && CollectionUtils.isNotEmpty(vs)) {
                 filterParams.addFilterTypeSpecificParam(k, vs.get(0));
             }

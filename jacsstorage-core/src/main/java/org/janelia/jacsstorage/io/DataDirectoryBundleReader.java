@@ -7,12 +7,10 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -20,7 +18,6 @@ import javax.inject.Inject;
 import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -160,8 +157,18 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
                     ImageUtils.getImagePathHandler(),
                     () -> {
                         try {
-                            return Files.walk(entryPath, traverseDepth)
+                            Stream<Path> files = Files.walk(entryPath, traverseDepth)
                                     .filter(p -> Files.isDirectory(p) || filterParams.matchEntry(p.toString()));
+                            if (filterParams.isNaturalSort()) {
+                                files = files.sorted(Comparator.naturalOrder());
+                            }
+                            if (filterParams.getStartEntryIndex() > 0) {
+                                files = files.skip(filterParams.getStartEntryIndex());
+                            }
+                            if (filterParams.getEntriesCount() > 0) {
+                                files = files.limit(filterParams.getEntriesCount());
+                            }
+                            return files;
                         } catch (IOException e) {
                             throw new UncheckedIOException(e);
                         }
