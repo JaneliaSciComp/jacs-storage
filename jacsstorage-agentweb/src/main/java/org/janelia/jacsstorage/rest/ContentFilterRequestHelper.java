@@ -21,6 +21,12 @@ class ContentFilterRequestHelper {
                 if (CollectionUtils.isNotEmpty(vs)) {
                     filterParams.setMaxDepth(vs.stream().filter(s -> StringUtils.isNotBlank(s)).map(s -> Integer.valueOf(s)).findFirst().orElse(1));
                 }
+            } else if ("useNaturalSort".equalsIgnoreCase(k)) {
+                if (CollectionUtils.isNotEmpty(vs))
+                    filterParams.setNaturalSort(Boolean.valueOf(vs.get(0)));
+            } else if ("alwaysArchive".equalsIgnoreCase(k)) {
+                if (CollectionUtils.isNotEmpty(vs))
+                    filterParams.setAlwaysArchive(Boolean.valueOf(vs.get(0)));
             } else if ("entryPattern".equalsIgnoreCase(k)) {
                 if (CollectionUtils.isNotEmpty(vs))
                     filterParams.setEntryNamePattern(vs.get(0));

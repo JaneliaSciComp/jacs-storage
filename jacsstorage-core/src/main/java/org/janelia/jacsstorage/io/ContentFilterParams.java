@@ -21,6 +21,7 @@ public class ContentFilterParams {
     private Pattern regexEntryNamePattern;
     private int maxDepth = DEFAULT_DEPTH;
     private boolean naturalSort;
+    private boolean alwaysArchive;
     private int startEntryIndex;
     private int entriesCount;
     private Map<String, String> filterTypeSpecificParams = new HashMap<>();
@@ -94,6 +95,14 @@ public class ContentFilterParams {
 
     public void setNaturalSort(boolean naturalSort) {
         this.naturalSort = naturalSort;
+    }
+
+    public boolean isAlwaysArchive() {
+        return alwaysArchive;
+    }
+
+    public void setAlwaysArchive(boolean alwaysArchive) {
+        this.alwaysArchive = alwaysArchive;
     }
 
     public int getStartEntryIndex() {

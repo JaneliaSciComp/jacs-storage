@@ -118,23 +118,34 @@ public class TiffROIPixelsContentConverter implements ContentConverter {
         Integer dimX = dataContent.getContentFilterParams().getAsInt("dimX", -1);
         Integer dimY = dataContent.getContentFilterParams().getAsInt("dimY", -1);
         Integer dimZ = dataContent.getContentFilterParams().getAsInt("dimZ", -1);
-        return dataContent.streamDataNodes()
-                .sorted(DataContentUtils.getDataNodePathComparator())
-                .reduce(
-                        0L,
-                        (size, dn) -> {
-                            long entrySize;
-                            if (dn.isCollectionFlag()) {
-                                entrySize = 0L;
-                            } else {
-                                entrySize = ImageUtils.sizeImagePixelBytesFromTiffStream(
-                                        dataContent.streamDataNode(dn),
-                                        xCenter, yCenter, zCenter,
-                                        dimX, dimY, dimZ
-                                );
-                            }
-                            return size + entrySize;
-                        },
-                        (s1, s2) -> s1 + s2);
+        List<DataNodeInfo> peekDataNodes = dataContent.streamDataNodes().filter(dn -> !dn.isCollectionFlag()).limit(2).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(peekDataNodes)) {
+            return 0L;
+        } else if (peekDataNodes.size() == 1) {
+            return ImageUtils.sizeImagePixelBytesFromTiffStream(
+                    dataContent.streamDataNode(peekDataNodes.get(0)),
+                    xCenter, yCenter, zCenter,
+                    dimX, dimY, dimZ
+            );
+        } else {
+            return dataContent.streamDataNodes()
+                    .sorted(DataContentUtils.getDataNodePathComparator())
+                    .reduce(
+                            0L,
+                            (size, dn) -> {
+                                long entrySize;
+                                if (dn.isCollectionFlag()) {
+                                    entrySize = 0L;
+                                } else {
+                                    entrySize = ImageUtils.sizeImagePixelBytesFromTiffStream(
+                                            dataContent.streamDataNode(dn),
+                                            xCenter, yCenter, zCenter,
+                                            dimX, dimY, dimZ
+                                    );
+                                }
+                                return size + DataContentUtils.calculateTarEntrySize(entrySize);
+                            },
+                            (s1, s2) -> s1 + s2);
+        }
     }
 }

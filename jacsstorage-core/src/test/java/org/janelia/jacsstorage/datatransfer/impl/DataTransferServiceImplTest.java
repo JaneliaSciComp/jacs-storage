@@ -61,7 +61,7 @@ public class DataTransferServiceImplTest {
         Instance<BundleWriter> bundleWriterSource = mock(Instance.class);
         ContentHandlerProvider contentHandlerProvider = mock(ContentHandlerProvider.class);
         Mockito.when(contentHandlerProvider.getContentConverter(any(ContentFilterParams.class)))
-                .thenReturn(new NoOPContentConverter());
+                .thenReturn(new NoOPContentConverter(false));
         when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader(contentHandlerProvider)).iterator());
         when(bundleWriterSource.iterator()).thenReturn(ImmutableList.<BundleWriter>of(new SingleFileBundleWriter()).iterator());
         storageService = new DataTransferServiceImpl(Executors.newSingleThreadExecutor(), new DataBundleIOProvider(bundleReaderSource, bundleWriterSource));

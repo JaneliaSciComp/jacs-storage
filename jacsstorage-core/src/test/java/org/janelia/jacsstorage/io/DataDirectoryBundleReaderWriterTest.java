@@ -51,7 +51,7 @@ public class DataDirectoryBundleReaderWriterTest {
     public void setUp() throws IOException {
         ContentHandlerProvider contentHandlerProvider = Mockito.mock(ContentHandlerProvider.class);
         Mockito.when(contentHandlerProvider.getContentConverter(ArgumentMatchers.any(ContentFilterParams.class)))
-                .thenReturn(new NoOPContentConverter());
+                .thenReturn(new NoOPContentConverter(false));
         dataDirectoryBundleReader = new DataDirectoryBundleReader(contentHandlerProvider);
         dataDirectoryBundleWriter = new DataDirectoryBundleWriter();
         testDirectory = Files.createTempDirectory("DataDirectoryBundleReaderWriterTest");

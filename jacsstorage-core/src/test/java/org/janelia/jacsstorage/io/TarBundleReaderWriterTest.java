@@ -56,7 +56,7 @@ public class TarBundleReaderWriterTest {
     public void setUp() throws IOException {
         ContentHandlerProvider contentHandlerProvider = Mockito.mock(ContentHandlerProvider.class);
         Mockito.when(contentHandlerProvider.getContentConverter(ArgumentMatchers.any(ContentFilterParams.class)))
-                .thenReturn(new NoOPContentConverter());
+                .thenReturn(new NoOPContentConverter(false));
         dataDirectoryBundleReader = new DataDirectoryBundleReader(contentHandlerProvider);
         tarBundleReader = new TarArchiveBundleReader(contentHandlerProvider);
         tarBundleWriter = new TarArchiveBundleWriter();

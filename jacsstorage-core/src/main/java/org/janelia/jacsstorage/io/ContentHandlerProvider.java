@@ -23,7 +23,7 @@ public class ContentHandlerProvider {
         return Streams.stream(contentConverterSource)
                 .filter(contentStreamFilter -> contentFilterParams != null && contentStreamFilter.support(contentFilterParams.getFilterType()))
                 .findFirst()
-                .orElseGet(() -> new NoOPContentConverter());
+                .orElseGet(() -> new NoOPContentConverter(contentFilterParams.isAlwaysArchive()));
     }
 
     public ContentInfoExtractor getContentInfoExtractor(String mimeType) {
