@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.coreutils.ComparatorUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -160,7 +161,7 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
                             Stream<Path> files = Files.walk(entryPath, traverseDepth)
                                     .filter(p -> Files.isDirectory(p) || filterParams.matchEntry(p.toString()));
                             if (filterParams.isNaturalSort()) {
-                                files = files.sorted(Comparator.naturalOrder());
+                                files = files.sorted((p1, p2) -> ComparatorUtils.naturalCompare(p1.toString(), p2.toString(), true));
                             }
                             if (filterParams.getStartEntryIndex() > 0) {
                                 files = files.skip(filterParams.getStartEntryIndex());
