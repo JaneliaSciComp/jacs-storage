@@ -119,6 +119,7 @@ public class NoOPContentConverter implements ContentConverter {
 
         try {
             streamWithLength.getLeft().finish();
+            LOG.info("!!!!!!!!!!!!! BYTES WRITTEN {} vs LENGTH {}", streamWithLength.getLeft().getBytesWritten(), streamWithLength.getRight());
         } catch (IOException e) {
             LOG.error("Error ending the archive stream for {}", dataContent, e);
             throw new IllegalStateException(e);
@@ -146,7 +147,7 @@ public class NoOPContentConverter implements ContentConverter {
         return dataContent.streamDataNodes()
                 .sorted(DataContentUtils.getDataNodePathComparator())
                 .reduce(
-                        (long) TarConstants.DEFAULT_RCDSIZE,
+                        (long) 2 * TarConstants.DEFAULT_RCDSIZE,
                         (size, dn) -> {
                             long entrySize;
                             if (dn.isCollectionFlag()) {
