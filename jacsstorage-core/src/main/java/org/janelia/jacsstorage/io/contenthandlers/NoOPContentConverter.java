@@ -113,7 +113,6 @@ public class NoOPContentConverter implements ContentConverter {
                             }
                         },
                         (a1, a2) -> a1);
-
         try {
             archiveOutputStream.finish();
             long nbytesWritten = archiveOutputStream.getBytesWritten();

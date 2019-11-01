@@ -14,11 +14,13 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.collect.ImmutableList;
 
+import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.utils.IOUtils;
 import org.hamcrest.Matchers;
 import org.janelia.jacsstorage.coreutils.PathUtils;
@@ -89,12 +91,21 @@ public class DataDirectoryBundleReaderWriterTest {
             testOutputStream = null;
             testInputStream = new BufferedInputStream(new FileInputStream(testFilePath.toFile()));
             long nWrittenBytes = dataDirectoryBundleWriter.writeBundle(testInputStream, testExpandedPath.toString());
-            assertEquals(nReadBytes, nWrittenBytes);
-            Files.walkFileTree(testExpandedPath, new SimpleFileVisitor<Path>() {
+            AtomicLong additionalBytes = new AtomicLong(2 * TarConstants.DEFAULT_RCDSIZE);
+            SimpleFileVisitor<Path> fileVisitorChecker = new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     Path relativePath = testExpandedPath.relativize(file);
                     assertTrue(Files.exists(testDataDir.resolve(relativePath)));
+                    long size = Files.size(file);
+                    // I must add only what is extra to size
+                    if ((size + TarConstants.DEFAULT_RCDSIZE) % TarConstants.DEFAULT_RCDSIZE != 0) {
+                        // add the header and the padding
+                        additionalBytes.addAndGet(((size + 2 * TarConstants.DEFAULT_RCDSIZE) / TarConstants.DEFAULT_RCDSIZE) * TarConstants.DEFAULT_RCDSIZE - size);
+                    } else {
+                        // only add the header
+                        additionalBytes.addAndGet(TarConstants.DEFAULT_RCDSIZE);
+                    }
                     return FileVisitResult.CONTINUE;
                 }
 
@@ -102,9 +113,13 @@ public class DataDirectoryBundleReaderWriterTest {
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                     Path relativePath = testExpandedPath.relativize(dir);
                     assertTrue(Files.exists(testDataDir.resolve(relativePath)));
+                    // add the header
+                    additionalBytes.addAndGet(TarConstants.DEFAULT_RCDSIZE);
                     return FileVisitResult.CONTINUE;
                 }
-            });
+            };
+            Files.walkFileTree(testExpandedPath, fileVisitorChecker);
+            assertEquals(nReadBytes, nWrittenBytes + additionalBytes.get());
         } finally {
             IOUtils.closeQuietly(testOutputStream);
             IOUtils.closeQuietly(testInputStream);

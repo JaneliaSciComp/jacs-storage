@@ -57,11 +57,11 @@ public class TiffROIPixelsContentConverter implements ContentConverter {
                     dimX, dimY, dimZ
             ), outputStream);
         } else {
-            Pair<TarArchiveOutputStream, Long> streamWithLength = dataContent.streamDataNodes()
+            TarArchiveOutputStream archiveOutputStream = dataContent.streamDataNodes()
                     .sorted(DataContentUtils.getDataNodePathComparator())
                     .reduce(
-                            Pair.of(new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE), 0L),
-                            (p, dn) -> {
+                            new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE),
+                            (archiveStream, dn) -> {
                                 Path entryPath = Paths.get(dn.getNodeRelativePath());
                                 String entryName;
                                 byte[] entryBytes;
@@ -83,30 +83,28 @@ public class TiffROIPixelsContentConverter implements ContentConverter {
                                 }
                                 TarArchiveEntry entry = new TarArchiveEntry(entryName);
                                 entry.setSize(entryBytes == null ? 0 : entryBytes.length);
-                                long nbytes;
                                 try {
-                                    p.getLeft().putArchiveEntry(entry);
+                                    archiveStream.putArchiveEntry(entry);
                                     if (!dn.isCollectionFlag()) {
-                                        nbytes = IOStreamUtils.copyFrom(entryBytes, p.getLeft());
-                                    } else {
-                                        nbytes = 0L;
+                                        IOStreamUtils.copyFrom(entryBytes, archiveStream);
                                     }
-                                    p.getLeft().closeArchiveEntry();
-                                    return Pair.of(p.getLeft(), p.getRight() + nbytes);
+                                    archiveStream.closeArchiveEntry();
+                                    return archiveStream;
                                 } catch (Exception e) {
                                     LOG.error("Error copying data from {} for {}", dn.getNodeAccessURL(), dataContent, e);
                                     throw new IllegalStateException(e);
                                 }
                             },
-                            (p1, p2) -> Pair.of(p2.getLeft(), p1.getRight() + p2.getRight()));
-
+                            (a1, a2) -> a1);
             try {
-                streamWithLength.getLeft().finish();
+                archiveOutputStream.finish();
+                long nbytesWritten = archiveOutputStream.getBytesWritten();
+                LOG.info("Archived {} bytes", nbytesWritten);
+                return nbytesWritten;
             } catch (IOException e) {
                 LOG.error("Error ending the archive stream for {}", dataContent, e);
                 throw new IllegalStateException(e);
             }
-            return streamWithLength.getRight();
         }
     }
 
