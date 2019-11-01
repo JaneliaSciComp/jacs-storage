@@ -29,7 +29,7 @@ class ContentFilterRequestHelper {
                     filterParams.setAlwaysArchive(Boolean.valueOf(vs.get(0)));
             } else if ("entryPattern".equalsIgnoreCase(k)) {
                 if (CollectionUtils.isNotEmpty(vs))
-                    filterParams.setEntryNamePattern(vs.get(0));
+                    filterParams.setEntryNamePattern(vs.stream().filter(s -> StringUtils.isNotBlank(s)).findFirst().orElse(null));
             } else if ("startEntryIndex".equalsIgnoreCase(k)) {
                 if (CollectionUtils.isNotEmpty(vs)) {
                     String startEntryIndeParamValue = vs.get(0);
