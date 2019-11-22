@@ -7,6 +7,7 @@ RequiresMountsFor=/misc/local
 [Service]
 Type=simple
 User=jacs
+LimitNOFILE=655350
 ExecStart=/bin/sh ${jacs.runtime.env.installDir}/bin/run-service.sh
 Restart=always
 
