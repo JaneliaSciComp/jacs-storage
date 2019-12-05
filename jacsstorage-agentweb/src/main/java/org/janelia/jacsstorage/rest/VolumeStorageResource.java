@@ -111,7 +111,17 @@ public class VolumeStorageResource {
                                                          @PathParam("storageRelativePath") String storageRelativeFilePath,
                                                          @Context UriInfo requestURI) {
         LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
-        JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
+        JacsStorageVolume storageVolume;
+        try {
+            storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
+        } catch (Exception e) {
+            LOG.error("Error retrieving volume info for {}", storageVolumeId, e);
+            return Response
+                    .status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(new ErrorResponse("No volume info returned for " + storageVolumeId))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
         if (storageVolume == null) {
             LOG.warn("No accessible volume found for {}", storageVolumeId);
             return Response

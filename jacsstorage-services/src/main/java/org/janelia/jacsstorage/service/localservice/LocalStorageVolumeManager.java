@@ -73,7 +73,8 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     }
 
     @TimedMethod(
-            logLevel = "info"
+            logLevel = "debug",
+            logResult = true
     )
     @Override
     public JacsStorageVolume getVolumeById(Number volumeId) {
@@ -124,7 +125,8 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     }
 
     @TimedMethod(
-            logLevel = "trace"
+            logLevel = "trace",
+            logResult = true
     )
     @Override
     public JacsStorageVolume updateVolumeInfo(Number volumeId, JacsStorageVolume storageVolume) {
