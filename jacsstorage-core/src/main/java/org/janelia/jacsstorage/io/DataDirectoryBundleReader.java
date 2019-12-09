@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -85,7 +86,7 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
         }
         try {
             // start to collect the files from the startPath but return the data relative to sourcePath
-            return Files.walk(startPath, depth).map(p -> pathToDataNodeInfo(sourcePath, p, (rootPath, nodePath) -> rootPath.relativize(nodePath).toString().replace(File.separatorChar, '/')));
+            return Files.walk(startPath, depth, FileVisitOption.FOLLOW_LINKS).map(p -> pathToDataNodeInfo(sourcePath, p, (rootPath, nodePath) -> rootPath.relativize(nodePath).toString().replace(File.separatorChar, '/')));
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -158,7 +159,7 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
                     ImageUtils.getImagePathHandler(),
                     () -> {
                         try {
-                            Stream<Path> files = Files.walk(entryPath, traverseDepth)
+                            Stream<Path> files = Files.walk(entryPath, traverseDepth, FileVisitOption.FOLLOW_LINKS)
                                     .filter(p -> Files.isDirectory(p) || filterParams.matchEntry(p.toString()));
                             if (filterParams.isNaturalSort()) {
                                 files = files.sorted((p1, p2) -> ComparatorUtils.naturalCompare(p1.toString(), p2.toString(), true));
