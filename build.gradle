@@ -13,8 +13,9 @@ subprojects {
         integrationTestImplementation.extendsFrom(testImplementation)
         integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
         perfApi.extendsFrom(api)
+        perfApiElements.extendsFrom(perfApi, apiElements)
         perfImplementation.extendsFrom(perfApi, implementation)
-        perfRuntimeOnly.extendsFrom(perfImplementation, runtimeOnly)
+        perfRuntimeElements.extendsFrom(perfImplementation, perfRuntimeOnly)
     }
 
     apply from: "${rootDir}/deps.gradle"
@@ -22,7 +23,6 @@ subprojects {
     sourceSets {
         perf {
             java {
-                runtimeClasspath += main.output + perf.output
                 srcDir file('src/perf/java')
             }
             resources {
@@ -95,19 +95,18 @@ subprojects {
                 downloadJavadoc = true
                 scopes.TEST.plus += [
                     configurations.integrationTestCompileOnly,
-                    configurations.integrationTestRuntime,
+                    configurations.integrationTestRuntimeOnly,
                     configurations.perfApi,
-                    configurations.perfRuntime
+                    configurations.perfRuntimeElements
                 ]
             }
         }
-
    }
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
-    task perfJar(type: Jar, dependsOn: configurations.perfRuntime) {
+    task perfJar(type: Jar, dependsOn: configurations.perfRuntimeElements) {
         from sourceSets.perf.output
         classifier = "perf"
     }
@@ -118,7 +117,7 @@ subprojects {
     }
 
     artifacts {
-        perfRuntime perfJar
+        perfRuntimeElements perfJar
     }
 }
 
@@ -127,7 +126,7 @@ task updateWrapper(type: Wrapper) {
 }
 
 def filteringProperties(otherProperties) {
-        def tmpProject = new org.apache.tools.ant.Project()
+        org.apache.tools.ant.Project tmpProject = new org.apache.tools.ant.Project()
         tmpProject.initProperties()
         // convert the build config to ant properties to be used with the ant ExpandProperties
         project.ext.properties.each { k,v ->

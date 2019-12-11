@@ -3,14 +3,14 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.netflix.nebula:gradle-ospackage-plugin:6.1.1'
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:8.0.3'
     }
 }
 
 plugins {
     id 'application'
     id 'distribution'
-    id 'nebula.rpm' version '6.1.1'
+    id 'nebula.rpm' version '8.0.3'
 }
 
 mainClassName = 'org.janelia.jacsstorage.client.StorageClientApp'
@@ -39,21 +39,21 @@ project(":jacsstorage-clients") {
 
     task createStoragePersistBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
         mainClassName = "org.janelia.jacsstorage.benchmarks.StoragePersistBenchmark"
-        classpath = project.perfJar.outputs.files + startScripts.classpath + configurations.perfRuntimeClasspath
+        classpath = project.perfJar.outputs.files + startScripts.classpath + configurations.perfRuntimeElements
         outputDir = startScripts.outputDir
         applicationName = "storagePersistBenchmarks"
     }
 
     task createStorageRetrieveBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
         mainClassName = "org.janelia.jacsstorage.benchmarks.StorageRetrieveBenchmark"
-        classpath = project.perfJar.outputs.files + startScripts.classpath + configurations.perfRuntimeClasspath
+        classpath = project.perfJar.outputs.files + startScripts.classpath + configurations.perfRuntimeElements
         outputDir = startScripts.outputDir
         applicationName = "storageRetrieveBenchmarks"
     }
 
     task createStorageUpdateBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
         mainClassName = "org.janelia.jacsstorage.benchmarks.StorageUpdateBenchmark"
-        classpath = project.perfJar.outputs.files + startScripts.classpath + configurations.perfRuntimeClasspath
+        classpath = project.perfJar.outputs.files + startScripts.classpath + configurations.perfRuntimeElements
         outputDir = startScripts.outputDir
         applicationName = "storageUpdateBenchmarks"
     }
@@ -61,6 +61,7 @@ project(":jacsstorage-clients") {
     distributions {
         benchmarks {
             contents {
+                duplicatesStrategy = DuplicatesStrategy.INCLUDE
                 into("bin") {
                     from(createStoragePersistBenchmark)
                     from(createStorageRetrieveBenchmark)
@@ -69,12 +70,13 @@ project(":jacsstorage-clients") {
                 }
                 into("lib") {
                     from(project.perfJar.outputs.files)
-                    from(project.configurations.perfRuntimeClasspath)
+                    from(project.configurations.perfRuntimeElements)
                 }
             }
         }
         main {
             contents {
+                duplicatesStrategy = DuplicatesStrategy.INCLUDE
                 into("bin") {
                     from(createStorageClientApp)
                     fileMode = 0755
@@ -87,13 +89,14 @@ project(":jacsstorage-clients") {
         release = "1"
         arch = I386
         os = LINUX
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
 
         def rpmInstallDir;
 
         if (project.hasProperty('jacs.runtime.env.jadeToolsDir')) {
-            rpmInstallDir = project.getProperty("jacs.runtime.env.jadeToolsDir") + "-${version}"
+            rpmInstallDir = project.getProperty("jacs.runtime.env.jadeToolsDir") + "-${archiveVersion}"
         } else {
-            rpmInstallDir= "/misc/sc/jadeTools-${version}"
+            rpmInstallDir= "/misc/sc/jadeTools-${archiveVersion}"
         }
         def parentRpmInstallDir = new File(rpmInstallDir).parent
         def installEnv = ["jacs.runtime.env.installDir": rpmInstallDir]

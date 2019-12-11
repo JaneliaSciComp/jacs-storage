@@ -3,14 +3,14 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.netflix.nebula:gradle-ospackage-plugin:6.1.1'
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:8.0.3'
     }
 }
 
 plugins {
     id 'application'
     id 'distribution'
-    id 'nebula.rpm' version '4.8.0'
+    id 'nebula.rpm' version '8.0.3'
 }
 
 mainClassName = 'org.janelia.jacsstorage.app.JacsAgentStorageApp'
@@ -30,7 +30,7 @@ project(":jacsstorage-agentweb") {
         perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
 
         perfImplementation project,
-                           project(path: ":jacsstorage-services", configuration: "perfRuntime"),
+                           project(path: ":jacsstorage-services", configuration: "perfRuntimeElements"),
                            JAX_RS_JERSEY_TEST_LIB,
                            JAX_RS_JERSEY_TEST_PROVIDER_LIB
     }
@@ -62,7 +62,7 @@ project(":jacsstorage-agentweb") {
                         filter(org.apache.tools.ant.filters.ExpandProperties,
                                 project: filteringProperties([
                                         "jacs.runtime.env.serviceName": "${project.name}",
-                                        "jacs.runtime.env.serviceVersion": "${version}"
+                                        "jacs.runtime.env.serviceVersion": "${project.version}"
                                 ]))
                         fileMode = 0755
                     }
@@ -84,7 +84,7 @@ project(":jacsstorage-agentweb") {
         arch = I386
         os = LINUX
 
-        def rpmInstallDir = "/opt/servers/jacsstorage/${project.name}-${version}"
+        def rpmInstallDir = "/opt/servers/jacsstorage/${project.name}-${archiveVersion}"
         def systemServiceDir = "/etc/systemd/system"
         def installEnv = ["jacs.runtime.env.installDir": rpmInstallDir]
 

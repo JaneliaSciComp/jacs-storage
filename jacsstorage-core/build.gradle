@@ -8,8 +8,8 @@ project(":jacsstorage-core") {
                        JWT_API_LIB,
                        MESSAGEPACK_LIB
 
-        runtime JWT_IMPL_LIB,
-                JWT_JACKSON_LIB
+        runtimeOnly JWT_IMPL_LIB,
+                    JWT_JACKSON_LIB
     }
 }
 
