@@ -30,6 +30,10 @@ project(":jacsstorage-clients") {
         perfImplementation project
     }
 
+    processPerfResources {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+
     task createStorageClientApp(type: CreateStartScripts) {
         mainClassName = "org.janelia.jacsstorage.client.StorageClientApp"
         classpath = startScripts.classpath
@@ -61,7 +65,7 @@ project(":jacsstorage-clients") {
     distributions {
         benchmarks {
             contents {
-                duplicatesStrategy = DuplicatesStrategy.INCLUDE
+                duplicatesStrategy = DuplicatesStrategy.EXCLUDE
                 into("bin") {
                     from(createStoragePersistBenchmark)
                     from(createStorageRetrieveBenchmark)
@@ -76,7 +80,7 @@ project(":jacsstorage-clients") {
         }
         main {
             contents {
-                duplicatesStrategy = DuplicatesStrategy.INCLUDE
+                duplicatesStrategy = DuplicatesStrategy.EXCLUDE
                 into("bin") {
                     from(createStorageClientApp)
                     fileMode = 0755
@@ -89,7 +93,7 @@ project(":jacsstorage-clients") {
         release = "1"
         arch = I386
         os = LINUX
-        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
         def rpmInstallDir;
 

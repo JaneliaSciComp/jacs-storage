@@ -24,6 +24,10 @@ project(":jacsstorage-services") {
                 CMDLINE_ARG_LIB
     }
 
+    processIntegrationTestResources {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+
     task createStorageRetrieveBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
         mainClassName = "org.janelia.jacsstorage.service.cmd.StorageRetrieveBenchmark"
         classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files

@@ -15,6 +15,7 @@ subprojects {
         perfApi.extendsFrom(api)
         perfApiElements.extendsFrom(perfApi, apiElements)
         perfImplementation.extendsFrom(perfApi, implementation)
+        perfRuntimeOnly.extendsFrom(runtimeOnly)
         perfRuntimeElements.extendsFrom(perfImplementation, perfRuntimeOnly)
     }
 
