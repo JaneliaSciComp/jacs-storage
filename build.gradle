@@ -95,8 +95,8 @@ subprojects {
                 downloadSources = true
                 downloadJavadoc = true
                 scopes.TEST.plus += [
-                    configurations.integrationTestCompileOnly,
-                    configurations.integrationTestRuntimeOnly,
+                    configurations.integrationTestCompileClasspath,
+                    configurations.integrationTestRuntimeClasspath,
                     configurations.perfApi,
                     configurations.perfRuntimeElements
                 ]

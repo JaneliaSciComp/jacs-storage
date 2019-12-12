@@ -44,6 +44,8 @@ public class StoragePathURI {
             return null;
         } else if (storagePathValue.startsWith(STORAGE_URI_SCHEME)) {
             return storagePathValue;
+        } else if (storagePathValue.startsWith("jade:/")) {
+            return STORAGE_URI_SCHEME + storagePathValue.replaceFirst("^jade:/", "/");
         } else if (storagePathValue.startsWith("//")) {
             return STORAGE_URI_SCHEME + storagePathValue.replaceFirst("^/+", "/");
         } else {
