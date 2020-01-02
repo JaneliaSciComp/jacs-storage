@@ -149,7 +149,7 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
         return entryPath;
     }
 
-    private DataContent getDataContent(Path entryPath, ContentFilterParams filterParams) throws IOException {
+    private DataContent getDataContent(Path entryPath, ContentFilterParams filterParams) {
         DataContent dataContent;
         if (Files.isDirectory(entryPath)) {
             int traverseDepth = filterParams.getMaxDepth() >= 0 ? filterParams.getMaxDepth() : Integer.MAX_VALUE;
