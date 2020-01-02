@@ -8,13 +8,13 @@ project(":jacsstorage-commonweb") {
             JACKSON_JAXRS_XML_PROVIDER,
             JAVAX_SERVLET_API_LIB,
             JAX_RS_API_LIB,
-            JAX_RS_JERSEY_CONTAINERS_LIB,
-            JAX_RS_JERSEY_CORE_LIB,
-            JAX_RS_JERSEY_SERVER_LIB,
             SWAGGER_JAXRS_LIB
 
         implementation GRIZZLY_SERVLET_LIB,
+                       JAX_RS_JERSEY_CONTAINERS_LIB,
+                       JAX_RS_JERSEY_CORE_LIB,
                        JAX_RS_JERSEY_HTTP_CONTAINERS_LIB,
+                       JAX_RS_JERSEY_SERVER_LIB,
                        UNDERTOW_CORE_LIB,
                        UNDERTOW_SERVLET_LIB
     }

@@ -109,7 +109,7 @@ subprojects {
 
     task perfJar(type: Jar, dependsOn: configurations.perfRuntimeElements) {
         from sourceSets.perf.output
-        classifier = "perf"
+        archiveClassifier = "perf"
     }
 
     task integrationTest(type: Test) {
