@@ -53,7 +53,7 @@ dependencies {
         JAVAMAIL_LIB = "com.sun.mail:javax.mail:1.6.2"
 
         // command line args
-        CMDLINE_ARG_LIB = "com.beust:jcommander:1.72"
+        CMDLINE_ARG_LIB = "com.beust:jcommander:1.78"
 
         // servlet engine
         JAVAX_SERVLET_API_LIB = "javax.servlet:javax.servlet-api:4.0.1"

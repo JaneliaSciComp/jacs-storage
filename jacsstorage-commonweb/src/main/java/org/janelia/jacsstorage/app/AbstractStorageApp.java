@@ -34,7 +34,7 @@ public abstract class AbstractStorageApp {
 
     static <A extends AppArgs> void displayAppUsage(A appArgs, StringBuilder output) {
         JCommander cmdline = new JCommander(appArgs);
-        cmdline.usage(output);
+        cmdline.getUsageFormatter().usage(output);
     }
 
     private String appId;
