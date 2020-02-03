@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.security;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,22 +18,32 @@ public class AggregatedTokenCredentialsValidator implements TokenCredentialsVali
 
     @Override
     public boolean acceptToken(String token) {
-        for (TokenCredentialsValidator tokenValidator : tokenValidatorsList) {
-            if (tokenValidator.acceptToken(token)) {
-                return true;
+        if (StringUtils.isBlank(token)) {
+            LOG.warn("Token is empty");
+            return false;
+        } else {
+            for (TokenCredentialsValidator tokenValidator : tokenValidatorsList) {
+                if (tokenValidator.acceptToken(token)) {
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
     }
 
     @Override
     public Optional<TokenCredentials> validateToken(String token) {
-        for (TokenCredentialsValidator tokenValidator : tokenValidatorsList) {
-            if (tokenValidator.acceptToken(token)) {
-                return tokenValidator.validateToken(token);
+        if (StringUtils.isBlank(token)) {
+            LOG.warn("Cannot validate an empty token");
+            return Optional.empty();
+        } else {
+            for (TokenCredentialsValidator tokenValidator : tokenValidatorsList) {
+                if (tokenValidator.acceptToken(token)) {
+                    return tokenValidator.validateToken(token);
+                }
             }
+            LOG.warn("No token validator found for: {}", token);
+            return Optional.empty();
         }
-        LOG.warn("No token validator found for: {}", token);
-        return Optional.empty();
     }
 }

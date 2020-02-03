@@ -33,7 +33,11 @@ class AgentConnectionHelper {
                 response.close();
             }
         } catch (Exception e) {
-            LOG.warn("Error raised during agent deregistration", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.error("Error raised while trying to find agent {} registration from {}", agentURL, masterServiceUrl, e);
+            } else {
+                LOG.error("Error raised while trying to find agent {} registration from {}: {}", agentURL, masterServiceUrl, e.toString());
+            }
         } finally {
             if (httpClient != null) {
                 httpClient.close();
@@ -91,7 +95,11 @@ class AgentConnectionHelper {
             }
             response.close();
         } catch (Exception e) {
-            LOG.warn("Error raised during agent deregistration", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.error("Error raised while unregistering agent {} from {}", agentURL, masterServiceUrl, e);
+            } else {
+                LOG.error("Error raised while unregistering agent {} from {}: {}", agentURL, masterServiceUrl, e.toString());
+            }
         } finally {
             if (httpClient != null) {
                 httpClient.close();
