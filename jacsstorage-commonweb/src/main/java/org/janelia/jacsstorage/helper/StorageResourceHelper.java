@@ -208,6 +208,7 @@ public class StorageResourceHelper {
                     StreamingOutput fileStream = output -> {
                         try {
                             dataStorageService.retrieveDataStream(dataEntryPath, storageFormat, filterParams, output);
+                            output.flush();
                         } catch (Exception e) {
                             LOG.error("Error streaming data file content for {}", dataEntryPath, e);
                             throw new WebApplicationException("Error streaming content for " + dataEntryName, e, Response.Status.INTERNAL_SERVER_ERROR);
@@ -269,6 +270,7 @@ public class StorageResourceHelper {
                         dataBundle.getStorageFormat(),
                         filterParams,
                         output);
+                output.flush();
             } catch (Exception e) {
                 LOG.error("Error streaming data file content for {}:{}", dataBundle, dataEntryPath, e);
                 throw new WebApplicationException(e);
