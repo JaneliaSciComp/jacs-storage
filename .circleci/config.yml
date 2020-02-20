@@ -45,4 +45,4 @@ jobs:
           path: jacsstorage-masterweb/build/test-results/test
 
       - store_test_results:
-          paths: jacsstorage-services/build/test-results/test
+          path: jacsstorage-services/build/test-results/test
