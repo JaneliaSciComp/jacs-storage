@@ -33,10 +33,16 @@ jobs:
       - run: ./gradlew --no-daemon installDist test
 
       - store_test_results:
-          paths: 
-            - jacsstorage-agentweb/build/test-results/test
-            - jacsstorage-api/build/test-results/test
-            - jacsstorage-core/build/test-results/test
-            - jacsstorage-masterweb/build/test-results/test
-            - jacsstorage-services/build/test-results/test
-      
+          path: jacsstorage-agentweb/build/test-results/test
+
+      - store_test_results:
+          path: jacsstorage-api/build/test-results/test
+
+      - store_test_results:
+          path: jacsstorage-core/build/test-results/test
+
+      - store_test_results:
+          path: jacsstorage-masterweb/build/test-results/test
+
+      - store_test_results:
+          paths: jacsstorage-services/build/test-results/test
