@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.rest;
 
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -95,7 +96,13 @@ public class VolumeStorageResource {
                     .build();
         }
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-        return storageResourceHelper.checkContentFromFile(storageVolume, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath), directoryOnlyParam != null && directoryOnlyParam).build();
+        return storageVolume.getDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath))
+                .map(dataPath -> storageResourceHelper.checkContentFromFile(storageVolume, dataPath, directoryOnlyParam != null && directoryOnlyParam).build())
+                .orElseGet(() -> Response
+                        .status(Response.Status.BAD_REQUEST)
+                        .header("Content-Length", 0)
+                        .build())
+                ;
     }
 
     @ApiOperation(value = "Stream the specified data file identified by the relative path to the volume mount point.")
@@ -133,7 +140,7 @@ public class VolumeStorageResource {
         ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-            return storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).build();
+            return storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, storageVolume.getDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).orElse(null)).build();
         } else {
             LOG.warn("Attempt to read {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
             return Response
@@ -166,7 +173,7 @@ public class VolumeStorageResource {
         }
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-            return storageResourceHelper.retrieveContentInfoFromFile(storageVolume, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).build();
+            return storageResourceHelper.retrieveContentInfoFromFile(storageVolume, storageVolume.getDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).orElse(null)).build();
         } else {
             LOG.warn("Attempt to get info about {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
             return Response
@@ -291,7 +298,7 @@ public class VolumeStorageResource {
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
             return storageResourceHelper.storeFileContent(storageVolume,
                     resourceURI.getBaseUri(),
-                    StorageRelativePath.pathRelativeToBaseRoot(storageRelativePathParam),
+                    storageVolume.getDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativePathParam)).orElse(null),
                     contentStream)
                     .build();
         } else {
@@ -328,7 +335,10 @@ public class VolumeStorageResource {
         }
         if (storageVolume.hasPermission(JacsStoragePermission.DELETE)) {
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-            return storageResourceHelper.removeFileContentFromVolume(storageVolume, StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).build();
+            return storageResourceHelper.removeFileContentFromVolume(
+                    storageVolume,
+                    storageVolume.getDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).orElse(null)
+            ).build();
         } else {
             LOG.warn("Attempt to read {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
             return Response

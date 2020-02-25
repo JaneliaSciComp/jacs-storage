@@ -48,7 +48,7 @@ public class ContentStorageResource {
      * Redirect to the agent URL for checking the content using the file path.
      *
      * @param filePathParam
-     * @param securityContext
+     * @param directoryOnlyParam
      * @return
      */
     @ApiOperation(value = "Get file content",
@@ -81,14 +81,14 @@ public class ContentStorageResource {
                         })
                         .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST)
                                 .header("Content-Length", 0)),
-                (storageVolume, dataEntryPath) -> {
+                (storageVolume, storageDataPathURI) -> {
                     if (StringUtils.isNotBlank(storageVolume.getStorageServiceURL())) {
                         URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
                                 .path("agent_storage")
                                 .path("storage_volume")
                                 .path(storageVolume.getId().toString())
                                 .path("data_content")
-                                .path(dataEntryPath.getPath())
+                                .path(storageVolume.getPathRelativeToBaseStorageRoot(storageDataPathURI.getStoragePath()).toString())
                                 .replaceQuery(requestURI.getRequestUri().getRawQuery())
                                 .build();
                         LOG.info("Redirect to {} for checking {}", redirectURI, filePathParam);
@@ -140,21 +140,21 @@ public class ContentStorageResource {
                                     .entity(new ErrorResponse("No volume associated with databundle " + dataBundle.getId()))
                                     .type(MediaType.APPLICATION_JSON)
                             ),
-                (storageVolume, dataEntryPath) -> {
+                (storageVolume, storageDataPathURI) -> {
                     if (StringUtils.isNotBlank(storageVolume.getStorageServiceURL())) {
                         URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
                                 .path("agent_storage")
                                 .path("storage_volume")
                                 .path(storageVolume.getId().toString())
                                 .path("data_content")
-                                .path(dataEntryPath.getPath())
+                                .path(storageVolume.getPathRelativeToBaseStorageRoot(storageDataPathURI.getStoragePath()).toString())
                                 .replaceQuery(requestURI.getRequestUri().getRawQuery())
                                 .build();
                         LOG.info("Redirect to {} for getting content from {}", redirectURI, filePathParam);
                         return Response.temporaryRedirect(redirectURI);
                     } else {
                         return Response.status(Response.Status.BAD_GATEWAY)
-                                .entity(new ErrorResponse("No storage service URL found to serve " + dataEntryPath))
+                                .entity(new ErrorResponse("No storage service URL found to serve " + storageDataPathURI))
                                 .type(MediaType.APPLICATION_JSON)
                                 ;
                     }
@@ -183,7 +183,7 @@ public class ContentStorageResource {
         LOG.info("Redirect to agent for deleting content of {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
         StoragePathURI storagePathURI = StoragePathURI.createAbsolutePathURI(filePathParam);
-        return storageResourceHelper.getStorageVolumeForURI(storagePathURI)
+        return storageResourceHelper.getStorageVolumesForURI(storagePathURI).stream()
                 .map(storageVolume -> {
                     URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
                             .path("agent_storage")
@@ -194,6 +194,7 @@ public class ContentStorageResource {
                     LOG.info("Redirect to {} to delete {}", redirectURI, filePathParam);
                     return Response.temporaryRedirect(redirectURI).build();
                 })
+                .findFirst()
                 .orElseGet(() -> Response
                         .status(Response.Status.BAD_GATEWAY)
                         .entity(new ErrorResponse("No storage service URL found to serve " + filePathParam))

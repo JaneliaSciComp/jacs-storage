@@ -186,34 +186,32 @@ public class AgentWebdavResource {
                             .entity(propfindResponse)
                             ;
                 },
-                (storageVolume, dataEntryName) -> storageVolume.getDataStorageAbsolutePath(dataEntryName)
-                        .filter(dataEntryPath -> Files.exists(dataEntryPath))
-                        .map(dataEntryPath -> {
-                            JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
-                            Stream<DataNodeInfo> dataBundleNodesStream = dataStorageService.streamDataEntries(dataEntryPath, null, storageFormat, depth).limit(MAX_NODE_ENTRIES);
-                            Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleNodesStream,
-                                    (nodeInfo) -> {
-                                        nodeInfo.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
-                                        nodeInfo.setStorageRootPathURI(StoragePathURI.createPathURI(dataEntryPath.toString()));
-                                        return nodeInfo;
-                                    },
-                                    (nodeInfo) -> {
-                                        String nodeInfoRelPath = nodeInfo.isCollectionFlag()
-                                                ? StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
-                                                : nodeInfo.getNodeRelativePath();
-                                        return resourceURI.getBaseUriBuilder()
-                                                .path(Constants.AGENTSTORAGE_URI_PATH)
-                                                .path("storage_path")
-                                                .path("data_content")
-                                                .path(nodeInfoRelPath)
-                                                .build()
-                                                .toString();
-                                    });
-                            return Response.status(207)
-                                    .entity(propfindResponse)
-                                    ;
-                        })
-                        .orElseGet(storageNotFoundHandler),
+                (storageVolume, storageDataPathURI) -> {
+                    java.nio.file.Path dataEntryPath = Paths.get(storageDataPathURI.getStoragePath());
+                    JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
+                    Stream<DataNodeInfo> dataBundleNodesStream = dataStorageService.streamDataEntries(dataEntryPath, null, storageFormat, depth).limit(MAX_NODE_ENTRIES);
+                    Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleNodesStream,
+                            (nodeInfo) -> {
+                                nodeInfo.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
+                                nodeInfo.setStorageRootPathURI(StoragePathURI.createPathURI(dataEntryPath.toString()));
+                                return nodeInfo;
+                            },
+                            (nodeInfo) -> {
+                                String nodeInfoRelPath = nodeInfo.isCollectionFlag()
+                                        ? StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
+                                        : nodeInfo.getNodeRelativePath();
+                                return resourceURI.getBaseUriBuilder()
+                                        .path(Constants.AGENTSTORAGE_URI_PATH)
+                                        .path("storage_path")
+                                        .path("data_content")
+                                        .path(nodeInfoRelPath)
+                                        .build()
+                                        .toString();
+                            });
+                    return Response.status(207)
+                            .entity(propfindResponse)
+                            ;
+                },
                 storageNotFoundHandler
         ).build();
     }

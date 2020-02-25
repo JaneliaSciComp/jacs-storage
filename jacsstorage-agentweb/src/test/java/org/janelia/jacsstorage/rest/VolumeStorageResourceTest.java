@@ -131,6 +131,7 @@ public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 );
         PowerMockito.mockStatic(Files.class);
         when(Files.exists(testFullPath)).thenReturn(false);
+        when(Files.notExists(testFullPath)).thenReturn(true);
         Response response = target()
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path("storage_volume")

@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.rest;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Paths;
 
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
@@ -74,7 +75,7 @@ public class PathBasedAgentStorageResource {
             return storageResourceHelper.handleResponseForFullDataPathParam(
                     StoragePathURI.createAbsolutePathURI(dataPathParam),
                     (dataBundle, dataEntryPath) -> storageResourceHelper.checkContentFromDataBundle(dataBundle, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam),
-                    (storageVolume, dataEntryPath) -> storageResourceHelper.checkContentFromFile(storageVolume, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam)
+                    (storageVolume, storageDataPathURI) -> storageResourceHelper.checkContentFromFile(storageVolume, Paths.get(storageDataPathURI.getStoragePath()), directoryOnlyParam != null && directoryOnlyParam)
             ).build();
         } finally {
             LOG.debug("Complete check path {}", dataPathParam);
@@ -100,7 +101,7 @@ public class PathBasedAgentStorageResource {
             return storageResourceHelper.handleResponseForFullDataPathParam(
                     StoragePathURI.createAbsolutePathURI(dataPathParam),
                     (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, filterParams, dataEntryPath),
-                    (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, dataEntryPath)
+                    (storageVolume, storageDataPathURI) -> storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, Paths.get(storageDataPathURI.getStoragePath()))
             ).build();
         } finally {
             LOG.debug("Complete retrieve data from {}", dataPathParam);
@@ -137,7 +138,7 @@ public class PathBasedAgentStorageResource {
                                         .usedSpaceInBytes(-freedEntrySize)
                                         .build(),
                                 credentials)),
-                (storageVolume, dataEntryName) -> storageResourceHelper.removeFileContentFromVolume(storageVolume, dataEntryName)
+                (storageVolume, storageDataPathURI) -> storageResourceHelper.removeFileContentFromVolume(storageVolume, Paths.get(storageDataPathURI.getStoragePath()))
         ).build();
     }
 
@@ -172,10 +173,10 @@ public class PathBasedAgentStorageResource {
                                                     .build(),
                                             SecurityUtils.getUserPrincipal(securityContext)),
                                 contentStream),
-                (storageVolume, dataEntryName) ->
+                (storageVolume, storageDataPathURI) ->
                         storageResourceHelper.storeFileContent(storageVolume,
                                 resourceURI.getBaseUri(),
-                                dataEntryName,
+                                Paths.get(storageDataPathURI.getStoragePath()),
                                 contentStream)
         ).build();
     }
@@ -198,7 +199,7 @@ public class PathBasedAgentStorageResource {
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentInfoFromDataBundle(dataBundle, dataEntryPath),
-                (storageVolume, dataEntryPath) -> storageResourceHelper.retrieveContentInfoFromFile(storageVolume, dataEntryPath)
+                (storageVolume, storageDataPathURI) -> storageResourceHelper.retrieveContentInfoFromFile(storageVolume, Paths.get(storageDataPathURI.getStoragePath()))
         ).build();
     }
 
@@ -229,7 +230,7 @@ public class PathBasedAgentStorageResource {
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryName) -> storageResourceHelper.listContentFromDataBundle(dataBundle, baseURI, dataEntryName, depth, offset, length),
-                (storageVolume, dataEntryName) -> storageResourceHelper.listContentFromPath(storageVolume, baseURI, dataEntryName, depth, offset, length)
+                (storageVolume, storageDataPathURI) -> storageResourceHelper.listContentFromPath(storageVolume, baseURI, Paths.get(storageDataPathURI.getStoragePath()), depth, offset, length)
         ).build();
     }
 
