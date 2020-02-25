@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -19,7 +21,7 @@ public class StoragePathURI {
      * @return
      */
     public static StoragePathURI createPathURI(String storagePathValue) {
-        return new StoragePathURI(storagePathValue);
+        return new StoragePathURI(decodePath(storagePathValue));
     }
 
     /**
@@ -30,7 +32,19 @@ public class StoragePathURI {
     public static StoragePathURI createAbsolutePathURI(String storagePathValue) {
         return StringUtils.isBlank(storagePathValue)
                 ? new StoragePathURI(null)
-                : new StoragePathURI(StringUtils.prependIfMissing(new StoragePathURI(storagePathValue).getStoragePath(), "/"));
+                : new StoragePathURI(StringUtils.prependIfMissing(new StoragePathURI(decodePath(storagePathValue)).getStoragePath(), "/"));
+    }
+
+    private static String decodePath(String p) {
+        if (StringUtils.isBlank(p)) {
+            return p;
+        } else {
+            try {
+                return URLDecoder.decode(p, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
     }
 
     private final String storagePathURI;
