@@ -1,14 +1,16 @@
 package org.janelia.jacsstorage.io.contenthandlers;
 
-import com.google.common.collect.ImmutableMap;
-import org.janelia.jacsstorage.io.ContentInfoExtractor;
-
-import javax.enterprise.inject.Vetoed;
 import java.io.InputStream;
 import java.util.Map;
 
+import javax.enterprise.inject.Vetoed;
+
+import com.google.common.collect.ImmutableMap;
+
+import org.janelia.jacsstorage.io.ContentInfoExtractor;
+
 @Vetoed
-public class VoidContentInfoExtractor implements ContentInfoExtractor {
+public class EmptyContentInfoExtractor implements ContentInfoExtractor {
     @Override
     public boolean support(String mimeType) {
         return false;

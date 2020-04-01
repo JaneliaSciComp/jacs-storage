@@ -1,11 +1,12 @@
 package org.janelia.jacsstorage.io;
 
-import com.google.common.collect.Streams;
-import org.janelia.jacsstorage.io.contenthandlers.NoOPContentConverter;
-import org.janelia.jacsstorage.io.contenthandlers.VoidContentInfoExtractor;
-
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
+
+import com.google.common.collect.Streams;
+
+import org.janelia.jacsstorage.io.contenthandlers.EmptyContentInfoExtractor;
+import org.janelia.jacsstorage.io.contenthandlers.NoOPContentConverter;
 
 public class ContentHandlerProvider {
 
@@ -30,7 +31,7 @@ public class ContentHandlerProvider {
         return Streams.stream(contentInfoExtractorsSource)
                 .filter(contentInfoExtractor -> contentInfoExtractor.support(mimeType))
                 .findFirst()
-                .orElseGet(() -> new VoidContentInfoExtractor());
+                .orElseGet(() -> new EmptyContentInfoExtractor());
     }
 
 }
