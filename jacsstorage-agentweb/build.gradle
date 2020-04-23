@@ -84,7 +84,7 @@ project(":jacsstorage-agentweb") {
         arch = I386
         os = LINUX
 
-        def rpmInstallDir = "/opt/servers/jacsstorage/${project.name}-${archiveVersion}"
+        def rpmInstallDir = "/opt/servers/jacsstorage/${project.name}-${project.version}"
         def systemServiceDir = "/etc/systemd/system"
         def installEnv = ["jacs.runtime.env.installDir": rpmInstallDir]
 

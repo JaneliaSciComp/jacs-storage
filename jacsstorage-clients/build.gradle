@@ -98,9 +98,9 @@ project(":jacsstorage-clients") {
         def rpmInstallDir;
 
         if (project.hasProperty('jacs.runtime.env.jadeToolsDir')) {
-            rpmInstallDir = project.getProperty("jacs.runtime.env.jadeToolsDir") + "-${archiveVersion}"
+            rpmInstallDir = project.getProperty("jacs.runtime.env.jadeToolsDir") + "-${project.version}"
         } else {
-            rpmInstallDir= "/misc/sc/jadeTools-${archiveVersion}"
+            rpmInstallDir= "/misc/sc/jadeTools-${project.version}"
         }
         def parentRpmInstallDir = new File(rpmInstallDir).parent
         def installEnv = ["jacs.runtime.env.installDir": rpmInstallDir]
