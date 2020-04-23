@@ -110,7 +110,10 @@ public class StorageResourceHelper {
                                     .flatMap(dataEntryPath -> Optional.<Supplier<Response.ResponseBuilder>>of(() -> volumeBasedResponseHandler.apply(storageVolume, StoragePathURI.createAbsolutePathURI(dataEntryPath.toString()))))
                                     ;
                         })
-                        .orElse(null))
+                        .orElseGet(() -> {
+                            LOG.info("No response builder created from volume {} for path {}", storageVolume, storagePathURI);
+                            return null;
+                        }))
                 .filter(rs -> rs != null)
                 .map(rbs -> rbs.get())
                 .findFirst()
