@@ -263,8 +263,8 @@ public class JacsStorageVolume extends AbstractEntity {
                 .append("name", name)
                 .append("storageTags", storageTags)
                 .append("storageRootTemplate", storageRootTemplate)
+                .append("storageVirtualPath", storageVirtualPath)
                 .append("storageServiceURL", storageServiceURL)
-                .append("systemUsageFile", systemUsageFile)
                 .toString();
     }
 }

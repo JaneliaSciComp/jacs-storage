@@ -86,6 +86,7 @@ public class LocalStorageVolumeManagerTest {
                                                 .storageRootTemplate("/root/testDir")
                                                 .addTag("t1").addTag("t2")
                                                 .storageServiceURL("http://storageURL")
+                                                .active(true)
                                                 .percentageFull(20)
                                                 .build()
                                 ));
@@ -98,6 +99,7 @@ public class LocalStorageVolumeManagerTest {
                                                 .addTag("t1").addTag("t2")
                                                 .storageServiceURL("http://storageURL")
                                                 .percentageFull(20)
+                                                .active(true)
                                                 .build(),
                                         new JacsStorageVolumeBuilder()
                                                 .name("v1")
@@ -106,6 +108,7 @@ public class LocalStorageVolumeManagerTest {
                                                 .addTag("t1").addTag("t2")
                                                 .storageServiceURL("http://storageURL")
                                                 .percentageFull(20)
+                                                .active(true)
                                                 .build(),
                                         new JacsStorageVolumeBuilder()
                                                 .name("v1")
@@ -114,6 +117,7 @@ public class LocalStorageVolumeManagerTest {
                                                 .addTag("t1").addTag("t2")
                                                 .storageServiceURL("http://storageURL")
                                                 .percentageFull(20)
+                                                .active(true)
                                                 .build()
                                 ));
                             }
@@ -171,11 +175,13 @@ public class LocalStorageVolumeManagerTest {
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
                 .percentageFull(20)
+                .active(true)
                 .build();
         JacsStorageVolume newlyCreatedTestVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
                 .storageAgentId(testHost)
                 .name(testVolume.getName())
+                .active(true)
                 .build();
 
         Mockito.when(storageVolumeDao.createStorageVolumeIfNotFound(testHost, testVolume.getName()))
@@ -214,6 +220,7 @@ public class LocalStorageVolumeManagerTest {
                 .storageServiceURL("http://storageURL")
                 .availableSpace(200L)
                 .percentageFull(70)
+                .active(true)
                 .build();
 
         JacsStorageVolume updatedTestVolume = new JacsStorageVolumeBuilder()
@@ -223,6 +230,7 @@ public class LocalStorageVolumeManagerTest {
                 .storageVirtualPath("/testDir")
                 .addTag("t1").addTag("t2").addTag("t3")
                 .storageServiceURL("http://storageURL")
+                .active(true)
                 .build();
 
         Mockito.when(storageVolumeDao.findById(testVolume.getId())).thenReturn(testVolume);

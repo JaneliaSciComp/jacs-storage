@@ -86,7 +86,9 @@ public abstract class AbstractStorageVolumeManager implements StorageVolumeManag
             updatedVolumeFieldsBuilder.put("storageHost", new SetFieldValueHandler<>(null));
         }
 
-        updatedVolumeFieldsBuilder.putAll(handleVolumeFillupStatus(currentVolumeInfo));
+        if (currentVolumeInfo.isActiveFlag()) {
+            updatedVolumeFieldsBuilder.putAll(handleVolumeFillupStatus(currentVolumeInfo));
+        }
 
         if (!currentVolumeInfo.hasTags() && storageVolume.hasTags() ||
                 currentVolumeInfo.hasTags() && !storageVolume.hasTags() ||

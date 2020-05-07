@@ -62,6 +62,11 @@ public class JacsStorageVolumeBuilder {
         return this;
     }
 
+    public JacsStorageVolumeBuilder active(boolean flag) {
+        jacsStorageVolume.setActiveFlag(flag);
+        return this;
+    }
+
     public JacsStorageVolumeBuilder volumePermissions(Set<JacsStoragePermission> permissions) {
         jacsStorageVolume.setVolumePermissions(permissions);
         return this;
