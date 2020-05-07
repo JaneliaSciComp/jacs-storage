@@ -106,13 +106,6 @@ public class StorageResourceHelper {
                                 LOG.debug("Path {} is not a data bundle - first component is not numeric", storageRelativeFileDataPath);
                             }
                             return storageVolume.getDataStorageAbsolutePath(storageRelativeFileDataPath)
-                                    .filter(dataEntryPath -> {
-                                        boolean bresult = Files.exists(dataEntryPath);
-                                        if (!bresult) {
-                                            LOG.warn("Path {} not found or not accessible on volume {}", dataEntryPath, storageVolume);
-                                        }
-                                        return bresult;
-                                    })
                                     .flatMap(dataEntryPath -> Optional.<Supplier<Response.ResponseBuilder>>of(() -> volumeBasedResponseHandler.apply(storageVolume, StoragePathURI.createAbsolutePathURI(dataEntryPath.toString()))))
                                     ;
                         })
