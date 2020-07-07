@@ -60,6 +60,7 @@ public class PersistenceProducer {
             @PropertyValue(name = "MongoDB.ConnectWaitTimeInSec") long connectWaitTimeInSec,
             @PropertyValue(name = "MongoDB.Username") String username,
             @PropertyValue(name = "MongoDB.Password") String password,
+            @PropertyValue(name = "MongoDB.UseSSL", defaultValue = "false") boolean useSSL,
             ObjectMapperFactory objectMapperFactory) {
         CodecRegistry codecRegistry = RegistryHelper.createCodecRegistry(objectMapperFactory);
         MongoClientSettings.Builder mongoClientSettingsBuilder = MongoClientSettings.builder()
@@ -72,6 +73,7 @@ public class PersistenceProducer {
                         .maxWaitTime(connectWaitTimeInSec, TimeUnit.SECONDS)
                 )
                 .applyToSocketSettings(builder -> builder.connectTimeout(connectTimeoutInMillis, TimeUnit.MILLISECONDS))
+                .applyToSslSettings(builder -> builder.enabled(useSSL))
                 ;
         if (StringUtils.isNotBlank(mongoServer)) {
             List<ServerAddress> clusterMembers = Splitter.on(',')
