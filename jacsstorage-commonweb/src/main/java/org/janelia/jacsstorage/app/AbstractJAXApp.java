@@ -29,6 +29,7 @@ public abstract class AbstractJAXApp extends Application {
                         IOExceptionRequestHandler.class,
                         NotFoundRequestHandler.class,
                         UncheckedIOExceptionRequestHandler.class,
+                        WebAppExceptionRequestHandler.class,
                         UnexpectedRuntimeExceptionRequestHandler.class
                 )
                 .addAll(getAppClasses())
