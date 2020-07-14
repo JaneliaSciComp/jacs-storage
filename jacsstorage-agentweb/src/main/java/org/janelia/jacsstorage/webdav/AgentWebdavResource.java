@@ -155,7 +155,7 @@ public class AgentWebdavResource {
                 StoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryName) -> {
                     Stream<DataNodeInfo> dataBundleTree = dataStorageService.streamDataEntries(dataBundle.getRealStoragePath(), dataEntryName, dataBundle.getStorageFormat(), depth);
-                    Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleTree,
+                    Multistatus multistatusResponse = WebdavUtils.convertNodeList(dataBundleTree,
                             (nodeInfo) -> {
                                 String nodeInfoRelPath = nodeInfo.isCollectionFlag()
                                         ? StringUtils.appendIfMissing(nodeInfo.getNodeRelativePath(), "/")
@@ -182,15 +182,31 @@ public class AgentWebdavResource {
                                 return nodeInfo;
                             },
                             DataNodeInfo::getNodeAccessURL);
-                    return Response.status(207)
-                            .entity(propfindResponse)
-                            ;
+                    if (multistatusResponse.getResponse().isEmpty()) {
+                        LOG.warn("No path found for {}", dataPathParam);
+                        Multistatus statusResponse = new Multistatus();
+                        Propstat propstat = new Propstat();
+                        propstat.setStatus("HTTP/1.1 404 Not Found");
+
+                        PropfindResponse propfindResponse = new PropfindResponse();
+                        propfindResponse.setResponseDescription("No path found for " + dataPathParam);
+                        propfindResponse.setPropstat(propstat);
+                        statusResponse.getResponse().add(propfindResponse);
+                        return Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(statusResponse)
+                                ;
+                    } else {
+                        return Response.status(207)
+                                .entity(multistatusResponse)
+                                ;
+                    }
                 },
                 (storageVolume, storageDataPathURI) -> {
                     java.nio.file.Path dataEntryPath = Paths.get(storageDataPathURI.getStoragePath());
                     JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
                     Stream<DataNodeInfo> dataBundleNodesStream = dataStorageService.streamDataEntries(dataEntryPath, null, storageFormat, depth).limit(MAX_NODE_ENTRIES);
-                    Multistatus propfindResponse = WebdavUtils.convertNodeList(dataBundleNodesStream,
+                    Multistatus multistatusResponse = WebdavUtils.convertNodeList(dataBundleNodesStream,
                             (nodeInfo) -> {
                                 nodeInfo.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
                                 nodeInfo.setStorageRootPathURI(StoragePathURI.createPathURI(dataEntryPath.toString()));
@@ -208,9 +224,25 @@ public class AgentWebdavResource {
                                         .build()
                                         .toString();
                             });
-                    return Response.status(207)
-                            .entity(propfindResponse)
-                            ;
+                    if (multistatusResponse.getResponse().isEmpty()) {
+                        LOG.warn("No path found for {}", dataPathParam);
+                        Multistatus statusResponse = new Multistatus();
+                        Propstat propstat = new Propstat();
+                        propstat.setStatus("HTTP/1.1 404 Not Found");
+
+                        PropfindResponse propfindResponse = new PropfindResponse();
+                        propfindResponse.setResponseDescription("No path found for " + dataPathParam);
+                        propfindResponse.setPropstat(propstat);
+                        statusResponse.getResponse().add(propfindResponse);
+                        return Response
+                                .status(Response.Status.NOT_FOUND)
+                                .entity(statusResponse)
+                                ;
+                    } else {
+                        return Response.status(207)
+                                .entity(multistatusResponse)
+                                ;
+                    }
                 },
                 storageNotFoundHandler
         ).build();
