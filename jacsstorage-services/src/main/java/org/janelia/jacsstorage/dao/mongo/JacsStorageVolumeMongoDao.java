@@ -90,8 +90,12 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             storageVolumesItr.forEach(results::add);
         } else {
             StreamSupport.stream(storageVolumesItr.spliterator(), false)
-                    .filter(sv -> ExprHelper.match(sv.getStorageVirtualPath(), storageQuery.getDataStoragePath()).isMatchFound() ||
-                            ExprHelper.match(sv.getStorageRootTemplate(), storageQuery.getDataStoragePath()).isMatchFound()
+                    .filter(sv -> ExprHelper.match(
+                            StringUtils.appendIfMissing(sv.getStorageVirtualPath(), "/"),
+                            StringUtils.appendIfMissing(storageQuery.getDataStoragePath(), "/")).isMatchFound() ||
+                            ExprHelper.match(
+                                    StringUtils.appendIfMissing(sv.getStorageRootTemplate(), "/"),
+                                    StringUtils.appendIfMissing(storageQuery.getDataStoragePath(), "/")).isMatchFound()
                     )
                     .forEach(results::add);
         }
