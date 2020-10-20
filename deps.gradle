@@ -91,7 +91,7 @@ dependencies {
         MESSAGEPACK_LIB = "org.msgpack:msgpack-core:0.8.14"
 
         // testing
-        JUNIT_VERSION = "4.12"
+        JUNIT_VERSION = "4.13.1"
         HAMCREST_VERSION = "2.0.0.0"
         MOCKITO_VERSION = "2.8.9"
         POWERMOCKITO_VERSION = "1.7.3"
