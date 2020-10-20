@@ -1,5 +1,8 @@
 package org.janelia.jacsstorage.dao.mongo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.janelia.jacsstorage.dao.JacsStorageEventDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageEvent;
@@ -9,13 +12,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 
 public class JacsStorageEventMongoDaoITest extends AbstractMongoDaoITest {
 
