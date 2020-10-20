@@ -1,15 +1,12 @@
 package org.janelia.jacsstorage.expr;
 
-import com.google.common.collect.ImmutableMap;
-import org.junit.Test;
-
 import java.util.Map;
 
+import com.google.common.collect.ImmutableMap;
+
+import org.junit.Test;
+
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 
 public class ExprHelperTest {
 

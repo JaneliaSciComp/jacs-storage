@@ -1,7 +1,14 @@
 package org.janelia.jacsstorage.rest;
 
+import java.io.IOException;
+import java.util.Set;
+
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.app.JAXMasterStorageApp;
 import org.janelia.jacsstorage.model.jacsstorage.UsageData;
@@ -12,14 +19,9 @@ import org.janelia.jacsstorage.testrest.TestResourceBinder;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.Set;
-
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 

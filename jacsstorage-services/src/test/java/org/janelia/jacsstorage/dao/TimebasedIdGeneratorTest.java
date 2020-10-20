@@ -1,13 +1,14 @@
 package org.janelia.jacsstorage.dao;
 
+import java.util.List;
+
 import com.google.common.collect.ImmutableSet;
+
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.junit.Assert.assertThat;
 
 public class TimebasedIdGeneratorTest {
     private TimebasedIdGenerator idGenerator;
