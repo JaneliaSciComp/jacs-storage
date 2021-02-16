@@ -226,6 +226,7 @@ public class LocalStorageUsageManager implements StorageUsageManager {
         }
         Scanner scanner = null;
         try {
+            LOG.info("Read system usage file {}", storageVolume.getSystemUsageFile());
             scanner = new Scanner(new File(storageVolume.getSystemUsageFile()));
             scanner.useDelimiter(",");
             while (scanner.hasNextLine()) {
