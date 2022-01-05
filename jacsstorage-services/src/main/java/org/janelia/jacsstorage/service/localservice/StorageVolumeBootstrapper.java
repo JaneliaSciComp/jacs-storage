@@ -67,6 +67,7 @@ public class StorageVolumeBootstrapper {
                 .filter(storageVolume -> storageVolume != null)
                 .map(storageVolume -> {
                     fillVolumeInfo(storageVolume);
+                    LOG.info("Update volume {}", storageVolume);
                     return storageVolumeManager.updateVolumeInfo(storageVolume.getId(), storageVolume);
                 })
                 .collect(Collectors.toList());
