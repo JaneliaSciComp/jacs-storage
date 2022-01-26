@@ -131,19 +131,21 @@ public class ExprHelper {
     }
 
     private static ValExpr parse(String expr) {
-        Pattern placeholderPattern = Pattern.compile("\\$\\{(.+?)\\}");
-        Matcher m = placeholderPattern.matcher(expr);
-        int exprIndex = 0;
         ValExpr valExpr = new ValExpr();
-        while (m.find(exprIndex)) {
-            int startRegion = m.start();
-            int endRegion = m.end();
-            String varName = expr.substring(m.start() + 2, m.end() - 1);
-            valExpr.addConst(expr.substring(exprIndex, startRegion));
-            valExpr.addVar(varName);
-            exprIndex = endRegion;
+        if (StringUtils.isNotBlank(expr)) {
+            Pattern placeholderPattern = Pattern.compile("\\$\\{(.+?)\\}");
+            Matcher m = placeholderPattern.matcher(expr);
+            int exprIndex = 0;
+            while (m.find(exprIndex)) {
+                int startRegion = m.start();
+                int endRegion = m.end();
+                String varName = expr.substring(m.start() + 2, m.end() - 1);
+                valExpr.addConst(expr.substring(exprIndex, startRegion));
+                valExpr.addVar(varName);
+                exprIndex = endRegion;
+            }
+            valExpr.addConst(expr.substring(exprIndex));
         }
-        valExpr.addConst(expr.substring(exprIndex));
         return valExpr;
     }
 
