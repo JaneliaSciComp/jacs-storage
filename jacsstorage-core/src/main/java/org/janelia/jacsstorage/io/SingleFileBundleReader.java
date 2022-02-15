@@ -66,7 +66,8 @@ public class SingleFileBundleReader extends AbstractBundleReader {
             return Stream.of();
         }
         Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
-        return Stream.of(pathToDataNodeInfo(sourcePath, sourcePath, (rootPath, nodePath) -> rootPath.toString()));
+        return Stream.of(pathToDataNodeInfo(sourcePath, sourcePath, (rootPath, nodePath) -> rootPath.toString()))
+                .filter(dni -> dni != null);
     }
 
     @TimedMethod(

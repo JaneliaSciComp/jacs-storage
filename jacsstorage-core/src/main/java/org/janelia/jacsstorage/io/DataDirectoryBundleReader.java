@@ -86,7 +86,10 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
         }
         try {
             // start to collect the files from the startPath but return the data relative to sourcePath
-            return Files.walk(startPath, depth, FileVisitOption.FOLLOW_LINKS).map(p -> pathToDataNodeInfo(sourcePath, p, (rootPath, nodePath) -> rootPath.relativize(nodePath).toString().replace(File.separatorChar, '/')));
+            return Files.walk(startPath, depth, FileVisitOption.FOLLOW_LINKS)
+                    .map(p -> pathToDataNodeInfo(sourcePath, p, (rootPath, nodePath) -> rootPath.relativize(nodePath).toString().replace(File.separatorChar, '/')))
+                    .filter(dni -> dni != null)
+                    ;
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

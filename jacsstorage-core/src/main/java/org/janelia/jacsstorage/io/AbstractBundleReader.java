@@ -3,6 +3,8 @@ package org.janelia.jacsstorage.io;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.io.OutputStream;
@@ -14,6 +16,8 @@ import java.util.Date;
 import java.util.function.BiFunction;
 
 abstract class AbstractBundleReader implements BundleReader {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractBundleReader.class);
 
     final ContentHandlerProvider contentHandlerProvider;
     private final MimetypesFileTypeMap mimetypesFileTypeMap;
@@ -44,7 +48,8 @@ abstract class AbstractBundleReader implements BundleReader {
             dataNodeInfo.setLastModified(new Date(attrs.lastModifiedTime().toMillis()));
             return dataNodeInfo;
         } catch (Exception e) {
-            throw new IllegalStateException(e);
+            LOG.error("Error getting data node info for {} using {} as root path", nodePath, rootPath, e);
+            return null;
         }
     }
 
