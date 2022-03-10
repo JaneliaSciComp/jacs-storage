@@ -372,7 +372,7 @@ public class StorageService {
         return requestWithCredentialsBuilder;
     }
 
-    private StorageEntryInfo extractStorageNodeFromJson(String storageUrl, String storageEntryUrl, String storagePath, JsonNode jsonNode) {
+    StorageEntryInfo extractStorageNodeFromJson(String storageUrl, String storageEntryUrl, String storagePath, JsonNode jsonNode) {
         JsonNode storageIdNode = jsonNode.get("storageId");
         JsonNode storageRootLocationNode = jsonNode.get("storageRootLocation");
         JsonNode storageRootPathURINode = jsonNode.get("storageRootPathURI");

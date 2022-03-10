@@ -3,84 +3,91 @@ package org.janelia.jacsstorage.newclient;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
-import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
- * Simplify the indecipherable ContentStack API.
+ * An object stored within a JADE StorageLocation.
  */
 public class StorageObject {
 
-    private BetterStorageHelper helper;
     private StorageLocation location;
-    private StorageObject parent;
-    private String name;
+    private String relativePath;
+    private String objectName;
+    private final Long sizeBytes;
+    private final boolean isCollection;
 
-    public StorageObject(BetterStorageHelper helper, StorageLocation location, StorageObject parent, String name) {
-        super();
-        this.helper = helper;
+    StorageObject(StorageLocation location, String relativePath, String objectName, Long sizeBytes, boolean isCollection) {
         this.location = location;
-        this.parent = parent;
-        this.name = name;
+        this.relativePath = relativePath;
+        this.objectName = objectName;
+        this.sizeBytes = sizeBytes;
+        this.isCollection = isCollection;
+    }
+
+    StorageObject(StorageLocation location, String relativePath, StorageContentInfo storageContentInfo) {
+        this.location = location;
+        this.relativePath = relativePath;
+        this.objectName = Paths.get(relativePath).getFileName().toString();
+        this.sizeBytes = storageContentInfo.getSize();
+        this.isCollection = storageContentInfo.getRemoteInfo().isCollection();
+    }
+
+    StorageObject(StorageLocation location, String relativePath, StorageEntryInfo storageEntryInfo) {
+        this.location = location;
+        this.relativePath = relativePath;
+        this.objectName = Paths.get(relativePath).getFileName().toString();
+        this.sizeBytes = storageEntryInfo.getSize();
+        this.isCollection = storageEntryInfo.isCollection();
     }
 
     /**
-     * Convenience function to get the containing class.
+     * The actual JADE server where this storage object can be found.
+     * @return
      */
-    public BetterStorageHelper getHelper() {
-        return helper;
-    }
-
-    StorageLocation getLocation() {
+    public StorageLocation getLocation() {
         return location;
     }
 
     /**
-     * Return the name of the object, without any path information.
-     * @return name of the object
+     * Path to the object relative to the StorageLocation.
+     * @return
      */
-    public String getName() {
-        return name;
+    public String getRelativePath() {
+        return relativePath;
     }
 
     /**
-     * Returns the full path of object.
-     * @return path object
+     * Name of the object.
+     * @return
      */
-    public Path getAbsolutePath() {
-        return parent == null ? location.getAbsolutePath().resolve(getName()) : parent.getAbsolutePath().resolve(getName());
+    public String getObjectName() {
+        return objectName;
     }
 
     /**
-     * Returns the path of the object relative to the storage location.
-     * @return path object
+     * Size in bytes of the object.
+     * @return
      */
-    public Path getRelativePath() {
-        return parent == null ? location.getRelativePath().resolve(getName()) : parent.getRelativePath().resolve(getName());
-    }
-
-    public StorageObject resolve(String name) {
-        return new StorageObject(helper, location, this, name);
+    public Long getSizeBytes() {
+        return sizeBytes;
     }
 
     /**
-     * Returns the URI for accessing the storage content.
-     * @return URI as a string
+     * Whether the object represents a collection (e.g. directory on disk) and can be listed.
+     * @return
      */
-    public String getContentURI() {
-        StorageLocation location = getLocation();
-        StorageEntryInfo storageInfo = location.getStorageInfo();
-        return storageInfo.getStorageURL()+"/data_content/"+getRelativePath();
+    public boolean isCollection() {
+        return isCollection;
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
-                .append("storageURL", location.getStorageInfo().getStorageURL())
-                .append("parent", parent==null?"null":parent.name)
-                .append("name", name)
-                .append("absolutePath", getAbsolutePath())
-                .append("relativePath", getRelativePath())
+                .append("location", location)
+                .append("relativePath", relativePath)
+                .append("objectName", objectName)
+                .append("sizeBytes", sizeBytes)
+                .append("isCollection", isCollection)
                 .toString();
     }
-
 }
