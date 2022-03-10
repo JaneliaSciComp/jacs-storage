@@ -20,8 +20,10 @@ project(":jacsstorage-clients") {
         implementation project(":jacsstorage-core"),
                        CDI_API_LIB,
                        CDI_SE_CORE_LIB,
+                       COMMONS_IO_LIB,
                        CMDLINE_ARG_LIB,
                        JAX_RS_JERSEY_CLIENT_LIB,
+                       JAX_RS_JERSEY_MEDIA_LIB,
                        JAX_RS_JERSEY_INJECT_LIB,
                        JAX_RS_JERSEY_MEDIA_JSON_LIB
 
@@ -39,6 +41,13 @@ project(":jacsstorage-clients") {
         classpath = startScripts.classpath
         outputDir = startScripts.outputDir
         applicationName = "storageClientApp"
+    }
+
+    task createNewStorageClientApp(type: CreateStartScripts) {
+        mainClassName = "org.janelia.jacsstorage.newclient.StorageClientApp"
+        classpath = startScripts.classpath
+        outputDir = startScripts.outputDir
+        applicationName = "newStorageClientApp"
     }
 
     task createStoragePersistBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
@@ -83,6 +92,10 @@ project(":jacsstorage-clients") {
                 duplicatesStrategy = DuplicatesStrategy.EXCLUDE
                 into("bin") {
                     from(createStorageClientApp)
+                    fileMode = 0755
+                }
+                into("bin") {
+                    from(createNewStorageClientApp)
                     fileMode = 0755
                 }
             }
