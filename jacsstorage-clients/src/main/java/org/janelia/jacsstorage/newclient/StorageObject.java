@@ -1,8 +1,10 @@
 package org.janelia.jacsstorage.newclient;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -35,7 +37,8 @@ public class StorageObject {
     StorageObject(StorageLocation location, String relativePath, StorageEntryInfo storageEntryInfo) {
         this.location = location;
         this.relativePath = relativePath;
-        this.objectName = Paths.get(relativePath).getFileName().toString();
+        Path filename = Paths.get(relativePath).getFileName();
+        this.objectName = filename == null ? "" : filename.toString();
         this.sizeBytes = storageEntryInfo.getSize();
         this.isCollection = storageEntryInfo.isCollection();
     }

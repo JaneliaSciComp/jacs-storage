@@ -66,6 +66,9 @@ public class StorageLocation {
         // Escape forward slashes so that the path can be searched using regex
         // Remove path prefix to generate a path relative to this storage location
         String regex = "^" + pathPrefix;
+        if (regex.endsWith("/")) {
+            regex += "?";
+        }
         return absolutePath.replaceFirst(regex, "");
     }
 

@@ -123,7 +123,8 @@ public class JadeStorageService extends StorageContentHelper {
                     .stream()
                     .map(content -> {
                         StorageEntryInfo storageEntryInfo = storageService.extractStorageNodeFromJson(storageURL, null, relativePath, content);
-                        return new StorageObject(storageLocation, StringUtils.appendIfMissing(relativePath, "/")+storageEntryInfo.getEntryRelativePath(), storageEntryInfo);
+                        String objectRelativePath =  StringUtils.isBlank(relativePath) ? relativePath : StringUtils.appendIfMissing(relativePath, "/");
+                        return new StorageObject(storageLocation, objectRelativePath+storageEntryInfo.getEntryRelativePath(), storageEntryInfo);
                     })
                     .collect(Collectors.toList());
         }
