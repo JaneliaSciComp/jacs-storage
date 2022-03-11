@@ -192,7 +192,7 @@ public class VolumeStorageResource {
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("storage_volume/{storageVolumeId}/list/{storageRelativePath:.+}")
+    @Path("storage_volume/{storageVolumeId}/list/{storageRelativePath:.*}")
     public Response listPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                               @PathParam("storageRelativePath") String storageRelativeFilePath,
                                               @QueryParam("depth") Integer depthParam,
