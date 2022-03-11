@@ -126,6 +126,12 @@ task updateWrapper(type: Wrapper) {
     gradleVersion = "5.1.1"
 }
 
+task printVersion {
+    doLast {
+        println project.version
+    }
+}
+
 def filteringProperties(otherProperties) {
         org.apache.tools.ant.Project tmpProject = new org.apache.tools.ant.Project()
         tmpProject.initProperties()
