@@ -14,21 +14,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class StorageClientApp {
 
     private static class CommandMain {
-        @Parameter(names = "-server", description = "URL of the Master JADE API")
+        @Parameter(names = {"-s","--server"}, description = "URL of the Master JADE API")
         private String serverURL = "http://localhost:8080/jacsstorage/master_api/v1";
-        @Parameter(names = "-apikey", description = "API Key for JADE service")
+        @Parameter(names = {"-k","--key"}, description = "API Key for JADE service")
         private String apiKey;
     }
 
-    @Parameters(commandDescription = "List the contents of the given path")
+    @Parameters(commandDescription = "Recursively list the descendants of the given path to a specified depth. By default, only the immediate children are listed.")
     private static class CommandList {
         @Parameter(description = "<path>")
         private String path;
+        @Parameter(names = {"-d","--depth"}, description = "Depth of tree to list")
+        private int depth = 1;
     }
 
     @Parameters(commandDescription = "Read a file at the given path")
@@ -43,19 +46,26 @@ public class StorageClientApp {
         private List<String> paths = new ArrayList<>();
     }
 
-    private static JadeStorageService helper;
+    private JCommander jc;
+    private JadeStorageService helper;
 
     public static void main(String[] args) throws Exception {
-        CommandMain cmdMain = new CommandMain();
-        CommandList cmdList = new CommandList();
-        CommandRead cmdRead = new CommandRead();
-        CommandCopy cmdCopy = new CommandCopy();
+        StorageClientApp app = new StorageClientApp();
+        app.interpretCommand(args);
+    }
 
-        JCommander jc = JCommander.newBuilder()
-                .addObject(cmdMain)
-                .addCommand("list", cmdList)
-                .addCommand("read", cmdRead)
-                .addCommand("copy", cmdCopy)
+    private void interpretCommand(String[] args) throws Exception {
+
+        CommandMain argsMain = new CommandMain();
+        CommandList argsList = new CommandList();
+        CommandRead argsRead = new CommandRead();
+        CommandCopy argsCopy = new CommandCopy();
+
+        jc = JCommander.newBuilder()
+                .addObject(argsMain)
+                .addCommand("list", argsList)
+                .addCommand("read", argsRead)
+                .addCommand("copy", argsCopy)
                 .build();
 
         try {
@@ -65,9 +75,7 @@ public class StorageClientApp {
             usage("Error parsing parameters", jc);
         }
 
-
-        StorageService storageService = new StorageService(cmdMain.serverURL, cmdMain.apiKey);
-        helper = new JadeStorageService(storageService, null, null);
+        helper = new JadeStorageService(argsMain.serverURL, argsMain.apiKey);
 
         String parsedCommand = jc.getParsedCommand();
         if (parsedCommand == null) {
@@ -76,13 +84,13 @@ public class StorageClientApp {
         else {
             switch (parsedCommand) {
                 case "list":
-                    commandList(jc, cmdMain, cmdList);
+                    commandList(argsList);
                     break;
                 case "read":
-                    commandRead(jc, cmdMain, cmdRead);
+                    commandRead(argsRead);
                     break;
                 case "copy":
-                    commandCopy(jc, cmdMain, cmdCopy);
+                    commandCopy(argsCopy);
                     break;
                 default:
                     usage("Unsupported command: " + parsedCommand, jc);
@@ -90,20 +98,23 @@ public class StorageClientApp {
         }
     }
 
-    private static void commandList(JCommander jc, CommandMain cmdMain, CommandList args) throws Exception {
+    private void commandList(CommandList args) throws Exception {
         StorageLocation storageLocation = getStorageLocation(args.path);
-        helper.getChildren(storageLocation, storageLocation.getRelativePath(args.path)).forEach(storageObject -> {
-            System.out.println(storageObject.getSizeBytes()+" bytes - "+storageObject.getObjectName());
+        List<StorageObject> descendants = helper.getDescendants(storageLocation, storageLocation.getRelativePath(args.path), args.depth);
+        descendants.sort(Comparator.comparing(StorageObject::getAbsolutePath));
+        descendants.forEach(storageObject -> {
+            String size = StringUtils.leftPad(storageObject.getSizeBytes() + "", 12)+" bytes";
+            System.out.println(size + " - " + storageObject.getAbsolutePath());
         });
     }
 
-    private static void commandRead(JCommander jc, CommandMain cmdMain, CommandRead args) throws Exception {
+    private void commandRead(CommandRead args) throws Exception {
         StorageLocation storageLocation = getStorageLocation(args.path);
         InputStream content = helper.getContent(storageLocation, storageLocation.getRelativePath(args.path));
         IOUtils.copy(content, System.out);
     }
 
-    private static void commandCopy(JCommander jc, CommandMain cmdMain, CommandCopy args) throws Exception {
+    private void commandCopy(CommandCopy args) throws Exception {
 
         if (args.paths.size() != 2) {
             usage("Extract requires source and target path", jc);
@@ -116,15 +127,13 @@ public class StorageClientApp {
             PathUtils.copyFiles(sourcePath, targetPath);
         }
         else {
-            StorageService storageService = new StorageService(cmdMain.serverURL, cmdMain.apiKey);
-            JadeStorageService helper = new JadeStorageService(storageService, null, null);
             StorageLocation storageLocation = getStorageLocation(sourcePath.toString());
             String relativePath = storageLocation.getRelativePath(sourcePath.toString());
             FileUtils.copyInputStreamToFile(helper.getContent(storageLocation, relativePath), targetPath.toFile());
         }
     }
 
-    private static StorageLocation getStorageLocation(String path) {
+    private StorageLocation getStorageLocation(String path) {
         StorageLocation storageLocation = helper.getStorageObjectByPath(path);
         if (storageLocation == null) {
             System.err.println("Path not found in JADE: "+path);
@@ -133,7 +142,7 @@ public class StorageClientApp {
         return storageLocation;
     }
 
-    private static void usage(String message, JCommander jc) {
+    private void usage(String message, JCommander jc) {
         if (StringUtils.isNotBlank(message)) {
             System.err.println(message);
         }

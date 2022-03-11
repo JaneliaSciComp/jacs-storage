@@ -28,15 +28,15 @@ public class JadeStorageService extends StorageContentHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageContentHelper.class);
 
-    private String subjectKey;
-    private String authToken;
+    private final String subjectKey;
+    private final String authToken;
 
-    /**
-     *
-     * @param storageService
-     * @param subjectKey subject key of the user
-     * @param authToken authentication token for JADE
-     */
+    public JadeStorageService(String masterStorageServiceURL, String storageServiceApiKey) {
+        super(new StorageService(masterStorageServiceURL, storageServiceApiKey));
+        this.subjectKey = null;
+        this.authToken = null;
+    }
+
     public JadeStorageService(StorageService storageService, String subjectKey, String authToken) {
         super(storageService);
         this.subjectKey = subjectKey;
@@ -75,12 +75,7 @@ public class JadeStorageService extends StorageContentHelper {
      * @return list of child objects
      */
     public List<StorageObject> getChildren(StorageLocation storageLocation, String relativePath) throws StorageObjectNotFoundException {
-        return getDescendants(storageLocation, relativePath, 1)
-                .stream()
-                // We're only interested in children, so filter out the blank relative path which represents the
-                // root object, or any path which is the same as the path we asked for.
-                .filter(c -> StringUtils.isNotBlank(c.getObjectName()) && !c.getRelativePath().equals(StringUtils.appendIfMissing(relativePath, "/")))
-                .collect(Collectors.toList());
+        return getDescendants(storageLocation, relativePath, 1);
     }
 
     /**
@@ -100,13 +95,16 @@ public class JadeStorageService extends StorageContentHelper {
                 .collect(Collectors.toList());
     }
 
-    public List<StorageObject> listStorageContent(StorageLocation storageLocation, String relativePath, int depth) throws StorageObjectNotFoundException {
+    private List<StorageObject> listStorageContent(StorageLocation storageLocation, String relativePath, int depth) throws StorageObjectNotFoundException {
         Client httpclient = HttpUtils.createHttpClient();
         String storageURL = storageLocation.getStorageURL();
         try {
             WebTarget target = httpclient.target(storageURL).path("list");
             if (StringUtils.isNotBlank(relativePath)) {
                 target = target.path(relativePath);
+            }
+            else {
+                target = target.path("/");
             }
             if (depth > 0) {
                 target = target.queryParam("depth", depth);
@@ -125,7 +123,7 @@ public class JadeStorageService extends StorageContentHelper {
                     .stream()
                     .map(content -> {
                         StorageEntryInfo storageEntryInfo = storageService.extractStorageNodeFromJson(storageURL, null, relativePath, content);
-                        return new StorageObject(storageLocation, relativePath+"/"+storageEntryInfo.getEntryRelativePath(), storageEntryInfo);
+                        return new StorageObject(storageLocation, StringUtils.appendIfMissing(relativePath, "/")+storageEntryInfo.getEntryRelativePath(), storageEntryInfo);
                     })
                     .collect(Collectors.toList());
         }

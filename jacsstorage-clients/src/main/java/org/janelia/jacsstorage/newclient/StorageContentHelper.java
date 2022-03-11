@@ -26,7 +26,7 @@ public class StorageContentHelper {
     }
 
     public Optional<StorageEntryInfo> lookupStorage(String storagePath, String ownerKey, String authToken) {
-        LOG.info("Lookup storage for {}", storagePath);
+        LOG.debug("Lookup storage for {}", storagePath);
         return storageService.findStorageVolumes(storagePath, ownerKey, authToken)
                 .stream().findFirst()
                 .map(jadeStorageVolume -> {
@@ -38,7 +38,7 @@ public class StorageContentHelper {
                     } else {
                         relativeStoragePath = "";
                     }
-                    LOG.info("Found {} for {}; the new path relative to the volume's root is {}", jadeStorageVolume, storagePath, relativeStoragePath);
+                    LOG.debug("Found {} for {}; the new path relative to the volume's root is {}", jadeStorageVolume, storagePath, relativeStoragePath);
                     return new StorageEntryInfo(
                             jadeStorageVolume.getId(),
                             jadeStorageVolume.getVolumeStorageURI(),
@@ -130,7 +130,7 @@ public class StorageContentHelper {
                             .forEach(sci -> {
                                 if (sci.getLocalRelativePath() != null) {
                                     Path localContentPath = Paths.get(sci.getLocalFullPath());
-                                    LOG.info("Clean local file {} ", localContentPath);
+                                    LOG.debug("Clean local file {} ", localContentPath);
                                     try {
                                         deletePath(localContentPath);
                                     } catch (IOException e) {
@@ -205,7 +205,7 @@ public class StorageContentHelper {
         InputStream inputStream = storageService.getStorageContent(storageContentInfo.getRemoteInfo().getEntryURL(), ownerKey, authToken);
         try {
             if (inputStream != null) {
-                LOG.info("Copy {} to {} {}", storageContentInfo, storageURL, storagePathParam);
+                LOG.debug("Copy {} to {} {}", storageContentInfo, storageURL, storagePathParam);
                 String storagePath = StringUtils.appendIfMissing(storagePathParam, "/");
                 storageContentInfo.setRemoteInfo(storageService.putStorageContent(
                         storageURL,
@@ -236,7 +236,7 @@ public class StorageContentHelper {
      * @return
      */
     List<ContentStack> uploadContent(List<ContentStack> contentList, String storageURL, String ownerKey, String authToken) {
-        LOG.info("Upload content stack {} to {} for {}", contentList, storageURL, ownerKey);
+        LOG.debug("Upload content stack {} to {} for {}", contentList, storageURL, ownerKey);
         return contentList.stream()
                 .peek(contentEntry -> {
                     Stream.concat(Stream.of(contentEntry.getMainRep()), contentEntry.getAdditionalReps().stream())
@@ -252,7 +252,7 @@ public class StorageContentHelper {
         InputStream inputStream = openLocalContent(localPath);
         try {
             if (inputStream != null) {
-                LOG.info("Upload {}({}) to {} for {}", storageContentInfo, localPath, storageURL, subjectKey);
+                LOG.debug("Upload {}({}) to {} for {}", storageContentInfo, localPath, storageURL, subjectKey);
                 storageContentInfo.setRemoteInfo(storageService.putStorageContent(
                         storageURL,
                         storageContentInfo.getRemoteInfo().getEntryRelativePath(),

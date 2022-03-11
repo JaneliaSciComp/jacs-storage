@@ -57,6 +57,14 @@ public class StorageObject {
     }
 
     /**
+     * Absolute JADE path, including the location prefix.
+     * @return
+     */
+    public String getAbsolutePath() {
+        return location.getAbsolutePath(relativePath);
+    }
+
+    /**
      * Name of the object.
      * @return
      */

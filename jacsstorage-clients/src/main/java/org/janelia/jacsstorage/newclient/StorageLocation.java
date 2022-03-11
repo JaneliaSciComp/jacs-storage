@@ -15,12 +15,11 @@ public class StorageLocation {
 
     StorageLocation(String storageURL, String pathPrefix) {
         this.storageURL = storageURL;
-        this.pathPrefix = pathPrefix;
+        this.pathPrefix = StringUtils.appendIfMissing(pathPrefix, "/");
     }
 
     StorageLocation(StorageEntryInfo storageEntryInfo) {
-        this.storageURL = storageEntryInfo.getStorageURL();
-        this.pathPrefix = storageEntryInfo.getStorageRootLocation();
+        this(storageEntryInfo.getStorageURL(), storageEntryInfo.getStorageRootLocation());
     }
 
     /**
@@ -66,8 +65,17 @@ public class StorageLocation {
     public String getRelativePath(String absolutePath) {
         // Escape forward slashes so that the path can be searched using regex
         // Remove path prefix to generate a path relative to this storage location
-        String regex = "^" + pathPrefix + "//?";
+        String regex = "^" + pathPrefix;
         return absolutePath.replaceFirst(regex, "");
+    }
+
+    /**
+     * Given a relative JADE path, generate the full absolute path.
+     * @param relativePath
+     * @return
+     */
+    public String getAbsolutePath(String relativePath) {
+        return pathPrefix + relativePath;
     }
 
     @Override
