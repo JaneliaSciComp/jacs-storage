@@ -47,7 +47,7 @@ project(":jacsstorage-clients") {
         mainClassName = "org.janelia.jacsstorage.newclient.StorageClientApp"
         classpath = startScripts.classpath
         outputDir = startScripts.outputDir
-        applicationName = "newStorageClientApp"
+        applicationName = "jade"
     }
 
     task createStoragePersistBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
