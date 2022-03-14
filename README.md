@@ -392,10 +392,16 @@ curl http://localhost:8881/jacsstorage/agent_api/v1/agent_storage/storage_conten
  
 ### Accessing the storage service from your application
 
-##### Java
+#### CLI
+
+See the [jacsstorage-clients](jacsstorage-clients/README.md) module for more information about the CLI.
+
+#### Java
+
+See the [jacsstorage-clients](jacsstorage-clients/README.md) module for more information about the Java API.
 
 For Java examples please take a look at the 'examples/java' directory.
 
-##### Python
+#### Python
 
 To access the storage service from python please take a look at the `examples/python` directory.
