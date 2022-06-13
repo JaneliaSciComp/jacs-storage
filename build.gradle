@@ -1,11 +1,13 @@
 allprojects {
     apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
     apply plugin: 'idea'
-    group = 'org.janelia.jacsstorage'
+    group = 'org.janelia.jacs-storage'
     version = '1.16.4.RELEASE'
 }
 
 subprojects {
+
     configurations {
         provided
         implementation.extendsFrom(provided)
@@ -102,7 +104,7 @@ subprojects {
                 ]
             }
         }
-   }
+    }
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -120,13 +122,46 @@ subprojects {
     artifacts {
         perfRuntimeElements perfJar
     }
+
+    task sourceJar(type: Jar) {
+        from sourceSets.main.allJava
+        archiveClassifier = 'sources'
+    }
+
+    publishing {
+        publications {
+            mavenJar(MavenPublication) {
+                from components.java
+                artifact sourceJar
+            }
+        }
+        ext {
+           if (!project.hasProperty('mavenRepoUser')) {
+              mavenRepoUser = ''
+           }
+           if (!project.hasProperty('mavenRepoPassword')) {
+              mavenRepoPassword = ''
+           }
+        }
+        repositories {
+            maven {
+                def releasesRepoUrl = 'https://nexus.janelia.org/repository/maven-releases'
+                def snapshotsRepoUrl = 'https://nexus.janelia.org/repository/maven-snapshots'
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+                credentials {
+                    username "${mavenRepoUser}"
+                    password "${mavenRepoPassword}"
+                }
+            }
+        }
+    }
 }
 
 task updateWrapper(type: Wrapper) {
     gradleVersion = "5.5.1"
 }
 
-task printVersion {
+task version {
     doLast {
         println project.version
     }
