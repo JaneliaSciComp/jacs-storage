@@ -34,6 +34,12 @@ public class StorageClientApp {
         private int depth = 1;
     }
 
+    @Parameters(commandDescription = "Prints metadata for the given path.")
+    private static class CommandMeta {
+        @Parameter(description = "<path>")
+        private String path;
+    }
+
     @Parameters(commandDescription = "Read a file at the given path")
     private static class CommandRead {
         @Parameter(description = "<path>")
@@ -58,12 +64,14 @@ public class StorageClientApp {
 
         CommandMain argsMain = new CommandMain();
         CommandList argsList = new CommandList();
+        CommandMeta argsMeta = new CommandMeta();
         CommandRead argsRead = new CommandRead();
         CommandCopy argsCopy = new CommandCopy();
 
         jc = JCommander.newBuilder()
                 .addObject(argsMain)
                 .addCommand("list", argsList)
+                .addCommand("meta", argsMeta)
                 .addCommand("read", argsRead)
                 .addCommand("copy", argsCopy)
                 .build();
@@ -86,6 +94,9 @@ public class StorageClientApp {
                 case "list":
                     commandList(argsList);
                     break;
+                case "meta":
+                    commandMeta(argsMeta);
+                    break;
                 case "read":
                     commandRead(argsRead);
                     break;
@@ -106,6 +117,19 @@ public class StorageClientApp {
             String size = StringUtils.leftPad(storageObject.getSizeBytes() + "", 12)+" bytes";
             System.out.println(size + " - " + storageObject.getAbsolutePath());
         });
+    }
+
+    private void commandMeta(CommandMeta args) throws Exception {
+        StorageLocation storageLocation = getStorageLocation(args.path);
+        StorageObject metadata = helper.getMetadata(storageLocation, storageLocation.getRelativePath(args.path));
+        if (metadata != null) {
+            System.out.println("Object name:   " + metadata.getObjectName());
+            System.out.println("Absolute path: " + metadata.getAbsolutePath());
+            System.out.println("Relative path: " + metadata.getRelativePath());
+            System.out.println("Location:      " + metadata.getLocation().getStorageURL());
+            System.out.println("Size (bytes):  " + metadata.getSizeBytes());
+            System.out.println("isCollection:  " + metadata.isCollection());
+        }
     }
 
     private void commandRead(CommandRead args) throws Exception {
