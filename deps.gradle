@@ -93,6 +93,11 @@ dependencies {
         // data
         MESSAGEPACK_LIB = "org.msgpack:msgpack-core:0.8.14"
 
+        // N5
+        N5_LIB = "org.janelia.saalfeldlab:n5:2.5.1"
+        N5_IMGLIB2_LIB = "org.janelia.saalfeldlab:n5-imglib2:4.3.0"
+        N5_VIEWER_LIB = "org.janelia.saalfeldlab:n5-viewer_fiji:5.5.1-SNAPSHOT"
+
         // testing
         JUNIT_VERSION = "4.13.1"
         HAMCREST_VERSION = "2.0.0.0"

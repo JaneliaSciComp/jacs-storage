@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.newclient;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.saalfeldlab.n5.N5TreeNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -179,4 +180,39 @@ public class JadeStorageService extends StorageContentHelper {
         LOG.debug("getContentLength requesting "+contentURL);
         return  storageService.getContentLength(contentURL, subjectKey, authToken);
     }
+
+    /**
+     * Discover n5 data sets and return a tree of N5 objects metadata for the given object.
+     * @param storageLocation location of the object
+     * @param relativePath path to the object relative to the storageLocation
+     * @return tree of data sets represented by N5TreeNode
+     */
+    public N5TreeNode getN5Tree(StorageLocation storageLocation, String relativePath) throws StorageObjectNotFoundException {
+        Client httpclient = HttpUtils.createHttpClient();
+        String storageURL = storageLocation.getStorageURL();
+        try {
+            WebTarget target = httpclient.target(storageURL).path("n5tree");
+            if (StringUtils.isNotBlank(relativePath)) {
+                target = target.path(relativePath);
+            }
+            else {
+                target = target.path("/");
+            }
+            LOG.debug("getN5Tree requesting {}", target.getUri().toString());
+            Invocation.Builder requestBuilder = storageService.createRequestWithCredentials(
+                    target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
+            Response response = requestBuilder.get();
+            if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+                throw new StorageObjectNotFoundException(storageLocation, relativePath);
+            }
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
+            }
+            return response.readEntity(new GenericType<N5TreeNode>(){});
+        }
+        finally {
+            httpclient.close();
+        }
+    }
+
 }
