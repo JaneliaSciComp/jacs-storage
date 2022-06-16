@@ -59,7 +59,7 @@ public class JadeStorageService extends StorageContentHelper {
      * @return
      */
     public StorageObject getMetadata(StorageLocation storageLocation, String relativePath) throws StorageObjectNotFoundException {
-        return listStorageContent(storageLocation, relativePath, 0)
+        return listStorageContent(storageLocation, relativePath, 1)
                 .stream()
                 .peek(storageObject -> LOG.trace("getMetadata found {}",storageObject))
                 .findFirst()
