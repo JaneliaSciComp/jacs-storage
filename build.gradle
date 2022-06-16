@@ -164,7 +164,7 @@ task updateWrapper(type: Wrapper) {
     gradleVersion = "5.5.1"
 }
 
-task version {
+task printVersion {
     doLast {
         println project.version
     }

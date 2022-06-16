@@ -18,7 +18,7 @@ fi
 
 echo ""
 
-projectVersion=`./gradlew -q version`
+projectVersion=`./gradlew -q printVersion`
 
 echo "Publish ${projectVersion}"
 
