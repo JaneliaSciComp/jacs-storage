@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
+import org.janelia.saalfeldlab.n5.N5TreeNode;
 
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -52,6 +53,12 @@ public class StorageClientApp {
         private List<String> paths = new ArrayList<>();
     }
 
+    @Parameters(commandDescription = "Show N5 data sets at the given path")
+    private static class CommandN5Tree {
+        @Parameter(description = "<path>")
+        private String path;
+    }
+
     private JCommander jc;
     private JadeStorageService helper;
 
@@ -67,6 +74,7 @@ public class StorageClientApp {
         CommandMeta argsMeta = new CommandMeta();
         CommandRead argsRead = new CommandRead();
         CommandCopy argsCopy = new CommandCopy();
+        CommandN5Tree argsN5Tree = new CommandN5Tree();
 
         jc = JCommander.newBuilder()
                 .addObject(argsMain)
@@ -74,6 +82,7 @@ public class StorageClientApp {
                 .addCommand("meta", argsMeta)
                 .addCommand("read", argsRead)
                 .addCommand("copy", argsCopy)
+                .addCommand("n5tree", argsN5Tree)
                 .build();
 
         try {
@@ -102,6 +111,9 @@ public class StorageClientApp {
                     break;
                 case "copy":
                     commandCopy(argsCopy);
+                    break;
+                case "n5tree":
+                    commandN5Tree(argsN5Tree);
                     break;
                 default:
                     usage("Unsupported command: " + parsedCommand, jc);
@@ -154,6 +166,21 @@ public class StorageClientApp {
             StorageLocation storageLocation = getStorageLocation(sourcePath.toString());
             String relativePath = storageLocation.getRelativePath(sourcePath.toString());
             FileUtils.copyInputStreamToFile(helper.getContent(storageLocation, relativePath), targetPath.toFile());
+        }
+    }
+
+    private void commandN5Tree(CommandN5Tree args) throws Exception {
+        StorageLocation storageLocation = getStorageLocation(args.path);
+        N5TreeNode n5Tree = helper.getN5Tree(storageLocation, storageLocation.getRelativePath(args.path));
+        if (n5Tree != null) {
+            printN5Tree(n5Tree, "");
+        }
+    }
+
+    private void printN5Tree(N5TreeNode node, String indent) {
+        System.out.println(node.getNodeName());
+        for (N5TreeNode n5TreeNode : node.childrenList()) {
+            printN5Tree(n5TreeNode, indent + "  ");
         }
     }
 
