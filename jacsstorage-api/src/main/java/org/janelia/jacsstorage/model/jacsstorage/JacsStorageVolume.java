@@ -233,18 +233,7 @@ public class JacsStorageVolume extends AbstractEntity {
 
     @JsonIgnore
     public Optional<Path> getDataStorageAbsolutePath(StorageRelativePath storageRelativePath) {
-        if (storageRelativePath.isRelativeToBaseRoot()) {
-            return Optional.of(Paths.get(getBaseStorageRootDir(), storageRelativePath.getPath()));
-        } else {
-            // storageRelativePath.isRelativeToVirtualRoot()
-            Set<String> storageRootVars = ExprHelper.extractVarNames(storageRootTemplate);
-            if (storageRootVars.isEmpty()) {
-                return Optional.of(Paths.get(getBaseStorageRootDir(), storageRelativePath.getPath()));
-            } else {
-                // the root directory template contains unresolved variables so I cannot determine the path exactly
-                return Optional.empty();
-            }
-        }
+        return Optional.of(Paths.get(getBaseStorageRootDir(), storageRelativePath.getPath()));
     }
 
     public boolean isActiveFlag() {
