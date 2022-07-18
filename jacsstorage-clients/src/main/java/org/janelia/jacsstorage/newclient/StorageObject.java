@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.newclient;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -18,21 +17,21 @@ public class StorageObject {
     private final Long sizeBytes;
     private final boolean isCollection;
 
-    StorageObject(StorageLocation location, String relativePath, String objectName, Long sizeBytes, boolean isCollection) {
-        this.location = location;
-        this.relativePath = relativePath;
-        this.objectName = objectName;
-        this.sizeBytes = sizeBytes;
-        this.isCollection = isCollection;
-    }
-
-    StorageObject(StorageLocation location, String relativePath, StorageContentInfo storageContentInfo) {
-        this.location = location;
-        this.relativePath = relativePath;
-        this.objectName = Paths.get(relativePath).getFileName().toString();
-        this.sizeBytes = storageContentInfo.getSize();
-        this.isCollection = storageContentInfo.getRemoteInfo().isCollection();
-    }
+//    StorageObject(StorageLocation location, String relativePath, String objectName, Long sizeBytes, boolean isCollection) {
+//        this.location = location;
+//        this.relativePath = relativePath;
+//        this.objectName = objectName;
+//        this.sizeBytes = sizeBytes;
+//        this.isCollection = isCollection;
+//    }
+//
+//    StorageObject(StorageLocation location, String relativePath, StorageContentInfo storageContentInfo) {
+//        this.location = location;
+//        this.relativePath = relativePath;
+//        this.objectName = Paths.get(relativePath).getFileName().toString();
+//        this.sizeBytes = storageContentInfo.getSize();
+//        this.isCollection = storageContentInfo.getRemoteInfo().isCollection();
+//    }
 
     StorageObject(StorageLocation location, String relativePath, StorageEntryInfo storageEntryInfo) {
         this.location = location;

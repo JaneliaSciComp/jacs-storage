@@ -2,22 +2,27 @@ package org.janelia.jacsstorage.newclient;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.client.ClientProperties;
+import org.janelia.jacsstorage.datarequest.PageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * TODO: This code was copied from org.janelia.jacs2.dataservice.storage.StorageService in jacs-compute.
+ *       It needs to be cleaned up and refactored in the future.
+ */
 public class StorageService {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageService.class);
@@ -30,66 +35,31 @@ public class StorageService {
         this.storageServiceApiKey = storageServiceApiKey;
     }
 
-    public List<DataStorageInfo> lookupDataStorage(String storageURI, String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
-        Client httpclient = HttpUtils.createHttpClient();
-        try {
-            WebTarget target;
-            if (StringUtils.isBlank(storageURI)) {
-                target = httpclient.target(masterStorageServiceURL);
-            } else {
-                target = httpclient.target(storageURI);
-            }
-            if (!StringUtils.endsWith(storageURI, "/storage")) {
-                target = target.path("storage");
-            }
-            StringBuilder storageIdentifiersBuilder = new StringBuilder();
-            if (StringUtils.isNotBlank(storageId)) {
-                target = target.queryParam("id", storageId);
-                storageIdentifiersBuilder.append("storageId=").append(storageId).append(' ');
-            }
-            if (StringUtils.isNotBlank(storageName)) {
-                target = target.queryParam("name", storageName);
-                if (storageIdentifiersBuilder.length() > 0) {
-                    storageIdentifiersBuilder.append(',');
-                }
-                storageIdentifiersBuilder.append("storageName=").append(storageName).append(' ');
-            }
-            if (StringUtils.isNotBlank(storagePath)) {
-                target = target.queryParam("storagePath", storagePath);
-                if (storageIdentifiersBuilder.length() > 0) {
-                    storageIdentifiersBuilder.append(',');
-                }
-                storageIdentifiersBuilder.append("storagePath=").append(storagePath).append(' ');
-            }
-            if (StringUtils.isNotBlank(subjectKey)) {
-                target = target.queryParam("ownerKey", subjectKey);
-            }
-            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
-            Response response = requestBuilder.get();
-            int responseStatus = response.getStatus();
-            if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
-                LOG.error("Lookup data storage request {} returned status {} while trying to get the storage for storageId = {}, storageName={}, storagePath={}", target, responseStatus, storageId, storageName, storagePath);
-                StringBuilder messageBuilder = new StringBuilder("Cannot locate any storage ");
-                if (storageIdentifiersBuilder.length() > 0) {
-                    messageBuilder.append("for ")
-                            .append(storageIdentifiersBuilder);
-                }
-                messageBuilder.append("at ").append(target.getUri())
-                        .append(". The attempt to connect to the storage server returned with an invalid status code")
-                        .append('(').append(responseStatus).append(')');
-                ;
-                throw new IllegalStateException(messageBuilder.toString());
-            } else {
-                PageResult<DataStorageInfo> storageInfoResult = response.readEntity(new GenericType<PageResult<DataStorageInfo>>(){});
-                return storageInfoResult.getResultList();
-            }
-        } catch (IllegalStateException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            httpclient.close();
-        }
+    public Optional<StorageEntryInfo> lookupStorage(String storagePath, String ownerKey, String authToken) {
+        LOG.debug("Lookup storage for {}", storagePath);
+        return findStorageVolumes(storagePath, ownerKey, authToken)
+                .stream().findFirst()
+                .map(jadeStorageVolume -> {
+                    String relativeStoragePath;
+                    if (StringUtils.startsWith(storagePath, StringUtils.appendIfMissing(jadeStorageVolume.getStorageVirtualPath(), "/"))) {
+                        relativeStoragePath = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(storagePath)).toString();
+                    } else if (StringUtils.startsWith(storagePath, StringUtils.appendIfMissing(jadeStorageVolume.getBaseStorageRootDir(), "/"))) {
+                        relativeStoragePath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(storagePath)).toString();
+                    } else {
+                        relativeStoragePath = "";
+                    }
+                    LOG.debug("Found {} for {}; the new path relative to the volume's root is {}", jadeStorageVolume, storagePath, relativeStoragePath);
+                    return new StorageEntryInfo(
+                            jadeStorageVolume.getId(),
+                            jadeStorageVolume.getVolumeStorageURI(),
+                            getEntryURI(jadeStorageVolume.getVolumeStorageURI(), relativeStoragePath),
+                            jadeStorageVolume.getStorageVirtualPath(),
+                            new StoragePathURI(relativeStoragePath),
+                            relativeStoragePath,
+                            null, // size is not known
+                            true // this really does not matter but assume the path is a directory
+                    );
+                });
     }
 
     public List<JadeStorageVolume> findStorageVolumes(String storagePath, String subjectKey, String authToken) {
@@ -137,31 +107,40 @@ public class StorageService {
         }
     }
 
-    public DataStorageInfo createStorage(String storageServiceURL, String storageName, List<String> storageTags, String subject, String authToken) {
+    public List<StorageObject> listStorageContent(StorageLocation storageLocation, String relativePath, int depth, String subjectKey, String authToken) throws StorageObjectNotFoundException {
         Client httpclient = HttpUtils.createHttpClient();
+        String storageURL = storageLocation.getStorageURL();
         try {
-            WebTarget target = httpclient.target(storageServiceURL);
-            if (!StringUtils.endsWith(storageServiceURL, "/storage")) {
-                target = target.path("storage");
+            WebTarget target = httpclient.target(storageURL).path("list");
+            if (StringUtils.isNotBlank(relativePath)) {
+                target = target.path(relativePath);
             }
-            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subject, authToken);
-            DataStorageInfo storageData = new DataStorageInfo();
-            storageData.setName(storageName);
-            storageData.setOwnerKey(subject);
-            storageData.setStorageFormat("DATA_DIRECTORY");
-            storageData.setStorageTags(storageTags);
-            Response response = requestBuilder.post(Entity.json(storageData));
-            int responseStatus = response.getStatus();
-            if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
-                LOG.warn("Error while trying to create storage {} for {} using {} - returned status {}", storageName, subject, target, responseStatus);
-                throw new IllegalStateException("Error while trying to create storage " + storageName + " for " + subject);
+            else {
+                target = target.path("/");
             }
-            return response.readEntity(DataStorageInfo.class);
-        } catch (IllegalStateException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
+            if (depth > 0) {
+                target = target.queryParam("depth", depth);
+            }
+            LOG.debug("listStorageContent requesting {}", target.getUri().toString());
+            Invocation.Builder requestBuilder = createRequestWithCredentials(
+                    target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
+            Response response = requestBuilder.get();
+            if (response.getStatus()==404) {
+                throw new StorageObjectNotFoundException(storageLocation, relativePath);
+            }
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
+            }
+            return response.readEntity(new GenericType<List<JsonNode>>(){})
+                    .stream()
+                    .map(content -> {
+                        StorageEntryInfo storageEntryInfo = extractStorageNodeFromJson(storageURL, null, relativePath, content);
+                        String objectRelativePath =  StringUtils.isBlank(relativePath) ? relativePath : StringUtils.appendIfMissing(relativePath, "/");
+                        return new StorageObject(storageLocation, objectRelativePath+storageEntryInfo.getEntryRelativePath(), storageEntryInfo);
+                    })
+                    .collect(Collectors.toList());
+        }
+        finally {
             httpclient.close();
         }
     }
@@ -176,123 +155,6 @@ public class StorageService {
                 throw new IllegalStateException(storageURI + " returned with " + response.getStatus());
             }
             return response.readEntity(InputStream.class);
-        } catch (IllegalStateException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            httpclient.close();
-        }
-    }
-
-    public InputStream getStorageFolderContent(String storageURI, long offset, long size, boolean sortedContent, String filter, String subject, String authToken) {
-        Client httpclient = HttpUtils.createHttpClient();
-        try {
-            WebTarget target = httpclient.target(storageURI)
-                    .queryParam("alwaysArchive", true)
-                    .queryParam("useNaturalSort", sortedContent)
-                    .queryParam("startEntryIndex", offset)
-                    .queryParam("entryPattern", filter)
-                    .queryParam("entriesCount", size);
-            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
-            Response response = requestBuilder.get();
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new IllegalStateException(storageURI + " returned with " + response.getStatus());
-            }
-            return response.readEntity(InputStream.class);
-        } catch (IllegalStateException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            httpclient.close();
-        }
-    }
-
-    public StorageEntryInfo putStorageContent(String storageURI, String entryName, String subject, String authToken, InputStream dataStream) {
-        Client httpclient = HttpUtils.createHttpClient();
-        try {
-            WebTarget target = httpclient
-                    .target(storageURI).path("data_content")
-                    .property(ClientProperties.CHUNKED_ENCODING_SIZE, 1024*1024)
-                    .property(ClientProperties.REQUEST_ENTITY_PROCESSING, "CHUNKED")
-                    .path(entryName);
-            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subject, authToken);
-            Response response = requestBuilder.put(Entity.entity(dataStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
-            String entryLocationUrl;
-            if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
-                entryLocationUrl = response.getHeaderString("Location");
-                JsonNode storageNode = response.readEntity(new GenericType<JsonNode>(){});
-                return extractStorageNodeFromJson(storageURI, entryLocationUrl, null, storageNode);
-            } else {
-                LOG.warn("Put content using {} return status {}", target, response.getStatus());
-                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
-            }
-        } catch (IllegalStateException e) {
-            LOG.error("Exception thrown while uploading content to {}, {}", storageURI, entryName, e);
-            throw e;
-        } catch (Exception e) {
-            LOG.error("Exception thrown while uploading content to {}, {}", storageURI, entryName, e);
-            throw new IllegalStateException(e);
-        } finally {
-            httpclient.close();
-        }
-    }
-
-    public List<StorageEntryInfo> listStorageContent(String storageURI,
-                                                     String storagePath,
-                                                     String subject,
-                                                     String authToken,
-                                                     int depth,
-                                                     long offset,
-                                                     int length) {
-        Client httpclient = HttpUtils.createHttpClient();
-        try {
-            WebTarget target = httpclient.target(storageURI).path("list");
-            if (StringUtils.isNotBlank(storagePath)) {
-                target = target.path(storagePath);
-            }
-            if (depth > 0) {
-                target = target.queryParam("depth", depth);
-            }
-            if (offset > 0) {
-                target = target.queryParam("offset", offset);
-            }
-            if (length > 0) {
-                target = target.queryParam("length", length);
-            }
-            Invocation.Builder requestBuilder = createRequestWithCredentials(
-                    target.request(MediaType.APPLICATION_JSON), subject, authToken);
-            Response response = requestBuilder.get();
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
-            }
-            List<JsonNode> storageCotent = response.readEntity(new GenericType<List<JsonNode>>(){});
-            return storageCotent.stream()
-                    .map(content -> extractStorageNodeFromJson(storageURI, null, storagePath, content))
-                    .collect(Collectors.toList());
-        } catch (IllegalStateException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        } finally {
-            httpclient.close();
-        }
-    }
-
-    public void removeStorageContent(String storageURI, String storagePath, String subject, String authToken) {
-        Client httpclient = HttpUtils.createHttpClient();
-        try {
-            WebTarget target = httpclient.target(storageURI);
-            if (StringUtils.isNotBlank(storagePath)) {
-                target = target.path(storagePath);
-            }
-            Invocation.Builder requestBuilder = createRequestWithCredentials(
-                    target.request(MediaType.APPLICATION_JSON), subject, authToken);
-            Response response = requestBuilder.delete();
-            if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
-                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
-            }
         } catch (IllegalStateException e) {
             throw e;
         } catch (Exception e) {
