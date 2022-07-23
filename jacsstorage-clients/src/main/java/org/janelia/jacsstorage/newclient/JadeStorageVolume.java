@@ -8,7 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 /**
- * This is the equivalent of the jade.JacsStorageVolume type.
+ * This is the client equivalent of the JacsStorageVolume type.
  */
 public class JadeStorageVolume {
     @JsonProperty
