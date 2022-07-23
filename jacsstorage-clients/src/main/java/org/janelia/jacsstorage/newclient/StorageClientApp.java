@@ -185,7 +185,7 @@ public class StorageClientApp {
     }
 
     private StorageLocation getStorageLocation(String path) {
-        StorageLocation storageLocation = helper.getStorageObjectByPath(path);
+        StorageLocation storageLocation = helper.getStorageLocationByPath(path);
         if (storageLocation == null) {
             System.err.println("Path not found in JADE: "+path);
             System.exit(1);
