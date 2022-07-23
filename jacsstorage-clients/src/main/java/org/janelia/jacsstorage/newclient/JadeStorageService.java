@@ -46,11 +46,19 @@ public class JadeStorageService {
     }
 
     /**
+     * @deprecated This method's name is a misnomer. Use getStorageLocationByPath instead.
+     */
+    @Deprecated
+    public StorageLocation getStorageObjectByPath(String path) {
+        return getStorageLocationByPath(path);
+    }
+
+    /**
      * Find the StorageLocation of the given path. If no storage location exists, null is returned.
      * @param path full JADE path to locate
      * @return
      */
-    public StorageLocation getStorageObjectByPath(String path) {
+    public StorageLocation getStorageLocationByPath(String path) {
         return storageService.lookupStorage(path, subjectKey, authToken).map(StorageLocation::new).orElse(null);
     }
 
@@ -62,7 +70,8 @@ public class JadeStorageService {
      */
     public StorageObject getMetadata(StorageLocation storageLocation, String path) throws StorageObjectNotFoundException {
         String relativePath = relativizePath(storageLocation, path);
-        return storageService.listStorageContent(storageLocation, path, 1, subjectKey, authToken)
+        LOG.info("Getting {} from location for {}", relativePath, storageLocation.getPathPrefix());
+        return storageService.listStorageContent(storageLocation, relativePath, 1, subjectKey, authToken)
                 .stream()
                 .peek(storageObject -> LOG.trace("getMetadata found {}",storageObject))
                 .findFirst()
@@ -197,6 +206,7 @@ public class JadeStorageService {
      * @return path relative to the storage location
      */
     private String relativizePath(StorageLocation storageLocation, String path) {
+        if (StringUtils.isBlank(path)) return "";
         if (path.charAt(0)=='/') {
             // This is an absolute path
             return storageLocation.getRelativePath(path);
