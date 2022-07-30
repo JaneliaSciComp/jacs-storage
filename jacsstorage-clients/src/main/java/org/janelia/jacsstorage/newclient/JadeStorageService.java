@@ -59,7 +59,7 @@ public class JadeStorageService {
      * @return
      */
     public StorageLocation getStorageLocationByPath(String path) {
-        return storageService.lookupStorage(path, subjectKey, authToken).map(StorageLocation::new).orElse(null);
+        return storageService.lookupStorage(path, subjectKey, authToken).orElse(null);
     }
 
     /**

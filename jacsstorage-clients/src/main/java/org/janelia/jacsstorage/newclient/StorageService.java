@@ -35,7 +35,7 @@ public class StorageService {
         this.storageServiceApiKey = storageServiceApiKey;
     }
 
-    public Optional<StorageEntryInfo> lookupStorage(String storagePath, String ownerKey, String authToken) {
+    public Optional<StorageLocation> lookupStorage(String storagePath, String ownerKey, String authToken) {
         LOG.debug("Lookup storage for {}", storagePath);
         return findStorageVolumes(storagePath, ownerKey, authToken)
                 .stream().findFirst()
@@ -49,15 +49,10 @@ public class StorageService {
                         relativeStoragePath = "";
                     }
                     LOG.debug("Found {} for {}; the new path relative to the volume's root is {}", jadeStorageVolume, storagePath, relativeStoragePath);
-                    return new StorageEntryInfo(
-                            jadeStorageVolume.getId(),
-                            jadeStorageVolume.getVolumeStorageURI(),
-                            getEntryURI(jadeStorageVolume.getVolumeStorageURI(), relativeStoragePath),
-                            jadeStorageVolume.getStorageVirtualPath(),
-                            new StoragePathURI(relativeStoragePath),
-                            relativeStoragePath,
-                            null, // size is not known
-                            true // this really does not matter but assume the path is a directory
+                    return new StorageLocation(
+                        jadeStorageVolume.getVolumeStorageURI(),
+                        jadeStorageVolume.getBaseStorageRootDir(),
+                        jadeStorageVolume.getStorageVirtualPath()
                     );
                 });
     }

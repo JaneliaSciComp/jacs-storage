@@ -12,14 +12,12 @@ public class StorageLocation {
 
     private String storageURL;
     private String pathPrefix;
+    private String virtualPath;
 
-    StorageLocation(String storageURL, String pathPrefix) {
+    StorageLocation(String storageURL, String pathPrefix, String virtualPath) {
         this.storageURL = storageURL;
         this.pathPrefix = StringUtils.appendIfMissing(pathPrefix, "/");
-    }
-
-    StorageLocation(StorageEntryInfo storageEntryInfo) {
-        this(storageEntryInfo.getStorageURL(), storageEntryInfo.getStorageRootLocation());
+        this.virtualPath = StringUtils.appendIfMissing(virtualPath, "/");
     }
 
     /**
@@ -63,13 +61,18 @@ public class StorageLocation {
      * @return
      */
     public String getRelativePath(String absolutePath) {
-        // Escape forward slashes so that the path can be searched using regex
-        // Remove path prefix to generate a path relative to this storage location
-        String regex = "^" + pathPrefix;
-        if (regex.endsWith("/")) {
-            regex += "?";
+        if (absolutePath.startsWith(pathPrefix)) {
+            return absolutePath.replaceFirst(pathPrefix, "");
         }
-        return absolutePath.replaceFirst(regex, "");
+        else if (absolutePath.startsWith(virtualPath)) {
+            return absolutePath.replaceFirst(virtualPath, "");
+        }
+        else if (!absolutePath.startsWith("/")) {
+            throw new IllegalArgumentException("Not an absolute path: "+absolutePath);
+        }
+        else {
+            throw new IllegalArgumentException("Given absolute path (" + absolutePath + ") does not exist in storage location with prefix " + pathPrefix);
+        }
     }
 
     /**
@@ -81,10 +84,20 @@ public class StorageLocation {
         return pathPrefix + relativePath;
     }
 
+    /**
+     * Given a relative JADE path, generate the full absolute virtual path.
+     * @param relativePath
+     * @return
+     */
+    public String getVirtualPath(String relativePath) {
+        return virtualPath + relativePath;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
                 .append("pathPrefix", pathPrefix)
+                .append("virtualPath", virtualPath)
                 .append("storageURL", storageURL)
                 .toString();
     }
