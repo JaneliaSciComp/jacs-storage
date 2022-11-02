@@ -61,7 +61,7 @@ public class StorageVolumeBootstrapper {
                         shared = applicationConfig.getBooleanPropertyValue(
                                 getVolumeConfigPropertyName(volumeName, "Shared"));
                     }
-                    LOG.info("Bootstrap {} volume {}", shared ? "shared" : "local", volumeName);
+                    LOG.info("Bootstrap {} volume {} at {}", shared ? "shared" : "local", volumeName, storageAgentId);
                     return storageVolumeManager.createStorageVolumeIfNotFound(volumeName, shared ? null : storageAgentId);
                 })
                 .filter(storageVolume -> storageVolume != null)
