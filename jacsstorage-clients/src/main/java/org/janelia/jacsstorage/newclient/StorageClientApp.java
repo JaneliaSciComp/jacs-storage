@@ -47,10 +47,12 @@ public class StorageClientApp {
         private String path;
     }
 
-    @Parameters(commandDescription = "Copy a file from a source location (which may be local or JADE-accessible) to a target location (which is local)")
+    @Parameters(commandDescription = "Copy a file from a source location to a target location (locations may be local or JADE-accessible)")
     private static class CommandCopy {
         @Parameter(description = "<source> <target>", arity = 2)
         private List<String> paths = new ArrayList<>();
+        @Parameter(description = "Verify by reading the entire file after writing")
+        private boolean verify = false;
     }
 
     @Parameters(commandDescription = "Show N5 data sets at the given path")
@@ -159,13 +161,39 @@ public class StorageClientApp {
         Path sourcePath = Paths.get(args.paths.get(0));
         Path targetPath = Paths.get(args.paths.get(1));
 
-        if (Files.exists(sourcePath)) {
+        if (Files.exists(sourcePath) && Files.exists(targetPath.getParent())) {
+            // Both paths are locally available, so just copy
             PathUtils.copyFiles(sourcePath, targetPath);
         }
         else {
-            StorageLocation storageLocation = getStorageLocation(sourcePath.toString());
-            String relativePath = storageLocation.getRelativePath(sourcePath.toString());
-            FileUtils.copyInputStreamToFile(helper.getContent(storageLocation, relativePath), targetPath.toFile());
+            if (Files.exists(sourcePath)) {
+                // Read locally and write to JADE
+
+            }
+            else if (Files.exists(targetPath.getParent())) {
+                // Read from JADE and write locally
+                InputStream source = getFileStream(sourcePath);
+                FileUtils.copyInputStreamToFile(source, targetPath.toFile());
+            }
+            else {
+                // Read from JADE and write to JADE
+                InputStream source = getFileStream(sourcePath);
+
+
+            }
+        }
+
+        if (args.verify) {
+            InputStream source = getFileStream(sourcePath);
+            InputStream target = getFileStream(targetPath);
+            System.out.println("Comparing source against target...");
+            if (IOUtils.contentEquals(source, target)) {
+                System.out.println("Verified target bytes");
+            }
+            else {
+                System.out.println("Verification failed!");
+                System.exit(1);
+            }
         }
     }
 
@@ -191,6 +219,14 @@ public class StorageClientApp {
             System.exit(1);
         }
         return storageLocation;
+    }
+
+    private InputStream getFileStream(Path path) {
+        StorageLocation sourceStorageLocation = getStorageLocation(path.toString());
+        String sourceRelativePath = sourceStorageLocation.getRelativePath(path.toString());
+        InputStream stream = helper.getContent(sourceStorageLocation, sourceStorageLocation.getRelativePath(sourceRelativePath));
+        System.out.println("Found "+sourceRelativePath+" in "+sourceStorageLocation.getStorageURL());
+        return stream;
     }
 
     private void usage(String message, JCommander jc) {
