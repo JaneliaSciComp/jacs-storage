@@ -14,6 +14,7 @@ import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.saalfeldlab.n5.N5TreeNode;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -210,9 +211,9 @@ public class StorageClientApp {
         }
 
         if (args.verify) {
+            System.out.println("Comparing source against target...");
             InputStream source = getFileStream(sourcePath);
             InputStream target = getFileStream(targetPath);
-            System.out.println("Comparing source against target...");
             if (IOUtils.contentEquals(source, target)) {
                 System.out.println("Verified target bytes");
             }
@@ -247,7 +248,12 @@ public class StorageClientApp {
         return storageLocation;
     }
 
-    private InputStream getFileStream(Path path) {
+    private InputStream getFileStream(Path path) throws FileNotFoundException {
+
+        if (Files.exists(path)) {
+            return new FileInputStream(path.toFile());
+        }
+
         StorageLocation sourceStorageLocation = getStorageLocation(path.toString());
         String sourceRelativePath = sourceStorageLocation.getRelativePath(path.toString());
         InputStream stream = helper.getContent(sourceStorageLocation, sourceRelativePath);
