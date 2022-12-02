@@ -55,7 +55,7 @@ public class HttpUtils {
             sslContext.init(null, trustManagers, new SecureRandom());
             return sslContext;
         } catch (Exception e) {
-            throw new IllegalStateException("Error initilizing SSL context", e);
+            throw new IllegalStateException("Error initializing SSL context", e);
         }
     }
 }

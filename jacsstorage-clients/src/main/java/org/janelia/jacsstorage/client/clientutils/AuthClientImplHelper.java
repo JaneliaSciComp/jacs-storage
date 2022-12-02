@@ -49,7 +49,7 @@ public class AuthClientImplHelper {
     }
 
     private Client createHttpClient() throws Exception {
-        SSLContext sslContext = SSLContext.getInstance("TLSv1");
+        SSLContext sslContext = SSLContext.getInstance("TLS");
         TrustManager[] trustManagers = {
                 new X509TrustManager() {
                     @Override

@@ -16,7 +16,7 @@ public class HttpClientUtils {
 
     public static Client createHttpClient() {
         try {
-            SSLContext sslContext = SSLContext.getInstance("TLSv1");
+            SSLContext sslContext = SSLContext.getInstance("TLS");
             TrustManager[] trustManagers = {
                     new X509TrustManager() {
                         @Override
