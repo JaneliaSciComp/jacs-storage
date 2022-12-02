@@ -1,12 +1,10 @@
-package org.janelia.jacsstorage.clientutils;
+package org.janelia.jacsstorage.client.clientutils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.SecureRandom;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
-import java.time.temporal.TemporalUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

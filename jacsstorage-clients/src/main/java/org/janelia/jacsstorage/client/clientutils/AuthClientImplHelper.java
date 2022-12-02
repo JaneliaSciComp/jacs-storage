@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.clientutils;
+package org.janelia.jacsstorage.client.clientutils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;

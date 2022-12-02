@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.newclient;
+package org.janelia.jacsstorage.clients.api;
 
 /**
  * Exception when a storage location is requested by the user but it cannot be found in JADE at the given

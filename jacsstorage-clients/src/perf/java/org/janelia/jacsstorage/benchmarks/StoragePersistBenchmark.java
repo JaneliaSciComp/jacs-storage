@@ -3,7 +3,7 @@ package org.janelia.jacsstorage.benchmarks;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.clientutils.AuthClientImplHelper;
+import org.janelia.jacsstorage.client.clientutils.AuthClientImplHelper;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;

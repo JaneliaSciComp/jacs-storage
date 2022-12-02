@@ -1,8 +1,9 @@
-package org.janelia.jacsstorage.newclient;
+package org.janelia.jacsstorage.clients.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.saalfeldlab.n5.N5TreeNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,14 +24,14 @@ import java.util.stream.Collectors;
  * TODO: This code was copied from org.janelia.jacs2.dataservice.storage.StorageService in jacs-compute.
  *       It needs to be cleaned up and refactored in the future.
  */
-public class StorageService {
+public class JadeHttpClient {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StorageService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JadeHttpClient.class);
 
     private final String masterStorageServiceURL;
     private final String storageServiceApiKey;
 
-    public StorageService(String masterStorageServiceURL, String storageServiceApiKey) {
+    public JadeHttpClient(String masterStorageServiceURL, String storageServiceApiKey) {
         this.masterStorageServiceURL = masterStorageServiceURL;
         this.storageServiceApiKey = storageServiceApiKey;
     }
@@ -264,5 +265,40 @@ public class StorageService {
                 sizeNode.asLong(),
                 collectionFlagNode.asBoolean(),
                 mimeTypeNode.asText());
+    }
+
+    /**
+     * TODO: this doesn't work yet because it turns out that N5TreeNode is not serializable
+     * Discover n5 data sets and return a tree of N5 objects metadata for the given object.
+     * @param storageLocation location of the object
+     * @param relativePath path to the object relative to the storageLocation
+     * @return tree of data sets represented by N5TreeNode
+     */
+    public N5TreeNode getN5Tree(StorageLocation storageLocation, String relativePath, String jacsPrincipal, String authToken) throws StorageObjectNotFoundException {
+        Client httpclient = HttpUtils.createHttpClient();
+        String storageURL = storageLocation.getStorageURL();
+        try {
+            WebTarget target = httpclient.target(storageURL).path("n5tree");
+            if (StringUtils.isNotBlank(relativePath)) {
+                target = target.path(relativePath);
+            }
+            else {
+                target = target.path("/");
+            }
+            LOG.debug("getN5Tree requesting {}", target.getUri().toString());
+            Invocation.Builder requestBuilder = createRequestWithCredentials(
+                    target.request(MediaType.APPLICATION_JSON), jacsPrincipal, authToken);
+            Response response = requestBuilder.get();
+            if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+                throw new StorageObjectNotFoundException(storageLocation, relativePath);
+            }
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
+            }
+            return response.readEntity(new GenericType<N5TreeNode>(){});
+        }
+        finally {
+            httpclient.close();
+        }
     }
 }

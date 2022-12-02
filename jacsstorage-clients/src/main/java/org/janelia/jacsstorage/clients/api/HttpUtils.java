@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.newclient;
+package org.janelia.jacsstorage.clients.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.glassfish.jersey.client.ClientConfig;

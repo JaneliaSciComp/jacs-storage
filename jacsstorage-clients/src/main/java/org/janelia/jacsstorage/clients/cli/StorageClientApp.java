@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.newclient;
+package org.janelia.jacsstorage.clients.cli;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -7,6 +7,9 @@ import com.beust.jcommander.Parameters;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.clients.api.JadeStorageService;
+import org.janelia.jacsstorage.clients.api.StorageLocation;
+import org.janelia.jacsstorage.clients.api.StorageObject;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.saalfeldlab.n5.N5TreeNode;
 
