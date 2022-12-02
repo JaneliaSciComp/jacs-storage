@@ -4,19 +4,23 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.saalfeldlab.n5.N5TreeNode;
+import org.jboss.weld.context.http.Http;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -160,8 +164,23 @@ public class JadeHttpClient {
         }
     }
 
-    public String getEntryURI(String storageURI, String entryName) {
-        return StringUtils.appendIfMissing(storageURI, "/") + "data_content/" + entryName;
+    protected void setStorageContent(String storageURI, String subjectKey, String authToken, InputStream fileStream) {
+        Client httpclient = HttpUtils.createHttpClient();
+        try {
+            WebTarget target = httpclient.target(storageURI);
+            Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(), subjectKey, authToken);
+            LOG.debug("setStorageContent putting to {}", target.getUri().toString());
+            Response response = requestBuilder.put(Entity.entity(fileStream, MediaType.APPLICATION_OCTET_STREAM));
+            if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
+                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
+            }
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            httpclient.close();
+        }
     }
 
     public boolean exists(String storageURI, String subjectKey, String authToken) {

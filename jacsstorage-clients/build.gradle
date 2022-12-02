@@ -45,7 +45,7 @@ project(":jacsstorage-clients") {
     }
 
     task createNewStorageClientApp(type: CreateStartScripts) {
-        mainClassName = "org.janelia.jacsstorage.newclient.StorageClientApp"
+        mainClassName = "org.janelia.jacsstorage.clients.cli.StorageClientApp"
         classpath = startScripts.classpath
         outputDir = startScripts.outputDir
         applicationName = "jade"

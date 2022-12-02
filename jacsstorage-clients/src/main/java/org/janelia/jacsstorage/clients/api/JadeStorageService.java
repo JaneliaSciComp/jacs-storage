@@ -147,6 +147,19 @@ public class JadeStorageService {
     }
 
     /**
+     * Sets the content of the given object. The object should be a file, not a collection.
+     * @param storageLocation location of the object
+     * @param path path to the object, either absolute or relative to the storageLocation
+     * @param inputStream stream of the content in the given object
+     */
+    public void setContent(StorageLocation storageLocation, String path, InputStream inputStream) {
+        String relativePath = relativizePath(storageLocation, path);
+        String contentURL = storageLocation.getStorageURLForRelativePath(relativePath);
+        LOG.debug("setContent for "+contentURL);
+        jadeHttpClient.setStorageContent(contentURL, subjectKey, authToken, inputStream);
+    }
+
+    /**
      * TODO: this doesn't work yet because it turns out that N5TreeNode is not serializable
      * Discover n5 data sets and return a tree of N5 objects metadata for the given object.
      * @param storageLocation location of the object
@@ -154,8 +167,9 @@ public class JadeStorageService {
      * @return tree of data sets represented by N5TreeNode
      */
     public N5TreeNode getN5Tree(StorageLocation storageLocation, String path) throws StorageObjectNotFoundException {
-        String relativePath = relativizePath(storageLocation, path);
-        return jadeHttpClient.getN5Tree(storageLocation, relativePath, subjectKey, authToken);
+        throw new UnsupportedOperationException("This isn't supported yet");
+//        String relativePath = relativizePath(storageLocation, path);
+//        return jadeHttpClient.getN5Tree(storageLocation, relativePath, subjectKey, authToken);
     }
 
     /**

@@ -13,6 +13,7 @@ import org.janelia.jacsstorage.clients.api.StorageObject;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.saalfeldlab.n5.N5TreeNode;
 
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,11 +51,17 @@ public class StorageClientApp {
         private String path;
     }
 
+    @Parameters(commandDescription = "Write given local file to an object at the given path")
+    private static class CommandWrite {
+        @Parameter(description = "<source> <target>", arity = 2)
+        private List<String> paths = new ArrayList<>();
+    }
+
     @Parameters(commandDescription = "Copy a file from a source location to a target location (locations may be local or JADE-accessible)")
     private static class CommandCopy {
         @Parameter(description = "<source> <target>", arity = 2)
         private List<String> paths = new ArrayList<>();
-        @Parameter(description = "Verify by reading the entire file after writing")
+        @Parameter(names = {"-v","--verify"}, description = "Verify by reading the entire file after writing")
         private boolean verify = false;
     }
 
@@ -78,6 +85,7 @@ public class StorageClientApp {
         CommandList argsList = new CommandList();
         CommandMeta argsMeta = new CommandMeta();
         CommandRead argsRead = new CommandRead();
+        CommandWrite argsWrite = new CommandWrite();
         CommandCopy argsCopy = new CommandCopy();
         CommandN5Tree argsN5Tree = new CommandN5Tree();
 
@@ -86,6 +94,7 @@ public class StorageClientApp {
                 .addCommand("list", argsList)
                 .addCommand("meta", argsMeta)
                 .addCommand("read", argsRead)
+                .addCommand("write", argsWrite)
                 .addCommand("copy", argsCopy)
                 .addCommand("n5tree", argsN5Tree)
                 .build();
@@ -113,6 +122,9 @@ public class StorageClientApp {
                     break;
                 case "read":
                     commandRead(argsRead);
+                    break;
+                case "write":
+                    commandWrite(argsWrite);
                     break;
                 case "copy":
                     commandCopy(argsCopy);
@@ -155,14 +167,22 @@ public class StorageClientApp {
         IOUtils.copy(content, System.out);
     }
 
+    private void commandWrite(CommandWrite args) throws Exception {
+        Path sourcePath = Paths.get(args.paths.get(0));
+        Path targetPath = Paths.get(args.paths.get(1));
+        try (InputStream inputStream = new FileInputStream(sourcePath.toFile())) {
+            setFileStream(targetPath, inputStream);
+        }
+    }
+
     private void commandCopy(CommandCopy args) throws Exception {
 
         if (args.paths.size() != 2) {
             usage("Extract requires source and target path", jc);
         }
 
-        Path sourcePath = Paths.get(args.paths.get(0));
-        Path targetPath = Paths.get(args.paths.get(1));
+        Path sourcePath = Paths.get(args.paths.get(0)).toAbsolutePath();
+        Path targetPath = Paths.get(args.paths.get(1)).toAbsolutePath();
 
         if (Files.exists(sourcePath) && Files.exists(targetPath.getParent())) {
             // Both paths are locally available, so just copy
@@ -171,18 +191,21 @@ public class StorageClientApp {
         else {
             if (Files.exists(sourcePath)) {
                 // Read locally and write to JADE
-
+                try (InputStream inputStream = new FileInputStream(sourcePath.toFile())) {
+                    setFileStream(targetPath, inputStream);
+                }
             }
             else if (Files.exists(targetPath.getParent())) {
                 // Read from JADE and write locally
-                InputStream source = getFileStream(sourcePath);
-                FileUtils.copyInputStreamToFile(source, targetPath.toFile());
+                try (InputStream source = getFileStream(sourcePath)) {
+                    FileUtils.copyInputStreamToFile(source, targetPath.toFile());
+                }
             }
             else {
                 // Read from JADE and write to JADE
-                InputStream source = getFileStream(sourcePath);
-
-
+                try (InputStream source = getFileStream(sourcePath)) {
+                    setFileStream(targetPath, source);
+                }
             }
         }
 
@@ -227,9 +250,16 @@ public class StorageClientApp {
     private InputStream getFileStream(Path path) {
         StorageLocation sourceStorageLocation = getStorageLocation(path.toString());
         String sourceRelativePath = sourceStorageLocation.getRelativePath(path.toString());
-        InputStream stream = helper.getContent(sourceStorageLocation, sourceStorageLocation.getRelativePath(sourceRelativePath));
+        InputStream stream = helper.getContent(sourceStorageLocation, sourceRelativePath);
         System.out.println("Found "+sourceRelativePath+" in "+sourceStorageLocation.getStorageURL());
         return stream;
+    }
+
+    private void setFileStream(Path path, InputStream inputStream) {
+        StorageLocation storageLocation = getStorageLocation(path.toString());
+        String relativePath = storageLocation.getRelativePath(path.toString());
+        helper.setContent(storageLocation, relativePath, inputStream);
+        System.out.println("Wrote "+relativePath+" to "+storageLocation);
     }
 
     private void usage(String message, JCommander jc) {

@@ -14,4 +14,12 @@ public class StorageObjectNotFoundException extends Exception {
         this.storageLocation = storageLocation;
         this.relativePath = relativePath;
     }
+
+    public StorageLocation getStorageLocation() {
+        return storageLocation;
+    }
+
+    public String getRelativePath() {
+        return relativePath;
+    }
 }
