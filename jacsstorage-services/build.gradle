@@ -12,6 +12,7 @@ project(":jacsstorage-services") {
 
         implementation JAX_RS_JERSEY_CLIENT_LIB,
                        JAX_RS_JERSEY_MEDIA_JSON_LIB,
+                       JAVAX_ACTIVATION,
                        JAVAMAIL_LIB,
                        MONGODB_DRIVER_LIB,
                        REFLECTIONS_LIB

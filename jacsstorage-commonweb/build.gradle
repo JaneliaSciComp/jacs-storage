@@ -8,6 +8,7 @@ project(":jacsstorage-commonweb") {
             JACKSON_JAXRS_XML_PROVIDER,
             JAVAX_SERVLET_API_LIB,
             JAX_RS_API_LIB,
+            JAXB_API,
             SWAGGER_JAXRS_LIB
 
         implementation GRIZZLY_SERVLET_LIB,

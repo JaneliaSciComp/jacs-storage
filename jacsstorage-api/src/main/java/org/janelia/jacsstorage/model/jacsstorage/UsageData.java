@@ -41,7 +41,7 @@ public class UsageData {
         this(groupId,
                 UsageDataHelper.parseValue("spaceUsedInBytes", spaceUsedInBytes, BigDecimal::new),
                 UsageDataHelper.parseValue("totalSpaceInBytes", totalSpaceInBytes, BigDecimal::new),
-                UsageDataHelper.parseValue("totalFiles", totalFiles, Long::new),
+                UsageDataHelper.parseValue("totalFiles", totalFiles, Long::parseLong),
                 warnPercentage,
                 failPercentage,
                 userProxy);

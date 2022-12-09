@@ -5,6 +5,7 @@ project(":jacsstorage-core") {
 
         implementation COMMONS_COMPRESS_LIB,
                        JACS_MODEL_RENDERING_LIB,
+                       JAVAX_ACTIVATION,
                        JWT_API_LIB,
                        MESSAGEPACK_LIB
 

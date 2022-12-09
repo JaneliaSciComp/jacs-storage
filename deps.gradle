@@ -2,6 +2,8 @@ dependencies {
     project.ext {
         GUAVA_LIB = "com.google.guava:guava:28.1-jre"
         REFLECTIONS_LIB = "org.reflections:reflections:0.9.10"
+        JAVAX_ACTIVATION = "javax.activation:javax.activation-api:1.2.0"
+        JAXB_API = "javax.xml.bind:jaxb-api:2.3.1"
 
         // logging
         SLF4J_VERSION = "1.7.25"
