@@ -218,7 +218,7 @@ public class StorageClientApp {
                 System.out.println("Verified target bytes");
             }
             else {
-                System.out.println("Verification failed!");
+                System.err.println("Post-copy verification failed!");
                 System.exit(1);
             }
         }
