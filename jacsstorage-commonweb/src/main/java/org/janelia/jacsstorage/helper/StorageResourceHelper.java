@@ -204,9 +204,17 @@ public class StorageResourceHelper {
                     .type(MediaType.APPLICATION_JSON)
                     ;
         } else {
-            JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
-            long fileSize = dataStorageService.estimateDataEntrySize(dataEntryPath, "", storageFormat, filterParams);
-            LOG.info("{} file size is: {}", dataEntryPath, fileSize);
+            JacsStorageFormat storageFormat;
+            long fileSize;
+            if (Files.isRegularFile(dataEntryPath)) {
+                storageFormat = JacsStorageFormat.SINGLE_DATA_FILE;
+                fileSize = dataStorageService.estimateDataEntrySize(dataEntryPath, "", storageFormat, filterParams);
+                LOG.info("{} file size is: {}", dataEntryPath, fileSize);
+            } else {
+                storageFormat = JacsStorageFormat.DATA_DIRECTORY;
+                fileSize = -1;
+                LOG.info("Skip getting filesize for {}", dataEntryPath);
+            }
             StreamingOutput fileStream = output -> {
                 try {
                     dataStorageService.retrieveDataStream(dataEntryPath, storageFormat, filterParams, output);

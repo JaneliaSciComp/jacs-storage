@@ -15,7 +15,6 @@ subprojects {
         integrationTestImplementation.extendsFrom(testImplementation)
         integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
         perfApi.extendsFrom(api)
-        perfApiElements.extendsFrom(perfApi, apiElements)
         perfImplementation.extendsFrom(perfApi, implementation)
         perfRuntimeOnly.extendsFrom(runtimeOnly)
         perfRuntimeElements.extendsFrom(perfImplementation, perfRuntimeOnly)
@@ -25,22 +24,13 @@ subprojects {
 
     sourceSets {
         perf {
-            java {
-                srcDir file('src/perf/java')
-            }
-            resources {
-                srcDir file('src/perf/resources')
-            }
+            extensions
+            compileClasspath += main.output
+            runtimeClasspath += main.output
         }
         integrationTest {
-            java {
-                compileClasspath += main.output + test.output
-                runtimeClasspath += main.output + test.output
-                srcDir file('src/integrationTest/java')
-            }
-            resources {
-                srcDir file('src/integrationTest/resources')
-            }
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
         }
     }
 
@@ -102,7 +92,6 @@ subprojects {
                 scopes.TEST.plus += [
                     configurations.integrationTestCompileClasspath,
                     configurations.integrationTestRuntimeClasspath,
-                    configurations.perfApi,
                     configurations.perfRuntimeElements
                 ]
             }
@@ -112,12 +101,14 @@ subprojects {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 
-    task perfJar(type: Jar, dependsOn: configurations.perfRuntimeElements) {
+    tasks.register('perfJar', Jar) {
+        dependsOn(configurations.perfRuntimeElements)
+
         from sourceSets.perf.output
-        archiveClassifier = "perf"
+        archiveClassifier.set('perf')
     }
 
-    task integrationTest(type: Test) {
+    tasks.register('integrationTest', Test) {
         testClassesDirs += sourceSets.integrationTest.output.classesDirs
         classpath = sourceSets.integrationTest.runtimeClasspath
     }
@@ -126,9 +117,10 @@ subprojects {
         perfRuntimeElements perfJar
     }
 
-    task sourceJar(type: Jar) {
+    tasks.register('sourceJar', Jar) {
+        archiveClassifier.set('sources')
+
         from sourceSets.main.allJava
-        archiveClassifier = 'sources'
     }
 
     publishing {
@@ -160,11 +152,11 @@ subprojects {
     }
 }
 
-task updateWrapper(type: Wrapper) {
-    gradleVersion = "5.5.1"
+tasks.register('updateWrapper', Wrapper) {
+    gradleVersion = "8.1.1"
 }
 
-task printVersion {
+tasks.register('printVersion') {
     doLast {
         println project.version
     }

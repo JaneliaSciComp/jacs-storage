@@ -29,8 +29,10 @@ project(":jacsstorage-services") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 
-    task createStorageRetrieveBenchmark(type: CreateStartScripts, dependsOn: perfJar) {
-        mainClassName = "org.janelia.jacsstorage.service.cmd.StorageRetrieveBenchmark"
+    tasks.register('createStorageRetrieveBenchmark', CreateStartScripts) {
+        dependsOn(perfJar, startScripts)
+
+        mainClass = "org.janelia.jacsstorage.service.cmd.StorageRetrieveBenchmark"
         classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
         outputDir = startScripts.outputDir
         applicationName = "storageRetrieveBenchmarks"
@@ -49,6 +51,11 @@ project(":jacsstorage-services") {
             }
         }
     }
+
+    [distTar, distZip, benchmarksDistTar, benchmarksDistZip, installDist, installBenchmarksDist].each {
+        it.dependsOn(createStorageRetrieveBenchmark)
+    }
+
 }
 
 ext.moduleName = 'org.janelia.jacsstorage.services'
