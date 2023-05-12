@@ -12,15 +12,14 @@ import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.datatransfer.DataTransferService;
-import org.janelia.jacsstorage.clientutils.AuthClientImplHelper;
-import org.janelia.jacsstorage.clientutils.StorageClientImplHelper;
+import org.janelia.jacsstorage.client.clientutils.AuthClientImplHelper;
+import org.janelia.jacsstorage.client.clientutils.StorageClientImplHelper;
 
 import javax.enterprise.inject.se.SeContainer;
 import javax.enterprise.inject.se.SeContainerInitializer;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.UncheckedIOException;
-import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;

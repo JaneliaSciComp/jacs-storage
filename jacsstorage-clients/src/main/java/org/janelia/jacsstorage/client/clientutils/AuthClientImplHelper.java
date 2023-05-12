@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.clientutils;
+package org.janelia.jacsstorage.client.clientutils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableMap;
@@ -49,7 +49,7 @@ public class AuthClientImplHelper {
     }
 
     private Client createHttpClient() throws Exception {
-        SSLContext sslContext = SSLContext.getInstance("TLSv1");
+        SSLContext sslContext = SSLContext.getInstance("TLS");
         TrustManager[] trustManagers = {
                 new X509TrustManager() {
                     @Override

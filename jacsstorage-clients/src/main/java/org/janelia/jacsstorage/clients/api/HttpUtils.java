@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.newclient;
+package org.janelia.jacsstorage.clients.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.glassfish.jersey.client.ClientConfig;
@@ -55,7 +55,7 @@ public class HttpUtils {
             sslContext.init(null, trustManagers, new SecureRandom());
             return sslContext;
         } catch (Exception e) {
-            throw new IllegalStateException("Error initilizing SSL context", e);
+            throw new IllegalStateException("Error initializing SSL context", e);
         }
     }
 }

@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.client;
 
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.io.ContentFilterParams;
-import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.datatransfer.StorageMessageResponse;
 
 import java.io.IOException;
