@@ -24,6 +24,7 @@ public class ContentFilterParams {
     private boolean alwaysArchive;
     private int startEntryIndex;
     private int entriesCount;
+    private boolean estimateSizeDisabled;
     private Map<String, String> filterTypeSpecificParams = new HashMap<>();
 
     public String getFilterType() {
@@ -119,6 +120,14 @@ public class ContentFilterParams {
 
     public void setEntriesCount(int entriesCount) {
         this.entriesCount = entriesCount;
+    }
+
+    public boolean isEstimateSizeDisabled() {
+        return estimateSizeDisabled;
+    }
+
+    public void setEstimateSizeDisabled(boolean estimateSizeDisabled) {
+        this.estimateSizeDisabled = estimateSizeDisabled;
     }
 
     boolean matchEntry(String entryName) {

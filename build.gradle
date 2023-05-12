@@ -11,7 +11,6 @@ subprojects {
     configurations {
         provided
         implementation.extendsFrom(provided)
-        integrationTestCompileOnly.extendsFrom(testCompileOnly)
         integrationTestImplementation.extendsFrom(testImplementation)
         integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
         perfApi.extendsFrom(api)
@@ -24,7 +23,6 @@ subprojects {
 
     sourceSets {
         perf {
-            extensions
             compileClasspath += main.output
             runtimeClasspath += main.output
         }

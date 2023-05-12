@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.helper;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
@@ -11,7 +10,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
-import org.janelia.jacsstorage.model.jacsstorage.StorageRelativePath;
 import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ErrorResponse;
@@ -36,7 +34,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -204,16 +201,16 @@ public class StorageResourceHelper {
                     .type(MediaType.APPLICATION_JSON)
                     ;
         } else {
-            JacsStorageFormat storageFormat;
+            JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath)
+                    ? JacsStorageFormat.SINGLE_DATA_FILE
+                    : JacsStorageFormat.DATA_DIRECTORY;
             long fileSize;
-            if (Files.isRegularFile(dataEntryPath)) {
-                storageFormat = JacsStorageFormat.SINGLE_DATA_FILE;
-                fileSize = dataStorageService.estimateDataEntrySize(dataEntryPath, "", storageFormat, filterParams);
-                LOG.info("{} file size is: {}", dataEntryPath, fileSize);
-            } else {
-                storageFormat = JacsStorageFormat.DATA_DIRECTORY;
+            if (filterParams.isEstimateSizeDisabled()) {
                 fileSize = -1;
                 LOG.info("Skip getting filesize for {}", dataEntryPath);
+            } else {
+                fileSize = dataStorageService.estimateDataEntrySize(dataEntryPath, "", storageFormat, filterParams);
+                LOG.info("{} file size is: {}", dataEntryPath, fileSize);
             }
             StreamingOutput fileStream = output -> {
                 try {
