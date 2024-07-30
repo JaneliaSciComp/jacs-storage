@@ -9,17 +9,14 @@ allprojects {
 subprojects {
 
     configurations {
-        provided
-        implementation.extendsFrom(provided)
-        integrationTestImplementation.extendsFrom(testImplementation)
+        integrationTestImplementation.extendsFrom(implementation, testImplementation)
         integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+
         perfApi.extendsFrom(api)
         perfImplementation.extendsFrom(perfApi, implementation)
         perfRuntimeOnly.extendsFrom(runtimeOnly)
         perfRuntimeElements.extendsFrom(perfImplementation, perfRuntimeOnly)
     }
-
-    apply from: "${rootDir}/deps.gradle"
 
     sourceSets {
         perf {
@@ -31,6 +28,8 @@ subprojects {
             runtimeClasspath += main.output + test.output
         }
     }
+
+    apply from: "${rootDir}/deps.gradle"
 
     afterEvaluate {
         repositories {
