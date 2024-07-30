@@ -42,7 +42,7 @@ public class StoragePathURI {
             try {
                 return URLDecoder.decode(p, "UTF-8");
             } catch (UnsupportedEncodingException e) {
-                throw new IllegalArgumentException("Error decoding: " + p, e);
+                throw new IllegalArgumentException("Error decoding: " + p + "." + e.getMessage(), e);
             }
         }
     }
