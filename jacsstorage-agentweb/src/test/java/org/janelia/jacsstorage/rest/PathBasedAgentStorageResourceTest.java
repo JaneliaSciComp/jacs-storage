@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.rest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
@@ -17,6 +18,7 @@ import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
 import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
 import org.janelia.jacsstorage.testrest.TestResourceBinder;
+import org.jcodings.specific.UTF8Encoding;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -28,6 +30,7 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -184,4 +187,40 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
             assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
         }
     }
+
+    @Test
+    public void retrieveDataStreamUsingDataPathWithCharsThatShouldBeEscaped() throws IOException {
+        String testPath = "/volRoot/testPath/c1/c2-5%/testFile";
+        String urlEncodedPath = StringUtils.replace(testPath, "%", "%25");
+        StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
+        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
+                .thenReturn(ImmutableList.of(
+                                new JacsStorageVolumeBuilder()
+                                        .storageVirtualPath("/volPrefix")
+                                        .storageRootTemplate("/volRoot")
+                                        .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
+                                        .build()
+                        )
+                );
+        String testData = "Test data";
+        PowerMockito.mockStatic(Files.class);
+        PowerMockito.mockStatic(PathUtils.class);
+        Path expectedDataPath = Paths.get(testPath);
+        Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
+        Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
+        JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
+        when(storageContentReader.estimateDataEntrySize(eq(expectedDataPath), eq(""), eq(testFormat), any(ContentFilterParams.class)))
+                .then(invocation -> (long) testData.length());
+        when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(ContentFilterParams.class), any(OutputStream.class)))
+                .then(invocation -> {
+                    OutputStream out = invocation.getArgument(3);
+                    out.write(testData.getBytes());
+                    return (long) testData.length();
+                });
+        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(urlEncodedPath).request().get();
+        assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
+        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
+    }
+
 }

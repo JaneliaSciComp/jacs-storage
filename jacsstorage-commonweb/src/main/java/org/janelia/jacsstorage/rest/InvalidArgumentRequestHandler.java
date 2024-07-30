@@ -20,7 +20,7 @@ public class InvalidArgumentRequestHandler implements ExceptionMapper<IllegalArg
 
     @Override
     public Response toResponse(IllegalArgumentException exception) {
-        LOG.error("Invalid argument for {}", request.getMethod(), exception);
+        LOG.error("Invalid argument for {}: {}", request.getMethod(), exception.getMessage(), exception);
         Response.ResponseBuilder responseBuilder = Response
                 .status(Response.Status.NOT_FOUND);
         if (StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {

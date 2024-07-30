@@ -32,7 +32,7 @@ public class StoragePathURI {
     public static StoragePathURI createAbsolutePathURI(String storagePathValue) {
         return StringUtils.isBlank(storagePathValue)
                 ? new StoragePathURI(null)
-                : new StoragePathURI(StringUtils.prependIfMissing(new StoragePathURI(decodePath(storagePathValue)).getStoragePath(), "/"));
+                : new StoragePathURI(StringUtils.prependIfMissing(new StoragePathURI(storagePathValue).getStoragePath(), "/"));
     }
 
     private static String decodePath(String p) {
