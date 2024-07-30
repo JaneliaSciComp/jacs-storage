@@ -10,10 +10,12 @@ buildscript {
 plugins {
     id 'application'
     id 'distribution'
-    id 'nebula.ospackage' version '9.1.1'
+    id 'nebula.rpm' version '9.1.1'
 }
- 
-mainClassName = 'org.janelia.jacsstorage.app.JacsMasterStorageApp'
+
+application {
+    mainClass = 'org.janelia.jacsstorage.app.JacsMasterStorageApp'
+}
 
 project(":jacsstorage-masterweb") {
     dependencies {
@@ -64,7 +66,21 @@ project(":jacsstorage-masterweb") {
                                         "jacs.runtime.env.serviceName": "${project.name}",
                                         "jacs.runtime.env.serviceVersion": "${project.version}"
                                 ]))
-                        fileMode = 0755
+                        filePermissions {
+                            user {
+                                read = true
+                                write = true
+                                execute = true
+                            }
+                            group {
+                                read = true
+                                execute = true
+                            }
+                            other {
+                                read = true
+                                execute = true
+                            }
+                        }
                     }
                 }
                 into('swagger-webapp') {

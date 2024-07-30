@@ -10,10 +10,12 @@ buildscript {
 plugins {
     id 'application'
     id 'distribution'
-    id 'nebula.ospackage' version '9.1.1'
+    id 'nebula.rpm' version '9.1.1'
 }
 
-mainClassName = 'org.janelia.jacsstorage.client.StorageClientApp'
+application {
+    mainClass = 'org.janelia.jacsstorage.client.StorageClientApp'
+}
 
 project(":jacsstorage-clients") {
     dependencies {
@@ -90,7 +92,21 @@ project(":jacsstorage-clients") {
                     from(createStoragePersistBenchmark)
                     from(createStorageRetrieveBenchmark)
                     from(createStorageUpdateBenchmark)
-                    fileMode = 0755
+                    filePermissions {
+                        user {
+                            read = true
+                            write = true
+                            execute = true
+                        }
+                        group {
+                            read = true
+                            execute = true
+                        }
+                        other {
+                            read = true
+                            execute = true
+                        }
+                    }
                 }
                 into("lib") {
                     from(project.perfJar.outputs.files)
@@ -103,11 +119,39 @@ project(":jacsstorage-clients") {
                 duplicatesStrategy = DuplicatesStrategy.EXCLUDE
                 into("bin") {
                     from(createStorageClientApp)
-                    fileMode = 0755
+                    filePermissions {
+                        user {
+                            read = true
+                            write = true
+                            execute = true
+                        }
+                        group {
+                            read = true
+                            execute = true
+                        }
+                        other {
+                            read = true
+                            execute = true
+                        }
+                    }
                 }
                 into("bin") {
                     from(createNewStorageClientApp)
-                    fileMode = 0755
+                    filePermissions {
+                        user {
+                            read = true
+                            write = true
+                            execute = true
+                        }
+                        group {
+                            read = true
+                            execute = true
+                        }
+                        other {
+                            read = true
+                            execute = true
+                        }
+                    }
                 }
             }
         }

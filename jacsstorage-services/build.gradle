@@ -3,8 +3,10 @@ plugins {
     id 'distribution'
 }
 
-applicationName = 'benchmarks'
-mainClassName = 'BenchmarkApp'
+application {
+    applicationName = 'benchmarks'
+    mainClass = 'BenchmarkApp'
+}
 
 project(":jacsstorage-services") {
     dependencies {
