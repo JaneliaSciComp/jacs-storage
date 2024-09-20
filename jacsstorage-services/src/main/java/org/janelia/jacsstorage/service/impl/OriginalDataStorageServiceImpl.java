@@ -16,16 +16,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class DataStorageServiceImpl implements DataStorageService {
+public class OriginalDataStorageServiceImpl implements DataStorageService {
 
     private final DataBundleIOProvider dataIOProvider;
 
     @Inject
-    public DataStorageServiceImpl(DataBundleIOProvider dataIOProvider) {
+    public OriginalDataStorageServiceImpl(DataBundleIOProvider dataIOProvider) {
         this.dataIOProvider = dataIOProvider;
     }
 

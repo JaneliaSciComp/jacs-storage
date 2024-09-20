@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 
+import com.google.common.io.ByteStreams;
+
 public class IOStreamUtils {
 
     /**

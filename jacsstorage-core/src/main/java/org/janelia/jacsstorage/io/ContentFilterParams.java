@@ -40,6 +40,11 @@ public class ContentFilterParams {
         return selectedEntries;
     }
 
+    public ContentFilterParams addSelectedEntry(String selectedEntry) {
+        this.selectedEntries.add(selectedEntry);
+        return this;
+    }
+
     public ContentFilterParams addSelectedEntries(Collection<String> selectedEntries) {
         this.selectedEntries.addAll(selectedEntries);
         return this;
@@ -130,7 +135,7 @@ public class ContentFilterParams {
         this.estimateSizeDisabled = estimateSizeDisabled;
     }
 
-    boolean matchEntry(String entryName) {
+    public boolean matchEntry(String entryName) {
         String nameToMatch = Paths.get(entryName).getFileName().toString();
         if (!selectedEntries.isEmpty()) {
             return selectedEntries.contains(nameToMatch);

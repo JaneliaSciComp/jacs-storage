@@ -8,6 +8,18 @@ allprojects {
 
 subprojects {
 
+    sourceSets {
+        perf
+//                {
+//            compileClasspath += main.output
+//            runtimeClasspath += main.output
+//        }
+        integrationTest
+//            compileClasspath += main.output + test.output
+//            runtimeClasspath += main.output + test.output
+//        }
+    }
+
     configurations {
         integrationTestImplementation.extendsFrom(implementation, testImplementation)
         integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
@@ -16,17 +28,6 @@ subprojects {
         perfImplementation.extendsFrom(perfApi, implementation)
         perfRuntimeOnly.extendsFrom(runtimeOnly)
         perfRuntimeElements.extendsFrom(perfImplementation, perfRuntimeOnly)
-    }
-
-    sourceSets {
-        perf {
-            compileClasspath += main.output
-            runtimeClasspath += main.output
-        }
-        integrationTest {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
-        }
     }
 
     apply from: "${rootDir}/deps.gradle"
@@ -107,10 +108,7 @@ subprojects {
         archiveClassifier.set('perf')
     }
 
-    tasks.register('integrationTest', Test) {
-        testClassesDirs += sourceSets.integrationTest.output.classesDirs
-        classpath = sourceSets.integrationTest.runtimeClasspath
-    }
+    tasks.register('integrationTest', Test)
 
     artifacts {
         perfRuntimeElements perfJar

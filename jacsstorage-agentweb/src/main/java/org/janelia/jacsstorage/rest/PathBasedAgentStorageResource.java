@@ -24,11 +24,11 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
-import org.janelia.jacsstorage.helper.StorageResourceHelper;
+import org.janelia.jacsstorage.helper.OriginalStorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
@@ -71,9 +71,9 @@ public class PathBasedAgentStorageResource {
     public Response checkPath(@PathParam("dataPath") String dataPathParam, @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
         try {
             LOG.debug("Start check path {}", dataPathParam);
-            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+            OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
             return storageResourceHelper.handleResponseForFullDataPathParam(
-                    StoragePathURI.createAbsolutePathURI(dataPathParam),
+                    OriginalStoragePathURI.createAbsolutePathURI(dataPathParam),
                     (dataBundle, dataEntryPath) -> storageResourceHelper.checkContentFromDataBundle(dataBundle, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam),
                     (storageVolume, storageDataPathURI) -> storageResourceHelper.checkContentFromFile(storageVolume, Paths.get(storageDataPathURI.getStoragePath()), directoryOnlyParam != null && directoryOnlyParam)
             ).build();
@@ -96,10 +96,10 @@ public class PathBasedAgentStorageResource {
                                  @Context UriInfo requestURI) {
         try {
             LOG.debug("Start retrieve data from {}", dataPathParam);
-            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+            OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
             ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
             return storageResourceHelper.handleResponseForFullDataPathParam(
-                    StoragePathURI.createAbsolutePathURI(dataPathParam),
+                    OriginalStoragePathURI.createAbsolutePathURI(dataPathParam),
                     (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, filterParams, dataEntryPath),
                     (storageVolume, storageDataPathURI) -> storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, Paths.get(storageDataPathURI.getStoragePath()))
             ).build();
@@ -125,10 +125,10 @@ public class PathBasedAgentStorageResource {
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response removeData(@PathParam("dataPath") String dataPathParam, @Context SecurityContext securityContext) {
         LOG.debug("Remove data from {}", dataPathParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         JacsCredentials credentials = SecurityUtils.getUserPrincipal(securityContext);
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                StoragePathURI.createAbsolutePathURI(dataPathParam),
+                OriginalStoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryName) -> storageResourceHelper.removeContentFromDataBundle(dataBundle,
                         dataEntryName,
                         credentials,
@@ -159,9 +159,9 @@ public class PathBasedAgentStorageResource {
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response storeData(@PathParam("dataPath") String dataPathParam, @Context SecurityContext securityContext, InputStream contentStream) {
         LOG.debug("Retrieve data from {}", dataPathParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                StoragePathURI.createAbsolutePathURI(dataPathParam),
+                OriginalStoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryName) ->
                         storageResourceHelper.storeDataBundleContent(dataBundle,
                                 resourceURI.getBaseUri(),
@@ -195,9 +195,9 @@ public class PathBasedAgentStorageResource {
     @Path("storage_path/data_info/{dataPath:.+}")
     public Response retrieveDataInfo(@PathParam("dataPath") String dataPathParam) {
         LOG.debug("Retrieve data info from {}", dataPathParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                StoragePathURI.createAbsolutePathURI(dataPathParam),
+                OriginalStoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentInfoFromDataBundle(dataBundle, dataEntryPath),
                 (storageVolume, storageDataPathURI) -> storageResourceHelper.retrieveContentInfoFromFile(storageVolume, Paths.get(storageDataPathURI.getStoragePath()))
         ).build();
@@ -222,13 +222,13 @@ public class PathBasedAgentStorageResource {
                                 @QueryParam("length") Integer lengthParam,
                                 @Context SecurityContext securityContext) {
         LOG.debug("List content from location {} with a depthParameter {}", dataPathParam, depthParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
         long offset = offsetParam != null ? offsetParam : 0;
         long length = lengthParam != null ? lengthParam : -1;
         URI baseURI = resourceURI.getBaseUri();
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                StoragePathURI.createAbsolutePathURI(dataPathParam),
+                OriginalStoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryName) -> storageResourceHelper.listContentFromDataBundle(dataBundle, baseURI, dataEntryName, depth, offset, length),
                 (storageVolume, storageDataPathURI) -> storageResourceHelper.listContentFromPath(storageVolume, baseURI, Paths.get(storageDataPathURI.getStoragePath()), depth, offset, length)
         ).build();

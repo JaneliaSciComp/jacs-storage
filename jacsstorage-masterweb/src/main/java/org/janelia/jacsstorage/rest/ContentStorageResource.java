@@ -23,9 +23,9 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
-import org.janelia.jacsstorage.helper.StorageResourceHelper;
+import org.janelia.jacsstorage.helper.OriginalStorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -64,9 +64,9 @@ public class ContentStorageResource {
                                             @QueryParam("directoryOnly") Boolean directoryOnlyParam,
                                             @Context UriInfo requestURI) {
         LOG.info("Check {}", filePathParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(null, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                StoragePathURI.createAbsolutePathURI(filePathParam),
+                OriginalStoragePathURI.createAbsolutePathURI(filePathParam),
                 (dataBundle, dataEntryPath) -> dataBundle.getStorageVolume()
                         .map(storageVolume -> {
                             URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
@@ -120,9 +120,9 @@ public class ContentStorageResource {
     @Path("storage_path_redirect/{filePath:.+}")
     public Response redirectForContent(@PathParam("filePath") String filePathParam, @Context UriInfo requestURI) {
         LOG.info("Redirecting to agent for getting content of {}", filePathParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(null, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                StoragePathURI.createAbsolutePathURI(filePathParam),
+                OriginalStoragePathURI.createAbsolutePathURI(filePathParam),
                 (dataBundle, dataEntryPath) -> dataBundle.getStorageVolume()
                             .map(storageVolume -> {
                                 URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
@@ -181,8 +181,8 @@ public class ContentStorageResource {
     @Path("storage_path_redirect/{filePath:.+}")
     public Response redirectForDeleteContent(@PathParam("filePath") String filePathParam, @Context UriInfo requestURI) {
         LOG.info("Redirect to agent for deleting content of {}", filePathParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(null, storageLookupService, storageVolumeManager);
-        StoragePathURI storagePathURI = StoragePathURI.createAbsolutePathURI(filePathParam);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(null, storageLookupService, storageVolumeManager);
+        OriginalStoragePathURI storagePathURI = OriginalStoragePathURI.createAbsolutePathURI(filePathParam);
         return storageResourceHelper.getStorageVolumesForURI(storagePathURI).stream()
                 .map(storageVolume -> {
                     URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))

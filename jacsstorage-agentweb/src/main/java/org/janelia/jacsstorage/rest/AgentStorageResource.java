@@ -11,12 +11,11 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Authorization;
 import io.swagger.annotations.SecurityDefinition;
 import io.swagger.annotations.SwaggerDefinition;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
-import org.janelia.jacsstorage.helper.StorageResourceHelper;
+import org.janelia.jacsstorage.helper.OriginalStorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -54,7 +53,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Base64;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -237,7 +235,7 @@ public class AgentStorageResource {
         LOG.info("Get entry {} content from bundle {} ", dataEntryPathParam, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         String dataEntryPath = StringUtils.removeStart(dataEntryPathParam, "/");
         return storageResourceHelper.checkContentFromDataBundle(dataBundle, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam).build();
     }
@@ -261,7 +259,7 @@ public class AgentStorageResource {
         LOG.info("Get entry {} content from bundle {} ", dataEntryPathParam, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         String dataEntryPath = StringUtils.removeStart(dataEntryPathParam, "/");
         return storageResourceHelper.retrieveContentFromDataBundle(dataBundle, ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters()), dataEntryPath).build();
     }
@@ -283,7 +281,7 @@ public class AgentStorageResource {
         LOG.info("Get entry {} content from bundle {} ", dataEntryPathParam, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         String dataEntryPath = StringUtils.removeStart(dataEntryPathParam, "/");
         return storageResourceHelper.retrieveContentInfoFromDataBundle(dataBundle, dataEntryPath).build();
     }

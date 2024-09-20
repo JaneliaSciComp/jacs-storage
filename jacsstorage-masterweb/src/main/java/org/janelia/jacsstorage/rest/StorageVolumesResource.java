@@ -14,7 +14,7 @@ import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
@@ -146,7 +146,7 @@ public class StorageVolumesResource {
                 .setAccessibleOnAgent(storageAgent)
                 .setStorageTags(storageTags)
                 .setStorageVirtualPath(storageVirtualPath)
-                .setDataStoragePath(StoragePathURI.createAbsolutePathURI(dataStoragePathParam).getStoragePath())
+                .setDataStoragePath(OriginalStoragePathURI.createAbsolutePathURI(dataStoragePathParam).getStoragePath())
                 .setIncludeInactiveVolumes(includeInactive)
                 .setIncludeInaccessibleVolumes(includeInaccessibleVolumes);
         LOG.info("List storage volumes filtered with: {}", storageQuery);

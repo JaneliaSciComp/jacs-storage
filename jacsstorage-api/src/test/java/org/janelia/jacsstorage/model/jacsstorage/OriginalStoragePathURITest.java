@@ -9,7 +9,7 @@ import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-public class StoragePathURITest {
+public class OriginalStoragePathURITest {
 
     @Test
     public void absoluteStoragePathURI() {
@@ -21,7 +21,7 @@ public class StoragePathURITest {
                 .put("///jade_dev/2567842844077203473", "/jade_dev/2567842844077203473")
                 .build();
         testData.forEach((k, v) -> {
-            StoragePathURI storagePathURI = StoragePathURI.createAbsolutePathURI(k);
+            OriginalStoragePathURI storagePathURI = OriginalStoragePathURI.createAbsolutePathURI(k);
             assertThat(k, storagePathURI.getStoragePath(), equalTo(v));
         });
     }

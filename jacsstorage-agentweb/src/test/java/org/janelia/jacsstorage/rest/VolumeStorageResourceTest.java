@@ -3,7 +3,7 @@ package org.janelia.jacsstorage.rest;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
-import org.janelia.jacsstorage.helper.StorageResourceHelper;
+import org.janelia.jacsstorage.helper.OriginalStorageResourceHelper;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
@@ -39,7 +39,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({PathBasedAgentStorageResource.class, StorageResourceHelper.class})
+@PrepareForTest({PathBasedAgentStorageResource.class, OriginalStorageResourceHelper.class})
 public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
 
     private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();

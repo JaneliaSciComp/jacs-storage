@@ -6,13 +6,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
 
 @JsonSerialize(using = StoragePathURIJsonSerializer.class)
 @JsonDeserialize(using = StoragePathURIJsonDeserializer.class)
-public class StoragePathURI {
+public class OriginalStoragePathURI {
     private static final String STORAGE_URI_SCHEME = "jade://";
 
     /**
@@ -20,8 +17,8 @@ public class StoragePathURI {
      * @param storagePathValue
      * @return
      */
-    public static StoragePathURI createPathURI(String storagePathValue) {
-        return new StoragePathURI(decodePath(storagePathValue));
+    public static OriginalStoragePathURI createPathURI(String storagePathValue) {
+        return new OriginalStoragePathURI(decodePath(storagePathValue));
     }
 
     /**
@@ -29,10 +26,10 @@ public class StoragePathURI {
      * @param storagePathValue
      * @return
      */
-    public static StoragePathURI createAbsolutePathURI(String storagePathValue) {
+    public static OriginalStoragePathURI createAbsolutePathURI(String storagePathValue) {
         return StringUtils.isBlank(storagePathValue)
-                ? new StoragePathURI(null)
-                : new StoragePathURI(StringUtils.prependIfMissing(new StoragePathURI(storagePathValue).getStoragePath(), "/"));
+                ? new OriginalStoragePathURI(null)
+                : new OriginalStoragePathURI(StringUtils.prependIfMissing(new OriginalStoragePathURI(storagePathValue).getStoragePath(), "/"));
     }
 
     private static String decodePath(String p) {
@@ -49,7 +46,7 @@ public class StoragePathURI {
 
     private final String storagePathURI;
 
-    StoragePathURI(String storagePath) {
+    OriginalStoragePathURI(String storagePath) {
         this.storagePathURI = toStoragePathURI(storagePath);
     }
 

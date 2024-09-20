@@ -7,7 +7,7 @@ import java.util.Comparator;
 
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 
 public class DataContentUtils {
 
@@ -16,7 +16,7 @@ public class DataContentUtils {
                                            boolean collectionFlag,
                                            long size) {
         DataNodeInfo ni = new DataNodeInfo();
-        ni.setStorageRootPathURI(StoragePathURI.createAbsolutePathURI(rootPath.toString().replace(File.separatorChar, '/')));
+        ni.setStorageRootPathURI(OriginalStoragePathURI.createAbsolutePathURI(rootPath.toString().replace(File.separatorChar, '/')));
         ni.setNodeAccessURL(nodePath.toUri().toString());
         ni.setNodeRelativePath(rootPath.relativize(nodePath).toString().replace(File.separatorChar, '/'));
         ni.setCollectionFlag(collectionFlag);

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 
 import java.math.BigInteger;
 import java.util.Date;
@@ -13,7 +13,7 @@ import java.util.Date;
 public class DataNodeInfo {
     private String storageId;
     private String storageRootLocation;
-    private StoragePathURI storageRootPathURI;
+    private OriginalStoragePathURI storageRootPathURI;
     private String nodeAccessURL;
     private String nodeInfoURL;
     private String nodeRelativePath; // node path relative to the root
@@ -58,11 +58,11 @@ public class DataNodeInfo {
         return this.storageRootLocation;
     }
 
-    public StoragePathURI getStorageRootPathURI() {
+    public OriginalStoragePathURI getStorageRootPathURI() {
         return storageRootPathURI;
     }
 
-    public void setStorageRootPathURI(StoragePathURI storageRootPathURI) {
+    public void setStorageRootPathURI(OriginalStoragePathURI storageRootPathURI) {
         this.storageRootPathURI = storageRootPathURI;
     }
 

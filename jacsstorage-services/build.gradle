@@ -12,7 +12,10 @@ project(":jacsstorage-services") {
     dependencies {
         api project(":jacsstorage-core")
 
-        implementation JAX_RS_JERSEY_CLIENT_LIB,
+        implementation AWS_S3_LIB,
+                       COMMONS_COMPRESS_LIB,
+                       JACS_MODEL_RENDERING_LIB,
+                       JAX_RS_JERSEY_CLIENT_LIB,
                        JAX_RS_JERSEY_MEDIA_JSON_LIB,
                        JAVAX_ACTIVATION,
                        JAVAMAIL_LIB,

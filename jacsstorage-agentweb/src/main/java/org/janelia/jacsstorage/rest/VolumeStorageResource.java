@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.rest;
 
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -31,13 +30,13 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
-import org.janelia.jacsstorage.helper.StorageResourceHelper;
+import org.janelia.jacsstorage.helper.OriginalStorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 import org.janelia.jacsstorage.model.jacsstorage.StorageRelativePath;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.service.DataStorageService;
@@ -95,7 +94,7 @@ public class VolumeStorageResource {
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         return storageVolume.getDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath))
                 .map(dataPath -> storageResourceHelper.checkContentFromFile(storageVolume, dataPath, directoryOnlyParam != null && directoryOnlyParam).build())
                 .orElseGet(() -> Response
@@ -139,7 +138,7 @@ public class VolumeStorageResource {
         }
         ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
-            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+            OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
             return storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, storageVolume.getDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).orElse(null)).build();
         } else {
             LOG.warn("Attempt to read {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
@@ -172,7 +171,7 @@ public class VolumeStorageResource {
                     .build();
         }
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
-            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+            OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
             return storageResourceHelper.retrieveContentInfoFromFile(storageVolume, storageVolume.getDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).orElse(null)).build();
         } else {
             LOG.warn("Attempt to get info about {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
@@ -295,7 +294,7 @@ public class VolumeStorageResource {
                     .build();
         }
         if (storageVolume.hasPermission(JacsStoragePermission.WRITE)) {
-            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+            OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
             return storageResourceHelper.storeFileContent(storageVolume,
                     resourceURI.getBaseUri(),
                     storageVolume.getDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativePathParam)).orElse(null),
@@ -334,7 +333,7 @@ public class VolumeStorageResource {
                     .build();
         }
         if (storageVolume.hasPermission(JacsStoragePermission.DELETE)) {
-            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+            OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
             return storageResourceHelper.removeFileContentFromVolume(
                     storageVolume,
                     storageVolume.getDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).orElse(null)
@@ -388,7 +387,7 @@ public class VolumeStorageResource {
                 .setAccessibleOnAgent(agentState.getLocalAgentId())
                 .setStorageTags(storageTags)
                 .setStorageVirtualPath(storageVirtualPath)
-                .setDataStoragePath(StoragePathURI.createAbsolutePathURI(dataStoragePathParam).getStoragePath())
+                .setDataStoragePath(OriginalStoragePathURI.createAbsolutePathURI(dataStoragePathParam).getStoragePath())
                 .setIncludeInactiveVolumes(includeInactive)
                 .setIncludeInaccessibleVolumes(includeInaccessibleVolumes);
         LOG.info("List storage volumes filtered with: {}", storageQuery);

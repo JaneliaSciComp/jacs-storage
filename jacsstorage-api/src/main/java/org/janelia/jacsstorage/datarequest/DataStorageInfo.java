@@ -9,7 +9,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 
 import java.net.URI;
 import java.nio.file.Paths;
@@ -30,7 +30,7 @@ public class DataStorageInfo {
     private String dataVirtualPath;
     private Set<String> readersKeys = new HashSet<>();
     private Set<String> writersKeys = new HashSet<>();
-    private StoragePathURI storageRootPathURI;
+    private OriginalStoragePathURI storageRootPathURI;
     private String storageRootDir;
     private String storageAgentId;
     private List<String> storageTags;
@@ -173,11 +173,11 @@ public class DataStorageInfo {
         return this;
     }
 
-    public StoragePathURI getStorageRootPathURI() {
+    public OriginalStoragePathURI getStorageRootPathURI() {
         return storageRootPathURI;
     }
 
-    public DataStorageInfo setStorageRootPathURI(StoragePathURI storageRootPathURI) {
+    public DataStorageInfo setStorageRootPathURI(OriginalStoragePathURI storageRootPathURI) {
         this.storageRootPathURI = storageRootPathURI;
         return this;
     }

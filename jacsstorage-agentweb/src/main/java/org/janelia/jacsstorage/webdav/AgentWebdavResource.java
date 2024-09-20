@@ -4,17 +4,13 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.datarequest.StorageQuery;
-import org.janelia.jacsstorage.helper.StorageResourceHelper;
+import org.janelia.jacsstorage.helper.OriginalStorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
-import org.janelia.jacsstorage.rest.AgentStorageResource;
+import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 import org.janelia.jacsstorage.rest.Constants;
-import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
 import org.janelia.jacsstorage.service.DataStorageService;
@@ -43,10 +39,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
-import java.math.BigInteger;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -132,7 +127,7 @@ public class AgentWebdavResource {
                                               Propfind propfindRequest,
                                               @Context SecurityContext securityContext) {
         LOG.debug("PROPFIND data storage by path: {}, Depth: {} for {}", dataPathParam, depthParam, securityContext.getUserPrincipal());
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
         int depth = WebdavUtils.getDepth(depthParam);
         Supplier<Response.ResponseBuilder> storageNotFoundHandler = () -> {
             // no storage volume was found
@@ -152,7 +147,7 @@ public class AgentWebdavResource {
                     ;
         };
         return storageResourceHelper.handleResponseForFullDataPathParam(
-                StoragePathURI.createAbsolutePathURI(dataPathParam),
+                OriginalStoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryName) -> {
                     Stream<DataNodeInfo> dataBundleTree = dataStorageService.streamDataEntries(dataBundle.getRealStoragePath(), dataEntryName, dataBundle.getStorageFormat(), depth);
                     Multistatus multistatusResponse = WebdavUtils.convertNodeList(dataBundleTree,
@@ -209,7 +204,7 @@ public class AgentWebdavResource {
                     Multistatus multistatusResponse = WebdavUtils.convertNodeList(dataBundleNodesStream,
                             (nodeInfo) -> {
                                 nodeInfo.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
-                                nodeInfo.setStorageRootPathURI(StoragePathURI.createPathURI(dataEntryPath.toString()));
+                                nodeInfo.setStorageRootPathURI(OriginalStoragePathURI.createPathURI(dataEntryPath.toString()));
                                 return nodeInfo;
                             },
                             (nodeInfo) -> {

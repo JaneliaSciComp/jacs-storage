@@ -27,7 +27,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ContentStorageResource;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
@@ -69,7 +69,7 @@ public class MasterWebdavResource {
                                                        Propfind propfindRequest,
                                                        @Context SecurityContext securityContext) {
         LOG.info("Find storage by prefix {} for {}", storagePrefixParam, securityContext.getUserPrincipal());
-        StoragePathURI storagePrefixURI = StoragePathURI.createAbsolutePathURI(storagePrefixParam);
+        OriginalStoragePathURI storagePrefixURI = OriginalStoragePathURI.createAbsolutePathURI(storagePrefixParam);
         StorageQuery storageQuery = new StorageQuery().setStorageVirtualPath(storagePrefixURI.getStoragePath());
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.findVolumes(storageQuery);
         if (CollectionUtils.isEmpty(managedVolumes)) {
@@ -111,7 +111,7 @@ public class MasterWebdavResource {
                                                      Propfind propfindRequest,
                                                      @Context SecurityContext securityContext) {
         LOG.info("Find storage for path {} for {}", dataStoragePathParam, securityContext.getUserPrincipal());
-        StoragePathURI dataStoragePathURI = StoragePathURI.createAbsolutePathURI(dataStoragePathParam);
+        OriginalStoragePathURI dataStoragePathURI = OriginalStoragePathURI.createAbsolutePathURI(dataStoragePathParam);
         StorageQuery storageQuery = new StorageQuery().setDataStoragePath(dataStoragePathURI.getStoragePath());
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.findVolumes(storageQuery);
         if (CollectionUtils.isEmpty(managedVolumes)) {

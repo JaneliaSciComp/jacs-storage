@@ -7,18 +7,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
-import org.janelia.jacsstorage.helper.StorageResourceHelper;
+import org.janelia.jacsstorage.helper.OriginalStorageResourceHelper;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
-import org.janelia.jacsstorage.service.StorageContentReader;
+import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
+import org.janelia.jacsstorage.service.OriginalStorageContentReader;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
 import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
 import org.janelia.jacsstorage.testrest.TestResourceBinder;
-import org.jcodings.specific.UTF8Encoding;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -30,7 +29,6 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,12 +38,11 @@ import java.util.Set;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({PathBasedAgentStorageResource.class, StorageResourceHelper.class, PathUtils.class})
+@PrepareForTest({PathBasedAgentStorageResource.class, OriginalStorageResourceHelper.class, PathUtils.class})
 public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
 
     private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
@@ -82,7 +79,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
     @Test
     public void retrieveDataStreamUsingDataPathRelativeToVolumeRoot() throws IOException {
         String testPath = "/volRoot/testPath";
-        StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
+        OriginalStorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
                 .thenReturn(ImmutableList.of(
@@ -108,7 +105,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                     out.write(testData.getBytes());
                     return (long) testData.length();
                 });
-        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(StoragePathURI.createAbsolutePathURI(testPath).toString()).request().get();
+        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(OriginalStoragePathURI.createAbsolutePathURI(testPath).toString()).request().get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
     }
@@ -116,7 +113,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
     @Test
     public void retrieveDataStreamUsingDataPathRelativeToVolumePrefix() throws IOException {
         String testPath = "/volPrefix/testPath";
-        StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
+        OriginalStorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
                 .thenReturn(ImmutableList.of(
@@ -154,7 +151,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 "jade://volPrefix/testPath",
                 "jade:///volPrefix/testPath"
         };
-        StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
+        OriginalStorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/volPrefix/testPath"))))
                 .thenReturn(ImmutableList.of(
@@ -192,7 +189,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
     public void retrieveDataStreamUsingDataPathWithCharsThatShouldBeEscaped() throws IOException {
         String testPath = "/volRoot/testPath/c1/c2-5%/testFile";
         String urlEncodedPath = StringUtils.replace(testPath, "%", "%25");
-        StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
+        OriginalStorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
                 .thenReturn(ImmutableList.of(

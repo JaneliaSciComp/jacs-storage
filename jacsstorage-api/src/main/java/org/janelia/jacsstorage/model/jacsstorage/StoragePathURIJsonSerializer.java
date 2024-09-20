@@ -6,10 +6,10 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 
 import java.io.IOException;
 
-public class StoragePathURIJsonSerializer extends JsonSerializer<StoragePathURI> {
+public class StoragePathURIJsonSerializer extends JsonSerializer<OriginalStoragePathURI> {
 
     @Override
-    public void serialize(StoragePathURI value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+    public void serialize(OriginalStoragePathURI value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         if (value == null || value.isEmpty()) {
             gen.writeNull();
         } else {

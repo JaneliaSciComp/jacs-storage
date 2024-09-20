@@ -99,6 +99,10 @@ dependencies {
         N5_LIB = "org.janelia.saalfeldlab:n5:2.5.1"
         N5_IMGLIB2_LIB = "org.janelia.saalfeldlab:n5-imglib2:4.3.0"
 
+        // AWS SDK
+        AWS_SDK_VERSION = "2.27.21"
+        AWS_S3_LIB = "software.amazon.awssdk:s3:${AWS_SDK_VERSION}"
+
         // testing
         JUNIT_VERSION = "4.13.1"
         HAMCREST_VERSION = "2.0.0.0"

@@ -7,10 +7,10 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 
 import java.io.IOException;
 
-public class StoragePathURIJsonDeserializer extends JsonDeserializer<StoragePathURI> {
+public class StoragePathURIJsonDeserializer extends JsonDeserializer<OriginalStoragePathURI> {
     @Override
-    public StoragePathURI deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+    public OriginalStoragePathURI deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
         String storagePath = p.getText();
-        return new StoragePathURI(storagePath);
+        return new OriginalStoragePathURI(storagePath);
     }
 }

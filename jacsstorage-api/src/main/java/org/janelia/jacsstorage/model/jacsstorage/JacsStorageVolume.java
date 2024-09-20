@@ -35,7 +35,7 @@ public class JacsStorageVolume extends AbstractEntity {
     private String storageAgentId; // storage agentId
     // if a volume is set to a network disk that could be mounted on multiple hosts
     private String name; // volume name
-    private String storageVirtualPath; // storage virtual path
+    private String storageVirtualPath; // storage path mapping
     private String storageRootTemplate; // template for storage real root directory
     private List<String> storageTags; // storage tags - identify certain features of the physical storage
     private String storageServiceURL;
@@ -75,8 +75,8 @@ public class JacsStorageVolume extends AbstractEntity {
     }
 
     @JsonIgnore
-    public StoragePathURI getStorageURI() {
-        return StoragePathURI.createPathURI(storageVirtualPath);
+    public OriginalStoragePathURI getStorageURI() {
+        return OriginalStoragePathURI.createPathURI(storageVirtualPath);
     }
 
     public String getStorageRootTemplate() {

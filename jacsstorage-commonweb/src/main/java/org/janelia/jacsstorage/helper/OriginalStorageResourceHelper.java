@@ -42,14 +42,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Timed
-public class StorageResourceHelper {
-    private static final Logger LOG = LoggerFactory.getLogger(StorageResourceHelper.class);
+public class OriginalStorageResourceHelper {
+    private static final Logger LOG = LoggerFactory.getLogger(OriginalStorageResourceHelper.class);
 
     private final DataStorageService dataStorageService;
     private final StorageLookupService storageLookupService;
     private final StorageVolumeManager storageVolumeManager;
 
-    public StorageResourceHelper(DataStorageService dataStorageService, StorageLookupService storageLookupService, StorageVolumeManager storageVolumeManager) {
+    public OriginalStorageResourceHelper(DataStorageService dataStorageService, StorageLookupService storageLookupService, StorageVolumeManager storageVolumeManager) {
         this.dataStorageService = dataStorageService;
         this.storageLookupService = storageLookupService;
         this.storageVolumeManager = storageVolumeManager;

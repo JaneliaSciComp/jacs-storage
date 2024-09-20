@@ -96,14 +96,14 @@ public class JacsBundle extends AbstractEntity {
     }
 
     @JsonIgnore
-    public StoragePathURI getStorageURI() {
+    public OriginalStoragePathURI getStorageURI() {
         if (storageVolume == null) {
             return null;
         } else if (StringUtils.isNotBlank(storageVolume.getStorageVirtualPath())) {
-            return StoragePathURI.createPathURI(Paths.get(storageVolume.getStorageVirtualPath(), getId().toString()).toString());
+            return OriginalStoragePathURI.createPathURI(Paths.get(storageVolume.getStorageVirtualPath(), getId().toString()).toString());
         } else {
             // otherwise cannot build the storage path URI
-            return StoragePathURI.createPathURI(null);
+            return OriginalStoragePathURI.createPathURI(null);
         }
     }
 
