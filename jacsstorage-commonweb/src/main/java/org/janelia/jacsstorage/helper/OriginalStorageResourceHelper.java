@@ -9,7 +9,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
+import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ErrorResponse;
@@ -55,9 +55,9 @@ public class StorageResourceHelper {
         this.storageVolumeManager = storageVolumeManager;
     }
 
-    public Response.ResponseBuilder handleResponseForFullDataPathParam(StoragePathURI storagePathURI,
+    public Response.ResponseBuilder handleResponseForFullDataPathParam(OriginalStoragePathURI storagePathURI,
                                                                        BiFunction<JacsBundle, String, Response.ResponseBuilder> bundleBasedResponseHandler,
-                                                                       BiFunction<JacsStorageVolume, StoragePathURI, Response.ResponseBuilder> volumeBasedResponseHandler) {
+                                                                       BiFunction<JacsStorageVolume, OriginalStoragePathURI, Response.ResponseBuilder> volumeBasedResponseHandler) {
         return handleResponseForFullDataPathParam(
                 storagePathURI,
                 bundleBasedResponseHandler,
@@ -69,9 +69,9 @@ public class StorageResourceHelper {
         );
     }
 
-    public Response.ResponseBuilder handleResponseForFullDataPathParam(StoragePathURI storagePathURI,
+    public Response.ResponseBuilder handleResponseForFullDataPathParam(OriginalStoragePathURI storagePathURI,
                                                                        BiFunction<JacsBundle, String, Response.ResponseBuilder> bundleBasedResponseHandler,
-                                                                       BiFunction<JacsStorageVolume, StoragePathURI, Response.ResponseBuilder> volumeBasedResponseHandler,
+                                                                       BiFunction<JacsStorageVolume, OriginalStoragePathURI, Response.ResponseBuilder> volumeBasedResponseHandler,
                                                                        Supplier<Response.ResponseBuilder> storageNotFoundHandler) {
         if (storagePathURI.isEmpty()) {
             LOG.warn("No storage path {} has been specified", storagePathURI);
@@ -103,7 +103,7 @@ public class StorageResourceHelper {
                                 LOG.debug("Path {} is not a data bundle - first component is not numeric", storageRelativeFileDataPath);
                             }
                             return storageVolume.getDataStorageAbsolutePath(storageRelativeFileDataPath)
-                                    .flatMap(dataEntryPath -> Optional.<Supplier<Response.ResponseBuilder>>of(() -> volumeBasedResponseHandler.apply(storageVolume, StoragePathURI.createAbsolutePathURI(dataEntryPath.toString()))))
+                                    .flatMap(dataEntryPath -> Optional.<Supplier<Response.ResponseBuilder>>of(() -> volumeBasedResponseHandler.apply(storageVolume, OriginalStoragePathURI.createAbsolutePathURI(dataEntryPath.toString()))))
                                     ;
                         })
                         .orElseGet(() -> {
@@ -117,7 +117,7 @@ public class StorageResourceHelper {
                 ;
     }
 
-    public List<JacsStorageVolume> getStorageVolumesForURI(StoragePathURI dirStorageURI) {
+    public List<JacsStorageVolume> getStorageVolumesForURI(OriginalStoragePathURI dirStorageURI) {
         if (dirStorageURI.isEmpty()) {
             return Collections.emptyList();
         } else {
