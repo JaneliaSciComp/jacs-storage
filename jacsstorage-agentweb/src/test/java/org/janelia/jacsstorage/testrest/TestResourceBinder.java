@@ -3,7 +3,8 @@ package org.janelia.jacsstorage.testrest;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
-import org.janelia.jacsstorage.service.DataStorageService;
+import org.janelia.jacsstorage.service.DataContentService;
+import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.OriginalStorageContentReader;
 import org.janelia.jacsstorage.service.StorageLookupService;
@@ -29,8 +30,9 @@ public class TestResourceBinder extends AbstractBinder {
         } catch (NoSuchMethodException e) {
             throw new IllegalStateException(e);
         }
+        bind(dependenciesProducer.getDataContentService()).to(DataContentService.class);
         bind(dependenciesProducer.getDataStorageService()).to(OriginalStorageContentReader.class);
-        bind(dependenciesProducer.getDataStorageService()).to(DataStorageService.class);
+        bind(dependenciesProducer.getDataStorageService()).to(OriginalDataStorageService.class);
         bind(dependenciesProducer.getStorageAllocatorService()).qualifiedBy(localInstanceAnnotation).to(StorageAllocatorService.class);
         bind(dependenciesProducer.getStorageLookupService()).qualifiedBy(localInstanceAnnotation).to(StorageLookupService.class);
         bind(dependenciesProducer.getStorageVolumeManager()).qualifiedBy(localInstanceAnnotation).to(StorageVolumeManager.class);

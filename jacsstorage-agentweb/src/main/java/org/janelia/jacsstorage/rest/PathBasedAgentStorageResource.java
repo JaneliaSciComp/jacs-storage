@@ -3,6 +3,8 @@ package org.janelia.jacsstorage.rest;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
@@ -17,22 +19,30 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.helper.OriginalStorageResourceHelper;
+import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
-import org.janelia.jacsstorage.service.DataStorageService;
+import org.janelia.jacsstorage.service.ContentNode;
+import org.janelia.jacsstorage.service.DataContentService;
+import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -48,12 +58,17 @@ public class PathBasedAgentStorageResource {
     private static final Logger LOG = LoggerFactory.getLogger(PathBasedAgentStorageResource.class);
 
     @Inject
-    private DataStorageService dataStorageService;
-    @Inject @LocalInstance
+    private DataContentService dataContentService;
+    @Inject
+    private OriginalDataStorageService originalDataStorageService;
+    @Inject
+    @LocalInstance
     private StorageAllocatorService storageAllocatorService;
-    @Inject @LocalInstance
+    @Inject
+    @LocalInstance
     private StorageLookupService storageLookupService;
-    @Inject @LocalInstance
+    @Inject
+    @LocalInstance
     private StorageVolumeManager storageVolumeManager;
     @Context
     private UriInfo resourceURI;
@@ -71,12 +86,48 @@ public class PathBasedAgentStorageResource {
     public Response checkPath(@PathParam("dataPath") String dataPathParam, @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
         try {
             LOG.debug("Start check path {}", dataPathParam);
-            OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-            return storageResourceHelper.handleResponseForFullDataPathParam(
-                    OriginalStoragePathURI.createAbsolutePathURI(dataPathParam),
-                    (dataBundle, dataEntryPath) -> storageResourceHelper.checkContentFromDataBundle(dataBundle, dataEntryPath, directoryOnlyParam != null && directoryOnlyParam),
-                    (storageVolume, storageDataPathURI) -> storageResourceHelper.checkContentFromFile(storageVolume, Paths.get(storageDataPathURI.getStoragePath()), directoryOnlyParam != null && directoryOnlyParam)
-            ).build();
+            JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam);
+            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
+            List<JacsStorageVolume> volumeCandidates;
+            try {
+                volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
+            } catch (IllegalArgumentException e) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse(e.getMessage()))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            if (CollectionUtils.isEmpty(volumeCandidates)) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No managed volume found for " + contentURI))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            List<JacsStorageVolume> accessibleVolumes = volumeCandidates.stream()
+                    .filter(storageVolume -> storageVolume.hasPermission(JacsStoragePermission.READ))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(accessibleVolumes)) {
+                return Response.status(Response.Status.FORBIDDEN)
+                        .entity(new ErrorResponse("No permissions to access " + contentURI))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            return accessibleVolumes.stream()
+                    .findFirst()
+                    .flatMap(aStorageVolume -> aStorageVolume.resolveDataContentURI(contentURI))
+                    .map(resolvedContentURI -> {
+                        List<ContentNode> contentNodes = dataContentService.listDataNodes(resolvedContentURI, new ContentFilterParams());
+                        if (contentNodes.isEmpty()) {
+                            return Response.status(Response.Status.NOT_FOUND)
+                                    .header("Content-Length", 0);
+                        } else {
+                            return Response.ok()
+                                    .header("Content-Length", 0);
+                        }
+                    })
+                    .orElse(Response.status(Response.Status.NOT_FOUND)
+                            .header("Content-Length", 0))
+                    .build();
         } finally {
             LOG.debug("Complete check path {}", dataPathParam);
         }
@@ -92,17 +143,54 @@ public class PathBasedAgentStorageResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @Path("storage_path/data_content/{dataPath:.+}")
-    public Response retrieveData(@PathParam("dataPath") String dataPathParam,
-                                 @Context UriInfo requestURI) {
+    public Response retrieveContent(@PathParam("dataPath") String dataPathParam,
+                                    @Context UriInfo requestURI) {
         try {
             LOG.debug("Start retrieve data from {}", dataPathParam);
-            OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+            JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam);
+            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
+            List<JacsStorageVolume> volumeCandidates;
+            try {
+                volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
+            } catch (IllegalArgumentException e) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse(e.getMessage()))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            if (CollectionUtils.isEmpty(volumeCandidates)) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No managed volume found for " + contentURI))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            List<JacsStorageVolume> accessibleVolumes = volumeCandidates.stream()
+                    .filter(storageVolume -> storageVolume.hasPermission(JacsStoragePermission.READ))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(accessibleVolumes)) {
+                return Response.status(Response.Status.FORBIDDEN)
+                        .entity(new ErrorResponse("No permissions to access " + contentURI))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
             ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
-            return storageResourceHelper.handleResponseForFullDataPathParam(
-                    OriginalStoragePathURI.createAbsolutePathURI(dataPathParam),
-                    (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentFromDataBundle(dataBundle, filterParams, dataEntryPath),
-                    (storageVolume, storageDataPathURI) -> storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, Paths.get(storageDataPathURI.getStoragePath()))
-            ).build();
+            return accessibleVolumes.stream()
+                    .findFirst()
+                    .flatMap(aStorageVolume -> aStorageVolume.resolveDataContentURI(contentURI))
+                    .map(resolvedContentURI -> {
+                        StreamingOutput outputStream = output -> {
+                            dataContentService.readDataStream(resolvedContentURI, filterParams, output);
+                            output.flush();
+                        };
+                        return Response
+                                .ok(outputStream, MediaType.APPLICATION_OCTET_STREAM)
+                                .header("Content-Length", null)
+                                .header("Content-Disposition", "attachment; filename = " + resolvedContentURI.getStorageObjectName())
+                                ;
+                    })
+                    .orElse(Response.status(Response.Status.NOT_FOUND)
+                            .header("Content-Length", 0))
+                    .build();
         } finally {
             LOG.debug("Complete retrieve data from {}", dataPathParam);
         }
@@ -125,7 +213,7 @@ public class PathBasedAgentStorageResource {
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response removeData(@PathParam("dataPath") String dataPathParam, @Context SecurityContext securityContext) {
         LOG.debug("Remove data from {}", dataPathParam);
-        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(originalDataStorageService, storageLookupService, storageVolumeManager);
         JacsCredentials credentials = SecurityUtils.getUserPrincipal(securityContext);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 OriginalStoragePathURI.createAbsolutePathURI(dataPathParam),
@@ -159,7 +247,7 @@ public class PathBasedAgentStorageResource {
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response storeData(@PathParam("dataPath") String dataPathParam, @Context SecurityContext securityContext, InputStream contentStream) {
         LOG.debug("Retrieve data from {}", dataPathParam);
-        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(originalDataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 OriginalStoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryName) ->
@@ -167,11 +255,11 @@ public class PathBasedAgentStorageResource {
                                 resourceURI.getBaseUri(),
                                 dataEntryName,
                                 (Long newEntrySize) -> storageAllocatorService.updateStorage(
-                                            new JacsBundleBuilder()
-                                                    .dataBundleId(dataBundle.getId())
-                                                    .usedSpaceInBytes(newEntrySize)
-                                                    .build(),
-                                            SecurityUtils.getUserPrincipal(securityContext)),
+                                        new JacsBundleBuilder()
+                                                .dataBundleId(dataBundle.getId())
+                                                .usedSpaceInBytes(newEntrySize)
+                                                .build(),
+                                        SecurityUtils.getUserPrincipal(securityContext)),
                                 contentStream),
                 (storageVolume, storageDataPathURI) ->
                         storageResourceHelper.storeFileContent(storageVolume,
@@ -195,7 +283,7 @@ public class PathBasedAgentStorageResource {
     @Path("storage_path/data_info/{dataPath:.+}")
     public Response retrieveDataInfo(@PathParam("dataPath") String dataPathParam) {
         LOG.debug("Retrieve data info from {}", dataPathParam);
-        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(originalDataStorageService, storageLookupService, storageVolumeManager);
         return storageResourceHelper.handleResponseForFullDataPathParam(
                 OriginalStoragePathURI.createAbsolutePathURI(dataPathParam),
                 (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentInfoFromDataBundle(dataBundle, dataEntryPath),
@@ -222,7 +310,7 @@ public class PathBasedAgentStorageResource {
                                 @QueryParam("length") Integer lengthParam,
                                 @Context SecurityContext securityContext) {
         LOG.debug("List content from location {} with a depthParameter {}", dataPathParam, depthParam);
-        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
+        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(originalDataStorageService, storageLookupService, storageVolumeManager);
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
         long offset = offsetParam != null ? offsetParam : 0;
         long length = lengthParam != null ? lengthParam : -1;

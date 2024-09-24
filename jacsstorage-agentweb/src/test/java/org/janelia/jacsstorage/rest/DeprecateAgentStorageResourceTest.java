@@ -10,7 +10,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
-import org.janelia.jacsstorage.service.DataStorageService;
+import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
@@ -35,7 +35,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
+public class DeprecateAgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
 
     private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
 
@@ -79,7 +79,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                         .path(testPath)
                         .storageFormat(testFormat)
                         .build());
-        DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
+        OriginalDataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
         String testData = "Test data";
         when(dataStorageService.retrieveDataStream(eq(Paths.get(testPath)), eq(testFormat), any(ContentFilterParams.class), any(OutputStream.class)))
                 .then(invocation -> {
@@ -147,7 +147,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                         .path(testPath)
                         .storageFormat(testFormat)
                         .build());
-        DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
+        OriginalDataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
         String testDataContent = "Test data";
         when(dataStorageService.estimateDataEntrySize(
                 eq(Paths.get(testPath)),
@@ -196,7 +196,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                         .path(testPath)
                         .storageFormat(testFormat)
                         .build());
-        DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
+        OriginalDataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
         String testDataContent = "Test data";
         when(dataStorageService.estimateDataEntrySize(
                 eq(Paths.get(testPath)),
@@ -244,7 +244,7 @@ public class AgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
                         .path(testPath)
                         .storageFormat(testFormat)
                         .build());
-        DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
+        OriginalDataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
         String testDataContent = "Test data";
         when(dataStorageService.estimateDataEntrySize(
                 eq(Paths.get(testPath)),

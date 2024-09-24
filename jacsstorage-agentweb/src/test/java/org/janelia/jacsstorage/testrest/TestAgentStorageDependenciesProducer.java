@@ -6,7 +6,8 @@ import org.janelia.jacsstorage.cdi.ObjectMapperFactory;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.NumberSerializerModule;
 import org.janelia.jacsstorage.filter.AuthFilter;
-import org.janelia.jacsstorage.service.DataStorageService;
+import org.janelia.jacsstorage.service.DataContentService;
+import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageUsageManager;
@@ -18,7 +19,8 @@ import static org.mockito.Mockito.mock;
 
 public class TestAgentStorageDependenciesProducer {
 
-    private DataStorageService dataStorageService = mock(DataStorageService.class);
+    private DataContentService dataContentService = mock(DataContentService.class);
+    private OriginalDataStorageService dataStorageService = mock(OriginalDataStorageService.class);
     private StorageAllocatorService storageAllocatorService = mock(StorageAllocatorService.class);
     private StorageLookupService storageLookupService = mock(StorageLookupService.class);
     private StorageUsageManager storageUsageManager = mock(StorageUsageManager.class);
@@ -27,7 +29,12 @@ public class TestAgentStorageDependenciesProducer {
     private AuthFilter authFilter = mock(AuthFilter.class);
 
     @Produces
-    public DataStorageService getDataStorageService() {
+    public DataContentService getDataContentService() {
+        return dataContentService;
+    }
+
+    @Produces
+    public OriginalDataStorageService getDataStorageService() {
         return dataStorageService;
     }
 

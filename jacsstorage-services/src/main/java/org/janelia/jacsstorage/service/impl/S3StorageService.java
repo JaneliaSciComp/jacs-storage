@@ -40,8 +40,8 @@ public class S3StorageService implements ContentStorageService {
     private final String bucket;
     private final S3Client s3Client;
 
-    S3StorageService(String endpoint, String bucket, String accessKey, String secretKey) {
-        this.bucket = bucket;
+    S3StorageService(String endpoint, String accessKey, String secretKey) {
+        this.bucket = null;
         s3Client = S3Client.builder()
                 .endpointOverride(URI.create(endpoint))
                 .credentialsProvider(() -> AwsBasicCredentials.builder()
@@ -95,8 +95,8 @@ public class S3StorageService implements ContentStorageService {
                 throw new ContentException("Content location expected to have at least 2 components " +
                         "separated by '/' - one for bucket and one for key: " + contentLocation);
             }
-            String contentBucket = contentLocation.substring(bucketSeparator);
-            String contentKey = contentLocation.substring(bucketSeparator + 1);
+            String contentBucket = currentContentLocation.substring(0, bucketSeparator);
+            String contentKey = currentContentLocation.substring(bucketSeparator + 1);
             return new S3ContentLocation(contentBucket, contentKey);
         }
     }

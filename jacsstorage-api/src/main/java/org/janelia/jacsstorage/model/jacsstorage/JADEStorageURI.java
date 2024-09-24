@@ -1,19 +1,39 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
 import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public class JADEStorageURI {
     private static final String JADE_URI_SCHEME = "jade://";
 
+    public enum JADEStorageScheme {
+        NONE(""),
+        HTTP("https"),
+        S3("s3");
+
+        private final String value;
+
+        JADEStorageScheme(String value) {
+            this.value = value;
+        }
+    }
+
     /**
      * Creates a StoragePathURI taking the path value exactly as is.
+     *
      * @param storageURIDesc
      * @return
      */
     public static JADEStorageURI createStoragePathURI(String storageURIDesc) {
-        return new JADEStorageURI(URI.create(normalizeURIDesc(storageURIDesc)));
+        return new JADEStorageURI(URI.create(normalizeURIDesc(storageURIDesc).replace("%", "%25")));
     }
 
     private static String normalizeURIDesc(String uriDesc) {
@@ -28,7 +48,14 @@ public class JADEStorageURI {
                 return uriDesc;
             }
         } else {
-            return uriDesc;
+            if (uriDesc.matches("^(\\w+://).*")) {
+                // if a scheme is present just return it as is
+                // but the caller must be careful with 'file://' URIs if they don't reference an absolute path
+                return uriDesc;
+            } else {
+                // if there's no URI scheme make sure the path is absolute
+                return uriDesc.charAt(0) == '/' ? uriDesc : "/" + uriDesc;
+            }
         }
     }
 
@@ -38,18 +65,28 @@ public class JADEStorageURI {
         this.storageURI = storageURI;
     }
 
-    public URI getStorageURI() {
-        return storageURI;
-    }
-
     public JacsStorageType getStorageType() {
-        String storageScheme = StringUtils.isBlank(storageURI.getScheme()) ? "" : storageURI.getScheme().toLowerCase();
-        if (storageScheme.equals("s3") ||
-                storageScheme.equals("https") ||
-                StringUtils.isNotBlank(getStorageHost())) {
-            return JacsStorageType.S3;
+        if (StringUtils.isNotBlank(storageURI.getHost())) {
+            if (StringUtils.equalsIgnoreCase(storageURI.getScheme(), "file") ||
+                    StringUtils.equalsIgnoreCase(storageURI.getScheme(), "jade")) {
+                return JacsStorageType.FILE_SYSTEM;
+            } else {
+                return JacsStorageType.S3;
+            }
         } else {
             return JacsStorageType.FILE_SYSTEM;
+        }
+    }
+
+    public JADEStorageScheme getStorageScheme() {
+        if (getStorageType() == JacsStorageType.S3) {
+            if (StringUtils.equalsIgnoreCase(storageURI.getScheme(), "s3")) {
+                return JADEStorageScheme.S3;
+            } else {
+                return JADEStorageScheme.HTTP;
+            }
+        } else {
+            return JADEStorageScheme.NONE;
         }
     }
 
@@ -57,8 +94,16 @@ public class JADEStorageURI {
         return storageURI.getHost() == null ? "" : storageURI.getHost();
     }
 
+    public String getStorageEndpoint() {
+        return storageURI.getHost() == null ? "" : getStorageScheme().value + "://" + storageURI.getHost();
+    }
+
     public String getStorageKey() {
         return storageURI.getPath();
+    }
+
+    public String getStorageObjectName() {
+        return Paths.get(storageURI.getPath()).getFileName().toString();
     }
 
     public String getUserAccessKey() {
@@ -75,14 +120,86 @@ public class JADEStorageURI {
         if (StringUtils.isNotBlank(storageURI.getUserInfo())) {
             String accessKeyAndSecret = storageURI.getUserInfo();
             int separatorIndex = accessKeyAndSecret.indexOf(":");
-            return separatorIndex == -1 ? "" : accessKeyAndSecret.substring(separatorIndex+1);
+            return separatorIndex == -1 ? "" : accessKeyAndSecret.substring(separatorIndex + 1);
         } else {
             return "";
         }
     }
 
+    public boolean isEmpty() {
+        return StringUtils.isEmpty(getStorageKey());
+    }
+
+    public String getJadeStorage() {
+        return resolveJadeStorage(null);
+    }
+
+    public String resolveJadeStorage(String relativePath) {
+        StringBuilder jadeStorageBuilder = new StringBuilder();
+        if (getStorageType() == JacsStorageType.FILE_SYSTEM) {
+            if (StringUtils.isNotBlank(getStorageHost())) {
+                jadeStorageBuilder.append('/').append(getStorageHost());
+            }
+            jadeStorageBuilder.append(getStorageKey());
+        } else {
+            jadeStorageBuilder.append(getStorageScheme().value).append("://");
+            if (StringUtils.isNotBlank(getUserAccessKey())) {
+                jadeStorageBuilder.append(getUserAccessKey());
+                if (StringUtils.isNotBlank(getUserSecretKey())) {
+                    jadeStorageBuilder.append(':').append(getUserSecretKey());
+                }
+                jadeStorageBuilder.append('@');
+            }
+            jadeStorageBuilder
+                    .append(getStorageHost())
+                    .append(getStorageKey());
+        }
+        if (StringUtils.isNotBlank(relativePath)) {
+            jadeStorageBuilder.append('/').append(relativePath);
+        }
+        return jadeStorageBuilder.toString();
+    }
+
+    public @Nullable String relativize(@Nonnull JADEStorageURI otherStorageURI) {
+        if (this.getStorageHost().equals(otherStorageURI.getStorageHost())) {
+            String thisStorageKey = this.getStorageKey();
+            String otherStorageKey = otherStorageURI.getStorageKey();
+            if (!StringUtils.startsWith(otherStorageKey, thisStorageKey)) {
+                // I consider this viable only if otherStorage key starts with current's storage key
+                return null;
+            }
+            return Paths.get(this.getStorageKey()).relativize(Paths.get(otherStorageURI.getStorageKey())).toString();
+        } else {
+            return null;
+        }
+    }
+
+    public JADEStorageURI resolve(String relativePath) {
+        return JADEStorageURI.createStoragePathURI(resolveJadeStorage(relativePath));
+    }
+
     @Override
     public String toString() {
-        return storageURI.toString();
+        return getJadeStorage();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        JADEStorageURI that = (JADEStorageURI) o;
+
+        return new EqualsBuilder()
+                .append(getJadeStorage(), that.getJadeStorage())
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(getJadeStorage())
+                .toHashCode();
     }
 }

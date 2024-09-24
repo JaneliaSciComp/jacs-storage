@@ -23,7 +23,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
-import org.janelia.jacsstorage.service.DataStorageService;
+import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -72,12 +72,12 @@ import java.util.stream.Stream;
 @Timed
 @RequireAuthentication
 @Path(Constants.AGENTSTORAGE_URI_PATH)
-public class AgentStorageResource {
+public class DeprecateAgentStorageResource {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AgentStorageResource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DeprecateAgentStorageResource.class);
 
     @Inject
-    private DataStorageService dataStorageService;
+    private OriginalDataStorageService dataStorageService;
     @Inject @LocalInstance
     private StorageAllocatorService storageAllocatorService;
     @Inject @LocalInstance

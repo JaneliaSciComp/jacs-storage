@@ -14,7 +14,7 @@ import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ErrorResponse;
 import org.janelia.jacsstorage.security.JacsCredentials;
-import org.janelia.jacsstorage.service.DataStorageService;
+import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
@@ -45,11 +45,11 @@ import java.util.stream.Stream;
 public class OriginalStorageResourceHelper {
     private static final Logger LOG = LoggerFactory.getLogger(OriginalStorageResourceHelper.class);
 
-    private final DataStorageService dataStorageService;
+    private final OriginalDataStorageService dataStorageService;
     private final StorageLookupService storageLookupService;
     private final StorageVolumeManager storageVolumeManager;
 
-    public OriginalStorageResourceHelper(DataStorageService dataStorageService, StorageLookupService storageLookupService, StorageVolumeManager storageVolumeManager) {
+    public OriginalStorageResourceHelper(OriginalDataStorageService dataStorageService, StorageLookupService storageLookupService, StorageVolumeManager storageVolumeManager) {
         this.dataStorageService = dataStorageService;
         this.storageLookupService = storageLookupService;
         this.storageVolumeManager = storageVolumeManager;
@@ -82,7 +82,7 @@ public class OriginalStorageResourceHelper {
                     ;
         }
         return getStorageVolumesForURI(storagePathURI).stream()
-                .map(storageVolume -> storageVolume.getStoragePathRelativeToStorageRoot(storagePathURI.getStoragePath())
+                .map(storageVolume -> storageVolume.getOriginalStoragePathRelativeToStorageRoot(storagePathURI.getStoragePath())
                         .flatMap(storageRelativeFileDataPath -> {
                             // check if the first path component after the storage prefix is a bundle ID
                             Path dataPath = Paths.get(storageRelativeFileDataPath.getPath());
@@ -102,7 +102,7 @@ public class OriginalStorageResourceHelper {
                             } catch (NumberFormatException e) {
                                 LOG.debug("Path {} is not a data bundle - first component is not numeric", storageRelativeFileDataPath);
                             }
-                            return storageVolume.getDataStorageAbsolutePath(storageRelativeFileDataPath)
+                            return storageVolume.getOriginalDataStorageAbsolutePath(storageRelativeFileDataPath)
                                     .flatMap(dataEntryPath -> Optional.<Supplier<Response.ResponseBuilder>>of(() -> volumeBasedResponseHandler.apply(storageVolume, OriginalStoragePathURI.createAbsolutePathURI(dataEntryPath.toString()))))
                                     ;
                         })
@@ -364,7 +364,7 @@ public class OriginalStorageResourceHelper {
                     .ok(entriesStream
                                     .map(dn -> {
                                         String dataNodeAbsolutePath = dataEntryPath.resolve(dn.getNodeRelativePath()).toString();
-                                        Path dataNodeRelativePath = storageVolume.getPathRelativeToBaseStorageRoot(dataNodeAbsolutePath);
+                                        Path dataNodeRelativePath = storageVolume.getOriginalPathRelativeToBaseStorageRoot(dataNodeAbsolutePath);
                                         DataNodeInfo newDataNode = new DataNodeInfo();
                                         newDataNode.setStorageId(dn.getStorageId());
                                         newDataNode.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
@@ -443,7 +443,7 @@ public class OriginalStorageResourceHelper {
         }
         LOG.info("Create {} on {}", dataEntryPath, storageVolume);
         dataStorageService.writeDataEntryStream(dataEntryPath, "", JacsStorageFormat.SINGLE_DATA_FILE, contentStream);
-        Path dataNodeRelativePath = storageVolume.getPathRelativeToBaseStorageRoot(dataEntryPath.toString());
+        Path dataNodeRelativePath = storageVolume.getOriginalPathRelativeToBaseStorageRoot(dataEntryPath.toString());
         URI newContentURI = UriBuilder.fromUri(baseURI)
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path("storage_volume")

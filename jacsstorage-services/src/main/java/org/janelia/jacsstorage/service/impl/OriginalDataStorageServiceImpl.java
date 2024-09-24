@@ -7,7 +7,7 @@ import org.janelia.jacsstorage.io.BundleWriter;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.janelia.jacsstorage.service.DataStorageService;
+import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 
 import javax.inject.Inject;
@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class OriginalDataStorageServiceImpl implements DataStorageService {
+public class OriginalDataStorageServiceImpl implements OriginalDataStorageService {
 
     private final DataBundleIOProvider dataIOProvider;
 

@@ -8,7 +8,7 @@ import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
-import org.janelia.jacsstorage.service.DataStorageService;
+import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
 import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
@@ -91,7 +91,7 @@ public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
         PowerMockito.mockStatic(Files.class);
         when(Files.exists(testFullPath)).thenReturn(true);
         when(Files.isRegularFile(testFullPath)).thenReturn(true);
-        DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
+        OriginalDataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
         String testContent = "This is the content";
         when(dataStorageService.estimateDataEntrySize(eq(testFullPath), eq(""), eq(JacsStorageFormat.SINGLE_DATA_FILE), any(ContentFilterParams.class)))
                 .thenReturn((long) testContent.length());
@@ -161,7 +161,7 @@ public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
         PowerMockito.mockStatic(Files.class);
         when(Files.exists(testFullPath)).thenReturn(true);
         when(Files.isRegularFile(testFullPath)).thenReturn(true);
-        DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
+        OriginalDataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
         UncheckedIOException thrownException = new UncheckedIOException(new IOException("error getting file size"));
         when(dataStorageService.estimateDataEntrySize(eq(testFullPath), eq(""), eq(JacsStorageFormat.SINGLE_DATA_FILE), any(ContentFilterParams.class)))
                 .thenThrow(thrownException);
@@ -196,7 +196,7 @@ public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
         PowerMockito.mockStatic(Files.class);
         when(Files.exists(testFullPath)).thenReturn(true);
         when(Files.isRegularFile(testFullPath)).thenReturn(true);
-        DataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
+        OriginalDataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
         when(dataStorageService.estimateDataEntrySize(eq(testFullPath), eq(""), eq(JacsStorageFormat.SINGLE_DATA_FILE), any(ContentFilterParams.class)))
                 .thenReturn(10L);
         when(dataStorageService.retrieveDataStream(eq(testFullPath), eq(JacsStorageFormat.SINGLE_DATA_FILE), any(ContentFilterParams.class), any(OutputStream.class)))

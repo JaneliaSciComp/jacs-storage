@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.rest;
 
 import java.net.URI;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
@@ -21,11 +22,11 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
-import org.janelia.jacsstorage.helper.OriginalStorageResourceHelper;
+import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -39,9 +40,8 @@ import org.slf4j.LoggerFactory;
 public class ContentStorageResource {
     private static final Logger LOG = LoggerFactory.getLogger(ContentStorageResource.class);
 
-    @Inject @RemoteInstance
-    private StorageLookupService storageLookupService;
-    @Inject @RemoteInstance
+    @Inject
+    @RemoteInstance
     private StorageVolumeManager storageVolumeManager;
 
     /**
@@ -64,41 +64,33 @@ public class ContentStorageResource {
                                             @QueryParam("directoryOnly") Boolean directoryOnlyParam,
                                             @Context UriInfo requestURI) {
         LOG.info("Check {}", filePathParam);
-        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(null, storageLookupService, storageVolumeManager);
-        return storageResourceHelper.handleResponseForFullDataPathParam(
-                OriginalStoragePathURI.createAbsolutePathURI(filePathParam),
-                (dataBundle, dataEntryPath) -> dataBundle.getStorageVolume()
-                        .map(storageVolume -> {
-                            URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
-                                    .path("agent_storage")
-                                    .path(dataBundle.getId().toString())
-                                    .path("data_content")
-                                    .path(dataEntryPath)
-                                    .replaceQuery(requestURI.getRequestUri().getRawQuery())
-                                    .build();
-                            LOG.info("Redirect to {} for checking {}", redirectURI, filePathParam);
-                            return Response.temporaryRedirect(redirectURI);
-                        })
-                        .orElseGet(() -> Response.status(Response.Status.BAD_REQUEST)
-                                .header("Content-Length", 0)),
-                (storageVolume, storageDataPathURI) -> {
-                    if (StringUtils.isNotBlank(storageVolume.getStorageServiceURL())) {
-                        URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
-                                .path("agent_storage")
-                                .path("storage_volume")
-                                .path(storageVolume.getId().toString())
-                                .path("data_content")
-                                .path(storageVolume.getPathRelativeToBaseStorageRoot(storageDataPathURI.getStoragePath()).toString())
-                                .replaceQuery(requestURI.getRequestUri().getRawQuery())
-                                .build();
-                        LOG.info("Redirect to {} for checking {}", redirectURI, filePathParam);
-                        return Response.temporaryRedirect(redirectURI);
-                    } else {
-                        return Response.status(Response.Status.BAD_GATEWAY)
-                                .header("Content-Length", 0);
-                    }
-                }
-        ).build();
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
+        JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(filePathParam);
+        List<JacsStorageVolume> volumeCandidates;
+        try {
+            volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+        return volumeCandidates.stream()
+                .findFirst()
+                .map(storageVolume -> {
+                    URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
+                            .path("agent_storage")
+                            .path("storage_path/data_content")
+                            .path(contentURI.getJadeStorage())
+                            .replaceQuery(requestURI.getRequestUri().getRawQuery())
+                            .build();
+                    LOG.info("Redirect to {} for checking {}", redirectURI, filePathParam);
+                    return Response.temporaryRedirect(redirectURI);
+                })
+                .orElse(Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No managed volume found for " + contentURI))
+                        .type(MediaType.APPLICATION_JSON))
+                .build();
     }
 
     /**
@@ -120,46 +112,33 @@ public class ContentStorageResource {
     @Path("storage_path_redirect/{filePath:.+}")
     public Response redirectForContent(@PathParam("filePath") String filePathParam, @Context UriInfo requestURI) {
         LOG.info("Redirecting to agent for getting content of {}", filePathParam);
-        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(null, storageLookupService, storageVolumeManager);
-        return storageResourceHelper.handleResponseForFullDataPathParam(
-                OriginalStoragePathURI.createAbsolutePathURI(filePathParam),
-                (dataBundle, dataEntryPath) -> dataBundle.getStorageVolume()
-                            .map(storageVolume -> {
-                                URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
-                                        .path("agent_storage")
-                                        .path(dataBundle.getId().toString())
-                                        .path("data_content")
-                                        .path(dataEntryPath)
-                                        .replaceQuery(requestURI.getRequestUri().getRawQuery())
-                                        .build();
-                                LOG.info("Redirect to {} for getting content from {}", redirectURI, filePathParam);
-                                return Response.temporaryRedirect(redirectURI);
-                            })
-                            .orElseGet(() -> Response
-                                    .status(Response.Status.BAD_REQUEST.getStatusCode())
-                                    .entity(new ErrorResponse("No volume associated with databundle " + dataBundle.getId()))
-                                    .type(MediaType.APPLICATION_JSON)
-                            ),
-                (storageVolume, storageDataPathURI) -> {
-                    if (StringUtils.isNotBlank(storageVolume.getStorageServiceURL())) {
-                        URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
-                                .path("agent_storage")
-                                .path("storage_volume")
-                                .path(storageVolume.getId().toString())
-                                .path("data_content")
-                                .path(storageVolume.getPathRelativeToBaseStorageRoot(storageDataPathURI.getStoragePath()).toString())
-                                .replaceQuery(requestURI.getRequestUri().getRawQuery())
-                                .build();
-                        LOG.info("Redirect to {} for getting content from {}", redirectURI, filePathParam);
-                        return Response.temporaryRedirect(redirectURI);
-                    } else {
-                        return Response.status(Response.Status.BAD_GATEWAY)
-                                .entity(new ErrorResponse("No storage service URL found to serve " + storageDataPathURI))
-                                .type(MediaType.APPLICATION_JSON)
-                                ;
-                    }
-                }
-        ).build();
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
+        JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(filePathParam);
+        List<JacsStorageVolume> volumeCandidates;
+        try {
+            volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+        return volumeCandidates.stream()
+                .findFirst()
+                .map(storageVolume -> {
+                    URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
+                            .path("agent_storage")
+                            .path("storage_path/data_content")
+                            .path(contentURI.getJadeStorage())
+                            .replaceQuery(requestURI.getRequestUri().getRawQuery())
+                            .build();
+                    LOG.info("Redirect to {} for getting content from {}", redirectURI, filePathParam);
+                    return Response.temporaryRedirect(redirectURI);
+                })
+                .orElse(Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No managed volume found for " + contentURI))
+                        .type(MediaType.APPLICATION_JSON))
+                .build();
     }
 
     /**
@@ -181,25 +160,33 @@ public class ContentStorageResource {
     @Path("storage_path_redirect/{filePath:.+}")
     public Response redirectForDeleteContent(@PathParam("filePath") String filePathParam, @Context UriInfo requestURI) {
         LOG.info("Redirect to agent for deleting content of {}", filePathParam);
-        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(null, storageLookupService, storageVolumeManager);
-        OriginalStoragePathURI storagePathURI = OriginalStoragePathURI.createAbsolutePathURI(filePathParam);
-        return storageResourceHelper.getStorageVolumesForURI(storagePathURI).stream()
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
+        JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(filePathParam);
+        List<JacsStorageVolume> volumeCandidates;
+        try {
+            volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+        return volumeCandidates.stream()
+                .findFirst()
                 .map(storageVolume -> {
                     URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
                             .path("agent_storage")
                             .path("storage_path/data_content")
-                            .path(storagePathURI.toString())
+                            .path(contentURI.getJadeStorage())
                             .replaceQuery(requestURI.getRequestUri().getRawQuery())
                             .build();
-                    LOG.info("Redirect to {} to delete {}", redirectURI, filePathParam);
-                    return Response.temporaryRedirect(redirectURI).build();
+                    LOG.info("Redirect to {} for getting content from {}", redirectURI, filePathParam);
+                    return Response.temporaryRedirect(redirectURI);
                 })
-                .findFirst()
-                .orElseGet(() -> Response
-                        .status(Response.Status.BAD_GATEWAY)
-                        .entity(new ErrorResponse("No storage service URL found to serve " + filePathParam))
-                        .build())
-                ;
+                .orElse(Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No managed volume found for " + contentURI))
+                        .type(MediaType.APPLICATION_JSON))
+                .build();
     }
 
 }

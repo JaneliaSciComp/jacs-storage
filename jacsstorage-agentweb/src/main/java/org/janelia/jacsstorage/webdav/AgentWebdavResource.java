@@ -13,7 +13,7 @@ import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
-import org.janelia.jacsstorage.service.DataStorageService;
+import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -60,7 +60,7 @@ public class AgentWebdavResource {
     @Inject @LocalInstance
     private StorageVolumeManager storageVolumeManager;
     @Inject
-    private DataStorageService dataStorageService;
+    private OriginalDataStorageService dataStorageService;
 
     @Context
     private UriInfo resourceURI;

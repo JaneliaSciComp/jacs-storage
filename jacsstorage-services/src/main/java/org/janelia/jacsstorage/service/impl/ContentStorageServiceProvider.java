@@ -12,13 +12,20 @@ public class ContentStorageServiceProvider {
         }
     }
 
-    private S3StorageService createFileStorageServiceInstance(JADEStorageURI storageURI) {
-
-        return null; // !!!
+    private FileSystemStorageService createFileStorageServiceInstance(JADEStorageURI storageURI) {
+        return new FileSystemStorageService();
     }
 
-    private FileSystemStorageService createS3StorageServiceInstance(JADEStorageURI storageURI) {
-        return new FileSystemStorageService();
+    private S3StorageService createS3StorageServiceInstance(JADEStorageURI storageURI) {
+        if (storageURI.getStorageScheme() == JADEStorageURI.JADEStorageScheme.S3) {
+            // hostname is interpreted as bucket
+            return new S3StorageService(storageURI.getStorageHost());
+        } else if (storageURI.getStorageScheme() == JADEStorageURI.JADEStorageScheme.HTTP) {
+            // use the endpoint
+            return new S3StorageService(storageURI.getStorageEndpoint(), storageURI.getUserAccessKey(), storageURI.getUserSecretKey());
+        } else {
+            throw new IllegalArgumentException("Cannot create S3 storage service instance for " + storageURI);
+        }
     }
 
 }

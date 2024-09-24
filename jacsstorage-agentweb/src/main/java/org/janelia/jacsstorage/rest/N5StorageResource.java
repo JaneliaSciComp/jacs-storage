@@ -79,7 +79,7 @@ public class N5StorageResource {
                     .build();
         }
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
-            java.nio.file.Path absolutePath = storageVolume.getDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).orElse(null);
+            java.nio.file.Path absolutePath = storageVolume.getOriginalDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).orElse(null);
             if (absolutePath == null) {
                 return Response
                         .serverError()
