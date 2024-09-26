@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service;
 import java.io.InputStream;
 import java.util.Date;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class ContentNode {
@@ -50,6 +51,18 @@ public class ContentNode {
     public ContentNode setLastModified(Date lastModified) {
         this.lastModified = lastModified;
         return this;
+    }
+
+    /**
+     * @return full object key - this always looks like a full path that starts with '/'
+     */
+    public String getObjectKey() {
+        StringBuilder objectKeyBuilder = new StringBuilder();
+        if (StringUtils.isNotBlank(prefix)) {
+            objectKeyBuilder.append('/').append(prefix);
+        }
+        objectKeyBuilder.append('/').append(name);
+        return objectKeyBuilder.toString();
     }
 
     public InputStream getContent() {

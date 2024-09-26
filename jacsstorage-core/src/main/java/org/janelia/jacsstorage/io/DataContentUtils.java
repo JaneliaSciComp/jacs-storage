@@ -16,7 +16,6 @@ public class DataContentUtils {
                                            boolean collectionFlag,
                                            long size) {
         DataNodeInfo ni = new DataNodeInfo();
-        ni.setStorageRootPathURI(OriginalStoragePathURI.createAbsolutePathURI(rootPath.toString().replace(File.separatorChar, '/')));
         ni.setNodeAccessURL(nodePath.toUri().toString());
         ni.setNodeRelativePath(rootPath.relativize(nodePath).toString().replace(File.separatorChar, '/'));
         ni.setCollectionFlag(collectionFlag);

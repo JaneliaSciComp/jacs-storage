@@ -6,7 +6,7 @@ import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.jacsstorage.service.distributedservice.StorageAgentManager;
+import org.janelia.jacsstorage.service.impl.distributedservice.StorageAgentManager;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;

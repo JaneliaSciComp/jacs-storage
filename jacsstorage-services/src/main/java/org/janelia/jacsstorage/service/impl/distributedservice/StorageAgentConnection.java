@@ -1,6 +1,4 @@
-package org.janelia.jacsstorage.service.distributedservice;
-
-import java.util.Set;
+package org.janelia.jacsstorage.service.impl.distributedservice;
 
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.ConnectionChecker;

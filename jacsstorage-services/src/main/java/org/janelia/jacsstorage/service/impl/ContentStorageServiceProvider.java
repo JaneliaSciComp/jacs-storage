@@ -1,14 +1,19 @@
 package org.janelia.jacsstorage.service.impl;
 
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.service.ContentStorageService;
 
 public class ContentStorageServiceProvider {
 
-    ContentStorageService getStorageService(JADEStorageURI storageURI) {
-        switch (storageURI.getStorageType()) {
-            case S3: return createS3StorageServiceInstance(storageURI);
-            default: return createFileStorageServiceInstance(storageURI);
+    public ContentStorageService getStorageService(JADEStorageURI storageURI) {
+        if (storageURI == null) {
+            return null;
+        }
+        if (storageURI.getStorageType() == JacsStorageType.S3) {
+            return createS3StorageServiceInstance(storageURI);
+        } else {
+            return createFileStorageServiceInstance(storageURI);
         }
     }
 

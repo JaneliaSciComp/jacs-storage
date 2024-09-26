@@ -95,18 +95,6 @@ public class JacsBundle extends AbstractEntity {
         }
     }
 
-    @JsonIgnore
-    public OriginalStoragePathURI getStorageURI() {
-        if (storageVolume == null) {
-            return null;
-        } else if (StringUtils.isNotBlank(storageVolume.getStorageVirtualPath())) {
-            return OriginalStoragePathURI.createPathURI(Paths.get(storageVolume.getStorageVirtualPath(), getId().toString()).toString());
-        } else {
-            // otherwise cannot build the storage path URI
-            return OriginalStoragePathURI.createPathURI(null);
-        }
-    }
-
     public Set<String> getReadersKeys() {
         return readersKeys;
     }
@@ -238,6 +226,15 @@ public class JacsBundle extends AbstractEntity {
     public Optional<JacsStorageVolume> setStorageVolume(JacsStorageVolume storageVolume) {
         this.storageVolume = storageVolume;
         return getStorageVolume();
+    }
+
+    @JsonIgnore
+    public String getStorageRootBinding() {
+        if (storageVolume != null) {
+            return Paths.get(storageVolume.getStorageVirtualPath(), getId().toString()).toString();
+        } else {
+            return null; // unknown
+        }
     }
 
     public boolean hasStorageAgent() {

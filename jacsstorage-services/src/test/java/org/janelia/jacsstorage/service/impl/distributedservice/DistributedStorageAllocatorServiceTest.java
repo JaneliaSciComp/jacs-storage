@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.distributedservice;
+package org.janelia.jacsstorage.service.impl.distributedservice;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -23,6 +23,8 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
+import org.janelia.jacsstorage.service.impl.distributedservice.DistributedStorageAllocatorService;
+import org.janelia.jacsstorage.service.impl.distributedservice.StorageAgentManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -115,21 +117,6 @@ public class DistributedStorageAllocatorServiceTest {
                         "testVolumeName",
                         "testHost",
                         "http://agentURL",
-                        "/overflowStorage",
-                        "bundlePrefix",
-                        new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
-                        new JacsStorageVolumeBuilder().storageVolumeId(20L)
-                                .name(JacsStorageVolume.OVERFLOW_VOLUME)
-                                .storageRootTemplate("/overflowStorage")
-                                .build(),
-                        ImmutableSet.of("testVolumeName"),
-                        ImmutableSet.of()
-                ),
-                new TestAllocateData(10L,
-                        20L,
-                        "testVolumeName",
-                        "testHost",
-                        "http://agentURL",
                         "/storage",
                         "",
                         new JacsBundleBuilder().ownerKey("user:anowner").name("aname").build(),
@@ -164,13 +151,7 @@ public class DistributedStorageAllocatorServiceTest {
         when(storageAgentManager.findRegisteredAgent(testData.testVolume.getStorageServiceURL()))
                 .thenReturn(Optional.of(testAgentInfo));
         when(storageVolumeDao.countMatchingVolumes(any(StorageQuery.class)))
-                .then(invocation -> {
-                    if (JacsStorageVolume.OVERFLOW_VOLUME.equals(testData.testVolume.getName())) {
-                        return 0L;
-                    } else {
-                        return 1L;
-                    }
-                });
+                .then(invocation -> 1L);
         when(storageVolumeDao.findMatchingVolumes(any(StorageQuery.class), any(PageRequest.class)))
                 .then(invocation -> new PageResult<>(invocation.getArgument(1), ImmutableList.of(testData.testVolume)));
         doAnswer((invocation) -> {

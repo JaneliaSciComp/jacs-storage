@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.distributedservice;
+package org.janelia.jacsstorage.service.impl.distributedservice;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.ImmutableList;

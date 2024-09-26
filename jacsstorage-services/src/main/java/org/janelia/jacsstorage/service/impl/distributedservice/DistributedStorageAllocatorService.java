@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.distributedservice;
+package org.janelia.jacsstorage.service.impl.distributedservice;
 
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
@@ -9,7 +9,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.StorageVolumeSelector;
 import org.janelia.jacsstorage.service.impl.AbstractStorageAllocatorService;
-import org.janelia.jacsstorage.service.impl.OverflowStorageVolumeSelector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,8 +58,7 @@ public class DistributedStorageAllocatorService extends AbstractStorageAllocator
                         availableAgents.stream().map(ai -> ai.getAgentId()).collect(Collectors.toList()),
                         availableAgents.stream().map(ai -> ai.getAgentAccessURL()).collect(Collectors.toList())),
                 new RandomSharedStorageVolumeSelector(storageVolumeDao,
-                        availableAgents.stream().map(ai -> ai.getAgentAccessURL()).collect(Collectors.toList())),
-                new OverflowStorageVolumeSelector(storageVolumeDao)
+                        availableAgents.stream().map(ai -> ai.getAgentAccessURL()).collect(Collectors.toList()))
         };
         JacsStorageVolume storageVolume = null;
         for (StorageVolumeSelector volumeSelector : volumeSelectors) {

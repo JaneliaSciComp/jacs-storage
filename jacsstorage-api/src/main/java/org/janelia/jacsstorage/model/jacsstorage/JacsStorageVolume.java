@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import org.apache.commons.lang3.StringUtils;
@@ -19,22 +21,22 @@ import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 
 /**
  * Entity for a JACS storage volume.
- *
+ * <p>
  * A volume can be shared or local.
  * A local volume corresponds to a local disk that is visible only on the machine where it's installed whereas
  * a shared volume corresponds to a mountable disk that could potentially be mounted on multiple machines (hosts).
- *
+ * <p>
  * For local volumes storageHost should be set and shared should be set to false.
  * For shared volumes storageHost is null, shared is set to true.
- *
  */
-@PersistenceInfo(storeName ="jacsStorageVolume", label="JacsStorageVolume")
+@PersistenceInfo(storeName = "jacsStorageVolume", label = "JacsStorageVolume")
 public class JacsStorageVolume extends AbstractEntity {
-    public static final String OVERFLOW_VOLUME = "OVERFLOW_VOLUME";
+    public static final String GENERIC_S3 = "GenericS3Volume";
 
     private String storageAgentId; // storage agentId
     // if a volume is set to a network disk that could be mounted on multiple hosts
     private String name; // volume name
+    private JacsStorageType storageType; // storage type
     private String storageVirtualPath; // storage path mapping - this will always be formatted as a UNIX path
     private String storageRootTemplate; // template for storage real root directory
     private List<String> storageTags; // storage tags - identify certain features of the physical storage
@@ -66,17 +68,20 @@ public class JacsStorageVolume extends AbstractEntity {
         this.name = name;
     }
 
+    public JacsStorageType getStorageType() {
+        return storageType;
+    }
+
+    public void setStorageType(JacsStorageType storageType) {
+        this.storageType = storageType;
+    }
+
     public String getStorageVirtualPath() {
         return storageVirtualPath;
     }
 
     public void setStorageVirtualPath(String storageVirtualPath) {
         this.storageVirtualPath = storageVirtualPath;
-    }
-
-    @JsonIgnore
-    public OriginalStoragePathURI getStorageURI() {
-        return OriginalStoragePathURI.createPathURI(storageVirtualPath);
     }
 
     public String getStorageRootTemplate() {
@@ -91,8 +96,12 @@ public class JacsStorageVolume extends AbstractEntity {
         return ExprHelper.eval(storageRootTemplate, evalContext);
     }
 
-    public String getBaseStorageRootDir() {
-        return StringUtils.removeEnd(ExprHelper.getConstPrefix(storageRootTemplate), "/");
+    @JsonIgnore
+    public @Nullable String getStorageRootLocation() {
+        if (StringUtils.isBlank(storageRootTemplate)) {
+            return null;
+        } else
+            return StringUtils.removeEnd(ExprHelper.getConstPrefix(storageRootTemplate), "/");
     }
 
     public List<String> getStorageTags() {
@@ -215,13 +224,13 @@ public class JacsStorageVolume extends AbstractEntity {
 
     @JsonIgnore
     public Path getOriginalPathRelativeToBaseStorageRoot(String dataPath) {
-        return Paths.get(getBaseStorageRootDir()).relativize(Paths.get(dataPath));
+        return Paths.get(getStorageRootLocation()).relativize(Paths.get(dataPath));
     }
 
     @JsonIgnore
     public Optional<StorageRelativePath> getOriginalStoragePathRelativeToStorageRoot(String dataPath) {
         if (ExprHelper.match(storageRootTemplate, dataPath).isMatchFound()) {
-            return Optional.of(Paths.get(getBaseStorageRootDir()).relativize(Paths.get(dataPath)))
+            return Optional.of(Paths.get(getStorageRootLocation()).relativize(Paths.get(dataPath)))
                     .map(p -> StorageRelativePath.pathRelativeToBaseRoot(p.toString()));
         } else if (ExprHelper.match(storageVirtualPath, dataPath).isMatchFound()) {
             return Optional.of(Paths.get(storageVirtualPath).relativize(Paths.get(dataPath)))
@@ -233,7 +242,7 @@ public class JacsStorageVolume extends AbstractEntity {
 
     @JsonIgnore
     public Optional<Path> getOriginalDataStorageAbsolutePath(StorageRelativePath storageRelativePath) {
-        return Optional.of(Paths.get(getBaseStorageRootDir(), storageRelativePath.getPath()));
+        return Optional.of(Paths.get(getStorageRootLocation(), storageRelativePath.getPath()));
     }
 
     public boolean isActiveFlag() {
@@ -245,53 +254,63 @@ public class JacsStorageVolume extends AbstractEntity {
     }
 
     @JsonIgnore
-    public JADEStorageURI getBaseVolumeStorageURI() {
-        return JADEStorageURI.createStoragePathURI(getBaseStorageRootDir());
+    public JADEStorageURI getVolumeStorageRootURI() {
+        String rootLocation = getStorageRootLocation();
+        if (rootLocation == null) {
+            return null;
+        } else {
+            return JADEStorageURI.createStoragePathURI(rootLocation);
+        }
     }
 
-    @JsonIgnore
-    public JADEStorageURI getDataContentURI(String relativeContentPath) {
-        return getBaseVolumeStorageURI().resolve(relativeContentPath);
+    /**
+     * @param contentStorageURI
+     * @return content's URI relative to the volume's root URI. If the volume's root URI is not set it returns
+     * the content's URI as is for S3 and null for file system.
+     */
+    public String getDataContentRelativePath(JADEStorageURI contentStorageURI) {
+        JADEStorageURI storageRootURI = getVolumeStorageRootURI();
+        if (storageRootURI == null) {
+            // this is supported only for S3 URIs
+            return contentStorageURI.getStorageType() == JacsStorageType.S3 ? contentStorageURI.getJadeStorage() : null;
+        }
+        return storageRootURI.relativize(contentStorageURI);
     }
 
     /**
      * Resolve the contentStorageURI relative to
-     * @param jadeStorageURI
+     *
+     * @param contentStorageURI
      * @return
      */
     public Optional<JADEStorageURI> resolveDataContentURI(JADEStorageURI contentStorageURI) {
-        JADEStorageURI volumeStorageURI = getBaseVolumeStorageURI();
+        JADEStorageURI storageRootURI = getVolumeStorageRootURI();
+        if (storageRootURI == null) {
+            // this is supported only for S3 URIs
+            return contentStorageURI.getStorageType() == JacsStorageType.S3
+                    ? Optional.of(contentStorageURI)
+                    : Optional.empty();
+        }
         if (contentStorageURI.getStorageType() == JacsStorageType.S3) {
-            if (contentStorageURI.getStorageHost().equals(contentStorageURI.getStorageHost())) {
-                String contentRelativePath = volumeStorageURI.relativize(contentStorageURI);
-                if (contentRelativePath == null) {
-                    return Optional.empty();
-                } else {
-                    // content storage is relative to volume's URI
-                    return Optional.of(contentStorageURI);
-                }
-            } else {
-                // if the content is S3 content and the endpoint or the bucket do not match - no URI
-                return Optional.empty();
+            if (storageRootURI.getStorageHost().equals(contentStorageURI.getStorageHost()) &&
+                    storageRootURI.relativize(contentStorageURI) != null) {
+                // typically storage root for S3 is not defined - we only have a single generic
+                // but, it is still possible to set it
+                // in case it is set check if a relative path can be created and if it can return the URI as is
+                // because it's already relative to this volume's root URI
+                return Optional.of(contentStorageURI);
             }
         } else {
-            // the contentURI is seen as file storage
-            // but it is still possible to match an S3 volume by matching the binding path
-            String contentKey = contentStorageURI.getJadeStorage();
-            if (volumeStorageURI.getStorageType() == JacsStorageType.S3) {
-                if (ExprHelper.match(storageVirtualPath, contentKey).isMatchFound()) {
-                    String contentRelativePath = Paths.get(storageVirtualPath).relativize(Paths.get(contentKey)).toString();
-                    return Optional.of(volumeStorageURI.resolve(contentRelativePath));
+            String contentKey = contentStorageURI.getStorageKey();
+            if (ExprHelper.match(storageRootTemplate, contentKey).isMatchFound()) {
+                String contentRelativePath = storageRootURI.relativizeKey(contentKey);
+                if (contentRelativePath != null) {
+                    return Optional.of(storageRootURI.resolve(contentRelativePath));
                 }
-            } else {
-                // the volume's storage is FileSystem so try to match both the physical root path and the volume binding path
-                if (ExprHelper.match(storageRootTemplate, contentKey).isMatchFound()) {
-                    String contentRelativePath = Paths.get(getBaseStorageRootDir()).relativize(Paths.get(contentKey)).toString();
-                    return Optional.of(volumeStorageURI.resolve(contentRelativePath));
-                } else if (ExprHelper.match(storageVirtualPath, contentKey).isMatchFound()) {
-                    String contentRelativePath = Paths.get(storageVirtualPath).relativize(Paths.get(contentKey)).toString();
-                    return Optional.of(volumeStorageURI.resolve(contentRelativePath));
-                }
+            }
+            if (ExprHelper.match(storageVirtualPath, contentKey).isMatchFound()) {
+                String contentRelativeToBinding = Paths.get(storageVirtualPath).relativize(Paths.get(contentKey)).toString();
+                return Optional.of(storageRootURI.resolve(contentRelativeToBinding));
             }
         }
         return Optional.empty();

@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
@@ -30,7 +31,7 @@ public class DataStorageInfo {
     private String dataVirtualPath;
     private Set<String> readersKeys = new HashSet<>();
     private Set<String> writersKeys = new HashSet<>();
-    private OriginalStoragePathURI storageRootPathURI;
+    private String storageRootPathURI;
     private String storageRootDir;
     private String storageAgentId;
     private List<String> storageTags;
@@ -55,11 +56,12 @@ public class DataStorageInfo {
                 ;
         dataBundle.getStorageVolume()
                 .ifPresent(sv -> {
+                    JADEStorageURI volumeRootStorageURI = sv.getVolumeStorageRootURI();
                     dsi.setStorageAgentId(sv.getStorageAgentId());
                     dsi.setStorageTags(sv.getStorageTags());
                     dsi.setStorageRootDir(sv.evalStorageRootDir(dataBundle.asStorageContext()));
                     dsi.setDataVirtualPath(Paths.get(sv.getStorageVirtualPath(), dataBundle.getId().toString()).toString());
-                    dsi.setStorageRootPathURI(sv.getStorageURI());
+                    dsi.setStorageRootPathURI(volumeRootStorageURI != null ? volumeRootStorageURI.getJadeStorage() : null);
                     dsi.setConnectionURL(sv.getStorageServiceURL());
                 });
         return dsi;
@@ -173,11 +175,11 @@ public class DataStorageInfo {
         return this;
     }
 
-    public OriginalStoragePathURI getStorageRootPathURI() {
+    public String getStorageRootPathURI() {
         return storageRootPathURI;
     }
 
-    public DataStorageInfo setStorageRootPathURI(OriginalStoragePathURI storageRootPathURI) {
+    public DataStorageInfo setStorageRootPathURI(String storageRootPathURI) {
         this.storageRootPathURI = storageRootPathURI;
         return this;
     }

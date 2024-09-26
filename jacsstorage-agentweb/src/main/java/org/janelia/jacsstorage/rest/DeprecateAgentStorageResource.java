@@ -195,7 +195,7 @@ public class DeprecateAgentStorageResource {
                 .peek(dn -> {
                     dn.setNumericStorageId(dataBundle.getId());
                     dn.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
-                    dn.setStorageRootPathURI(dataBundle.getStorageURI());
+                    dn.setStorageRootBinding(dataBundle.getStorageRootBinding());
                     dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
                             .path(Constants.AGENTSTORAGE_URI_PATH)
                             .path(dataBundle.getId().toString())
@@ -370,7 +370,7 @@ public class DeprecateAgentStorageResource {
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundleId);
         newDataNode.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
-        newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
+        newDataNode.setStorageRootBinding(dataBundle.getStorageRootBinding());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeInfoURL(resourceURI.getBaseUriBuilder()
                 .path(Constants.AGENTSTORAGE_URI_PATH)
@@ -485,7 +485,7 @@ public class DeprecateAgentStorageResource {
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundleId);
         newDataNode.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
-        newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
+        newDataNode.setStorageRootBinding(dataBundle.getStorageRootBinding());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
         newDataNode.setNodeInfoURL(resourceURI.getBaseUriBuilder()
                 .path(Constants.AGENTSTORAGE_URI_PATH)

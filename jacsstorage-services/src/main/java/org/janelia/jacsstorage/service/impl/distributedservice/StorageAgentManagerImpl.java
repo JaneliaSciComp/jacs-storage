@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.distributedservice;
+package org.janelia.jacsstorage.service.impl.distributedservice;
 
 import java.security.SecureRandom;
 import java.util.List;

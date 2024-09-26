@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.dao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 
 public interface JacsStorageVolumeDao extends ReadWriteDao<JacsStorageVolume> {
@@ -26,8 +27,9 @@ public interface JacsStorageVolumeDao extends ReadWriteDao<JacsStorageVolume> {
      * The hostname can be empty in which case the method will create shared volume if no shared volume exists with the specified name.
      *
      * @param volumeName
+     * @param storageType
      * @param agentId
      * @return
      */
-    JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String agentId);
+    JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, JacsStorageType storageType, String agentId);
 }

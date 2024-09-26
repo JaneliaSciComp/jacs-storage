@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.localservice;
+package org.janelia.jacsstorage.service.impl.localservice;
 
 import java.io.File;
 import java.io.IOException;

@@ -44,4 +44,9 @@ public class DataContentServiceImpl implements DataContentService {
         return contentStorageService.writeContent(storageURI.getStorageKey(), dataStream);
     }
 
+    @Override
+    public void removeData(JADEStorageURI storageURI) {
+        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
+        contentStorageService.deleteContent(storageURI.getStorageKey());
+    }
 }

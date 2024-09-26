@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.distributedservice;
+package org.janelia.jacsstorage.service.impl.distributedservice;
 
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import java.util.List;

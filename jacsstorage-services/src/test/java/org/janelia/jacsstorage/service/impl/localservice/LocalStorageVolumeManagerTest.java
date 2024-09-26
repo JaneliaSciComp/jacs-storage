@@ -1,15 +1,10 @@
-package org.janelia.jacsstorage.service.localservice;
+package org.janelia.jacsstorage.service.impl.localservice;
 
-import java.nio.file.FileStore;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
@@ -20,32 +15,31 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.service.AgentStatePersistence;
+import org.janelia.jacsstorage.service.ContentStorageService;
 import org.janelia.jacsstorage.service.NotificationService;
+import org.janelia.jacsstorage.service.StorageCapacity;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.janelia.jacsstorage.service.impl.ContentStorageServiceProvider;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({LocalStorageVolumeManager.class})
 public class LocalStorageVolumeManagerTest {
     private static final String TEST_HOST = "testHost";
 
     private JacsStorageVolumeDao storageVolumeDao;
+    private ContentStorageServiceProvider storageServiceProvider;
+    private ContentStorageService storageService;
     private AgentStatePersistence agentStatePersistence;
     private NotificationService capacityNotifier;
     private StorageVolumeManager storageVolumeManager;
@@ -53,6 +47,8 @@ public class LocalStorageVolumeManagerTest {
     @Before
     public void setUp() {
         storageVolumeDao = mock(JacsStorageVolumeDao.class);
+        storageServiceProvider = mock(ContentStorageServiceProvider.class);
+        storageService = mock(ContentStorageService.class);
         capacityNotifier = mock(NotificationService.class);
         agentStatePersistence = mock(AgentStatePersistence.class);
         Mockito.when(agentStatePersistence.getLocalStorageAgentInfo())
@@ -62,18 +58,19 @@ public class LocalStorageVolumeManagerTest {
                     jacsStorageAgent.setServedVolumes(ImmutableSet.of("v1"));
                     return jacsStorageAgent;
                 });
+        Mockito.when(storageServiceProvider.getStorageService(argThat(anyURIArg -> true))).thenReturn(storageService);
         storageVolumeManager = new LocalStorageVolumeManager(
                 storageVolumeDao,
+                storageServiceProvider,
                 agentStatePersistence,
                 capacityNotifier);
     }
 
     @Test
     public void mangedVolumes() {
-        PowerMockito.mockStatic(Files.class);
-        Mockito.when(Files.exists(Paths.get("/root/testDir"))).thenReturn(true);
-        Mockito.when(Files.exists(Paths.get("/root/testSharedDir"))).thenReturn(true);
-        Mockito.when(Files.exists(Paths.get("/root/notAccessible"))).thenReturn(false);
+        Mockito.when(storageService.canAccess("/root/testDir")).thenReturn(true);
+        Mockito.when(storageService.canAccess("/root/testSharedDir")).thenReturn(true);
+        Mockito.when(storageService.canAccess("/root/notAccessible")).thenReturn(false);
 
         Mockito.when(storageVolumeDao.findMatchingVolumes(any(StorageQuery.class), any(PageRequest.class)))
                 .then(invocation -> {
@@ -148,72 +145,53 @@ public class LocalStorageVolumeManagerTest {
     }
 
     private TestDiskUsage prepareGetAvailableStorageBytes(long usableSpace, long totalSpace) {
-        try {
-            FileStore testFileStore = mock(FileStore.class);
-            PowerMockito.mockStatic(Files.class);
-            Mockito.when(Files.notExists(any(Path.class)))
-                    .thenReturn(true, false, false);
-            Mockito.when(Files.createDirectories(any(Path.class)))
-                    .then((Answer<Path>) invocation -> invocation.getArgument(0));
-            Mockito.when(Files.getFileStore(any(Path.class)))
-                    .then((Answer<FileStore>) invocation -> testFileStore);
-            Mockito.when(testFileStore.getUsableSpace()).thenReturn(usableSpace);
-            Mockito.when(testFileStore.getTotalSpace()).thenReturn(totalSpace);
-            return new TestDiskUsage(usableSpace, totalSpace);
-        } catch (Exception e) {
-            fail(e.toString());
-            return null;
-        }
+        Mockito.when(storageService.getStorageCapacity(anyString())).thenReturn(new StorageCapacity(totalSpace, usableSpace));
+        return new TestDiskUsage(usableSpace, totalSpace);
     }
 
     @Test
-    public void updateVolumeWhenIdIsNotKnown() {
-        final String testHost = "TheTestHost";
-        JacsStorageVolume testVolume = new JacsStorageVolumeBuilder()
-                .storageAgentId(testHost)
+    public void updateVolumeWhenExistingVolumeDoesNotHaveRootStorageSet() {
+        JacsStorageVolume existingVolume = new JacsStorageVolumeBuilder()
+                .storageVolumeId(1L)
+                .storageAgentId(TEST_HOST)
+                .name("v1")
+                .active(true)
+                .build();
+        JacsStorageVolume updatedVolumeFields = new JacsStorageVolumeBuilder()
                 .storageRootTemplate("/root/testDir")
                 .addTag("t1").addTag("t2")
                 .storageServiceURL("http://storageURL")
                 .percentageFull(20)
                 .active(true)
                 .build();
-        JacsStorageVolume newlyCreatedTestVolume = new JacsStorageVolumeBuilder()
-                .storageVolumeId(1L)
-                .storageAgentId(testHost)
-                .name(testVolume.getName())
-                .active(true)
-                .build();
 
-        Mockito.when(storageVolumeDao.createStorageVolumeIfNotFound(testHost, testVolume.getName()))
-                .then(invocation -> newlyCreatedTestVolume);
-        Mockito.when(storageVolumeDao.findById(newlyCreatedTestVolume.getId()))
-                .thenReturn(newlyCreatedTestVolume);
-        Mockito.when(storageVolumeDao.update(eq(newlyCreatedTestVolume.getId()), anyMap()))
-                .thenReturn(newlyCreatedTestVolume);
+        Mockito.when(storageVolumeDao.findById(existingVolume.getId())).thenReturn(existingVolume);
+        Mockito.when(storageVolumeDao.update(eq(existingVolume.getId()), anyMap())).thenReturn(existingVolume);
+        Mockito.when(storageService.canAccess("/root/testDir")).thenReturn(true);
 
         TestDiskUsage diskUsage = prepareGetAvailableStorageBytes(199L, 300L);
 
-        storageVolumeManager.updateVolumeInfo(newlyCreatedTestVolume.getId(), testVolume);
+        storageVolumeManager.updateVolumeInfo(existingVolume.getId(), updatedVolumeFields);
 
-        Mockito.verify(storageVolumeDao).findById(newlyCreatedTestVolume.getId());
-        Mockito.verify(storageVolumeDao).update(newlyCreatedTestVolume.getId(), ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
-                .put("storageRootTemplate", new SetFieldValueHandler<>(testVolume.getStorageRootTemplate()))
-                .put("storageVirtualPath", new SetFieldValueHandler<>(testVolume.getStorageVirtualPath()))
+        Mockito.verify(storageVolumeDao).findById(existingVolume.getId());
+        Mockito.verify(storageVolumeDao).update(existingVolume.getId(), ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
+                .put("storageRootTemplate", new SetFieldValueHandler<>(updatedVolumeFields.getStorageRootTemplate()))
+                .put("storageVirtualPath", new SetFieldValueHandler<>(updatedVolumeFields.getStorageVirtualPath()))
+                .put("storageServiceURL", new SetFieldValueHandler<>(updatedVolumeFields.getStorageServiceURL()))
+                .put("storageTags", new SetFieldValueHandler<>(updatedVolumeFields.getStorageTags()))
                 .put("availableSpaceInBytes", new SetFieldValueHandler<>(diskUsage.usableSpace))
-                .put("storageServiceURL", new SetFieldValueHandler<>(testVolume.getStorageServiceURL()))
                 .put("percentageFull", new SetFieldValueHandler<>(diskUsage.usagePercentage))
-                .put("storageTags", new SetFieldValueHandler<>(testVolume.getStorageTags()))
                 .build()
         );
         Mockito.verifyNoMoreInteractions(storageVolumeDao);
     }
 
     @Test
-    public void updateVolumeWhenIdIsKnown() {
-        final String testAgentId = "TheTestHost";
-        JacsStorageVolume testVolume = new JacsStorageVolumeBuilder()
+    public void updateVolumeWhenExistingRootStorageIsSet() {
+        JacsStorageVolume existingVolume = new JacsStorageVolumeBuilder()
                 .storageVolumeId(1L)
-                .storageAgentId(testAgentId)
+                .name("v1")
+                .storageAgentId(TEST_HOST)
                 .storageRootTemplate("/root/testDir")
                 .storageVirtualPath("/testDir")
                 .addTag("t1").addTag("t2")
@@ -223,9 +201,7 @@ public class LocalStorageVolumeManagerTest {
                 .active(true)
                 .build();
 
-        JacsStorageVolume updatedTestVolume = new JacsStorageVolumeBuilder()
-                .storageVolumeId(1L)
-                .storageAgentId(testAgentId)
+        JacsStorageVolume updatedTestVolumeFields = new JacsStorageVolumeBuilder()
                 .storageRootTemplate("/root/testDir")
                 .storageVirtualPath("/testDir")
                 .addTag("t1").addTag("t2").addTag("t3")
@@ -233,17 +209,18 @@ public class LocalStorageVolumeManagerTest {
                 .active(true)
                 .build();
 
-        Mockito.when(storageVolumeDao.findById(testVolume.getId())).thenReturn(testVolume);
-        Mockito.when(storageVolumeDao.update(eq(testVolume.getId()), anyMap())).thenReturn(testVolume);
+        Mockito.when(storageVolumeDao.findById(existingVolume.getId())).thenReturn(existingVolume);
+        Mockito.when(storageVolumeDao.update(eq(existingVolume.getId()), anyMap())).thenReturn(existingVolume);
+        Mockito.when(storageService.canAccess("/root/testDir")).thenReturn(true);
         TestDiskUsage diskUsage = prepareGetAvailableStorageBytes(199L, 300L);
 
-        storageVolumeManager.updateVolumeInfo(updatedTestVolume.getId(), updatedTestVolume);
+        storageVolumeManager.updateVolumeInfo(existingVolume.getId(), updatedTestVolumeFields);
 
-        Mockito.verify(storageVolumeDao).findById(testVolume.getId());
-        Mockito.verify(storageVolumeDao).update(testVolume.getId(), ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
+        Mockito.verify(storageVolumeDao).findById(existingVolume.getId());
+        Mockito.verify(storageVolumeDao).update(existingVolume.getId(), ImmutableMap.<String, EntityFieldValueHandler<?>>builder()
+                .put("storageTags", new SetFieldValueHandler<>(updatedTestVolumeFields.getStorageTags()))
                 .put("availableSpaceInBytes", new SetFieldValueHandler<>(diskUsage.usableSpace))
                 .put("percentageFull", new SetFieldValueHandler<>(diskUsage.usagePercentage))
-                .put("storageTags", new SetFieldValueHandler<>(updatedTestVolume.getStorageTags()))
                 .build()
         );
         Mockito.verifyNoMoreInteractions(storageVolumeDao);

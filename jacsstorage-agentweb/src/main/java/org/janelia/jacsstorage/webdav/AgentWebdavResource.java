@@ -91,7 +91,7 @@ public class AgentWebdavResource {
                             : nodeInfo.getNodeRelativePath();
                     nodeInfo.setNumericStorageId(dataBundle.getId());
                     nodeInfo.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
-                    nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
+                    nodeInfo.setStorageRootBinding(dataBundle.getStorageRootBinding());
                     nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
                             .path(Constants.AGENTSTORAGE_URI_PATH)
                             .path(dataBundle.getId().toString())
@@ -157,7 +157,7 @@ public class AgentWebdavResource {
                                         : nodeInfo.getNodeRelativePath();
                                 nodeInfo.setNumericStorageId(dataBundle.getId());
                                 nodeInfo.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
-                                nodeInfo.setStorageRootPathURI(dataBundle.getStorageURI());
+                                nodeInfo.setStorageRootBinding(dataBundle.getStorageRootBinding());
                                 nodeInfo.setNodeAccessURL(resourceURI.getBaseUriBuilder()
                                         .path(Constants.AGENTSTORAGE_URI_PATH)
                                         .path(dataBundle.getId().toString())
@@ -203,8 +203,8 @@ public class AgentWebdavResource {
                     Stream<DataNodeInfo> dataBundleNodesStream = dataStorageService.streamDataEntries(dataEntryPath, null, storageFormat, depth).limit(MAX_NODE_ENTRIES);
                     Multistatus multistatusResponse = WebdavUtils.convertNodeList(dataBundleNodesStream,
                             (nodeInfo) -> {
-                                nodeInfo.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
-                                nodeInfo.setStorageRootPathURI(OriginalStoragePathURI.createPathURI(dataEntryPath.toString()));
+                                nodeInfo.setStorageRootLocation(storageVolume.getStorageRootLocation());
+//!!!!!!                                nodeInfo.setStorageRootBinding(OriginalStoragePathURI.createPathURI(dataEntryPath.toString()));
                                 return nodeInfo;
                             },
                             (nodeInfo) -> {

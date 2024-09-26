@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.localservice;
+package org.janelia.jacsstorage.service.impl.localservice;
 
 import java.util.List;
 import java.util.Set;
@@ -18,6 +18,7 @@ import org.janelia.jacsstorage.config.ApplicationConfigValueResolver;
 import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
@@ -52,17 +53,22 @@ public class StorageVolumeBootstrapper {
     @TimedMethod
     public List<JacsStorageVolume> initializeStorageVolumes(String storageAgentId) {
         // initialize the list of specified volumes plus the overflow volume
-        return Stream.concat(bootstrappedVolumeNames.stream(), Stream.of(JacsStorageVolume.OVERFLOW_VOLUME))
+        return Stream.concat(bootstrappedVolumeNames.stream(), Stream.of(JacsStorageVolume.GENERIC_S3))
                 .map(volumeName -> {
                     boolean shared;
-                    if (JacsStorageVolume.OVERFLOW_VOLUME.equals(volumeName)) {
+                    JacsStorageType storageType;
+                    if (JacsStorageVolume.GENERIC_S3.equals(volumeName)) {
                         shared = true;
+                        storageType = JacsStorageType.S3;
                     } else {
                         shared = applicationConfig.getBooleanPropertyValue(
                                 getVolumeConfigPropertyName(volumeName, "Shared"));
+                        storageType = JacsStorageType.fromName(applicationConfig.getStringPropertyValue(
+                                getVolumeConfigPropertyName(volumeName, "Storage"),
+                                JacsStorageType.FILE_SYSTEM.name()));
                     }
                     LOG.info("Bootstrap {} volume {} at {}", shared ? "shared" : "local", volumeName, storageAgentId);
-                    return storageVolumeManager.createStorageVolumeIfNotFound(volumeName, shared ? null : storageAgentId);
+                    return storageVolumeManager.createStorageVolumeIfNotFound(volumeName, storageType, shared ? null : storageAgentId);
                 })
                 .filter(storageVolume -> storageVolume != null)
                 .map(storageVolume -> {

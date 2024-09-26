@@ -1,12 +1,12 @@
-package org.janelia.jacsstorage.service.distributedservice;
+package org.janelia.jacsstorage.service.impl.distributedservice;
 
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
-import org.janelia.jacsstorage.service.distributedservice.DistributedStorageLookupService;
-import org.janelia.jacsstorage.service.distributedservice.StorageAgentManager;
+import org.janelia.jacsstorage.service.impl.distributedservice.DistributedStorageLookupService;
+import org.janelia.jacsstorage.service.impl.distributedservice.StorageAgentManager;
 import org.junit.Before;
 import org.junit.Test;
 

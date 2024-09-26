@@ -309,7 +309,6 @@ public class OriginalStorageResourceHelper {
         return Response
                 .ok(dataBundleContentStream.peek(dn -> {
                     dn.setNumericStorageId(dataBundle.getId());
-                    dn.setStorageRootPathURI(dataBundle.getStorageURI());
                     dn.setNodeAccessURL(UriBuilder.fromUri(baseURI)
                             .path(Constants.AGENTSTORAGE_URI_PATH)
                             .path(dataBundle.getId().toString())
@@ -367,8 +366,8 @@ public class OriginalStorageResourceHelper {
                                         Path dataNodeRelativePath = storageVolume.getOriginalPathRelativeToBaseStorageRoot(dataNodeAbsolutePath);
                                         DataNodeInfo newDataNode = new DataNodeInfo();
                                         newDataNode.setStorageId(dn.getStorageId());
-                                        newDataNode.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
-                                        newDataNode.setStorageRootPathURI(storageVolume.getStorageURI());
+                                        newDataNode.setStorageRootLocation(storageVolume.getStorageRootLocation());
+                                        newDataNode.setStorageRootBinding(storageVolume.getVolumeStorageRootURI().getJadeStorage());
                                         newDataNode.setNodeAccessURL(UriBuilder.fromUri(baseURI)
                                                 .path(Constants.AGENTSTORAGE_URI_PATH)
                                                 .path("storage_volume")
@@ -411,7 +410,6 @@ public class OriginalStorageResourceHelper {
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundle.getId());
         newDataNode.setStorageRootLocation(dataBundle.getRealStoragePath().toString());
-        newDataNode.setStorageRootPathURI(dataBundle.getStorageURI());
         newDataNode.setNodeAccessURL(newContentURI.toString());
         newDataNode.setNodeInfoURL(UriBuilder.fromUri(baseURI)
                 .path(Constants.AGENTSTORAGE_URI_PATH)
@@ -452,8 +450,7 @@ public class OriginalStorageResourceHelper {
                 .path(dataNodeRelativePath.toString())
                 .build();
         DataNodeInfo newDataNode = new DataNodeInfo();
-        newDataNode.setStorageRootLocation(storageVolume.getBaseStorageRootDir());
-        newDataNode.setStorageRootPathURI(storageVolume.getStorageURI());
+        newDataNode.setStorageRootLocation(storageVolume.getStorageRootLocation());
         newDataNode.setNodeAccessURL(newContentURI.toString());
         newDataNode.setNodeInfoURL(UriBuilder.fromUri(baseURI)
                 .path(Constants.AGENTSTORAGE_URI_PATH)

@@ -54,7 +54,7 @@ public class JADEStorageURITest {
                         "scicompsoft-public",
                         "",
                         "",
-                        "/scicompsoft/flynp/pipeline_info/software_versions.yml",
+                        "/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
                         JacsStorageType.FILE_SYSTEM,
                         "/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml"
                 ),
@@ -117,7 +117,7 @@ public class JADEStorageURITest {
                         "s3.us-east-1.lyvecloud.seagate.com",
                         "NNQ20KNJ2YCWWMPE",
                         "IID4TNAS3OXI2UUAAKK21CCYHJRAP3JM",
-                        "/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
+                        "/s3.us-east-1.lyvecloud.seagate.com/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
                         JacsStorageType.FILE_SYSTEM,
                         "/s3.us-east-1.lyvecloud.seagate.com/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml"
                 ),
@@ -126,7 +126,7 @@ public class JADEStorageURITest {
                         "s3.us-east-1.lyvecloud.seagate.com",
                         "",
                         "",
-                        "/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
+                        "/s3.us-east-1.lyvecloud.seagate.com/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
                         JacsStorageType.FILE_SYSTEM,
                         "/s3.us-east-1.lyvecloud.seagate.com/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml"
                 ),
@@ -144,7 +144,7 @@ public class JADEStorageURITest {
                         "scicompsoft-public",
                         "",
                         "",
-                        "/scicompsoft/flynp/pipeline_info/software_versions.yml",
+                        "/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
                         JacsStorageType.FILE_SYSTEM,
                         "/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml"
                 ),

@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.localservice;
+package org.janelia.jacsstorage.service.impl.localservice;
 
 import java.util.List;
 
@@ -11,8 +11,10 @@ import org.hamcrest.beans.HasPropertyWithValue;
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.coreutils.NetUtils;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.janelia.jacsstorage.service.impl.localservice.StorageVolumeBootstrapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -21,6 +23,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -38,13 +41,15 @@ public class StorageVolumeBootstrapperTest {
     @Before
     public void setUp() {
         storageVolumeManager = mock(StorageVolumeManager.class);
-        Mockito.when(storageVolumeManager.createStorageVolumeIfNotFound(anyString(), argThat(argument -> true)))
+        Mockito.when(storageVolumeManager.createStorageVolumeIfNotFound(anyString(), argThat(st -> true), argThat(argument -> true)))
                 .then(invocation -> {
                     String volumeName = invocation.getArgument(0);
-                    String storageAgentId = invocation.getArgument(1);
+                    JacsStorageType storageType = invocation.getArgument(1);
+                    String storageAgentId = invocation.getArgument(2);
                     JacsStorageVolume sv = new JacsStorageVolume();
                     sv.setId(TEST_VOLUME_ID);
                     sv.setName(volumeName);
+                    sv.setStorageType(storageType);
                     sv.setStorageAgentId(storageAgentId);
                     sv.setShared(StringUtils.isBlank(storageAgentId));
                     return sv;
@@ -79,7 +84,6 @@ public class StorageVolumeBootstrapperTest {
                                         .put("StorageAgent.StorageHost", "")
                                         .put("otherKey", "otherKeyValue")
                                         .put("andAnother", "andAnotherValue")
-                                        .put("StorageVolume.OVERFLOW_VOLUME.RootDir", "/overflow")
                                         .build()
                                 )
                                 .build(),
@@ -94,9 +98,11 @@ public class StorageVolumeBootstrapperTest {
                                         new HasPropertyWithValue<>("storageVirtualPath", equalTo("/shared/jadestorage")),
                                         new HasPropertyWithValue<>("shared", equalTo(true))
                                 ),
-                                allOf(new HasPropertyWithValue<>("name", equalTo("OVERFLOW_VOLUME")),
-                                        new HasPropertyWithValue<>("storageRootTemplate", equalTo("/overflow")),
-                                        new HasPropertyWithValue<>("shared", equalTo(true))
+                                allOf(new HasPropertyWithValue<>("name", equalTo("GenericS3Volume")),
+                                        new HasPropertyWithValue<>("storageRootTemplate", nullValue()),
+                                        new HasPropertyWithValue<>("storageVirtualPath", nullValue()),
+                                        new HasPropertyWithValue<>("shared", equalTo(true)),
+                                        new HasPropertyWithValue<>("storageType", equalTo(JacsStorageType.S3))
                                 )
                         )
                 ),
@@ -112,7 +118,6 @@ public class StorageVolumeBootstrapperTest {
                                         .put("StorageVolume.v2.Shared", "true")
                                         .put("StorageVolume.v2.Tags", "shared")
                                         .put("StorageAgent.StorageHost", "TheHost")
-                                        .put("StorageVolume.OVERFLOW_VOLUME.RootDir", "/overflow")
                                         .build()
                                 )
                                 .build(),
@@ -125,8 +130,11 @@ public class StorageVolumeBootstrapperTest {
                                         new HasPropertyWithValue<>("storageRootTemplate", equalTo("/data/jadestorage")),
                                         new HasPropertyWithValue<>("storageVirtualPath", equalTo("/shared/jadestorage"))
                                 ),
-                                allOf(new HasPropertyWithValue<>("name", equalTo("OVERFLOW_VOLUME")),
-                                        new HasPropertyWithValue<>("storageRootTemplate", equalTo("/overflow"))
+                                allOf(new HasPropertyWithValue<>("name", equalTo("GenericS3Volume")),
+                                        new HasPropertyWithValue<>("storageRootTemplate", nullValue()),
+                                        new HasPropertyWithValue<>("storageVirtualPath", nullValue()),
+                                        new HasPropertyWithValue<>("shared", equalTo(true)),
+                                        new HasPropertyWithValue<>("storageType", equalTo(JacsStorageType.S3))
                                 )
                         )
                 )

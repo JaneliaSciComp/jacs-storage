@@ -37,4 +37,11 @@ public interface DataContentService {
      * @return
      */
     long writeDataStream(JADEStorageURI contentURI, InputStream dataStream);
+
+    /**
+     * List content nodes from the specified URI.
+     *
+     * @param storageURI
+     */
+    void removeData(JADEStorageURI storageURI);
 }

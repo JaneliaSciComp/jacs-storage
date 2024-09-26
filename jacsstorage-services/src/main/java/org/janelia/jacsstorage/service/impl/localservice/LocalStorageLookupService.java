@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.localservice;
+package org.janelia.jacsstorage.service.impl.localservice;
 
 import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;

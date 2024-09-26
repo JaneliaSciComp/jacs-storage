@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.service.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -20,6 +21,7 @@ import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
+import org.janelia.jacsstorage.service.StorageCapacity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +30,16 @@ public class FileSystemStorageService implements ContentStorageService {
     private final static Logger LOG = LoggerFactory.getLogger(FileSystemStorageService.class);
 
     FileSystemStorageService() {
+    }
+
+    @Override
+    public boolean canAccess(String contentLocation) {
+        Path contentPath = Paths.get(contentLocation);
+        if (Files.exists(contentPath)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -131,4 +143,23 @@ public class FileSystemStorageService implements ContentStorageService {
             }
         }
     }
+
+    @Override
+    public StorageCapacity getStorageCapacity(String contentLocation) {
+        Path contentPath = getContentPath(contentLocation);
+        if (contentPath == null) {
+            return new StorageCapacity(0, 0);
+        }
+        try {
+            FileStore fs = Files.getFileStore(contentPath);
+            return new StorageCapacity(
+                    fs.getTotalSpace(),
+                    fs.getUsableSpace()
+            );
+        } catch (IOException e) {
+            throw new ContentException(e);
+        }
+    }
+
+
 }

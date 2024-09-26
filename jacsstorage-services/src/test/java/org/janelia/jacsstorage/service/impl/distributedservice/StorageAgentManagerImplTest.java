@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.distributedservice;
+package org.janelia.jacsstorage.service.impl.distributedservice;
 
 import java.util.List;
 import java.util.Map;
@@ -14,6 +14,9 @@ import com.google.common.collect.ImmutableSet;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.ConnectionState;
 import org.janelia.jacsstorage.service.NotificationService;
+import org.janelia.jacsstorage.service.impl.distributedservice.AgentConnectionTester;
+import org.janelia.jacsstorage.service.impl.distributedservice.StorageAgentConnection;
+import org.janelia.jacsstorage.service.impl.distributedservice.StorageAgentManagerImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

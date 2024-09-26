@@ -1,7 +1,6 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
 import java.net.URI;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import javax.annotation.Nonnull;
@@ -98,11 +97,28 @@ public class JADEStorageURI {
         return storageURI.getHost() == null ? "" : getStorageScheme().value + "://" + storageURI.getHost();
     }
 
+    /**
+     * @return stored object's path.
+     * So for FileSystem storage it should return file's path,
+     * for S3 it should return object's key
+     */
     public String getStorageKey() {
-        return storageURI.getPath();
+        if (getStorageType() == JacsStorageType.FILE_SYSTEM) {
+            StringBuilder storageKeyBuilder = new StringBuilder();
+            if (StringUtils.isNotBlank(getStorageHost())) {
+                storageKeyBuilder.append('/').append(getStorageHost());
+            }
+            storageKeyBuilder.append(storageURI.getPath());
+            return storageKeyBuilder.toString();
+        } else {
+            return storageURI.getPath();
+        }
     }
 
-    public String getStorageObjectName() {
+    /**
+     * @return stored object's file name.
+     */
+    public String getObjectName() {
         return Paths.get(storageURI.getPath()).getFileName().toString();
     }
 
@@ -137,9 +153,6 @@ public class JADEStorageURI {
     public String resolveJadeStorage(String relativePath) {
         StringBuilder jadeStorageBuilder = new StringBuilder();
         if (getStorageType() == JacsStorageType.FILE_SYSTEM) {
-            if (StringUtils.isNotBlank(getStorageHost())) {
-                jadeStorageBuilder.append('/').append(getStorageHost());
-            }
             jadeStorageBuilder.append(getStorageKey());
         } else {
             jadeStorageBuilder.append(getStorageScheme().value).append("://");
@@ -168,10 +181,19 @@ public class JADEStorageURI {
                 // I consider this viable only if otherStorage key starts with current's storage key
                 return null;
             }
-            return Paths.get(this.getStorageKey()).relativize(Paths.get(otherStorageURI.getStorageKey())).toString();
+            return Paths.get(thisStorageKey).relativize(Paths.get(otherStorageURI.getStorageKey())).toString();
         } else {
             return null;
         }
+    }
+
+    public @Nullable String relativizeKey(@Nonnull String otherContentKey) {
+        String thisStorageKey = this.getStorageKey();
+        if (!StringUtils.startsWith(otherContentKey, thisStorageKey)) {
+            // I consider this viable only if otherContent key starts with current's storage key
+            return null;
+        }
+        return Paths.get(thisStorageKey).relativize(Paths.get(otherContentKey)).toString();
     }
 
     public JADEStorageURI resolve(String relativePath) {

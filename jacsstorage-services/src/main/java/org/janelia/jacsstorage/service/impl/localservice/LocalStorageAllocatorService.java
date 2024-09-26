@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.localservice;
+package org.janelia.jacsstorage.service.impl.localservice;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -13,7 +13,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.StorageVolumeSelector;
 import org.janelia.jacsstorage.service.impl.AbstractStorageAllocatorService;
-import org.janelia.jacsstorage.service.impl.OverflowStorageVolumeSelector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,8 +81,7 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
     @Override
     public Optional<JacsStorageVolume> selectStorageVolume(JacsBundle dataBundle) {
         StorageVolumeSelector[] volumeSelectors = new StorageVolumeSelector[] {
-                new LocalStorageVolumeSelector(storageVolumeDao, storageAgentId),
-                new OverflowStorageVolumeSelector(storageVolumeDao)
+                new LocalStorageVolumeSelector(storageVolumeDao, storageAgentId)
         };
         JacsStorageVolume storageVolume = null;
         for (StorageVolumeSelector volumeSelector : volumeSelectors) {

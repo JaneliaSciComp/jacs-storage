@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.distributedservice;
+package org.janelia.jacsstorage.service.impl.distributedservice;
 
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
@@ -13,22 +13,25 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Random;
 
-public class RandomSharedStorageVolumeSelector implements StorageVolumeSelector {
-    private static final Logger LOG = LoggerFactory.getLogger(RandomSharedStorageVolumeSelector.class);
+public class RandomLocalStorageVolumeSelector implements StorageVolumeSelector {
+    private static final Logger LOG = LoggerFactory.getLogger(RandomLocalStorageVolumeSelector.class);
     private static final Random RANDOM_SELECTOR = new Random(System.currentTimeMillis());
 
     private final JacsStorageVolumeDao storageVolumeDao;
+    private final List<String> availableAgentIds;
     private final List<String> availableServicesURLs;
 
-    RandomSharedStorageVolumeSelector(JacsStorageVolumeDao storageVolumeDao, List<String> availableServicesURLs) {
+    RandomLocalStorageVolumeSelector(JacsStorageVolumeDao storageVolumeDao, List<String> availableAgentIds, List<String> availableServicesURLs) {
         this.storageVolumeDao = storageVolumeDao;
+        this.availableAgentIds = availableAgentIds;
         this.availableServicesURLs = availableServicesURLs;
     }
 
     @Override
     public JacsStorageVolume selectStorageVolume(JacsBundle storageRequest) {
         StorageQuery storageQuery = new StorageQuery()
-                .setShared(true)
+                .setStorageAgentIds(availableAgentIds)
+                .setLocalToAnyAgent(true)
                 .setStorageAgentURLs(availableServicesURLs);
         storageRequest.getStorageVolume()
                 .ifPresent(sv -> {
@@ -36,6 +39,7 @@ public class RandomSharedStorageVolumeSelector implements StorageVolumeSelector 
                     storageQuery.setStorageName(sv.getName());
                     storageQuery.setStorageVirtualPath(sv.getStorageVirtualPath());
                     storageQuery.setStorageTags(sv.getStorageTags());
+                    storageQuery.setAccessibleOnAgent(sv.getStorageAgentId());
                 });
         if (storageRequest.hasUsedSpaceSet()) {
             storageQuery.setMinAvailableSpaceInBytes(storageRequest.getUsedSpaceInBytes());

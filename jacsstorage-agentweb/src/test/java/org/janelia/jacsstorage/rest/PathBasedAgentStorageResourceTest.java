@@ -17,6 +17,7 @@ import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -179,6 +180,70 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                     return (long) testData.length();
                 });
         Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(urlEncodedPath).request().get();
+        assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
+        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
+    }
+
+    @Test
+    public void retrieveDataStreamFromS3UsingAWSS3URI() throws IOException {
+        String testPath = "s3://testBucket/testPrefix/test.key";
+        DataContentService storageContentReader = dependenciesProducer.getDataContentService();
+        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        when(storageVolumeManager.findVolumes(
+                eq(new StorageQuery().setStorageType(JacsStorageType.S3).setDataStoragePath(testPath))))
+                .thenReturn(ImmutableList.of(
+                                new JacsStorageVolumeBuilder()
+                                        .storageType(JacsStorageType.S3)
+                                        .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
+                                        .build()
+                        )
+                );
+        String testData = "Test data";
+        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+                .then(invocation -> {
+                    OutputStream out = invocation.getArgument(2);
+                    out.write(testData.getBytes());
+                    return (long) testData.length();
+                });
+        Response response = target()
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path("storage_path/data_content")
+                .path(expectedDataURI.getJadeStorage())
+                .request()
+                .get();
+        assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
+        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
+    }
+
+    @Test
+    public void retrieveDataStreamFromS3UsingEndpointURI() throws IOException {
+        String testPath = "https://user:secret@testEndpoint/testBucket/testPrefix/test.key";
+        DataContentService storageContentReader = dependenciesProducer.getDataContentService();
+        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        when(storageVolumeManager.findVolumes(
+                eq(new StorageQuery().setStorageType(JacsStorageType.S3).setDataStoragePath(testPath))))
+                .thenReturn(ImmutableList.of(
+                                new JacsStorageVolumeBuilder()
+                                        .storageType(JacsStorageType.S3)
+                                        .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
+                                        .build()
+                        )
+                );
+        String testData = "Test data";
+        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+                .then(invocation -> {
+                    OutputStream out = invocation.getArgument(2);
+                    out.write(testData.getBytes());
+                    return (long) testData.length();
+                });
+        Response response = target()
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path("storage_path/data_content")
+                .path(expectedDataURI.getJadeStorage())
+                .request()
+                .get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
     }

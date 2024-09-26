@@ -99,32 +99,36 @@ public class ContentFilterParams {
         return naturalSort;
     }
 
-    public void setNaturalSort(boolean naturalSort) {
+    public ContentFilterParams setNaturalSort(boolean naturalSort) {
         this.naturalSort = naturalSort;
+        return this;
     }
 
     public boolean isAlwaysArchive() {
         return alwaysArchive;
     }
 
-    public void setAlwaysArchive(boolean alwaysArchive) {
+    public ContentFilterParams setAlwaysArchive(boolean alwaysArchive) {
         this.alwaysArchive = alwaysArchive;
+        return this;
     }
 
     public int getStartEntryIndex() {
         return startEntryIndex;
     }
 
-    public void setStartEntryIndex(int startEntryIndex) {
+    public ContentFilterParams setStartEntryIndex(int startEntryIndex) {
         this.startEntryIndex = startEntryIndex;
+        return this;
     }
 
     public int getEntriesCount() {
         return entriesCount;
     }
 
-    public void setEntriesCount(int entriesCount) {
+    public ContentFilterParams setEntriesCount(int entriesCount) {
         this.entriesCount = entriesCount;
+        return this;
     }
 
     public boolean isEstimateSizeDisabled() {

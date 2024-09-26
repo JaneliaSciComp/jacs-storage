@@ -15,13 +15,17 @@ import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
+import org.janelia.jacsstorage.service.StorageCapacity;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 
@@ -54,6 +58,22 @@ public class S3StorageService implements ContentStorageService {
     S3StorageService(String bucket) {
         this.bucket = bucket;
         s3Client = S3Client.create();
+    }
+
+    @Override
+    public boolean canAccess(String contentLocation) {
+        S3ContentLocation s3Location = getS3Location(contentLocation);
+
+        HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+                .bucket(s3Location.bucket)
+                .key(s3Location.key)
+                .build();
+        try {
+            HeadObjectResponse response = s3Client.headObject(headObjectRequest);
+            return true;
+        } catch (S3Exception e) {
+            return false;
+        }
     }
 
     public List<ContentNode> listContentNodes(String contentLocation, ContentFilterParams filterParams) {
@@ -151,5 +171,10 @@ public class S3StorageService implements ContentStorageService {
         } catch (Exception e) {
             throw new ContentException("Error deleting content at " + contentLocation, e);
         }
+    }
+
+    @Override
+    public StorageCapacity getStorageCapacity(String contentLocation) {
+        return new StorageCapacity(-1L, -1L); // don't know how to calculate it
     }
 }

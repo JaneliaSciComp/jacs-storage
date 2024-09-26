@@ -234,7 +234,7 @@ public class VolumeStorageResource {
                                 java.nio.file.Path dataNodeVolumeRelativePath = storageVolume.getOriginalPathRelativeToBaseStorageRoot(dataNodeAbsolutePath);
                                 dn.setNumericStorageId(storageVolume.getId());
                                 dn.setStorageRootLocation(storageVolume.getStorageVirtualPath());
-                                dn.setStorageRootPathURI(storageVolume.getStorageURI());
+                                dn.setStorageRootBinding(storageVolume.getStorageVirtualPath());
                                 if (storageFormat == JacsStorageFormat.SINGLE_DATA_FILE) {
                                     dn.setNodeRelativePath(dataNodeVolumeRelativePath.toString().replace('\\', '/'));
                                 }
