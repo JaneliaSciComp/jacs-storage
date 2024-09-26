@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.impl.content_filters.tiff;
+package org.janelia.jacsstorage.service.impl.contenthandling.tiff;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -13,7 +13,7 @@ import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.impl.ContentFilter;
-import org.janelia.jacsstorage.service.impl.content_filters.ContentNodeHelper;
+import org.janelia.jacsstorage.service.impl.contenthandling.ContentNodeHelper;
 import org.janelia.rendering.utils.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

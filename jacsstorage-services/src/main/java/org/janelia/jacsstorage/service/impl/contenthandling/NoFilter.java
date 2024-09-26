@@ -1,9 +1,11 @@
-package org.janelia.jacsstorage.service.impl.content_filters;
+package org.janelia.jacsstorage.service.impl.contenthandling;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+
+import javax.enterprise.inject.Vetoed;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -16,6 +18,7 @@ import org.janelia.jacsstorage.service.impl.ContentFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Vetoed
 public class NoFilter implements ContentFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(NoFilter.class);
@@ -24,6 +27,10 @@ public class NoFilter implements ContentFilter {
 
     public NoFilter(boolean alwaysArchive) {
         this.alwaysArchive = alwaysArchive;
+    }
+
+    NoFilter() {
+        this(false);
     }
 
     @Override
@@ -70,5 +77,4 @@ public class NoFilter implements ContentFilter {
             throw new ContentException(e);
         }
     }
-
 }

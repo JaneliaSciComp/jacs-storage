@@ -62,14 +62,6 @@ public class PathBasedAgentStorageResource {
     @Inject
     private DataContentService dataContentService;
     @Inject
-    private OriginalDataStorageService originalDataStorageService;
-    @Inject
-    @LocalInstance
-    private StorageAllocatorService storageAllocatorService;
-    @Inject
-    @LocalInstance
-    private StorageLookupService storageLookupService;
-    @Inject
     @LocalInstance
     private StorageVolumeManager storageVolumeManager;
     @Context
@@ -332,14 +324,45 @@ public class PathBasedAgentStorageResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path/data_info/{dataPath:.+}")
-    public Response retrieveDataInfo(@PathParam("dataPath") String dataPathParam) {
-        LOG.debug("Retrieve data info from {}", dataPathParam);
-        OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(originalDataStorageService, storageLookupService, storageVolumeManager);
-        return storageResourceHelper.handleResponseForFullDataPathParam(
-                OriginalStoragePathURI.createAbsolutePathURI(dataPathParam),
-                (dataBundle, dataEntryPath) -> storageResourceHelper.retrieveContentInfoFromDataBundle(dataBundle, dataEntryPath),
-                (storageVolume, storageDataPathURI) -> storageResourceHelper.retrieveContentInfoFromFile(storageVolume, Paths.get(storageDataPathURI.getStoragePath()))
-        ).build();
+    public Response retrieveContentMetadata(@PathParam("dataPath") String dataPathParam) {
+        try {
+            LOG.debug("Retrieve metadata from {}", dataPathParam);
+            JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam);
+            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
+            List<JacsStorageVolume> volumeCandidates;
+            try {
+                volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
+            } catch (IllegalArgumentException e) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse(e.getMessage()))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            if (CollectionUtils.isEmpty(volumeCandidates)) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No managed volume found for " + contentURI))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            List<JacsStorageVolume> accessibleVolumes = volumeCandidates.stream()
+                    .filter(storageVolume -> storageVolume.hasPermission(JacsStoragePermission.READ))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(accessibleVolumes)) {
+                return Response.status(Response.Status.FORBIDDEN)
+                        .entity(new ErrorResponse("No permissions to access " + contentURI))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            return accessibleVolumes.stream()
+                    .findFirst()
+                    .flatMap(aStorageVolume -> aStorageVolume.resolveDataContentURI(contentURI))
+                    .map(resolvedContentURI -> Response.ok(dataContentService.readNodeMetadata(resolvedContentURI)))
+                    .orElse(Response.status(Response.Status.NOT_FOUND)
+                            .header("Content-Length", 0))
+                    .build();
+        } finally {
+            LOG.debug("Complete retrieve metadata from {}", dataPathParam);
+        }
     }
 
     @ApiOperation(

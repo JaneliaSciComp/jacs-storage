@@ -8,14 +8,14 @@ import com.google.common.collect.Streams;
 import org.janelia.jacsstorage.io.contenthandlers.EmptyContentInfoExtractor;
 import org.janelia.jacsstorage.io.contenthandlers.NoOPContentConverter;
 
-public class ContentHandlerProvider {
+public class OriginalContentHandlerProvider {
 
     private final Instance<ContentConverter> contentConverterSource;
     private final Instance<ContentInfoExtractor> contentInfoExtractorsSource;
 
     @Inject
-    public ContentHandlerProvider(Instance<ContentConverter> contentConverterSource,
-                                  Instance<ContentInfoExtractor> contentInfoExtractorsSource) {
+    public OriginalContentHandlerProvider(Instance<ContentConverter> contentConverterSource,
+                                          Instance<ContentInfoExtractor> contentInfoExtractorsSource) {
         this.contentConverterSource = contentConverterSource;
         this.contentInfoExtractorsSource = contentInfoExtractorsSource;
     }

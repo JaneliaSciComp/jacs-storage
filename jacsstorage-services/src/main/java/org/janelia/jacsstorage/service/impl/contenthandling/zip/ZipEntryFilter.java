@@ -1,16 +1,11 @@
-package org.janelia.jacsstorage.service.impl.content_filters.zip;
+package org.janelia.jacsstorage.service.impl.contenthandling.zip;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -19,16 +14,11 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
-import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
-import org.janelia.jacsstorage.io.ContentConverter;
 import org.janelia.jacsstorage.io.ContentFilterParams;
-import org.janelia.jacsstorage.io.DataContent;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.impl.ContentFilter;
-import org.janelia.jacsstorage.service.impl.content_filters.ContentNodeHelper;
-import org.janelia.rendering.utils.ImageUtils;
+import org.janelia.jacsstorage.service.impl.contenthandling.ContentNodeHelper;
 
 public class ZipEntryFilter implements ContentFilter {
 

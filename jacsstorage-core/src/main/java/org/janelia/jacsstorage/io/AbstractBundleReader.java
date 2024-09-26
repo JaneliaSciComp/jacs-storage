@@ -19,10 +19,10 @@ abstract class AbstractBundleReader implements BundleReader {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractBundleReader.class);
 
-    final ContentHandlerProvider contentHandlerProvider;
+    final OriginalContentHandlerProvider contentHandlerProvider;
     private final MimetypesFileTypeMap mimetypesFileTypeMap;
 
-    AbstractBundleReader(ContentHandlerProvider contentHandlerProvider) {
+    AbstractBundleReader(OriginalContentHandlerProvider contentHandlerProvider) {
         this.contentHandlerProvider = contentHandlerProvider;
         this.mimetypesFileTypeMap = new MimetypesFileTypeMap();
     }

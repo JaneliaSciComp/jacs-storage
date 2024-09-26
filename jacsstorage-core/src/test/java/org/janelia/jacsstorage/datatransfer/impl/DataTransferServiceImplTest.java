@@ -28,7 +28,7 @@ import org.janelia.jacsstorage.datatransfer.TransferState;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
 import org.janelia.jacsstorage.io.ContentFilterParams;
-import org.janelia.jacsstorage.io.ContentHandlerProvider;
+import org.janelia.jacsstorage.io.OriginalContentHandlerProvider;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.io.SingleFileBundleReader;
 import org.janelia.jacsstorage.io.SingleFileBundleWriter;
@@ -61,7 +61,7 @@ public class DataTransferServiceImplTest {
     public void setUp() throws IOException {
         Instance<BundleReader> bundleReaderSource = mock(Instance.class);
         Instance<BundleWriter> bundleWriterSource = mock(Instance.class);
-        ContentHandlerProvider contentHandlerProvider = mock(ContentHandlerProvider.class);
+        OriginalContentHandlerProvider contentHandlerProvider = mock(OriginalContentHandlerProvider.class);
         Mockito.when(contentHandlerProvider.getContentConverter(any(ContentFilterParams.class)))
                 .thenReturn(new NoOPContentConverter(false));
         when(bundleReaderSource.iterator()).thenReturn(ImmutableList.<BundleReader>of(new SingleFileBundleReader(contentHandlerProvider)).iterator());

@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.impl.content_filters;
+package org.janelia.jacsstorage.service.impl.contenthandling;
 
 import java.util.List;
 

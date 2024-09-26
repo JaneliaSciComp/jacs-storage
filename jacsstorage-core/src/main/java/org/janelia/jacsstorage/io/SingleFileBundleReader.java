@@ -1,8 +1,6 @@
 package org.janelia.jacsstorage.io;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
@@ -18,9 +16,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -30,7 +26,7 @@ public class SingleFileBundleReader extends AbstractBundleReader {
     private final static Logger LOG = LoggerFactory.getLogger(SingleFileBundleReader.class);
 
     @Inject
-    public SingleFileBundleReader(ContentHandlerProvider contentHandlerProvider) {
+    public SingleFileBundleReader(OriginalContentHandlerProvider contentHandlerProvider) {
         super(contentHandlerProvider);
     }
 

@@ -51,7 +51,7 @@ public class DataDirectoryBundleReaderWriterTest {
 
     @Before
     public void setUp() throws IOException {
-        ContentHandlerProvider contentHandlerProvider = Mockito.mock(ContentHandlerProvider.class);
+        OriginalContentHandlerProvider contentHandlerProvider = Mockito.mock(OriginalContentHandlerProvider.class);
         Mockito.when(contentHandlerProvider.getContentConverter(ArgumentMatchers.any(ContentFilterParams.class)))
                 .thenReturn(new NoOPContentConverter(false));
         dataDirectoryBundleReader = new DataDirectoryBundleReader(contentHandlerProvider);

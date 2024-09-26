@@ -8,7 +8,6 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +32,7 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
     private final static Logger LOG = LoggerFactory.getLogger(SingleFileBundleReader.class);
 
     @Inject
-    DataDirectoryBundleReader(ContentHandlerProvider contentHandlerProvider) {
+    DataDirectoryBundleReader(OriginalContentHandlerProvider contentHandlerProvider) {
         super(contentHandlerProvider);
     }
 

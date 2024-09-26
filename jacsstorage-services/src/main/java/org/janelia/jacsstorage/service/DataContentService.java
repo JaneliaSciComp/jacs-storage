@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Map;
 
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
@@ -19,6 +20,13 @@ public interface DataContentService {
      * @return
      */
     List<ContentNode> listDataNodes(JADEStorageURI storageURI, ContentFilterParams filterParams);
+
+    /**
+     * Read content's node metadata - a map of attributes that depends on the content.
+     * @param storageURI
+     * @return
+     */
+    Map<String, Object> readNodeMetadata(JADEStorageURI storageURI);
 
     /**
      * Read data from the specified URI and apply filter based on filterParams.

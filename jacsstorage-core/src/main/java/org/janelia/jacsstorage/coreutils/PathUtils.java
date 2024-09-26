@@ -202,4 +202,16 @@ public class PathUtils {
         }
         return StringUtils.isNotBlank(ext) ? "." + ext : "";
     }
+
+    public static String getFilenameExt(String fn) {
+        int extDelimPos = fn.lastIndexOf('.');
+        String ext;
+        if (extDelimPos == -1) {
+            ext = "";
+        } else {
+            ext = fn.substring(extDelimPos + 1);
+        }
+        return StringUtils.isNotBlank(ext) ? "." + ext : "";
+    }
+
 }

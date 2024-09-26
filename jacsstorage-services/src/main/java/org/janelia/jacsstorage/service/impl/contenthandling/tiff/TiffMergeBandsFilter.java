@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.impl.content_filters.tiff;
+package org.janelia.jacsstorage.service.impl.contenthandling.tiff;
 
 import java.io.OutputStream;
 import java.util.List;
