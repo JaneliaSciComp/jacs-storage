@@ -80,8 +80,8 @@ public class PathBasedAgentStorageResource {
     public Response checkPath(@PathParam("dataPath") String dataPathParam, @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
         try {
             LOG.debug("Start check path {}", dataPathParam);
-            JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam);
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
+            JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam);
             List<JacsStorageVolume> volumeCandidates;
             try {
                 volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
