@@ -1,6 +1,26 @@
 package org.janelia.jacsstorage.helper;
 
-import org.janelia.jacsstorage.coreutils.PathUtils;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriBuilder;
+
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
@@ -19,27 +39,6 @@ import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriBuilder;
-
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Timed
 public class OriginalStorageResourceHelper {
@@ -148,114 +147,6 @@ public class OriginalStorageResourceHelper {
             LOG.debug("Storage volumes found for {} -> {}", dirName, storageVolumes);
         }
         return storageVolumes;
-    }
-
-    public Response.ResponseBuilder checkContentFromFile(JacsStorageVolume storageVolume, Path dataEntryPath, boolean dirOnly) {
-        if (dataEntryPath == null) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .header("Content-Length", 0)
-                    ;
-        }
-        if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .header("Content-Length", 0);
-        }
-        if (Files.notExists(dataEntryPath) || (dirOnly && !Files.isDirectory(dataEntryPath))) {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .header("Content-Length", 0)
-                    ;
-        } else {
-            long fileSize;
-            if (Files.isRegularFile(dataEntryPath)) {
-                fileSize = PathUtils.getSize(dataEntryPath, 0);
-            } else {
-                fileSize = 0;
-            }
-            return Response.ok()
-                    .header("Content-Length", fileSize > 0 ? fileSize : null)
-                    ;
-        }
-    }
-
-    public Response.ResponseBuilder retrieveContentFromFile(JacsStorageVolume storageVolume, ContentFilterParams filterParams, Path dataEntryPath) {
-        if (dataEntryPath == null) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResponse("Retrieve content error - invalid path on volume " + storageVolume.getName()))
-                    .type(MediaType.APPLICATION_JSON)
-                    ;
-        }
-        if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
-            return Response
-                    .status(Response.Status.FORBIDDEN)
-                    .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to read " + dataEntryPath))
-                    .type(MediaType.APPLICATION_JSON)
-                    ;
-        }
-        if (Files.notExists(dataEntryPath)) {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No path found for " + dataEntryPath + " on volume " + storageVolume.getName()))
-                    .type(MediaType.APPLICATION_JSON)
-                    ;
-        } else {
-            JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath)
-                    ? JacsStorageFormat.SINGLE_DATA_FILE
-                    : JacsStorageFormat.DATA_DIRECTORY;
-            long fileSize;
-            if (filterParams.isEstimateSizeDisabled()) {
-                fileSize = -1;
-                LOG.info("Skip getting filesize for {}", dataEntryPath);
-            } else {
-                fileSize = dataStorageService.estimateDataEntrySize(dataEntryPath, "", storageFormat, filterParams);
-                LOG.info("{} file size is: {}", dataEntryPath, fileSize);
-            }
-            StreamingOutput fileStream = output -> {
-                try {
-                    dataStorageService.retrieveDataStream(dataEntryPath, storageFormat, filterParams, output);
-                    output.flush();
-                } catch (Exception e) {
-                    LOG.error("Error streaming data file content for {}", dataEntryPath, e);
-                    throw new WebApplicationException("Error streaming content for " + dataEntryPath, e, Response.Status.INTERNAL_SERVER_ERROR);
-                }
-            };
-            return Response
-                    .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
-                    .header("Content-Length", fileSize > 0 ? fileSize : null)
-                    .header("Content-Disposition", "attachment; filename = " + dataEntryPath.getFileName())
-                    ;
-        }
-    }
-
-    public Response.ResponseBuilder retrieveContentInfoFromFile(JacsStorageVolume storageVolume, Path dataEntryPath) {
-        if (dataEntryPath == null) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResponse("Retrieve content info error - invalid path on volume " + storageVolume.getName()))
-                    .type(MediaType.APPLICATION_JSON)
-                    ;
-        }
-        if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
-            return Response
-                    .status(Response.Status.FORBIDDEN)
-                    .entity(new ErrorResponse("No read permission for volume " + storageVolume.getName() + " to read " + dataEntryPath))
-                    .type(MediaType.APPLICATION_JSON)
-                    ;
-        }
-        if (Files.notExists(dataEntryPath)) {
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No path found for " + dataEntryPath + " on volume " + storageVolume.getName()))
-                    .type(MediaType.APPLICATION_JSON)
-                    ;
-        } else {
-            JacsStorageFormat storageFormat = Files.isRegularFile(dataEntryPath) ? JacsStorageFormat.SINGLE_DATA_FILE : JacsStorageFormat.DATA_DIRECTORY;
-            return Response
-                    .ok(dataStorageService.getDataEntryInfo(dataEntryPath, "", storageFormat))
-                    ;
-        }
     }
 
     public Response.ResponseBuilder checkContentFromDataBundle(JacsBundle dataBundle, String dataEntryPath, boolean collectionOnly) {

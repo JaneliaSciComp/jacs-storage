@@ -16,6 +16,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
 import org.janelia.jacsstorage.service.DataContentService;
+import org.janelia.jacsstorage.service.StorageCapacity;
 
 public class DataContentServiceImpl implements DataContentService {
 
@@ -29,6 +30,21 @@ public class DataContentServiceImpl implements DataContentService {
         this.contentStorageServiceProvider = contentStorageServiceProvider;
         this.contentHandlersProvider = contentHandlersProvider;
         this.mimetypesFileTypeMap = new MimetypesFileTypeMap();
+    }
+
+    @Override
+    public boolean exists(JADEStorageURI storageURI) {
+        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
+        // artificially set the filter to only select the first item
+        ContentFilterParams filterParams = new ContentFilterParams().setEntriesCount(1);
+        List<ContentNode> contentNodes = contentStorageService.listContentNodes(storageURI.getStorageKey(), filterParams);
+        return !contentNodes.isEmpty();
+    }
+
+    @Override
+    public StorageCapacity storageCapacity(JADEStorageURI storageURI) {
+        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
+        return contentStorageService.getStorageCapacity(storageURI.getStorageKey());
     }
 
     @Override
@@ -68,8 +84,12 @@ public class DataContentServiceImpl implements DataContentService {
     public long readDataStream(JADEStorageURI storageURI, ContentFilterParams filterParams, OutputStream dataStream) {
         ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
         List<ContentNode> contentNodes = contentStorageService.listContentNodes(storageURI.getStorageKey(), filterParams);
-        ContentFilter contentFilter = contentHandlersProvider.getContentFilter(filterParams);
-        return contentFilter.applyContentFilter(filterParams, contentNodes, dataStream);
+        if (contentNodes.isEmpty()) {
+            return -1;
+        } else {
+            ContentFilter contentFilter = contentHandlersProvider.getContentFilter(filterParams);
+            return contentFilter.applyContentFilter(filterParams, contentNodes, dataStream);
+        }
     }
 
     @Override

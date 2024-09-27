@@ -21,6 +21,9 @@ public class TiffMergeBandsFilter implements ContentFilter {
 
     @Override
     public long applyContentFilter(ContentFilterParams filterParams, List<ContentNode> contentNodes, OutputStream outputStream) {
+        if (contentNodes.isEmpty()) {
+            return 0L;
+        }
         Integer pageNumber = filterParams.getAsInt("z", 0);
         byte[] contentBytes = ImageUtils.bandMergedTextureBytesFromImageStreams(
                 contentNodes.stream()

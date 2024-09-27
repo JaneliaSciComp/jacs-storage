@@ -43,7 +43,9 @@ public class NoFilter implements ContentFilter {
         if (alwaysArchive) {
             return archiveContent(contentNodes, outputStream);
         } else {
-            if (contentNodes.size() == 1) {
+            if (contentNodes.isEmpty()) {
+                return 0;
+            } else if (contentNodes.size() == 1) {
                 try (InputStream nodeContentStream = contentNodes.get(0).getContent()) {
                     return IOStreamUtils.copyFrom(nodeContentStream, outputStream);
                 } catch (IOException e) {

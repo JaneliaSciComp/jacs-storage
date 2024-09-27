@@ -13,6 +13,22 @@ import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
  */
 public interface DataContentService {
     /**
+     * Check if the content identified by the specified URI exists.
+     *
+     * @param storageURI
+     * @return
+     */
+    boolean exists(JADEStorageURI storageURI);
+
+    /**
+     * Compute storage capacity.
+     *
+     * @param storageURI
+     * @return
+     */
+    StorageCapacity storageCapacity(JADEStorageURI storageURI);
+
+    /**
      * List content nodes from the specified URI.
      *
      * @param storageURI
@@ -23,6 +39,7 @@ public interface DataContentService {
 
     /**
      * Read content's node metadata - a map of attributes that depends on the content.
+     *
      * @param storageURI
      * @return
      */
@@ -31,7 +48,7 @@ public interface DataContentService {
     /**
      * Read data from the specified URI and apply filter based on filterParams.
      *
-     * @param contentURI contentURI
+     * @param contentURI   contentURI
      * @param filterParams
      * @param dataStream
      * @return
@@ -40,6 +57,7 @@ public interface DataContentService {
 
     /**
      * Write data at the specified URI
+     *
      * @param contentURI
      * @param dataStream
      * @return

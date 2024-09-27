@@ -278,12 +278,12 @@ public class JacsStorageVolume extends AbstractEntity {
     }
 
     /**
-     * Resolve the contentStorageURI relative to
+     * Convert an absolute content URI to volume's storage root URI.
      *
      * @param contentStorageURI
      * @return
      */
-    public Optional<JADEStorageURI> resolveDataContentURI(JADEStorageURI contentStorageURI) {
+    public Optional<JADEStorageURI> relativizeContentURIToVolumeRoot(JADEStorageURI contentStorageURI) {
         JADEStorageURI storageRootURI = getVolumeStorageRootURI();
         if (storageRootURI == null) {
             // this is supported only for S3 URIs
@@ -314,6 +314,31 @@ public class JacsStorageVolume extends AbstractEntity {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Convert a relative content URI to an absolute URI.
+     *
+     * @param contentStorageURI
+     * @return
+     */
+    public Optional<JADEStorageURI> resolveContentURIToVolumeRoot(JADEStorageURI contentStorageURI) {
+        JADEStorageURI storageRootURI = getVolumeStorageRootURI();
+        if (storageRootURI == null) {
+            // this is supported only for S3 URIs
+            return contentStorageURI.getStorageType() == JacsStorageType.S3
+                    ? Optional.of(contentStorageURI)
+                    : Optional.empty();
+        }
+        StringBuilder volumeContentURIBuilder = new StringBuilder(storageRootURI.getJadeStorage());
+        String contentKey = contentStorageURI.getStorageKey();
+        if (!contentKey.startsWith("/")) {
+            volumeContentURIBuilder.append('/');
+        }
+        volumeContentURIBuilder.append(contentKey);
+        return Optional.of(
+                JADEStorageURI.createStoragePathURI(volumeContentURIBuilder.toString())
+        );
     }
 
     @Override

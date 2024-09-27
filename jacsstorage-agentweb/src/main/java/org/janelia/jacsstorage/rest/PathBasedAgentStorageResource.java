@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.rest;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,22 +30,15 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.helper.OriginalStorageResourceHelper;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
-import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
-import org.janelia.jacsstorage.securitycontext.SecurityUtils;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.DataContentService;
-import org.janelia.jacsstorage.service.OriginalDataStorageService;
-import org.janelia.jacsstorage.service.StorageAllocatorService;
-import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
 import org.slf4j.Logger;
@@ -108,7 +100,7 @@ public class PathBasedAgentStorageResource {
             }
             return accessibleVolumes.stream()
                     .findFirst()
-                    .flatMap(aStorageVolume -> aStorageVolume.resolveDataContentURI(contentURI))
+                    .flatMap(aStorageVolume -> aStorageVolume.relativizeContentURIToVolumeRoot(contentURI))
                     .map(resolvedContentURI -> {
                         List<ContentNode> contentNodes = dataContentService.listDataNodes(resolvedContentURI, new ContentFilterParams());
                         if (contentNodes.isEmpty()) {
@@ -170,7 +162,7 @@ public class PathBasedAgentStorageResource {
             ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
             return accessibleVolumes.stream()
                     .findFirst()
-                    .flatMap(aStorageVolume -> aStorageVolume.resolveDataContentURI(contentURI))
+                    .flatMap(aStorageVolume -> aStorageVolume.relativizeContentURIToVolumeRoot(contentURI))
                     .map(resolvedContentURI -> {
                         StreamingOutput outputStream = output -> {
                             dataContentService.readDataStream(resolvedContentURI, filterParams, output);
@@ -235,7 +227,7 @@ public class PathBasedAgentStorageResource {
         }
         return accessibleVolumes.stream()
                 .findFirst()
-                .flatMap(aStorageVolume -> aStorageVolume.resolveDataContentURI(contentURI))
+                .flatMap(aStorageVolume -> aStorageVolume.relativizeContentURIToVolumeRoot(contentURI))
                 .map(resolvedContentURI -> {
                     dataContentService.removeData(resolvedContentURI);
                     return Response.noContent();
@@ -289,7 +281,7 @@ public class PathBasedAgentStorageResource {
         }
         return accessibleVolumes.stream()
                 .findFirst()
-                .flatMap(aStorageVolume -> aStorageVolume.resolveDataContentURI(contentURI)
+                .flatMap(aStorageVolume -> aStorageVolume.relativizeContentURIToVolumeRoot(contentURI)
                         .map(resolvedContentURI -> Pair.of(aStorageVolume, resolvedContentURI)))
                 .map(volAndContentURIPair -> {
                     JacsStorageVolume storageVolume = volAndContentURIPair.getLeft();
@@ -355,7 +347,7 @@ public class PathBasedAgentStorageResource {
             }
             return accessibleVolumes.stream()
                     .findFirst()
-                    .flatMap(aStorageVolume -> aStorageVolume.resolveDataContentURI(contentURI))
+                    .flatMap(aStorageVolume -> aStorageVolume.relativizeContentURIToVolumeRoot(contentURI))
                     .map(resolvedContentURI -> Response.ok(dataContentService.readNodeMetadata(resolvedContentURI)))
                     .orElse(Response.status(Response.Status.NOT_FOUND)
                             .header("Content-Length", 0))
@@ -421,7 +413,7 @@ public class PathBasedAgentStorageResource {
                 .setStartEntryIndex(offset);
         return accessibleVolumes.stream()
                 .findFirst()
-                .flatMap(aStorageVolume -> aStorageVolume.resolveDataContentURI(contentURI)
+                .flatMap(aStorageVolume -> aStorageVolume.relativizeContentURIToVolumeRoot(contentURI)
                         .map(resolvedContentURI -> Pair.of(aStorageVolume, resolvedContentURI)))
                 .map(volAndContentURIPair -> {
                     JacsStorageVolume storageVolume = volAndContentURIPair.getLeft();

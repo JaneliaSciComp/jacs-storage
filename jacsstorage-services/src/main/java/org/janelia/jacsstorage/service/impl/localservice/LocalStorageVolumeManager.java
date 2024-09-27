@@ -1,19 +1,13 @@
 package org.janelia.jacsstorage.service.impl.localservice;
 
-import java.io.IOException;
-import java.nio.file.FileStore;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
@@ -29,10 +23,10 @@ import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.service.AgentStatePersistence;
 import org.janelia.jacsstorage.service.ContentStorageService;
+import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.StorageCapacity;
 import org.janelia.jacsstorage.service.impl.AbstractStorageVolumeManager;
-import org.janelia.jacsstorage.service.impl.ContentStorageServiceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,16 +38,16 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     private static final Integer FILL_UP_THRESHOLD = 85;
 
     private final AgentStatePersistence storageAgentPersistence;
-    private final ContentStorageServiceProvider storageServiceProvider;
+    private final DataContentService dataContentService;
     private final NotificationService capacityNotifier;
 
     @Inject
     public LocalStorageVolumeManager(JacsStorageVolumeDao storageVolumeDao,
-                                     ContentStorageServiceProvider storageServiceProvider,
+                                     DataContentService dataContentService,
                                      AgentStatePersistence storageAgentPersistence,
                                      NotificationService capacityNotifier) {
         super(storageVolumeDao);
-        this.storageServiceProvider = storageServiceProvider;
+        this.dataContentService = dataContentService;
         this.storageAgentPersistence = storageAgentPersistence;
         this.capacityNotifier = capacityNotifier;
     }
@@ -186,11 +180,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
             if (storageVolume.getStorageType() == JacsStorageType.S3) {
                 return true;
             }
-            ContentStorageService storageService = storageServiceProvider.getStorageService(storageVolume.getVolumeStorageRootURI());
-            if (storageService != null && storageService.canAccess(storageVolume.getStorageRootLocation())) {
-                return true;
-            }
-            return false;
+            return dataContentService.exists(storageVolume.getVolumeStorageRootURI());
         };
     }
 
@@ -223,11 +213,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     }
 
     private StorageCapacity getStorageCapacity(JADEStorageURI storageURI) {
-        ContentStorageService storageService = storageServiceProvider.getStorageService(storageURI);
-        if (storageService == null) {
-            return new StorageCapacity(-1L, -1L); // don't know how to calculate these values
-        }
-        return storageService.getStorageCapacity(storageURI.getJadeStorage());
+        return dataContentService.storageCapacity(storageURI);
     }
 
     private void notifyCapacityChange(Integer previousUsagePercentage, Integer newUsagePercentage, String volumeLocation, Number volumeId) {

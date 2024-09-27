@@ -4,9 +4,9 @@ import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.service.ContentStorageService;
 
-public class ContentStorageServiceProvider {
+class ContentStorageServiceProvider {
 
-    public ContentStorageService getStorageService(JADEStorageURI storageURI) {
+    ContentStorageService getStorageService(JADEStorageURI storageURI) {
         if (storageURI == null) {
             return null;
         }

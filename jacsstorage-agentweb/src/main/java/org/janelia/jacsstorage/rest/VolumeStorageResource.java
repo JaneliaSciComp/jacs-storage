@@ -19,6 +19,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
 import io.swagger.annotations.Api;
@@ -31,7 +32,6 @@ import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.helper.OriginalStorageResourceHelper;
-import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
@@ -61,9 +61,11 @@ public class VolumeStorageResource {
     private DataContentService dataContentService;
     @Inject
     private OriginalDataStorageService dataStorageService;
-    @Inject @LocalInstance
+    @Inject
+    @LocalInstance
     private StorageLookupService storageLookupService;
-    @Inject @LocalInstance
+    @Inject
+    @LocalInstance
     private StorageVolumeManager storageVolumeManager;
     @Inject
     private AgentState agentState;
@@ -101,8 +103,7 @@ public class VolumeStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
-            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
-            return storageVolume.resolveDataContentURI(JADEStorageURI.createStoragePathURI(storageRelativeFilePath))
+            return storageVolume.resolveContentURIToVolumeRoot(JADEStorageURI.createStoragePathURI(storageRelativeFilePath))
                     .map(resolvedContentURI -> {
                         List<ContentNode> contentNodes = dataContentService.listDataNodes(resolvedContentURI, new ContentFilterParams());
                         if (contentNodes.isEmpty()) {
@@ -133,37 +134,42 @@ public class VolumeStorageResource {
     public Response retrieveDataContentFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                          @PathParam("storageRelativePath") String storageRelativeFilePath,
                                                          @Context UriInfo requestURI) {
-        LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
-        JacsStorageVolume storageVolume;
         try {
-            storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
-        } catch (Exception e) {
-            LOG.error("Error retrieving volume info for {}", storageVolumeId, e);
-            return Response
-                    .status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(new ErrorResponse("No volume info returned for " + storageVolumeId))
-                    .type(MediaType.APPLICATION_JSON)
+            LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
+            JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
+            if (storageVolume == null) {
+                LOG.warn("No accessible volume found for {}", storageVolumeId);
+                return Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No accessible volume found for " + storageVolumeId))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            } else if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
+                LOG.warn("Attempt to read {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
+                return Response
+                        .status(Response.Status.FORBIDDEN)
+                        .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
+            return storageVolume.resolveContentURIToVolumeRoot(JADEStorageURI.createStoragePathURI(storageRelativeFilePath))
+                    .map(resolvedContentURI -> {
+                        StreamingOutput outputStream = output -> {
+                            dataContentService.readDataStream(resolvedContentURI, filterParams, output);
+                            output.flush();
+                        };
+                        return Response
+                                .ok(outputStream, MediaType.APPLICATION_OCTET_STREAM)
+                                .header("Content-Length", null)
+                                .header("Content-Disposition", "attachment; filename = " + resolvedContentURI.getObjectName())
+                                ;
+                    })
+                    .orElse(Response.status(Response.Status.NOT_FOUND)
+                            .header("Content-Length", 0))
                     .build();
-        }
-        if (storageVolume == null) {
-            LOG.warn("No accessible volume found for {}", storageVolumeId);
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No accessible volume found for " + storageVolumeId))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-        ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
-        if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
-            OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-            return storageResourceHelper.retrieveContentFromFile(storageVolume, filterParams, storageVolume.getOriginalDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).orElse(null)).build();
-        } else {
-            LOG.warn("Attempt to read {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
-            return Response
-                    .status(Response.Status.FORBIDDEN)
-                    .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
+        } finally {
+            LOG.debug("Complete retrieving data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         }
     }
 
@@ -176,26 +182,32 @@ public class VolumeStorageResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_volume/{storageVolumeId}/data_info/{storageRelativePath:.+}")
-    public Response retrieveDataInfoFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
+    public Response retrieveMetadataFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                       @PathParam("storageRelativePath") String storageRelativeFilePath) {
-        LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
-        JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
-        if (storageVolume == null) {
-            LOG.warn("No accessible volume found for {}", storageVolumeId);
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No accessible volume found for " + storageVolumeId))
+        try {
+            LOG.debug("Retrieve metadata from volume {}:{}", storageVolumeId, storageRelativeFilePath);
+            JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
+            if (storageVolume == null) {
+                LOG.warn("No accessible volume found for {}", storageVolumeId);
+                return Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No accessible volume found for " + storageVolumeId))
+                        .build();
+            } else if (!storageVolume.hasPermission(JacsStoragePermission.READ)) {
+                LOG.warn("Attempt to read {} metadata from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
+                return Response
+                        .status(Response.Status.FORBIDDEN)
+                        .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            return storageVolume.resolveContentURIToVolumeRoot(JADEStorageURI.createStoragePathURI(storageRelativeFilePath))
+                    .map(resolvedContentURI -> Response.ok(dataContentService.readNodeMetadata(resolvedContentURI)))
+                    .orElse(Response.status(Response.Status.NOT_FOUND)
+                            .header("Content-Length", 0))
                     .build();
-        }
-        if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
-            OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-            return storageResourceHelper.retrieveContentInfoFromFile(storageVolume, storageVolume.getOriginalDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).orElse(null)).build();
-        } else {
-            LOG.warn("Attempt to get info about {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
-            return Response
-                    .status(Response.Status.FORBIDDEN)
-                    .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
-                    .build();
+        } finally {
+            LOG.debug("Complete retrieving metadata from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         }
     }
 
@@ -247,33 +259,33 @@ public class VolumeStorageResource {
                     }
                     return Response
                             .ok(contentInfoStream.peek(dn -> {
-                                String dataNodeAbsolutePath = dataEntryPath.resolve(dn.getNodeRelativePath()).toString();
-                                java.nio.file.Path dataNodeVolumeRelativePath = storageVolume.getOriginalPathRelativeToBaseStorageRoot(dataNodeAbsolutePath);
-                                dn.setNumericStorageId(storageVolume.getId());
-                                dn.setStorageRootLocation(storageVolume.getStorageVirtualPath());
-                                dn.setStorageRootBinding(storageVolume.getStorageVirtualPath());
-                                if (storageFormat == JacsStorageFormat.SINGLE_DATA_FILE) {
-                                    dn.setNodeRelativePath(dataNodeVolumeRelativePath.toString().replace('\\', '/'));
-                                }
-                                dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
-                                        .path(Constants.AGENTSTORAGE_URI_PATH)
-                                        .path("storage_volume")
-                                        .path(storageVolume.getId().toString())
-                                        .path("data_content")
-                                        .path(dataNodeVolumeRelativePath.toString())
-                                        .build()
-                                        .toString()
-                                );
-                                dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
-                                        .path(Constants.AGENTSTORAGE_URI_PATH)
-                                        .path("storage_volume")
-                                        .path(storageVolume.getId().toString())
-                                        .path("data_info")
-                                        .path(dataNodeVolumeRelativePath.toString())
-                                        .build()
-                                        .toString()
-                                );
-                            }).collect(Collectors.toList()),
+                                        String dataNodeAbsolutePath = dataEntryPath.resolve(dn.getNodeRelativePath()).toString();
+                                        java.nio.file.Path dataNodeVolumeRelativePath = storageVolume.getOriginalPathRelativeToBaseStorageRoot(dataNodeAbsolutePath);
+                                        dn.setNumericStorageId(storageVolume.getId());
+                                        dn.setStorageRootLocation(storageVolume.getStorageVirtualPath());
+                                        dn.setStorageRootBinding(storageVolume.getStorageVirtualPath());
+                                        if (storageFormat == JacsStorageFormat.SINGLE_DATA_FILE) {
+                                            dn.setNodeRelativePath(dataNodeVolumeRelativePath.toString().replace('\\', '/'));
+                                        }
+                                        dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
+                                                .path(Constants.AGENTSTORAGE_URI_PATH)
+                                                .path("storage_volume")
+                                                .path(storageVolume.getId().toString())
+                                                .path("data_content")
+                                                .path(dataNodeVolumeRelativePath.toString())
+                                                .build()
+                                                .toString()
+                                        );
+                                        dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+                                                .path(Constants.AGENTSTORAGE_URI_PATH)
+                                                .path("storage_volume")
+                                                .path(storageVolume.getId().toString())
+                                                .path("data_info")
+                                                .path(dataNodeVolumeRelativePath.toString())
+                                                .build()
+                                                .toString()
+                                        );
+                                    }).collect(Collectors.toList()),
                                     MediaType.APPLICATION_JSON)
                             .build();
                 })
@@ -313,9 +325,9 @@ public class VolumeStorageResource {
         if (storageVolume.hasPermission(JacsStoragePermission.WRITE)) {
             OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
             return storageResourceHelper.storeFileContent(storageVolume,
-                    resourceURI.getBaseUri(),
-                    storageVolume.getOriginalDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativePathParam)).orElse(null),
-                    contentStream)
+                            resourceURI.getBaseUri(),
+                            storageVolume.getOriginalDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativePathParam)).orElse(null),
+                            contentStream)
                     .build();
         } else {
             LOG.warn("Attempt to write {} on volume {} but the volume does not allow WRITE", storageRelativePathParam, storageVolumeId);
