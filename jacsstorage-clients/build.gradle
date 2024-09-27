@@ -32,7 +32,8 @@ project(":jacsstorage-clients") {
 
         perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
 
-        perfImplementation project
+        perfImplementation project,
+                           COMMONS_RNG_LIB
     }
 
     processPerfResources {

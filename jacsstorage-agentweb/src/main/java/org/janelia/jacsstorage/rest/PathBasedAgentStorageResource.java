@@ -294,6 +294,13 @@ public class PathBasedAgentStorageResource {
                             .build();
                     DataNodeInfo newContentNode = new DataNodeInfo();
                     newContentNode.setStorageRootLocation(storageVolume.getStorageRootLocation());
+                    newContentNode.setNodeInfoURL(UriBuilder.fromUri(resourceURI.getBaseUri())
+                            .path(Constants.AGENTSTORAGE_URI_PATH)
+                            .path("storage_path/data_info")
+                            .path(resolvedContentURI.getJadeStorage())
+                            .build()
+                            .toString()
+                    );
                     newContentNode.setNodeAccessURL(newContentURI.toString());
                     newContentNode.setNodeRelativePath(storageVolume.getDataContentRelativePath(resolvedContentURI));
                     newContentNode.setSize(size);
@@ -427,6 +434,15 @@ public class PathBasedAgentStorageResource {
                                 dataNode.setSize(contentNode.getSize());
                                 dataNode.setCollectionFlag(false);
                                 dataNode.setLastModified(contentNode.getLastModified());
+                                dataNode.setNodeInfoURL(
+                                        UriBuilder.fromUri(endpointBaseURI)
+                                                .path(Constants.AGENTSTORAGE_URI_PATH)
+                                                .path("storage_volume")
+                                                .path(storageVolume.getId().toString())
+                                                .path("data_info")
+                                                .path(dataNode.getNodeRelativePath())
+                                                .build()
+                                                .toString());
                                 dataNode.setNodeAccessURL(
                                         UriBuilder.fromUri(endpointBaseURI)
                                                 .path(Constants.AGENTSTORAGE_URI_PATH)

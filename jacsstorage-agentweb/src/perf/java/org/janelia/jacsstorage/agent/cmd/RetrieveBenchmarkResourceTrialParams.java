@@ -1,12 +1,20 @@
 package org.janelia.jacsstorage.agent.cmd;
 
-import org.apache.commons.lang3.RandomUtils;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+
+import javax.enterprise.inject.se.SeContainer;
+import javax.enterprise.inject.se.SeContainerInitializer;
+import javax.ws.rs.core.Application;
+
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.client.ClientConfig;
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.simple.RandomSource;
 import org.glassfish.jersey.server.ApplicationHandler;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.test.JerseyTest;
-import org.glassfish.jersey.test.util.client.LoopBackConnectorProvider;
 import org.glassfish.jersey.test.util.server.ContainerRequestBuilder;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.openjdk.jmh.annotations.Level;
@@ -17,17 +25,6 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.BenchmarkParams;
 
-import javax.enterprise.inject.se.SeContainer;
-import javax.enterprise.inject.se.SeContainerInitializer;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Application;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
-
 @State(Scope.Benchmark)
 public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
     @Param({""})
@@ -37,6 +34,7 @@ public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
     private List<String> entryPathList;
     private Application application;
     private ApplicationHandler handler;
+    private final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_128_PP);
 
     @Setup(Level.Trial)
     public void setUpTrial(BenchmarkParams params) {
@@ -89,6 +87,6 @@ public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
     }
 
     public String getRandomEntry() {
-        return entryPathList.get(RandomUtils.nextInt(0, entryPathList.size()));
+        return entryPathList.get(rng.nextInt(entryPathList.size()));
     }
 }

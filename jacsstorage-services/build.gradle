@@ -14,6 +14,7 @@ project(":jacsstorage-services") {
 
         implementation AWS_S3_LIB,
                        COMMONS_COMPRESS_LIB,
+                       COMMONS_RNG_LIB,
                        JACS_MODEL_RENDERING_LIB,
                        JAX_RS_JERSEY_CLIENT_LIB,
                        JAX_RS_JERSEY_MEDIA_JSON_LIB,

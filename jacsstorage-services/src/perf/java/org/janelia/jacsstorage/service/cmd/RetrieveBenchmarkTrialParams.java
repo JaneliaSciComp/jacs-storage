@@ -1,7 +1,8 @@
 package org.janelia.jacsstorage.service.cmd;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.simple.RandomSource;
 import org.janelia.jacsstorage.service.OriginalStorageContentReader;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
@@ -24,6 +25,7 @@ public class RetrieveBenchmarkTrialParams {
     @Param({""})
     String entriesPathsFile;
     private List<String> entryPathList;
+    private final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_128_PP);
 
     OriginalStorageContentReader storageContentReader;
 
@@ -43,6 +45,6 @@ public class RetrieveBenchmarkTrialParams {
     }
 
     public String getRandomEntry() {
-        return entryPathList.get(RandomUtils.nextInt(0, entryPathList.size()));
+        return entryPathList.get(rng.nextInt(entryPathList.size()));
     }
 }

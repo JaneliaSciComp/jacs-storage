@@ -1,7 +1,13 @@
 package org.janelia.jacsstorage.benchmarks;
 
-import org.apache.commons.lang3.RandomUtils;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.simple.RandomSource;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datarequest.PageRequest;
@@ -12,23 +18,19 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 @State(Scope.Thread)
 public class StreamContentBenchmarkInvocationParams {
     Number storageBundleId;
     List<DataNodeInfo> storageContent;
     Map<String, DataStorageInfo> storageInfoMap;
+    UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_128_PP);
 
     @Setup(Level.Invocation)
     public void setUp(RetrieveBenchmarkTrialParams params) {
         storageBundleId = params.dataBundleId;
         PageRequestBuilder pageRequestBuilder = new PageRequestBuilder().pageSize(1);
         if (params.nStorageRecords > 0) {
-            pageRequestBuilder.pageNumber(RandomUtils.nextLong(0, params.nStorageRecords));
+            pageRequestBuilder.pageNumber(rng.nextLong(params.nStorageRecords));
         }
         if (storageBundleId == null || storageBundleId.toString().equals("0") || storageContent == null) {
             storageInfoMap = new HashMap<>();

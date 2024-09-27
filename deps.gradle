@@ -25,7 +25,7 @@ dependencies {
         MONGODB_DRIVER_LIB = "org.mongodb:mongo-java-driver:${MONGODB_VERSION}"
 
         // apache commons
-        COMMONS_LANG_VERSION = "3.9"
+        COMMONS_LANG_VERSION = "3.14.0"
         COMMONS_LANG_LIB = "org.apache.commons:commons-lang3:${COMMONS_LANG_VERSION}"
         COMMONS_COLLECTIONS_VERSION = "4.2"
         COMMONS_COLLECTIONS_LIB = "org.apache.commons:commons-collections4:${COMMONS_COLLECTIONS_VERSION}"
@@ -33,6 +33,7 @@ dependencies {
         COMMONS_COMPRESS_LIB = "org.apache.commons:commons-compress:${COMMONS_COMPRESS_LIB_VERSION}"
         COMMONS_IO_LIB_VERSION = "2.11.0"
         COMMONS_IO_LIB = "commons-io:commons-io:${COMMONS_IO_LIB_VERSION}"
+        COMMONS_RNG_LIB = "org.apache.commons:commons-rng-simple:1.3"
 
         // Janelia libraries
         JACS_MODEL_VERSION = "2.21.5"
@@ -96,7 +97,7 @@ dependencies {
         MESSAGEPACK_LIB = "org.msgpack:msgpack-core:0.8.14"
 
         // N5
-        N5_LIB = "org.janelia.saalfeldlab:n5:2.5.1"
+        N5_LIB = "org.janelia.saalfeldlab:n5:3.3.0"
         N5_IMGLIB2_LIB = "org.janelia.saalfeldlab:n5-imglib2:4.3.0"
 
         // AWS SDK

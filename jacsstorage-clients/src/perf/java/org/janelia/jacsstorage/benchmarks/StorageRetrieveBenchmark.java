@@ -4,8 +4,9 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.simple.RandomSource;
 import org.janelia.jacsstorage.client.clientutils.AuthClientImplHelper;
 import org.janelia.jacsstorage.client.clientutils.StorageClientImplHelper;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
@@ -43,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 public class StorageRetrieveBenchmark {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageRetrieveBenchmark.class);
+    private static final UniformRandomProvider RNG = RandomSource.create(RandomSource.XO_RO_SHI_RO_128_PP);
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
@@ -80,7 +82,7 @@ public class StorageRetrieveBenchmark {
     }
 
     private void streamStorageContentEntryImpl(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
-        DataNodeInfo contentInfo = invocationParams.storageContent.get(RandomUtils.nextInt(0, CollectionUtils.size(invocationParams.storageContent)));
+        DataNodeInfo contentInfo = invocationParams.storageContent.get(RNG.nextInt(CollectionUtils.size(invocationParams.storageContent)));
         OutputStream targetStream = new NullOutputStream();
         long nbytes = trialParams.storageClientHelper.streamDataEntryFromStorage(contentInfo.getStorageRootLocation(), contentInfo.getNumericStorageId(), contentInfo.getNodeRelativePath(), trialParams.authToken)
                 .map(is -> {
@@ -115,7 +117,7 @@ public class StorageRetrieveBenchmark {
     }
 
     private void streamStorageContentImpl(RetrieveBenchmarkTrialParams trialParams, StreamContentBenchmarkInvocationParams invocationParams, Blackhole blackhole) {
-        DataNodeInfo contentInfo = invocationParams.storageContent.get(RandomUtils.nextInt(0, CollectionUtils.size(invocationParams.storageContent)));
+        DataNodeInfo contentInfo = invocationParams.storageContent.get(RNG.nextInt(CollectionUtils.size(invocationParams.storageContent)));
         OutputStream targetStream = new NullOutputStream();
         long nbytes = trialParams.storageClientHelper.streamDataFromStore(contentInfo.getStorageRootLocation(), contentInfo.getNumericStorageId(), trialParams.authToken)
                 .map(is -> {
@@ -142,7 +144,7 @@ public class StorageRetrieveBenchmark {
     }
 
     private Path getTempDataLocation(RetrieveBenchmarkTrialParams trialParams) {
-        return Paths.get(trialParams.dataLocation, String.valueOf(RandomUtils.nextLong(0, Integer.MAX_VALUE)));
+        return Paths.get(trialParams.dataLocation, String.valueOf(RNG.nextLong(Integer.MAX_VALUE)));
     }
 
     @Benchmark

@@ -1,7 +1,15 @@
 package org.janelia.jacsstorage.benchmarks;
 
-import org.apache.commons.lang3.RandomUtils;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.simple.RandomSource;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
@@ -10,14 +18,6 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.BenchmarkParams;
-
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 @State(Scope.Benchmark)
 public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
@@ -29,6 +29,7 @@ public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
     @Param({""})
     String entriesPathsFile;
     private List<String> entryPathList;
+    private final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_128_PP);
 
     @Setup(Level.Trial)
     public void setUp(BenchmarkParams params) {
@@ -57,6 +58,6 @@ public class RetrieveBenchmarkTrialParams extends BenchmarkTrialParams {
     }
 
     public String getRandomEntry() {
-        return entryPathList.get(RandomUtils.nextInt(0, entryPathList.size()));
+        return entryPathList.get(rng.nextInt(entryPathList.size()));
     }
 }

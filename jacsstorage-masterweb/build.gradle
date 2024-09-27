@@ -31,6 +31,7 @@ project(":jacsstorage-masterweb") {
 
         perfImplementation project,
                            project(path: ":jacsstorage-services", configuration: "perfRuntimeElements"),
+                           COMMONS_RNG_LIB,
                            JAX_RS_JERSEY_TEST_LIB,
                            JAX_RS_JERSEY_TEST_PROVIDER_LIB
     }
