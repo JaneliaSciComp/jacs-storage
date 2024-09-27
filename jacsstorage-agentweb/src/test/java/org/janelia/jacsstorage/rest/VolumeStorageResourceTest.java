@@ -3,6 +3,9 @@ package org.janelia.jacsstorage.rest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -14,14 +17,17 @@ import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.DataContentService;
+import org.janelia.jacsstorage.service.NoContentFoundException;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
 import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
 import org.janelia.jacsstorage.testrest.TestResourceBinder;
 import org.junit.Test;
+import org.powermock.api.mockito.PowerMockito;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -96,6 +102,104 @@ public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
         assertEquals(200, response.getStatus());
         assertArrayEquals(testContent.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
 
+    }
+
+    @Test
+    public void retrieveContentFromS3() throws IOException {
+        Long testStorageVolumeId = 10L;
+        String testPath = "s3://aBucket/aPrefix/aKey";
+        DataContentService storageContentReader = dependenciesProducer.getDataContentService();
+        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        when(storageVolumeManager.getVolumeById(testStorageVolumeId))
+                .thenReturn(new JacsStorageVolumeBuilder()
+                        .storageVolumeId(testStorageVolumeId)
+                        .storageType(JacsStorageType.S3)
+                        .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
+                        .build()
+                );
+        String testContent = "This is the content";
+        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+                .then(invocation -> {
+                    OutputStream os = invocation.getArgument(2);
+                    os.write(testContent.getBytes());
+                    return (long) testContent.length();
+                });
+        Response response = target()
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path("storage_volume")
+                .path(testStorageVolumeId.toString())
+                .path("data_content")
+                .path(testPath)
+                .request()
+                .get();
+        assertEquals(200, response.getStatus());
+        assertArrayEquals(testContent.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
+    }
+
+    @Test
+    public void retrieveContentFromS3IfThereIsARootStorage() throws IOException {
+        Long testStorageVolumeId = 10L;
+        String testPath = "s3://aBucket/aPrefix/aKey";
+        String testVolumeRoot = "s3://aBucket";
+        DataContentService storageContentReader = dependenciesProducer.getDataContentService();
+        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        when(storageVolumeManager.getVolumeById(testStorageVolumeId))
+                .thenReturn(new JacsStorageVolumeBuilder()
+                        .storageVolumeId(testStorageVolumeId)
+                        .storageRootTemplate(testVolumeRoot)
+                        .storageVirtualPath("/s3data/fortest")
+                        .storageType(JacsStorageType.S3)
+                        .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
+                        .build()
+                );
+        String testContent = "This is the content";
+        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+                .then(invocation -> {
+                    OutputStream os = invocation.getArgument(2);
+                    os.write(testContent.getBytes());
+                    return (long) testContent.length();
+                });
+        Response response = target()
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path("storage_volume")
+                .path(testStorageVolumeId.toString())
+                .path("data_content")
+                .path(testPath)
+                .request()
+                .get();
+        assertEquals(200, response.getStatus());
+        assertArrayEquals(testContent.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
+    }
+
+    @Test
+    public void contentNotFound() {
+        Long testStorageVolumeId = 10L;
+        String testPath = "d1/d2/f1";
+        String testPhysicalRoot = "/storageRoot";
+        DataContentService storageContentReader = dependenciesProducer.getDataContentService();
+        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        when(storageVolumeManager.getVolumeById(testStorageVolumeId))
+                .thenReturn(new JacsStorageVolumeBuilder()
+                        .storageVolumeId(testStorageVolumeId)
+                        .storageVirtualPath("/virtualRoot")
+                        .storageRootTemplate(testPhysicalRoot)
+                        .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
+                        .build()
+                );
+        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPhysicalRoot).resolve(testPath);
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+                .thenThrow(new NoContentFoundException("error reading file"));
+        Response response = target()
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path("storage_volume")
+                .path(testStorageVolumeId.toString())
+                .path("data_content")
+                .path(testPath)
+                .request()
+                .get();
+        assertEquals(404, response.getStatus());
     }
 
     @Test

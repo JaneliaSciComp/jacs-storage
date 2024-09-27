@@ -16,7 +16,8 @@ public class JAXAgentStorageApp extends AbstractJAXApp {
                 VolumeStorageResource.class,
                 VolumeQuotaResource.class,
                 AgentWebdavResource.class,
-                N5StorageResource.class
+                N5StorageResource.class,
+                ContentNotFoundRequestHandler.class
         );
     }
 }

@@ -43,6 +43,7 @@ import org.janelia.jacsstorage.model.jacsstorage.StorageRelativePath;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.DataContentService;
+import org.janelia.jacsstorage.service.NoContentFoundException;
 import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;

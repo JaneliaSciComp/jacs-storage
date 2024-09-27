@@ -16,6 +16,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
 import org.janelia.jacsstorage.service.DataContentService;
+import org.janelia.jacsstorage.service.NoContentFoundException;
 import org.janelia.jacsstorage.service.StorageCapacity;
 
 public class DataContentServiceImpl implements DataContentService {
@@ -55,7 +56,9 @@ public class DataContentServiceImpl implements DataContentService {
         List<ContentNode> contentNodes = contentStorageService.listContentNodes(storageURI.getStorageKey(), filterParams);
         // if there's more than 1 node (a directory or prefix was provided)
         // then retrieve no metadata
-        if (contentNodes.size() != 1) {
+        if (contentNodes.isEmpty()) {
+            throw new NoContentFoundException("No content found for " + storageURI);
+        } else if (contentNodes.size() != 1) {
             return Collections.emptyMap();
         } else {
             // if there's exactly 1 match lookup if there's a supported metada reader
@@ -85,7 +88,7 @@ public class DataContentServiceImpl implements DataContentService {
         ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
         List<ContentNode> contentNodes = contentStorageService.listContentNodes(storageURI.getStorageKey(), filterParams);
         if (contentNodes.isEmpty()) {
-            return -1;
+            throw new NoContentFoundException("No content found for " + storageURI);
         } else {
             ContentFilter contentFilter = contentHandlersProvider.getContentFilter(filterParams);
             return contentFilter.applyContentFilter(filterParams, contentNodes, dataStream);
