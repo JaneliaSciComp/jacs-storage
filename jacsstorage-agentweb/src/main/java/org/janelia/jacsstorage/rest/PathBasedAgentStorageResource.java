@@ -36,6 +36,7 @@ import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.requesthelpers.ContentFilterRequestHelper;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.DataContentService;
@@ -69,7 +70,9 @@ public class PathBasedAgentStorageResource {
     @HEAD
     @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
     @Path("storage_path/data_content/{dataPath:.+}")
-    public Response checkPath(@PathParam("dataPath") String dataPathParam, @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
+    public Response checkPath(@PathParam("dataPath") String dataPathParam,
+                              @QueryParam("directoryOnly") Boolean directoryOnlyParam,
+                              @Context UriInfo requestURI) {
         try {
             LOG.debug("Start check path {}", dataPathParam);
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
@@ -98,11 +101,12 @@ public class PathBasedAgentStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
+            ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
             return accessibleVolumes.stream()
                     .findFirst()
-                    .flatMap(aStorageVolume -> aStorageVolume.relativizeContentURIToVolumeRoot(contentURI))
+                    .flatMap(aStorageVolume -> aStorageVolume.resolveAbsoluteLocationURI(contentURI))
                     .map(resolvedContentURI -> {
-                        List<ContentNode> contentNodes = dataContentService.listDataNodes(resolvedContentURI, new ContentFilterParams());
+                        List<ContentNode> contentNodes = dataContentService.listDataNodes(resolvedContentURI, filterParams);
                         if (contentNodes.isEmpty()) {
                             return Response.status(Response.Status.NOT_FOUND)
                                     .header("Content-Length", 0);
@@ -162,7 +166,7 @@ public class PathBasedAgentStorageResource {
             ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
             return accessibleVolumes.stream()
                     .findFirst()
-                    .flatMap(aStorageVolume -> aStorageVolume.relativizeContentURIToVolumeRoot(contentURI))
+                    .flatMap(aStorageVolume -> aStorageVolume.resolveAbsoluteLocationURI(contentURI))
                     .map(resolvedContentURI -> {
                         StreamingOutput outputStream = output -> {
                             dataContentService.readDataStream(resolvedContentURI, filterParams, output);
@@ -198,42 +202,46 @@ public class PathBasedAgentStorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response removeData(@PathParam("dataPath") String dataPathParam, @Context SecurityContext securityContext) {
-        LOG.debug("Remove data from {}", dataPathParam);
-        JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam);
-        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
-        List<JacsStorageVolume> volumeCandidates;
         try {
-            volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
-        } catch (IllegalArgumentException e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ErrorResponse(e.getMessage()))
-                    .type(MediaType.APPLICATION_JSON)
+            LOG.debug("Remove data from {}", dataPathParam);
+            JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam);
+            StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
+            List<JacsStorageVolume> volumeCandidates;
+            try {
+                volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
+            } catch (IllegalArgumentException e) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(new ErrorResponse(e.getMessage()))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            if (CollectionUtils.isEmpty(volumeCandidates)) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No managed volume found for " + contentURI))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            List<JacsStorageVolume> accessibleVolumes = volumeCandidates.stream()
+                    .filter(storageVolume -> storageVolume.hasPermission(JacsStoragePermission.DELETE))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(accessibleVolumes)) {
+                return Response.status(Response.Status.FORBIDDEN)
+                        .entity(new ErrorResponse("No permissions to delete " + contentURI))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            return accessibleVolumes.stream()
+                    .findFirst()
+                    .flatMap(aStorageVolume -> aStorageVolume.resolveAbsoluteLocationURI(contentURI))
+                    .map(resolvedContentURI -> {
+                        dataContentService.removeData(resolvedContentURI);
+                        return Response.noContent();
+                    })
+                    .orElse(Response.status(Response.Status.NOT_FOUND))
                     .build();
+        } finally {
+            LOG.debug("Complete remove data from {}", dataPathParam);
         }
-        if (CollectionUtils.isEmpty(volumeCandidates)) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No managed volume found for " + contentURI))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-        List<JacsStorageVolume> accessibleVolumes = volumeCandidates.stream()
-                .filter(storageVolume -> storageVolume.hasPermission(JacsStoragePermission.DELETE))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(accessibleVolumes)) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .entity(new ErrorResponse("No permissions to delete " + contentURI))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
-        }
-        return accessibleVolumes.stream()
-                .findFirst()
-                .flatMap(aStorageVolume -> aStorageVolume.relativizeContentURIToVolumeRoot(contentURI))
-                .map(resolvedContentURI -> {
-                    dataContentService.removeData(resolvedContentURI);
-                    return Response.noContent();
-                })
-                .orElse(Response.status(Response.Status.NOT_FOUND))
-                .build();
     }
 
     @ApiOperation(value = "Store the content at the specified data path.")
@@ -281,7 +289,7 @@ public class PathBasedAgentStorageResource {
         }
         return accessibleVolumes.stream()
                 .findFirst()
-                .flatMap(aStorageVolume -> aStorageVolume.relativizeContentURIToVolumeRoot(contentURI)
+                .flatMap(aStorageVolume -> aStorageVolume.resolveAbsoluteLocationURI(contentURI)
                         .map(resolvedContentURI -> Pair.of(aStorageVolume, resolvedContentURI)))
                 .map(volAndContentURIPair -> {
                     JacsStorageVolume storageVolume = volAndContentURIPair.getLeft();
@@ -302,7 +310,7 @@ public class PathBasedAgentStorageResource {
                             .toString()
                     );
                     newContentNode.setNodeAccessURL(newContentURI.toString());
-                    newContentNode.setNodeRelativePath(storageVolume.getDataContentRelativePath(resolvedContentURI));
+                    newContentNode.setNodeRelativePath(storageVolume.getContentRelativePath(resolvedContentURI));
                     newContentNode.setSize(size);
                     newContentNode.setCollectionFlag(false);
                     return Response.created(newContentURI).entity(newContentNode);
@@ -354,7 +362,7 @@ public class PathBasedAgentStorageResource {
             }
             return accessibleVolumes.stream()
                     .findFirst()
-                    .flatMap(aStorageVolume -> aStorageVolume.relativizeContentURIToVolumeRoot(contentURI))
+                    .flatMap(aStorageVolume -> aStorageVolume.resolveAbsoluteLocationURI(contentURI))
                     .map(resolvedContentURI -> Response.ok(dataContentService.readNodeMetadata(resolvedContentURI)))
                     .orElse(Response.status(Response.Status.NOT_FOUND)
                             .header("Content-Length", 0))
@@ -409,7 +417,7 @@ public class PathBasedAgentStorageResource {
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(accessibleVolumes)) {
             return Response.status(Response.Status.FORBIDDEN)
-                    .entity(new ErrorResponse("No permissions to delete " + contentURI))
+                    .entity(new ErrorResponse("No permissions to read " + contentURI))
                     .type(MediaType.APPLICATION_JSON)
                     .build();
         }
@@ -420,7 +428,7 @@ public class PathBasedAgentStorageResource {
                 .setStartEntryIndex(offset);
         return accessibleVolumes.stream()
                 .findFirst()
-                .flatMap(aStorageVolume -> aStorageVolume.relativizeContentURIToVolumeRoot(contentURI)
+                .flatMap(aStorageVolume -> aStorageVolume.resolveAbsoluteLocationURI(contentURI)
                         .map(resolvedContentURI -> Pair.of(aStorageVolume, resolvedContentURI)))
                 .map(volAndContentURIPair -> {
                     JacsStorageVolume storageVolume = volAndContentURIPair.getLeft();

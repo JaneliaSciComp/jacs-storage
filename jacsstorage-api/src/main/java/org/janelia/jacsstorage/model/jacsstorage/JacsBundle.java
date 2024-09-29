@@ -34,9 +34,7 @@ public class JacsBundle extends AbstractEntity {
     private String createdBy;
     private Date created = new Date();
     private Date modified = new Date();
-    private Map<String, Object> metadata = new LinkedHashMap<>();
     private Number storageVolumeId;
-    private String linkedPath;
 
     @JsonIgnore
     private JacsStorageVolume storageVolume;
@@ -65,33 +63,20 @@ public class JacsBundle extends AbstractEntity {
         this.path = path;
     }
 
-    public String getLinkedPath() {
-        return linkedPath;
-    }
-
-    public void setLinkedPath(String linkedPath) {
-        this.linkedPath = linkedPath;
-    }
-
     @JsonIgnore
-    public boolean isLinkedStorage() {
-        return StringUtils.isNotBlank(linkedPath);
-    }
-
-    @JsonIgnore
-    public Path getRealStoragePath() {
-        String storageRootDir;
-        if (isLinkedStorage()) {
-            return Paths.get(linkedPath);
-        } else if (storageVolume != null) {
-            storageRootDir = storageVolume.evalStorageRootDir(asStorageContext());
+    public JADEStorageURI getStorageURI() {
+        String storageRoot;
+        if (storageVolume != null) {
+            storageRoot = storageVolume.evalStorageRoot(asStorageContext());
         } else {
-            storageRootDir = null;
+            storageRoot = null;
         }
-        if (StringUtils.isNotBlank(storageRootDir)) {
-            return Paths.get(storageRootDir, path);
+        if (StringUtils.isNotBlank(storageRoot)) {
+            return JADEStorageURI.createStoragePathURI(storageRoot).resolve(path);
+        } else if (StringUtils.isNotBlank(path)) {
+            return JADEStorageURI.createStoragePathURI(path);
         } else {
-            return Paths.get(path);
+            return null;
         }
     }
 
@@ -183,32 +168,6 @@ public class JacsBundle extends AbstractEntity {
         this.modified = modified;
     }
 
-    public Map<String, Object> getMetadata() {
-        return metadata;
-    }
-
-    void setMetadata(Map<String, Object> metadata) {
-        this.metadata = metadata;
-    }
-
-    public boolean hasMetadata() {
-        return metadata.size() > 0;
-    }
-
-    public void addMetadataField(String name, Object value) {
-        metadata.put(name, value);
-    }
-
-    public void removeMetadataField(String name) {
-        metadata.remove(name);
-    }
-
-    public void addMetadataFields(Map<String, Object> metadataFields) {
-        if (metadataFields != null) {
-            this.metadata.putAll(metadataFields);
-        }
-    }
-
     public Number getStorageVolumeId() {
         return storageVolumeId;
     }
@@ -254,7 +213,6 @@ public class JacsBundle extends AbstractEntity {
         addToContext("username", JacsSubjectHelper.getNameFromSubjectKey(ownerKey), storageContext);
         addToContext("createdBy", JacsSubjectHelper.getNameFromSubjectKey(createdBy), storageContext);
         addToContext("createDate", new SimpleDateFormat("yyyyMMddHHmmss").format(created), storageContext);
-        metadata.forEach((k, v) -> addToContext(k, v, storageContext));
         return storageContext;
     }
 
@@ -272,7 +230,6 @@ public class JacsBundle extends AbstractEntity {
                 .append("path", path)
                 .append("storageFormat", storageFormat)
                 .append("storageVolumeId", storageVolumeId)
-                .append("linkedPath", linkedPath)
                 .toString();
     }
 }

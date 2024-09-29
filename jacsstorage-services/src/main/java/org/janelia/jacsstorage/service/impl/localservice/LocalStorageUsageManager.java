@@ -181,9 +181,13 @@ public class LocalStorageUsageManager implements StorageUsageManager {
         Path storagePath;
         Path physicalStoragePath;
         try {
-            storagePath = Paths.get(
-                    ExprHelper.getConstPrefix(storageVolume.evalStorageRootDir(ImmutableMap.of("username", username)))
+            String storageLocation = ExprHelper.getConstPrefix(
+                    storageVolume.evalStorageRoot(ImmutableMap.of("username", username))
             );
+            if (StringUtils.isBlank(storageLocation)) {
+                return null;
+            }
+            storagePath = Paths.get(storageLocation);
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {
                 LOG.warn("No storage path could be resolved on volume {} for user {}", storageVolume, username, e);

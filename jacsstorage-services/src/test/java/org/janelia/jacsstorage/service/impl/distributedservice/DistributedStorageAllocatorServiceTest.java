@@ -21,6 +21,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
+import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
 import org.janelia.jacsstorage.service.impl.distributedservice.DistributedStorageAllocatorService;
@@ -106,7 +107,7 @@ public class DistributedStorageAllocatorServiceTest {
                         new JacsStorageVolumeBuilder().storageVolumeId(20L)
                                 .name("testVolumeName")
                                 .storageAgentId("testHost")
-                                .storageRootTemplate("/storage/${owner}")
+                                .storageRootTemplate("/storage/${username}")
                                 .storageServiceURL("http://agentURL")
                                 .build(),
                         ImmutableSet.of("testVolumeName"),
@@ -174,7 +175,11 @@ public class DistributedStorageAllocatorServiceTest {
             Mockito.verify(bundleDao).save(dataBundle);
             assertThat(dataBundle.getId(), equalTo(testData.testBundleId));
             assertThat(dataBundle.getPath(), equalTo((StringUtils.isBlank(testData.testBundlePrefix) ? "" : testData.testBundlePrefix + File.separator) + testData.testBundleId.toString()));
-            assertThat(dataBundle.getRealStoragePath(), equalTo(Paths.get(testData.testVolume.getStorageRootTemplate(), StringUtils.defaultIfBlank(testData.testBundlePrefix, ""), testData.testBundleId.toString())));
+            assertThat(dataBundle.getStorageURI().getJadeStorage(),
+                    equalTo(Paths.get(
+                            testData.testVolume.evalStorageRoot(ImmutableMap.of("username", JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()))),
+                            StringUtils.defaultIfBlank(testData.testBundlePrefix, ""),
+                            testData.testBundleId.toString()).toString()));
             Mockito.verify(bundleDao).update(dataBundle.getId(), ImmutableMap.of(
                     "path", new SetFieldValueHandler<>(dataBundle.getPath())
             ));

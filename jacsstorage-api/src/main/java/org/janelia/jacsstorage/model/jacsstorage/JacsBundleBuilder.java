@@ -1,14 +1,13 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class JacsBundleBuilder {
 
@@ -49,11 +48,6 @@ public class JacsBundleBuilder {
         updateBundleStorageVolume(sv -> {
             sv.setStorageVirtualPath(v);
         });
-        return this;
-    }
-
-    public JacsBundleBuilder storageRootPath(String v) {
-        jacsBundle.setLinkedPath(v);
         return this;
     }
 
@@ -117,11 +111,6 @@ public class JacsBundleBuilder {
 
     public JacsBundleBuilder writersKeys(Collection<String> vs) {
         jacsBundle.addWritersKeys(vs);
-        return this;
-    }
-
-    public JacsBundleBuilder metadata(Map<String, Object> metadata) {
-        jacsBundle.addMetadataFields(metadata);
         return this;
     }
 

@@ -47,35 +47,8 @@ public class LocalStorageAllocatorService extends AbstractStorageAllocatorServic
         JacsBundle existingBundle = retrieveExistingStorage(dataBundle);
         checkStorageDeletePermission(dataBundle, credentials);
         LOG.info("Delete {}", existingBundle);
-        return existingBundle.setStorageVolume(storageVolumeDao.findById(existingBundle.getStorageVolumeId()))
-                .map(storageVolume -> {
-                    if (existingBundle.isLinkedStorage()) {
-                        LOG.warn("Linked storage cannot be deleted: {}", dataBundle);
-                        return false;
-                    }
-                    Path dataPath = existingBundle.getRealStoragePath();
-                    try {
-                        PathUtils.deletePath(dataPath);
-                    } catch (IOException e) {
-                        LOG.error("Error deleting {}", dataPath, e);
-                        return false;
-                    }
-                    List<String> dataSubpath = PathUtils.getTreePathComponentsForId(existingBundle.getId());
-                    if (CollectionUtils.isNotEmpty(dataSubpath)) {
-                        String storageRootDir = storageVolume.evalStorageRootDir(existingBundle.asStorageContext());
-                        Path parentPath = Paths.get(storageRootDir, dataSubpath.get(0));
-                        if (dataPath.startsWith(parentPath)) {
-                            try {
-                                PathUtils.deletePathIfEmpty(parentPath);
-                            } catch (IOException e) {
-                                LOG.error("Error cleaning {}", parentPath, e);
-                                return false;
-                            }
-                        }
-                    }
-                    return true;
-                })
-                .orElse(false);
+        bundleDao.delete(existingBundle);
+        return true;
     }
 
     @Override

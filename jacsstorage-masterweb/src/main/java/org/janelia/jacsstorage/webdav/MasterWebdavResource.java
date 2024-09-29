@@ -145,7 +145,6 @@ public class MasterWebdavResource {
 
     /**
      * @param storageName
-     * @param format
      * @param pathPrefix - bundle's root relative path to the storage volume, e.g. if the storage volume is /vol/storage and
      *                   pathPrefix is /my/prefix than the bundle's root will be at /vol/storage/my/prefix
      * @param storageTags
@@ -158,19 +157,13 @@ public class MasterWebdavResource {
     )
     @MKCOL
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("storage/{storageName}{format:(/format/[^/]+?)?}")
+    @Path("storage/{storageName}format/DATA_DIRECTORY")
     public Response createDataStorage(@PathParam("storageName") String storageName,
-                                      @PathParam("format") String format,
                                       @HeaderParam("pathPrefix") String pathPrefix,
                                       @HeaderParam("storageTags") String storageTags,
                                       @Context SecurityContext securityContext) {
-        LOG.info("Create storage {} format {} prefix {} for {}", storageName, format, pathPrefix, securityContext.getUserPrincipal());
-        JacsStorageFormat storageFormat;
-        if (StringUtils.isBlank(format)) {
-            storageFormat = JacsStorageFormat.DATA_DIRECTORY;
-        } else {
-            storageFormat = JacsStorageFormat.valueOf(format.substring(8)); // 8 is "/format/".length()
-        }
+        LOG.info("Create storage {} prefix {} for {}", storageName, pathPrefix, securityContext.getUserPrincipal());
+        JacsStorageFormat storageFormat = JacsStorageFormat.DATA_DIRECTORY;
         JacsBundle dataBundle = new JacsBundleBuilder()
                 .name(storageName)
                 .storageFormat(storageFormat)

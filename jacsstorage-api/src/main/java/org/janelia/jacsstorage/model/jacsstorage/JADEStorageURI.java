@@ -167,8 +167,9 @@ public class JADEStorageURI {
                     .append(getStorageHost())
                     .append(getStorageKey());
         }
-        if (StringUtils.isNotBlank(relativePath)) {
-            jadeStorageBuilder.append('/').append(relativePath);
+        String appendedPath = StringUtils.removeStart(relativePath, '/');
+        if (StringUtils.isNotBlank(appendedPath)) {
+            jadeStorageBuilder.append('/').append(appendedPath);
         }
         return jadeStorageBuilder.toString();
     }

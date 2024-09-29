@@ -54,7 +54,7 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
 
     @Test
     public void saveTestEntity() {
-        JacsBundle te = persistEntity(testDao, createTestEntity("user:user", "d1", null, "/tmp", 100L, 216, ImmutableMap.of("f1", 1, "f2", "v2")));
+        JacsBundle te = persistEntity(testDao, createTestEntity("user:user", "d1", null, "/tmp", 100L, 216));
         JacsBundle retrievedTe = testDao.findById(te.getId());
         assertThat(retrievedTe.getName(), equalTo(te.getName()));
         assertNotSame(te, retrievedTe);
@@ -64,7 +64,7 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
     public void findByNameAndOwnerKey() {
         String testUser = "user:user";
         String testName = "test";
-        JacsBundle te = persistEntity(testDao, createTestEntity(testUser, testName, null, "/tmp", 100L, 128, ImmutableMap.of("f1", 1, "f2", "v2")));
+        JacsBundle te = persistEntity(testDao, createTestEntity(testUser, testName, null, "/tmp", 100L, 128));
         JacsBundle retrievedTe = testDao.findByOwnerKeyAndName(testUser, testName);
         assertThat(retrievedTe.getName(), equalTo(te.getName()));
         assertNotSame(te, retrievedTe);
@@ -75,7 +75,7 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
         String testUser = "user:user";
         String testName = "test";
         JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume("testLocation", 1000,"testVol",  "mountPoint", 100L));
-        persistEntity(testDao, createTestEntity(testUser, testName, storageVolume.getId(), "/tmp", 100L, 0, ImmutableMap.of("f1", 1, "f2", "v2")));
+        persistEntity(testDao, createTestEntity(testUser, testName, storageVolume.getId(), "/tmp", 100L, 0));
         ImmutableMap<JacsBundle, Integer> testData = ImmutableMap.of(
                 new JacsBundleBuilder().build(), 1,
                 new JacsBundleBuilder().storageVolumeId(storageVolume.getId()).build(), 1,
@@ -97,8 +97,8 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
         String testName = "test";
         String testVolumeRootDir = "/mountPoint";
         JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume(testHost, testPort,"vol", testVolumeRootDir, 100L));
-        JacsBundle testBundle1 = persistEntity(testDao, createTestEntity(testUser, testName + "1", storageVolume.getId(), "/tmp", 100L, 512, ImmutableMap.of("f1", 1, "f2", "v2")));
-        JacsBundle testBundle2 = persistEntity(testDao, createTestEntity(testUser, testName + "2", storageVolume.getId(), "/tmp", 100L, 512, ImmutableMap.of("f1", 1, "f2", "v2")));
+        JacsBundle testBundle1 = persistEntity(testDao, createTestEntity(testUser, testName + "1", storageVolume.getId(), "/tmp", 100L, 512));
+        JacsBundle testBundle2 = persistEntity(testDao, createTestEntity(testUser, testName + "2", storageVolume.getId(), "/tmp", 100L, 512));
         ImmutableMap.Builder<JacsBundle, Integer> testDataBuilder = ImmutableMap.<JacsBundle, Integer>builder()
                 .put(new JacsBundleBuilder()
                         .storageAgentId(testHost + ":" + testPort).build(), 2)
@@ -140,8 +140,8 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
         String testName = "test";
         String testVolumeRootDir = "/mountPoint";
         JacsStorageVolume storageVolume = persistEntity(testVolumeDao, createTestVolume(testHost, testPort,"vol", testVolumeRootDir, 100L));
-        JacsBundle testBundle1 = persistEntity(testDao, createTestEntity(testUser, testName + "1", storageVolume.getId(), "/tmp", 100L, 512, ImmutableMap.of("f1", 1, "f2", "v2")));
-        JacsBundle testBundle2 = persistEntity(testDao, createTestEntity(testUser, testName + "2", storageVolume.getId(), "/tmp", 100L, 512, ImmutableMap.of("f1", 1, "f2", "v2")));
+        JacsBundle testBundle1 = persistEntity(testDao, createTestEntity(testUser, testName + "1", storageVolume.getId(), "/tmp", 100L, 512));
+        JacsBundle testBundle2 = persistEntity(testDao, createTestEntity(testUser, testName + "2", storageVolume.getId(), "/tmp", 100L, 512));
         ImmutableMap.Builder<JacsBundle, Long> testDataBuilder = ImmutableMap.<JacsBundle, Long>builder()
                 .put(new JacsBundleBuilder()
                         .storageAgentId(testHost + ":" + testPort).build(), 2L)
@@ -172,7 +172,7 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
     @Test
     public void updateChecksum() {
         String testUser = "user:user";
-        JacsBundle te = persistEntity(testDao, createTestEntity(testUser, "d1", null, "/tmp", 100L, 0, ImmutableMap.of("f1", 1, "f2", "v2")));
+        JacsBundle te = persistEntity(testDao, createTestEntity(testUser, "d1", null, "/tmp", 100L, 0));
         String checksum = createChecksum(256);
         JacsBundle updatedEntity = testDao.update(te.getId(), ImmutableMap.of(
                 "checksum", new SetFieldValueHandler<>(checksum),
@@ -200,7 +200,7 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
         return v;
     }
 
-    private JacsBundle createTestEntity(String ownerKey, String name, Number storageVolumeId, String path, Long size, int checksumLength, Map<String, Object> metadata) {
+    private JacsBundle createTestEntity(String ownerKey, String name, Number storageVolumeId, String path, Long size, int checksumLength, Map<String) {
         JacsBundle d = new JacsBundle();
         d.setOwnerKey(ownerKey);
         d.setName(name);
@@ -208,7 +208,6 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
         d.setStorageVolumeId(storageVolumeId);
         d.setUsedSpaceInBytes(size);
         d.setChecksum(createChecksum(checksumLength));
-        metadata.forEach(d::addMetadataField);
         testData.add(d);
         return d;
     }

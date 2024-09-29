@@ -6,10 +6,12 @@ import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
+import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -35,7 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-public class DeprecateAgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
+public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTest {
 
     private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
 
@@ -69,41 +71,6 @@ public class DeprecateAgentStorageResourceTest extends AbstractCdiInjectedResour
     }
 
     @Test
-    public void retrieveStream() throws IOException {
-        StorageLookupService storageLookupService = dependenciesProducer.getStorageLookupService();
-        Long testBundleId = 1L;
-        String testPath = "volPrefix/testPath";
-        JacsStorageFormat testFormat = JacsStorageFormat.DATA_DIRECTORY;
-        when(storageLookupService.getDataBundleById(testBundleId))
-                .thenReturn(new JacsBundleBuilder()
-                        .path(testPath)
-                        .storageFormat(testFormat)
-                        .build());
-        OriginalDataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
-        String testData = "Test data";
-        when(dataStorageService.retrieveDataStream(eq(Paths.get(testPath)), eq(testFormat), any(ContentFilterParams.class), any(OutputStream.class)))
-                .then(invocation -> {
-                    OutputStream out = invocation.getArgument(3);
-                    out.write(testData.getBytes());
-                    return (long) testData.length();
-                });
-        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
-                .thenReturn(ImmutableList.of(
-                        new JacsStorageVolumeBuilder()
-                                .storageVirtualPath("/volPrefix")
-                                .storageRootTemplate("/volRoot/${owner}")
-                                .build()
-                        )
-                );
-        InputStream response = target()
-                .path(Constants.AGENTSTORAGE_URI_PATH)
-                .path(testBundleId.toString())
-                .request().get(InputStream.class);
-        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response));
-    }
-
-    @Test
     public void putEntryContent() {
         Long testBundleId = 1L;
 
@@ -113,7 +80,6 @@ public class DeprecateAgentStorageResourceTest extends AbstractCdiInjectedResour
 
         JacsBundle testBundle = new JacsBundleBuilder()
                 .dataBundleId(testBundleId)
-                .storageRootPath(testPath)
                 .storageVirtualPath(testPath)
                 .path(testPath)
                 .storageFormat(testFormat)
@@ -147,22 +113,15 @@ public class DeprecateAgentStorageResourceTest extends AbstractCdiInjectedResour
                         .path(testPath)
                         .storageFormat(testFormat)
                         .build());
-        OriginalDataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
+        DataContentService dataContentService = dependenciesProducer.getDataContentService();
         String testDataContent = "Test data";
-        when(dataStorageService.estimateDataEntrySize(
-                eq(Paths.get(testPath)),
-                eq(testDataEntryName),
-                eq(testFormat),
-                any(ContentFilterParams.class)))
-                .then(invocation -> (long) testDataContent.length());
-        when(dataStorageService.readDataEntryStream(
-                eq(Paths.get(testPath)),
-                eq(testDataEntryName),
-                eq(testFormat),
+        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volPrefix/testPath/e1");
+        when(dataContentService.readDataStream(
+                eq(expectedDataURI),
                 any(ContentFilterParams.class),
                 any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(4);
+                    OutputStream out = invocation.getArgument(2);
                     out.write(testDataContent.getBytes());
                     return (long) testDataContent.length();
                 });
@@ -196,22 +155,15 @@ public class DeprecateAgentStorageResourceTest extends AbstractCdiInjectedResour
                         .path(testPath)
                         .storageFormat(testFormat)
                         .build());
-        OriginalDataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
+        DataContentService dataContentService = dependenciesProducer.getDataContentService();
+        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volPrefix/testPath");
         String testDataContent = "Test data";
-        when(dataStorageService.estimateDataEntrySize(
-                eq(Paths.get(testPath)),
-                eq(""),
-                eq(testFormat),
-                any(ContentFilterParams.class)))
-                .then(invocation -> (long) testDataContent.length());
-        when(dataStorageService.readDataEntryStream(
-                eq(Paths.get(testPath)),
-                eq(""),
-                eq(testFormat),
+        when(dataContentService.readDataStream(
+                eq(expectedDataURI),
                 any(ContentFilterParams.class),
                 any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(4);
+                    OutputStream out = invocation.getArgument(2);
                     out.write(testDataContent.getBytes());
                     return (long) testDataContent.length();
                 });

@@ -1,14 +1,14 @@
-package org.janelia.jacsstorage.rest;
+package org.janelia.jacsstorage.requesthelpers;
+
+import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 
-import javax.ws.rs.core.MultivaluedMap;
+public class ContentFilterRequestHelper {
 
-class ContentFilterRequestHelper {
-
-    static ContentFilterParams createContentFilterParamsFromQuery(MultivaluedMap<String, String> queryParameters) {
+    public static ContentFilterParams createContentFilterParamsFromQuery(MultivaluedMap<String, String> queryParameters) {
         ContentFilterParams filterParams = new ContentFilterParams();
         queryParameters.forEach((k, vs) -> {
             if ("filterType".equalsIgnoreCase(k)) {

@@ -23,14 +23,12 @@ public class DataContentServiceImpl implements DataContentService {
 
     private final ContentStorageServiceProvider contentStorageServiceProvider;
     private final ContentHandlersProvider contentHandlersProvider;
-    private final MimetypesFileTypeMap mimetypesFileTypeMap;
 
     @Inject
     DataContentServiceImpl(ContentStorageServiceProvider contentStorageServiceProvider,
                            ContentHandlersProvider contentHandlersProvider) {
         this.contentStorageServiceProvider = contentStorageServiceProvider;
         this.contentHandlersProvider = contentHandlersProvider;
-        this.mimetypesFileTypeMap = new MimetypesFileTypeMap();
     }
 
     @Override
@@ -62,18 +60,8 @@ public class DataContentServiceImpl implements DataContentService {
             return Collections.emptyMap();
         } else {
             // if there's exactly 1 match lookup if there's a supported metada reader
-            ContentMetadataReader contentMetadataReader = contentHandlersProvider.getContentMetadataReader(getMimeType(storageURI));
+            ContentMetadataReader contentMetadataReader = contentHandlersProvider.getContentMetadataReader(contentNodes.get(0).getMimeType());
             return contentMetadataReader.getMetadata(contentNodes.get(0));
-        }
-    }
-
-    private String getMimeType(JADEStorageURI storageURI) {
-        String objectName = storageURI.getObjectName();
-        String fnExt = PathUtils.getFilenameExt(objectName);
-        if (StringUtils.equalsIgnoreCase(fnExt, ".lsm")) {
-            return "image/tiff";
-        } else {
-            return mimetypesFileTypeMap.getContentType(objectName);
         }
     }
 

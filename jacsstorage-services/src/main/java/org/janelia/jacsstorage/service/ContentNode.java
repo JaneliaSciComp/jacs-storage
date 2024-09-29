@@ -1,19 +1,28 @@
 package org.janelia.jacsstorage.service;
 
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.Date;
+
+import javax.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacsstorage.coreutils.PathUtils;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 
 public class ContentNode {
+    private static final MimetypesFileTypeMap MIMETYPES_FILE_TYPE_MAP = new MimetypesFileTypeMap();
+
     private String prefix;
     private String name;
     private long size;
     private Date lastModified;
+    private JADEStorageURI rootStorageURi;
     private final ContentReader contentReader;
 
-    public ContentNode(ContentReader contentReader) {
+    public ContentNode(JADEStorageURI rootStorageURI, ContentReader contentReader) {
+        this.rootStorageURi = rootStorageURI;
         this.contentReader = contentReader;
     }
 
@@ -44,6 +53,15 @@ public class ContentNode {
         return this;
     }
 
+    public String getMimeType() {
+        String ext = PathUtils.getFilenameExt(name);
+        if (StringUtils.equalsIgnoreCase(ext, ".lsm")) {
+            return "image/tiff";
+        } else {
+            return MIMETYPES_FILE_TYPE_MAP.getContentType(name);
+        }
+    }
+
     public Date getLastModified() {
         return lastModified;
     }
@@ -63,6 +81,10 @@ public class ContentNode {
         }
         objectKeyBuilder.append('/').append(name);
         return objectKeyBuilder.toString();
+    }
+
+    public JADEStorageURI getNodeStorageURI() {
+        return rootStorageURi.resolve(getObjectKey());
     }
 
     public InputStream getContent() {

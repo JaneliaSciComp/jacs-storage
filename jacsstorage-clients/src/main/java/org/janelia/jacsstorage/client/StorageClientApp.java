@@ -73,8 +73,6 @@ public class StorageClientApp {
         private String dataFormat = "DATA_DIRECTORY";
         @Parameter(names = "-storageTags", description = "Storage tags used for selecting the storage device")
         private List<String> storageTags = new ArrayList<>();
-        @DynamicParameter(names = "-storageProperty", description = "Storage tags used for selecting the storage device")
-        private Map<String, Object> bundleProperties = new HashMap<>();
     }
 
     @Parameters(commandDescription = "Send data to the storage server")
@@ -170,7 +168,6 @@ public class StorageClientApp {
                         .setConnectionURL(cmdMain.serverURL)
                         .setStorageFormat(JacsStorageFormat.valueOf(cmdAlloc.dataFormat))
                         .setStorageTags(cmdAlloc.storageTags)
-                        .addMetadata(cmdAlloc.bundleProperties)
                         .setOwnerKey(StringUtils.defaultIfBlank(cmdAlloc.getOwnerKey(), cmdMain.getUserKey()))
                         .setName(cmdAlloc.name);
                 if (StringUtils.isBlank(cmdAlloc.localPath)) {

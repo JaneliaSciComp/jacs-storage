@@ -19,10 +19,11 @@ public class S3StorageServiceTest {
     public void retrieveSingleFileContentFromS3Endpoint() throws IOException {
         S3StorageService storageService = new S3StorageService(
                 "https://s3.us-east-1.lyvecloud.seagate.com",
+                "scicompsoft-public",
                 "NNQ20KNJ2YCWWMPE",
                 "IID4TNAS3OXI2UUAAKK21CCYHJRAP3JM"
         );
-        List<ContentNode> contentNodes = storageService.listContentNodes("/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml", new ContentFilterParams());
+        List<ContentNode> contentNodes = storageService.listContentNodes("/scicompsoft/flynp/pipeline_info/software_versions.yml", new ContentFilterParams());
         assertEquals(1, contentNodes.size());
         String nodeContent = new String(ByteStreams.toByteArray(contentNodes.get(0).getContent()));
         assertTrue(nodeContent.length() > 0);
@@ -32,10 +33,11 @@ public class S3StorageServiceTest {
     public void listFolderContentFromS3Endpoint() throws IOException {
         S3StorageService storageService = new S3StorageService(
                 "https://s3.us-east-1.lyvecloud.seagate.com",
+                "scicompsoft-public",
                 "NNQ20KNJ2YCWWMPE",
                 "IID4TNAS3OXI2UUAAKK21CCYHJRAP3JM"
         );
-        List<ContentNode> contentNodes = storageService.listContentNodes("scicompsoft-public/scicompsoft/flynp/pipeline_info", new ContentFilterParams());
+        List<ContentNode> contentNodes = storageService.listContentNodes("scicompsoft/flynp/pipeline_info", new ContentFilterParams());
         assertTrue(contentNodes.size() > 0);
     }
 

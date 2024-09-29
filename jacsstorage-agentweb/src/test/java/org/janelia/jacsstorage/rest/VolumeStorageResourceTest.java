@@ -142,6 +142,7 @@ public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
         Long testStorageVolumeId = 10L;
         String testPath = "s3://aBucket/aPrefix/aKey";
         String testVolumeRoot = "s3://aBucket";
+        String relativeTestPath = "aPrefix/aKey";
         DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.getVolumeById(testStorageVolumeId))
@@ -166,7 +167,7 @@ public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 .path("storage_volume")
                 .path(testStorageVolumeId.toString())
                 .path("data_content")
-                .path(testPath)
+                .path(relativeTestPath)
                 .request()
                 .get();
         assertEquals(200, response.getStatus());

@@ -65,9 +65,6 @@ public abstract class AbstractStorageAllocatorService implements StorageAllocato
         if (StringUtils.isNotBlank(dataBundle.getChecksum())) {
             updatedFieldsBuilder.put("checksum", new SetFieldValueHandler<>(dataBundle.getChecksum()));
         }
-        if (dataBundle.hasMetadata()) {
-            updatedFieldsBuilder.put("metadata", new SetFieldValueHandler<>(dataBundle.getMetadata()));
-        }
         return bundleDao.update(existingBundle.getId(), updatedFieldsBuilder.build());
     }
 

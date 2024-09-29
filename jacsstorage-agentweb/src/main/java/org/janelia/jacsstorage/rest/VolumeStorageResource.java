@@ -2,10 +2,8 @@ package org.janelia.jacsstorage.rest;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
@@ -33,22 +31,17 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
-import org.janelia.jacsstorage.helper.OriginalStorageResourceHelper;
-import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
-import org.janelia.jacsstorage.model.jacsstorage.StorageRelativePath;
+import org.janelia.jacsstorage.requesthelpers.ContentFilterRequestHelper;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.DataContentService;
-import org.janelia.jacsstorage.service.NoContentFoundException;
-import org.janelia.jacsstorage.service.OriginalDataStorageService;
-import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
 import org.slf4j.Logger;
@@ -63,11 +56,6 @@ public class VolumeStorageResource {
 
     @Inject
     private DataContentService dataContentService;
-    @Inject
-    private OriginalDataStorageService dataStorageService;
-    @Inject
-    @LocalInstance
-    private StorageLookupService storageLookupService;
     @Inject
     @LocalInstance
     private StorageVolumeManager storageVolumeManager;
@@ -107,7 +95,7 @@ public class VolumeStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
-            return storageVolume.resolveContentURIToVolumeRoot(JADEStorageURI.createStoragePathURI(storageRelativeFilePath))
+            return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
                         List<ContentNode> contentNodes = dataContentService.listDataNodes(resolvedContentURI, new ContentFilterParams());
                         if (contentNodes.isEmpty()) {
@@ -157,7 +145,7 @@ public class VolumeStorageResource {
                         .build();
             }
             ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
-            return storageVolume.resolveContentURIToVolumeRoot(JADEStorageURI.createStoragePathURI(storageRelativeFilePath))
+            return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
                         StreamingOutput outputStream = output -> {
                             dataContentService.readDataStream(resolvedContentURI, filterParams, output);
@@ -205,7 +193,7 @@ public class VolumeStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
-            return storageVolume.resolveContentURIToVolumeRoot(JADEStorageURI.createStoragePathURI(storageRelativeFilePath))
+            return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> Response.ok(dataContentService.readNodeMetadata(resolvedContentURI)))
                     .orElse(Response.status(Response.Status.NOT_FOUND)
                             .header("Content-Length", 0))
@@ -255,14 +243,14 @@ public class VolumeStorageResource {
                     .setMaxDepth(depth)
                     .setEntriesCount(length)
                     .setStartEntryIndex(offset);
-            return storageVolume.resolveContentURIToVolumeRoot(JADEStorageURI.createStoragePathURI(storageRelativeFilePath))
+            return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
                         List<DataNodeInfo> dataNodes = dataContentService.listDataNodes(resolvedContentURI, filterParams).stream()
                                 .map(contentNode -> {
-                                    JADEStorageURI storageVolumeURI = storageVolume.getVolumeStorageRootURI();
                                     DataNodeInfo dataNode = new DataNodeInfo();
-                                    dataNode.setStorageRootBinding(storageVolumeURI.getJadeStorage());
-                                    dataNode.setNodeRelativePath(storageVolumeURI.relativizeKey(contentNode.getObjectKey()));
+                                    dataNode.setStorageRootLocation(storageVolume.getStorageRootLocation());
+                                    dataNode.setStorageRootBinding(storageVolume.getStorageVirtualPath());
+                                    dataNode.setNodeRelativePath(storageVolume.getContentRelativePath(contentNode.getNodeStorageURI()));
                                     dataNode.setSize(contentNode.getSize());
                                     dataNode.setCollectionFlag(false);
                                     dataNode.setLastModified(contentNode.getLastModified());
@@ -333,7 +321,7 @@ public class VolumeStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
-            return storageVolume.resolveContentURIToVolumeRoot(JADEStorageURI.createStoragePathURI(storageRelativeFilePath))
+            return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
                         long size = dataContentService.writeDataStream(resolvedContentURI, contentStream);
                         URI newContentURI = UriBuilder.fromUri(resourceURI.getBaseUri())
@@ -342,6 +330,7 @@ public class VolumeStorageResource {
                                 .path(resolvedContentURI.getJadeStorage())
                                 .build();
                         DataNodeInfo newContentNode = new DataNodeInfo();
+                        newContentNode.setStorageRootBinding(storageVolume.getStorageVirtualPath());
                         newContentNode.setStorageRootLocation(storageVolume.getStorageRootLocation());
                         newContentNode.setNodeInfoURL(UriBuilder.fromUri(resourceURI.getBaseUri())
                                 .path(Constants.AGENTSTORAGE_URI_PATH)
@@ -351,7 +340,7 @@ public class VolumeStorageResource {
                                 .toString()
                         );
                         newContentNode.setNodeAccessURL(newContentURI.toString());
-                        newContentNode.setNodeRelativePath(storageVolume.getDataContentRelativePath(resolvedContentURI));
+                        newContentNode.setNodeRelativePath(storageVolume.getContentRelativePath(resolvedContentURI));
                         newContentNode.setSize(size);
                         newContentNode.setCollectionFlag(false);
                         return Response.created(newContentURI).entity(newContentNode);
@@ -374,29 +363,33 @@ public class VolumeStorageResource {
     @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     public Response deleteDataContentFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                        @PathParam("storageRelativePath") String storageRelativeFilePath) {
-        LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
-        JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
-        if (storageVolume == null) {
-            LOG.warn("No accessible volume found for {}", storageVolumeId);
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(new ErrorResponse("No accessible volume found for " + storageVolumeId))
-                    .type(MediaType.APPLICATION_JSON)
+        try {
+            LOG.debug("Delete data {}:{}", storageVolumeId, storageRelativeFilePath);
+            JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
+            if (storageVolume == null) {
+                LOG.warn("No accessible volume found for {}", storageVolumeId);
+                return Response
+                        .status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No accessible volume found for " + storageVolumeId))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            } else if (!storageVolume.hasPermission(JacsStoragePermission.DELETE)) {
+                LOG.warn("Attempt to read {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
+                return Response
+                        .status(Response.Status.FORBIDDEN)
+                        .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
+                        .type(MediaType.APPLICATION_JSON)
+                        .build();
+            }
+            return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
+                    .map(resolvedContentURI -> {
+                        dataContentService.removeData(resolvedContentURI);
+                        return Response.noContent();
+                    })
+                    .orElse(Response.status(Response.Status.NOT_FOUND))
                     .build();
-        }
-        if (storageVolume.hasPermission(JacsStoragePermission.DELETE)) {
-            OriginalStorageResourceHelper storageResourceHelper = new OriginalStorageResourceHelper(dataStorageService, storageLookupService, storageVolumeManager);
-            return storageResourceHelper.removeFileContentFromVolume(
-                    storageVolume,
-                    storageVolume.getOriginalDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).orElse(null)
-            ).build();
-        } else {
-            LOG.warn("Attempt to read {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
-            return Response
-                    .status(Response.Status.FORBIDDEN)
-                    .entity(new ErrorResponse("No read permission for volume " + storageVolumeId))
-                    .type(MediaType.APPLICATION_JSON)
-                    .build();
+        } finally {
+            LOG.debug("Complete delete data {}:{}", storageVolumeId, storageRelativeFilePath);
         }
     }
 
@@ -425,6 +418,7 @@ public class VolumeStorageResource {
     @Path("storage_volumes")
     public Response listStorageVolumes(@QueryParam("id") Long storageVolumeId,
                                        @QueryParam("name") String volumeName,
+                                       @QueryParam("storageType") String storageType,
                                        @QueryParam("shared") boolean shared,
                                        @QueryParam("storageTags") List<String> storageTags,
                                        @QueryParam("storageVirtualPath") String storageVirtualPath,
@@ -433,6 +427,7 @@ public class VolumeStorageResource {
                                        @QueryParam("includeInaccessibleVolumes") boolean includeInaccessibleVolumes,
                                        @Context SecurityContext securityContext) {
         StorageQuery storageQuery = new StorageQuery()
+                .setStorageType(JacsStorageType.fromName(storageType))
                 .setId(storageVolumeId)
                 .setStorageName(volumeName)
                 .setShared(shared)
