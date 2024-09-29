@@ -1,25 +1,8 @@
 package org.janelia.jacsstorage.rest;
 
-import com.google.common.collect.ImmutableMap;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
-import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.jacsstorage.StorageRelativePath;
-import org.janelia.jacsstorage.n5.N5ViewerMultichannelMetadata;
-import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.saalfeldlab.n5.N5DatasetDiscoverer;
-import org.janelia.saalfeldlab.n5.N5FSReader;
-import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.N5TreeNode;
-import org.janelia.saalfeldlab.n5.metadata.*;
-import org.janelia.saalfeldlab.n5.metadata.canonical.CanonicalMetadataParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -28,9 +11,32 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.Executors;
+
+import com.google.common.collect.ImmutableMap;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
+import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
+import org.janelia.jacsstorage.n5.N5ViewerMultichannelMetadata;
+import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.janelia.saalfeldlab.n5.N5DatasetDiscoverer;
+import org.janelia.saalfeldlab.n5.N5FSReader;
+import org.janelia.saalfeldlab.n5.N5Reader;
+import org.janelia.saalfeldlab.n5.N5TreeNode;
+import org.janelia.saalfeldlab.n5.metadata.N5CosemMetadataParser;
+import org.janelia.saalfeldlab.n5.metadata.N5CosemMultiScaleMetadata;
+import org.janelia.saalfeldlab.n5.metadata.N5GenericSingleScaleMetadataParser;
+import org.janelia.saalfeldlab.n5.metadata.N5MetadataParser;
+import org.janelia.saalfeldlab.n5.metadata.N5SingleScaleMetadataParser;
+import org.janelia.saalfeldlab.n5.metadata.N5ViewerMultiscaleMetadataParser;
+import org.janelia.saalfeldlab.n5.metadata.canonical.CanonicalMetadataParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Api(value = "Agent storage API for N5 file structures")
 @Timed
@@ -79,15 +85,15 @@ public class N5StorageResource {
                     .build();
         }
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
-            java.nio.file.Path absolutePath = storageVolume.getOriginalDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).orElse(null);
-            if (absolutePath == null) {
+            JADEStorageURI n5ContainerURI = storageVolume.resolveRelativeLocation(storageRelativeFilePath).orElse(null);
+            if (n5ContainerURI == null) {
                 return Response
                         .serverError()
                         .entity(ImmutableMap.of("errormessage", "Could not resolve relative path: "+storageRelativeFilePath))
                         .build();
             }
             try {
-                N5Reader n5Reader = new N5FSReader(absolutePath.toString());
+                N5Reader n5Reader = new N5FSReader(n5ContainerURI.getJadeStorage());
                 N5DatasetDiscoverer datasetDiscoverer = new N5DatasetDiscoverer(
                         n5Reader,
                         Executors.newCachedThreadPool(),
@@ -99,7 +105,7 @@ public class N5StorageResource {
                         .build();
             }
             catch (IOException e) {
-                String errorMessage = "Error discovering N5 content at "+absolutePath;
+                String errorMessage = "Error discovering N5 content at "+n5ContainerURI;
                 LOG.error(errorMessage, e);
                 return Response
                         .serverError()

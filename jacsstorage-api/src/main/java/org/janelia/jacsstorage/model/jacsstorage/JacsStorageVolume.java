@@ -222,11 +222,6 @@ public class JacsStorageVolume extends AbstractEntity {
         this.modified = modified;
     }
 
-    @JsonIgnore
-    public Optional<Path> getOriginalDataStorageAbsolutePath(StorageRelativePath storageRelativePath) {
-        return Optional.of(Paths.get(getStorageRootLocation(), storageRelativePath.getPath()));
-    }
-
     public boolean isActiveFlag() {
         return activeFlag;
     }
