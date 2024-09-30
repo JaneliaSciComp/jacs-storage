@@ -63,7 +63,7 @@ public class JADEStorageURITest {
                         "s3.us-east-1.lyvecloud.seagate.com",
                         "NNQ20KNJ2YCWWMPE",
                         "IID4TNAS3OXI2UUAAKK21CCYHJRAP3JM",
-                        "/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
+                        "scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
                         JacsStorageType.S3,
                         "https://NNQ20KNJ2YCWWMPE:IID4TNAS3OXI2UUAAKK21CCYHJRAP3JM@s3.us-east-1.lyvecloud.seagate.com/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml"
                 ),
@@ -72,7 +72,7 @@ public class JADEStorageURITest {
                         "s3.us-east-1.lyvecloud.seagate.com",
                         "NNQ20KNJ2YCWWMPE",
                         "",
-                        "/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
+                        "scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
                         JacsStorageType.S3,
                         "https://NNQ20KNJ2YCWWMPE@s3.us-east-1.lyvecloud.seagate.com/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml"
                 ),
@@ -81,7 +81,7 @@ public class JADEStorageURITest {
                         "s3.us-east-1.lyvecloud.seagate.com",
                         "",
                         "",
-                        "/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
+                        "scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
                         JacsStorageType.S3,
                         "https://s3.us-east-1.lyvecloud.seagate.com/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml"
                 ),
@@ -90,7 +90,7 @@ public class JADEStorageURITest {
                         "scicompsoft-public",
                         "",
                         "",
-                        "/scicompsoft/flynp/pipeline_info/software_versions.yml",
+                        "scicompsoft/flynp/pipeline_info/software_versions.yml",
                         JacsStorageType.S3,
                         "s3://scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml"
                 ),
@@ -99,7 +99,7 @@ public class JADEStorageURITest {
                         "scicompsoft-public",
                         "",
                         "",
-                        "/scicompsoft/flynp/pipeline_info/software_versions.yml",
+                        "scicompsoft/flynp/pipeline_info/software_versions.yml",
                         JacsStorageType.S3,
                         "s3://scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml"
                 ),
@@ -108,7 +108,7 @@ public class JADEStorageURITest {
                         "s3.us-east-1.lyvecloud.seagate.com",
                         "NNQ20KNJ2YCWWMPE",
                         "IID4TNAS3OXI2UUAAKK21CCYHJRAP3JM",
-                        "/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
+                        "scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml",
                         JacsStorageType.S3,
                         "https://NNQ20KNJ2YCWWMPE:IID4TNAS3OXI2UUAAKK21CCYHJRAP3JM@s3.us-east-1.lyvecloud.seagate.com/scicompsoft-public/scicompsoft/flynp/pipeline_info/software_versions.yml"
                 ),

@@ -1,9 +1,5 @@
 package org.janelia.jacsstorage.rest;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.Executors;
-
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -22,19 +18,9 @@ import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.n5.N5ViewerMultichannelMetadata;
+import org.janelia.jacsstorage.service.N5ContentService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.saalfeldlab.n5.N5DatasetDiscoverer;
-import org.janelia.saalfeldlab.n5.N5FSReader;
-import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.N5TreeNode;
-import org.janelia.saalfeldlab.n5.metadata.N5CosemMetadataParser;
-import org.janelia.saalfeldlab.n5.metadata.N5CosemMultiScaleMetadata;
-import org.janelia.saalfeldlab.n5.metadata.N5GenericSingleScaleMetadataParser;
-import org.janelia.saalfeldlab.n5.metadata.N5MetadataParser;
-import org.janelia.saalfeldlab.n5.metadata.N5SingleScaleMetadataParser;
-import org.janelia.saalfeldlab.n5.metadata.N5ViewerMultiscaleMetadataParser;
-import org.janelia.saalfeldlab.n5.metadata.canonical.CanonicalMetadataParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,23 +31,10 @@ public class N5StorageResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(N5StorageResource.class);
 
-    public static final N5MetadataParser<?>[] n5vGroupParsers = new N5MetadataParser[]{
-            new N5CosemMultiScaleMetadata.CosemMultiScaleParser(),
-            new N5ViewerMultiscaleMetadataParser(),
-            new CanonicalMetadataParser(),
-            new N5ViewerMultichannelMetadata.N5ViewerMultichannelMetadataParser()
-    };
-
-    public static final N5MetadataParser<?>[] n5vParsers = new N5MetadataParser[] {
-            new N5CosemMetadataParser(),
-            new N5SingleScaleMetadataParser(),
-            new CanonicalMetadataParser(),
-            new N5GenericSingleScaleMetadataParser()
-    };
-
     @Inject @LocalInstance
     private StorageVolumeManager storageVolumeManager;
-
+    @Inject
+    private N5ContentService n5ContentService;
 
     @ApiOperation(value = "Discover N5 data sets in the given path and return a tree of N5TreeNodes")
     @ApiResponses(value = {
@@ -92,27 +65,10 @@ public class N5StorageResource {
                         .entity(ImmutableMap.of("errormessage", "Could not resolve relative path: "+storageRelativeFilePath))
                         .build();
             }
-            try {
-                N5Reader n5Reader = new N5FSReader(n5ContainerURI.getJadeStorage());
-                N5DatasetDiscoverer datasetDiscoverer = new N5DatasetDiscoverer(
-                        n5Reader,
-                        Executors.newCachedThreadPool(),
-                        Arrays.asList(n5vParsers),
-                        Arrays.asList(n5vGroupParsers));
-                N5TreeNode n5RootNode = datasetDiscoverer.discoverAndParseRecursive("/");
-                return Response
-                        .ok(n5RootNode, MediaType.APPLICATION_JSON)
-                        .build();
-            }
-            catch (IOException e) {
-                String errorMessage = "Error discovering N5 content at "+n5ContainerURI;
-                LOG.error(errorMessage, e);
-                return Response
-                        .serverError()
-                        .entity(ImmutableMap.of("errormessage", errorMessage))
-                        .build();
-            }
-
+            N5TreeNode n5RootNode = n5ContentService.getN5Container(n5ContainerURI);
+            return Response
+                    .ok(n5RootNode, MediaType.APPLICATION_JSON)
+                    .build();
         } else {
             LOG.warn("Attempt to get info about {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
             return Response

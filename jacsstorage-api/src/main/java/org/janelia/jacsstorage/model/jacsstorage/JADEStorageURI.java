@@ -111,7 +111,7 @@ public class JADEStorageURI {
             storageKeyBuilder.append(storageURI.getPath());
             return storageKeyBuilder.toString();
         } else {
-            return storageURI.getPath();
+            return StringUtils.removeStart(storageURI.getPath(), '/');
         }
     }
 
@@ -163,9 +163,12 @@ public class JADEStorageURI {
                 }
                 jadeStorageBuilder.append('@');
             }
-            jadeStorageBuilder
-                    .append(getStorageHost())
-                    .append(getStorageKey());
+            jadeStorageBuilder.append(getStorageHost());
+            String storageKey = getStorageKey();
+            if (StringUtils.isNotBlank(storageKey)) {
+                // s3 keys should not start with a '/'
+                jadeStorageBuilder.append('/').append(storageKey);
+            }
         }
         String appendedPath = StringUtils.removeStart(relativePath, '/');
         if (StringUtils.isNotBlank(appendedPath)) {

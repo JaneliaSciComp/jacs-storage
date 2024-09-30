@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.service.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -17,9 +16,8 @@ import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
 import org.janelia.jacsstorage.service.StorageCapacity;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import org.janelia.jacsstorage.service.s3.S3Adapter;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
@@ -32,32 +30,14 @@ import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 
 public class S3StorageService implements ContentStorageService {
 
-    private final String endpoint;
-    private final String accessKey;
-    private final String secretKey;
-    private final String bucket;
-    private final S3Client s3Client;
+    private final S3Adapter s3Adapter;
 
     S3StorageService(String endpoint, String bucket, String accessKey, String secretKey) {
-        this.endpoint = endpoint;
-        this.accessKey = accessKey;
-        this.secretKey = secretKey;
-        this.bucket = bucket;
-        s3Client = S3Client.builder()
-                .endpointOverride(URI.create(endpoint))
-                .credentialsProvider(() -> AwsBasicCredentials.builder()
-                        .accessKeyId(accessKey)
-                        .secretAccessKey(secretKey)
-                        .build())
-                .build();
+        this.s3Adapter = new S3Adapter(endpoint, bucket, accessKey, secretKey);
     }
 
     S3StorageService(String bucket) {
-        this.endpoint = null;
-        this.accessKey = null;
-        this.secretKey = null;
-        this.bucket = bucket;
-        s3Client = S3Client.create();
+        this.s3Adapter = new S3Adapter(bucket);
     }
 
     @Override
@@ -65,11 +45,11 @@ public class S3StorageService implements ContentStorageService {
         String s3Location = adjustLocation(contentLocation);
 
         HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
-                .bucket(bucket)
+                .bucket(s3Adapter.getBucket())
                 .key(s3Location)
                 .build();
         try {
-            HeadObjectResponse response = s3Client.headObject(headObjectRequest);
+            HeadObjectResponse response = s3Adapter.getS3Client().headObject(headObjectRequest);
             return true;
         } catch (S3Exception e) {
             return false;
@@ -80,10 +60,10 @@ public class S3StorageService implements ContentStorageService {
         String s3Location = adjustLocation(contentLocation);
 
         ListObjectsV2Request initialRequest = ListObjectsV2Request.builder()
-                .bucket(bucket)
+                .bucket(s3Adapter.getBucket())
                 .prefix(s3Location)
                 .build();
-        ListObjectsV2Iterable listObjectsResponses = s3Client.listObjectsV2Paginator(initialRequest);
+        ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
 
         List<ContentNode> results = new ArrayList<>();
         for (ListObjectsV2Response r : listObjectsResponses) {
@@ -108,7 +88,7 @@ public class S3StorageService implements ContentStorageService {
             String key = s3Object.key();
             Path p = Paths.get(key);
             Path parent = p.getParent();
-            return new ContentNode(getJADEStorageURI(), new S3ObjectContentReader(s3Client, bucket, key))
+            return new ContentNode(s3Adapter.getStorageURI(), new S3ObjectContentReader(s3Adapter.getS3Client(), s3Adapter.getBucket(), key))
                     .setName(p.getFileName().toString())
                     .setPrefix(parent != null ? parent.toString() : "")
                     .setSize(s3Object.size())
@@ -124,13 +104,13 @@ public class S3StorageService implements ContentStorageService {
         String s3Location = adjustLocation(contentLocation);
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucket)
+                .bucket(s3Adapter.getBucket())
                 .key(s3Location)
                 .build();
 
         try {
             byte[] dataBytes = ByteStreams.toByteArray(dataStream);
-            s3Client.putObject(putObjectRequest,
+            s3Adapter.getS3Client().putObject(putObjectRequest,
                     RequestBody.fromBytes(dataBytes)
             );
             return dataBytes.length;
@@ -144,12 +124,12 @@ public class S3StorageService implements ContentStorageService {
         String s3Location = adjustLocation(contentLocation);
 
         DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-                .bucket(bucket)
+                .bucket(s3Adapter.getBucket())
                 .key(s3Location)
                 .build();
 
         try {
-            s3Client.deleteObject(deleteObjectRequest);
+            s3Adapter.getS3Client().deleteObject(deleteObjectRequest);
         } catch (Exception e) {
             throw new ContentException("Error deleting content at " + contentLocation, e);
         }
@@ -165,23 +145,4 @@ public class S3StorageService implements ContentStorageService {
         return StringUtils.isBlank(currentContentLocation) ? "" : currentContentLocation;
     }
 
-    private JADEStorageURI getJADEStorageURI() {
-        StringBuilder jadeStorageURIBuilder = new StringBuilder();
-        URI endpointURI;
-        String appendedBucket;
-        if (StringUtils.isNotBlank(endpoint)) {
-            endpointURI = URI.create(endpoint);
-            appendedBucket = '/' + bucket;
-        } else {
-            endpointURI = URI.create("s3://" + bucket);
-            appendedBucket = "";
-        }
-        jadeStorageURIBuilder
-                .append(endpointURI.getScheme()).append("://");
-        if (StringUtils.isNotBlank(accessKey)) {
-            jadeStorageURIBuilder.append(accessKey).append(':').append(secretKey).append('@');
-        }
-        jadeStorageURIBuilder.append(endpointURI.getHost()).append(appendedBucket);
-        return JADEStorageURI.createStoragePathURI(jadeStorageURIBuilder.toString());
-    }
 }

@@ -7,6 +7,7 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.NumberSerializerModule;
 import org.janelia.jacsstorage.filter.AuthFilter;
 import org.janelia.jacsstorage.service.DataContentService;
+import org.janelia.jacsstorage.service.N5ContentService;
 import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.mock;
 public class TestAgentStorageDependenciesProducer {
 
     private DataContentService dataContentService = mock(DataContentService.class);
+    private N5ContentService n5ContentService = mock(N5ContentService.class);
     private OriginalDataStorageService dataStorageService = mock(OriginalDataStorageService.class);
     private StorageAllocatorService storageAllocatorService = mock(StorageAllocatorService.class);
     private StorageLookupService storageLookupService = mock(StorageLookupService.class);
@@ -31,6 +33,11 @@ public class TestAgentStorageDependenciesProducer {
     @Produces
     public DataContentService getDataContentService() {
         return dataContentService;
+    }
+
+    @Produces
+    public N5ContentService getN5ContentService() {
+        return n5ContentService;
     }
 
     @Produces

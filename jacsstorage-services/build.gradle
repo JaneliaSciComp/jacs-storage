@@ -21,6 +21,8 @@ project(":jacsstorage-services") {
                        JAVAX_ACTIVATION,
                        JAVAMAIL_LIB,
                        MONGODB_DRIVER_LIB,
+                       N5_LIB,
+                       N5_IMGLIB2_LIB,
                        REFLECTIONS_LIB
 
         perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB

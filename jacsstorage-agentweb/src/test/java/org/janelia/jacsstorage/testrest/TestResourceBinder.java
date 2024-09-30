@@ -4,6 +4,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.service.DataContentService;
+import org.janelia.jacsstorage.service.N5ContentService;
 import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.OriginalStorageContentReader;
@@ -31,6 +32,7 @@ public class TestResourceBinder extends AbstractBinder {
             throw new IllegalStateException(e);
         }
         bind(dependenciesProducer.getDataContentService()).to(DataContentService.class);
+        bind(dependenciesProducer.getN5ContentService()).to(N5ContentService.class);
         bind(dependenciesProducer.getDataStorageService()).to(OriginalStorageContentReader.class);
         bind(dependenciesProducer.getDataStorageService()).to(OriginalDataStorageService.class);
         bind(dependenciesProducer.getStorageAllocatorService()).qualifiedBy(localInstanceAnnotation).to(StorageAllocatorService.class);
