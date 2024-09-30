@@ -172,7 +172,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
                             )
                     )
             ));
-            if (storageQuery.getStorageType() != JacsStorageType.S3) {
+            if (storageQuery.getStorageType() == JacsStorageType.S3) {
                 filtersBuilder.add(Filters.eq("dataStoragePath", null));
             } else {
                 filtersBuilder.add(Filters.eq("dataStoragePath", storageQuery.getDataStoragePath()));

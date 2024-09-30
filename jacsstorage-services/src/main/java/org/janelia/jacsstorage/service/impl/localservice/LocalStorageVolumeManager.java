@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 import com.google.common.base.Preconditions;
@@ -212,8 +213,12 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         }
     }
 
-    private StorageCapacity getStorageCapacity(JADEStorageURI storageURI) {
-        return dataContentService.storageCapacity(storageURI);
+    private StorageCapacity getStorageCapacity(@Nullable JADEStorageURI storageURI) {
+        if (storageURI == null) {
+            return new StorageCapacity(-1, -1);
+        } else {
+            return dataContentService.storageCapacity(storageURI);
+        }
     }
 
     private void notifyCapacityChange(Integer previousUsagePercentage, Integer newUsagePercentage, String volumeLocation, Number volumeId) {
