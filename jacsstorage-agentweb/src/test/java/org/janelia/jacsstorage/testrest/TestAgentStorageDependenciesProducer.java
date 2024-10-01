@@ -8,7 +8,6 @@ import org.janelia.jacsstorage.datarequest.NumberSerializerModule;
 import org.janelia.jacsstorage.filter.AuthFilter;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.N5ContentService;
-import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageUsageManager;
@@ -22,7 +21,6 @@ public class TestAgentStorageDependenciesProducer {
 
     private DataContentService dataContentService = mock(DataContentService.class);
     private N5ContentService n5ContentService = mock(N5ContentService.class);
-    private OriginalDataStorageService dataStorageService = mock(OriginalDataStorageService.class);
     private StorageAllocatorService storageAllocatorService = mock(StorageAllocatorService.class);
     private StorageLookupService storageLookupService = mock(StorageLookupService.class);
     private StorageUsageManager storageUsageManager = mock(StorageUsageManager.class);
@@ -38,11 +36,6 @@ public class TestAgentStorageDependenciesProducer {
     @Produces
     public N5ContentService getN5ContentService() {
         return n5ContentService;
-    }
-
-    @Produces
-    public OriginalDataStorageService getDataStorageService() {
-        return dataStorageService;
     }
 
     @Produces @LocalInstance

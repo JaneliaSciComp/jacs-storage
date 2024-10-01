@@ -1,5 +1,15 @@
 package org.janelia.jacsstorage.rest;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Set;
+
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
@@ -12,23 +22,12 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.service.DataContentService;
-import org.janelia.jacsstorage.service.OriginalDataStorageService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
 import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
 import org.janelia.jacsstorage.testrest.TestResourceBinder;
 import org.junit.Test;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Paths;
-import java.util.Set;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -196,23 +195,15 @@ public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTe
                         .path(testPath)
                         .storageFormat(testFormat)
                         .build());
-        OriginalDataStorageService dataStorageService = dependenciesProducer.getDataStorageService();
+        DataContentService dataContentService = dependenciesProducer.getDataContentService();
         String testDataContent = "Test data";
-        when(dataStorageService.estimateDataEntrySize(
-                eq(Paths.get(testPath)),
-                eq(""),
-                eq(testFormat),
-                any(ContentFilterParams.class)))
-                .then(invocation -> (long) testDataContent.length());
-
-        when(dataStorageService.readDataEntryStream(
-                eq(Paths.get(testPath)),
-                eq(""),
-                eq(testFormat),
+        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volPrefix/testPath");
+        when(dataContentService.readDataStream(
+                eq(expectedDataURI),
                 any(ContentFilterParams.class),
                 any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(4);
+                    OutputStream out = invocation.getArgument(2);
                     out.write(testDataContent.getBytes());
                     return (long) testDataContent.length();
                 });
@@ -221,7 +212,7 @@ public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTe
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
                                 .storageVirtualPath("/volPrefix")
-                                .storageRootTemplate("/volRoot/${owner}")
+                                .storageRootTemplate("/volRoot/${username}")
                                 .build()
                         )
                 );
