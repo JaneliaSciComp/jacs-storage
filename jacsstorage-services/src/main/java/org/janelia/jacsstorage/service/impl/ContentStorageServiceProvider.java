@@ -3,10 +3,14 @@ package org.janelia.jacsstorage.service.impl;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.service.ContentStorageService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class ContentStorageServiceProvider {
+    private static final Logger LOG = LoggerFactory.getLogger(ContentStorageServiceProvider.class);
 
     ContentAccess<? extends ContentStorageService> getStorageService(JADEStorageURI storageURI) {
+        LOG.info("Get content access for {}", storageURI);
         if (storageURI == null) {
             return null;
         }

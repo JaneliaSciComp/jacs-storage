@@ -6,11 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import javax.activation.MimetypesFileTypeMap;
 import javax.inject.Inject;
 
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.ContentNode;
@@ -34,6 +31,9 @@ public class DataContentServiceImpl implements DataContentService {
     @Override
     public boolean exists(JADEStorageURI storageURI) {
         ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
+        if (contentAccess == null) {
+            return false;
+        }
         ContentStorageService contentStorageService = contentAccess.storageService;
         String contentKey = contentAccess.contentKey;
         // artificially set the filter to only select the first item
@@ -45,6 +45,9 @@ public class DataContentServiceImpl implements DataContentService {
     @Override
     public StorageCapacity storageCapacity(JADEStorageURI storageURI) {
         ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
+        if (contentAccess == null) {
+            return new StorageCapacity(-1, -1);
+        }
         ContentStorageService contentStorageService = contentAccess.storageService;
         String contentKey = contentAccess.contentKey;
         return contentStorageService.getStorageCapacity(contentKey);
@@ -53,6 +56,9 @@ public class DataContentServiceImpl implements DataContentService {
     @Override
     public Map<String, Object> readNodeMetadata(JADEStorageURI storageURI) {
         ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
+        if (contentAccess == null) {
+            return Collections.emptyMap();
+        }
         ContentStorageService contentStorageService = contentAccess.storageService;
         String contentKey = contentAccess.contentKey;
         // artificially set the filter to only select the first item
@@ -74,6 +80,9 @@ public class DataContentServiceImpl implements DataContentService {
     @Override
     public List<ContentNode> listDataNodes(JADEStorageURI storageURI, ContentFilterParams filterParams) {
         ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
+        if (contentAccess == null) {
+            return Collections.emptyList();
+        }
         ContentStorageService contentStorageService = contentAccess.storageService;
         String contentKey = contentAccess.contentKey;
         return contentStorageService.listContentNodes(contentKey, filterParams);
@@ -82,6 +91,9 @@ public class DataContentServiceImpl implements DataContentService {
     @Override
     public long readDataStream(JADEStorageURI storageURI, ContentFilterParams filterParams, OutputStream dataStream) {
         ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
+        if (contentAccess == null) {
+            throw new IllegalArgumentException("Invalid storage URI");
+        }
         ContentStorageService contentStorageService = contentAccess.storageService;
         String contentKey = contentAccess.contentKey;
         List<ContentNode> contentNodes = contentStorageService.listContentNodes(contentKey, filterParams);
@@ -96,6 +108,9 @@ public class DataContentServiceImpl implements DataContentService {
     @Override
     public long writeDataStream(JADEStorageURI storageURI, InputStream dataStream) {
         ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
+        if (contentAccess == null) {
+            throw new IllegalArgumentException("Invalid storage URI");
+        }
         ContentStorageService contentStorageService = contentAccess.storageService;
         String contentKey = contentAccess.contentKey;
         return contentStorageService.writeContent(contentKey, dataStream);
