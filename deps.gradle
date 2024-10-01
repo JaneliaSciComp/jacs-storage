@@ -21,8 +21,9 @@ dependencies {
         CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
 
         // database drivers
-        MONGODB_VERSION = "3.10.2"
-        MONGODB_DRIVER_LIB = "org.mongodb:mongo-java-driver:${MONGODB_VERSION}"
+        MONGODB_VERSION = "5.1.2"
+        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver-sync:${MONGODB_VERSION}"
+        MONGODB_BSON_LIB = "org.mongodb:bson:${MONGODB_VERSION}"
 
         // apache commons
         COMMONS_LANG_VERSION = "3.14.0"

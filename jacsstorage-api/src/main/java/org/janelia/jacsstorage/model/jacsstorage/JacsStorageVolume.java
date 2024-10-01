@@ -278,15 +278,16 @@ public class JacsStorageVolume extends AbstractEntity {
                 return Optional.of(contentStorageURI);
             }
         } else {
-            String contentKey = contentStorageURI.getStorageKey();
-            if (ExprHelper.match(storageRootTemplate, contentKey).isMatchFound()) {
-                String contentRelativePath = storageRootURI.relativizeKey(contentKey);
+            // for file system we compare the path with volume's root
+            String contentPath = contentStorageURI.getContentKey();
+            if (ExprHelper.match(storageRootTemplate, contentPath).isMatchFound()) {
+                String contentRelativePath = storageRootURI.relativizeKey(contentPath);
                 if (contentRelativePath != null) {
                     return Optional.of(storageRootURI.resolve(contentRelativePath));
                 }
             }
-            if (ExprHelper.match(storageVirtualPath, contentKey).isMatchFound()) {
-                String contentRelativeToBinding = Paths.get(storageVirtualPath).relativize(Paths.get(contentKey)).toString();
+            if (ExprHelper.match(storageVirtualPath, contentPath).isMatchFound()) {
+                String contentRelativeToBinding = Paths.get(storageVirtualPath).relativize(Paths.get(contentPath)).toString();
                 return Optional.of(storageRootURI.resolve(contentRelativeToBinding));
             }
         }

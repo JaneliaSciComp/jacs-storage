@@ -158,7 +158,7 @@ public class S3KeyValueAccess implements KeyValueAccess {
 
     @Override
     public boolean isDirectory(String normalPath) {
-        String s3Key = s3Adapter.getStorageURI().resolve(normalPath).getStorageKey();
+        String s3Key = s3Adapter.getStorageURI().resolve(normalPath).getContentKey();
         // append '/' (if normalPath is not root) to force looking for a prefix not an object
         String key = StringUtils.removeStart(StringUtils.appendIfMissing(s3Key, "/"), '/');
         ListObjectsV2Iterable iterableContent = queryIfExists(key);
@@ -167,14 +167,14 @@ public class S3KeyValueAccess implements KeyValueAccess {
 
     @Override
     public boolean isFile(String normalPath) {
-        String s3Key = s3Adapter.getStorageURI().resolve(normalPath).getStorageKey();
+        String s3Key = s3Adapter.getStorageURI().resolve(normalPath).getContentKey();
         ListObjectsV2Iterable iterableContent = queryIfExists(s3Key);
         return iterableContent.contents().stream().count() > 0;
     }
 
     @Override
     public LockedChannel lockForReading(String normalPath) throws IOException {
-        String key = s3Adapter.getStorageURI().resolve(normalPath).getStorageKey();
+        String key = s3Adapter.getStorageURI().resolve(normalPath).getContentKey();
         return new S3ObjectChannel(key);
     }
 
@@ -204,7 +204,7 @@ public class S3KeyValueAccess implements KeyValueAccess {
     }
 
     private String[] list(final String normalPath, final boolean onlyDirectories) {
-        String s3Key = s3Adapter.getStorageURI().resolve(normalPath).getStorageKey();
+        String s3Key = s3Adapter.getStorageURI().resolve(normalPath).getContentKey();
         String prefix = onlyDirectories
                 ? StringUtils.removeStart(StringUtils.appendIfMissing(s3Key, "/"), '/')
                 : s3Key;

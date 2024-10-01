@@ -33,25 +33,31 @@ public class DataContentServiceImpl implements DataContentService {
 
     @Override
     public boolean exists(JADEStorageURI storageURI) {
-        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
+        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
+        ContentStorageService contentStorageService = contentAccess.storageService;
+        String contentKey = contentAccess.contentKey;
         // artificially set the filter to only select the first item
         ContentFilterParams filterParams = new ContentFilterParams().setEntriesCount(1);
-        List<ContentNode> contentNodes = contentStorageService.listContentNodes(storageURI.getStorageKey(), filterParams);
+        List<ContentNode> contentNodes = contentStorageService.listContentNodes(contentKey, filterParams);
         return !contentNodes.isEmpty();
     }
 
     @Override
     public StorageCapacity storageCapacity(JADEStorageURI storageURI) {
-        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
-        return contentStorageService.getStorageCapacity(storageURI.getStorageKey());
+        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
+        ContentStorageService contentStorageService = contentAccess.storageService;
+        String contentKey = contentAccess.contentKey;
+        return contentStorageService.getStorageCapacity(contentKey);
     }
 
     @Override
     public Map<String, Object> readNodeMetadata(JADEStorageURI storageURI) {
-        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
+        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
+        ContentStorageService contentStorageService = contentAccess.storageService;
+        String contentKey = contentAccess.contentKey;
         // artificially set the filter to only select the first item
         ContentFilterParams filterParams = new ContentFilterParams().setEntriesCount(2);
-        List<ContentNode> contentNodes = contentStorageService.listContentNodes(storageURI.getStorageKey(), filterParams);
+        List<ContentNode> contentNodes = contentStorageService.listContentNodes(contentKey, filterParams);
         // if there's more than 1 node (a directory or prefix was provided)
         // then retrieve no metadata
         if (contentNodes.isEmpty()) {
@@ -67,14 +73,18 @@ public class DataContentServiceImpl implements DataContentService {
 
     @Override
     public List<ContentNode> listDataNodes(JADEStorageURI storageURI, ContentFilterParams filterParams) {
-        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
-        return contentStorageService.listContentNodes(storageURI.getStorageKey(), filterParams);
+        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
+        ContentStorageService contentStorageService = contentAccess.storageService;
+        String contentKey = contentAccess.contentKey;
+        return contentStorageService.listContentNodes(contentKey, filterParams);
     }
 
     @Override
     public long readDataStream(JADEStorageURI storageURI, ContentFilterParams filterParams, OutputStream dataStream) {
-        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
-        List<ContentNode> contentNodes = contentStorageService.listContentNodes(storageURI.getStorageKey(), filterParams);
+        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
+        ContentStorageService contentStorageService = contentAccess.storageService;
+        String contentKey = contentAccess.contentKey;
+        List<ContentNode> contentNodes = contentStorageService.listContentNodes(contentKey, filterParams);
         if (contentNodes.isEmpty()) {
             throw new NoContentFoundException("No content found for " + storageURI);
         } else {
@@ -85,13 +95,17 @@ public class DataContentServiceImpl implements DataContentService {
 
     @Override
     public long writeDataStream(JADEStorageURI storageURI, InputStream dataStream) {
-        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
-        return contentStorageService.writeContent(storageURI.getStorageKey(), dataStream);
+        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
+        ContentStorageService contentStorageService = contentAccess.storageService;
+        String contentKey = contentAccess.contentKey;
+        return contentStorageService.writeContent(contentKey, dataStream);
     }
 
     @Override
     public void removeData(JADEStorageURI storageURI) {
-        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
-        contentStorageService.deleteContent(storageURI.getStorageKey());
+        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
+        ContentStorageService contentStorageService = contentAccess.storageService;
+        String contentKey = contentAccess.contentKey;
+        contentStorageService.deleteContent(contentKey);
     }
 }

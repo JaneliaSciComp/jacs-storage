@@ -81,7 +81,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         Iterable<JacsStorageVolume> storageVolumesItr = aggregateIterable(
                 createMatchingPipeline(storageQuery),
                 createBsonSortCriteria(ImmutableList.of(
-                        new SortCriteria("storageVirtualPath", SortDirection.DESC)),
+                                new SortCriteria("storageVirtualPath", SortDirection.DESC)),
                         pageRequest.getSortCriteria()),
                 pageRequest.getOffset(),
                 pageRequest.getPageSize(),
@@ -91,12 +91,15 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             storageVolumesItr.forEach(results::add);
         } else {
             StreamSupport.stream(storageVolumesItr.spliterator(), false)
-                    .filter(sv -> ExprHelper.match(
-                            StringUtils.appendIfMissing(sv.getStorageVirtualPath(), "/"),
-                            StringUtils.appendIfMissing(storageQuery.getDataStoragePath(), "/")).isMatchFound() ||
-                            ExprHelper.match(
-                                    StringUtils.appendIfMissing(sv.getStorageRootTemplate(), "/"),
-                                    StringUtils.appendIfMissing(storageQuery.getDataStoragePath(), "/")).isMatchFound()
+                    .filter(sv -> sv.getStorageType() == JacsStorageType.S3 && sv.getStorageRootTemplate() == null && sv.getStorageVirtualPath() == null ||
+                                  sv.getStorageRootTemplate() != null && (
+                                          ExprHelper.match(
+                                                  StringUtils.appendIfMissing(sv.getStorageVirtualPath(), "/"),
+                                                  StringUtils.appendIfMissing(storageQuery.getDataStoragePath(), "/")).isMatchFound() ||
+                                          ExprHelper.match(
+                                            StringUtils.appendIfMissing(sv.getStorageRootTemplate(), "/"),
+                                            StringUtils.appendIfMissing(storageQuery.getDataStoragePath(), "/")).isMatchFound()
+                                  )
                     )
                     .forEach(results::add);
         }
@@ -173,7 +176,13 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
                     )
             ));
             if (storageQuery.getStorageType() == JacsStorageType.S3) {
-                filtersBuilder.add(Filters.eq("dataStoragePath", null));
+                filtersBuilder.add(
+                        Filters.or(
+                                Filters.eq("dataStoragePath", storageQuery.getDataStoragePath()),
+                                Filters.eq("storageRootTemplate", null),
+                                Filters.exists("storageRootTemplate", false)
+                        )
+                );
             } else {
                 filtersBuilder.add(Filters.eq("dataStoragePath", storageQuery.getDataStoragePath()));
             }

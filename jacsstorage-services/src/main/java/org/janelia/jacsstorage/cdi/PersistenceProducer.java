@@ -56,8 +56,9 @@ public class PersistenceProducer {
     public MongoClient createMongoClient(
             @PropertyValue(name = "MongoDB.ConnectionsPerHost") int connectionsPerHost,
             @PropertyValue(name = "MongoDB.ConnectTimeoutInMillis") int connectTimeoutInMillis,
-            @PropertyValue(name = "MongoDB.ConnectionWaitQueueSize") int connectionWaitQueueSize,
-            @PropertyValue(name = "MongoDB.ConnectWaitTimeInSec") long connectWaitTimeInSec,
+            @PropertyValue(name = "MongoDB.ConnectWaitTimeInSec") long connectWaitTimeInSecs,
+            @PropertyValue(name = "MongoDB.MaxConnecting") int maxConnecting,
+            @PropertyValue(name = "MongoDB.MaxConnectionLifeSecs") int maxConnectionLifeInSecs,
             @PropertyValue(name = "MongoDB.Username") String username,
             @PropertyValue(name = "MongoDB.Password") String password,
             @PropertyValue(name = "MongoDB.UseSSL", defaultValue = "false") boolean useSSL,
@@ -67,11 +68,12 @@ public class PersistenceProducer {
                 .codecRegistry(CodecRegistries.fromRegistries(
                         MongoClientSettings.getDefaultCodecRegistry(),
                         codecRegistry))
-                .applyToConnectionPoolSettings(builder -> builder
-                        .maxSize(connectionsPerHost)
-                        .maxWaitQueueSize(connectionWaitQueueSize)
-                        .maxWaitTime(connectWaitTimeInSec, TimeUnit.SECONDS)
-                )
+                .applyToConnectionPoolSettings(builder -> {
+                    if (connectionsPerHost > 0) builder.maxSize(connectionsPerHost);
+                    if (connectWaitTimeInSecs > 0) builder.maxWaitTime(connectWaitTimeInSecs, TimeUnit.SECONDS);
+                    if (maxConnecting > 0) builder.maxConnecting(maxConnecting);
+                    if (maxConnectionLifeInSecs > 0) builder.maxConnectionLifeTime(maxConnectionLifeInSecs, TimeUnit.SECONDS);
+                })
                 .applyToSocketSettings(builder -> builder.connectTimeout(connectTimeoutInMillis, TimeUnit.MILLISECONDS))
                 .applyToSslSettings(builder -> builder.enabled(useSSL))
                 ;

@@ -28,8 +28,8 @@ public class JADEStorageURI {
     /**
      * Creates a StoragePathURI taking the path value exactly as is.
      *
-     * @param storageURIDesc
-     * @return
+     * @param storageURIDesc source URI descriptor
+     * @return create a JADEStorageURI from the given URI descriptor
      */
     public static JADEStorageURI createStoragePathURI(String storageURIDesc) {
         return new JADEStorageURI(URI.create(normalizeURIDesc(storageURIDesc).replace("%", "%25")));
@@ -102,16 +102,101 @@ public class JADEStorageURI {
      * So for FileSystem storage it should return file's path,
      * for S3 it should return object's key
      */
-    public String getStorageKey() {
+    public String getJADEKey() {
         if (getStorageType() == JacsStorageType.FILE_SYSTEM) {
-            StringBuilder storageKeyBuilder = new StringBuilder();
-            if (StringUtils.isNotBlank(getStorageHost())) {
-                storageKeyBuilder.append('/').append(getStorageHost());
-            }
-            storageKeyBuilder.append(storageURI.getPath());
-            return storageKeyBuilder.toString();
+            return getFileSystemContentKey();
+        } else if (getStorageType() == JacsStorageType.S3) {
+            return StringUtils.removeEnd(storageURI.getPath(), "/");
         } else {
-            return StringUtils.removeStart(storageURI.getPath(), '/');
+            return null;
+        }
+    }
+
+    /**
+     * @return content's key using the following rules:
+     * for the file system the content key is the same as the full path
+     * for S3
+     * if the scheme is S3 the content key is the same as the one parsed by the URI parser
+     * if the scheme is HTTPS we assume the first component in the path is the bucket which will
+     * not be part of the content key
+     */
+    public String getContentKey() {
+        if (getStorageType() == JacsStorageType.FILE_SYSTEM) {
+            return getFileSystemContentKey();
+        } else if (getStorageType() == JacsStorageType.S3) {
+            return getS3ContentKey();
+        } else {
+            return null;
+        }
+    }
+
+    private String getFileSystemContentKey() {
+        StringBuilder storageKeyBuilder = new StringBuilder();
+        if (StringUtils.isNotBlank(getStorageHost())) {
+            storageKeyBuilder.append('/').append(getStorageHost());
+        }
+        storageKeyBuilder.append(storageURI.getPath());
+        return storageKeyBuilder.toString();
+    }
+
+    private String getS3ContentKey() {
+        String storagePath = StringUtils.removeStart(storageURI.getPath(), '/');
+        if (getStorageScheme() == JADEStorageScheme.S3) {
+            return StringUtils.removeStart(storagePath, '/');
+        } else {
+            int pathSeparator = storagePath.indexOf('/');
+            if (pathSeparator == -1) {
+                return "";
+            } else {
+                return storagePath.substring(pathSeparator + 1);
+            }
+        }
+    }
+
+    public String getContentBucket() {
+        if (getStorageType() == JacsStorageType.FILE_SYSTEM) {
+            return "";
+        } else if (getStorageType() == JacsStorageType.S3) {
+            if (getStorageScheme() == JADEStorageScheme.S3) {
+                return storageURI.getHost();
+            } else {
+                String bucketName = extractBucketNameFromPath();
+                if (StringUtils.isEmpty(bucketName)) {
+                    return extractBucketNameFromHost();
+                } else {
+                    return bucketName;
+                }
+            }
+        } else {
+            return null;
+        }
+    }
+
+    private String extractBucketNameFromPath() {
+        String storagePath = StringUtils.removeStart(storageURI.getPath(), '/');
+        if (StringUtils.isEmpty(storagePath)) {
+            return null;
+        } else {
+            int pathSeparator = storagePath.indexOf('/');
+            if (pathSeparator == -1) {
+                return storagePath;
+            } else {
+                return storagePath.substring(0, pathSeparator);
+            }
+        }
+    }
+
+    private String extractBucketNameFromHost() {
+        String host = getStorageHost();
+        if (StringUtils.isEmpty(host)) {
+            return null;
+        } else {
+            int domainSeparator = host.indexOf('.');
+            if (domainSeparator == -1) {
+                return host;
+            } else {
+                return host.substring(0, domainSeparator);
+            }
         }
     }
 
@@ -143,9 +228,12 @@ public class JADEStorageURI {
     }
 
     public boolean isEmpty() {
-        return StringUtils.isEmpty(getStorageKey());
+        return StringUtils.isEmpty(storageURI.getHost()) && StringUtils.isEmpty(storageURI.getPath());
     }
 
+    /**
+     * @return the stringified JADEStorageURI which for HTTP scheme will include the bucket name in the path.
+     */
     public String getJadeStorage() {
         return resolveJadeStorage(null);
     }
@@ -153,8 +241,8 @@ public class JADEStorageURI {
     public String resolveJadeStorage(String relativePath) {
         StringBuilder jadeStorageBuilder = new StringBuilder();
         if (getStorageType() == JacsStorageType.FILE_SYSTEM) {
-            jadeStorageBuilder.append(getStorageKey());
-        } else {
+            jadeStorageBuilder.append(getFileSystemContentKey());
+        } else if (getStorageType() == JacsStorageType.S3) {
             jadeStorageBuilder.append(getStorageScheme().value).append("://");
             if (StringUtils.isNotBlank(getUserAccessKey())) {
                 jadeStorageBuilder.append(getUserAccessKey());
@@ -163,12 +251,11 @@ public class JADEStorageURI {
                 }
                 jadeStorageBuilder.append('@');
             }
-            jadeStorageBuilder.append(getStorageHost());
-            String storageKey = getStorageKey();
-            if (StringUtils.isNotBlank(storageKey)) {
-                // s3 keys should not start with a '/'
-                jadeStorageBuilder.append('/').append(storageKey);
-            }
+            jadeStorageBuilder
+                    .append(getStorageHost())
+                    .append(getJADEKey());
+        } else {
+            throw new IllegalStateException("Method cannot be invoked when the storage type is unknow");
         }
         String appendedPath = StringUtils.removeStart(relativePath, '/');
         if (StringUtils.isNotBlank(appendedPath)) {
@@ -178,26 +265,40 @@ public class JADEStorageURI {
     }
 
     public @Nullable String relativize(@Nonnull JADEStorageURI otherStorageURI) {
-        if (this.getStorageHost().equals(otherStorageURI.getStorageHost())) {
-            String thisStorageKey = this.getStorageKey();
-            String otherStorageKey = otherStorageURI.getStorageKey();
-            if (!StringUtils.startsWith(otherStorageKey, thisStorageKey)) {
-                // I consider this viable only if otherStorage key starts with current's storage key
-                return null;
+        if (this.getStorageType() == JacsStorageType.FILE_SYSTEM) {
+            return Paths.get(this.getFileSystemContentKey()).relativize(Paths.get(otherStorageURI.getFileSystemContentKey())).toString();
+        } else if (this.getStorageType() == JacsStorageType.S3) {
+            if (StringUtils.equalsIgnoreCase(this.getContentBucket(), otherStorageURI.getContentBucket())) {
+                // the URIs must have the same bucket
+                String thisContentKey = this.getContentKey();
+                String otherContentKey = otherStorageURI.getContentKey();
+                if (!StringUtils.startsWith(otherContentKey, thisContentKey)) {
+                    // I consider this viable only if otherStorage key starts with current's storage key
+                    return null;
+                } else {
+                    return otherContentKey.substring(thisContentKey.length());
+                }
             }
-            return Paths.get(thisStorageKey).relativize(Paths.get(otherStorageURI.getStorageKey())).toString();
-        } else {
             return null;
+        } else {
+            throw new IllegalStateException("Method cannot be invoked when the storage type is unknow");
         }
     }
 
     public @Nullable String relativizeKey(@Nonnull String otherContentKey) {
-        String thisStorageKey = this.getStorageKey();
-        if (!StringUtils.startsWith(otherContentKey, thisStorageKey)) {
-            // I consider this viable only if otherContent key starts with current's storage key
-            return null;
+        if (this.getStorageType() == JacsStorageType.FILE_SYSTEM) {
+            return Paths.get(this.getFileSystemContentKey()).relativize(Paths.get(otherContentKey)).toString();
+        } else if (this.getStorageType() == JacsStorageType.S3) {
+            String thisContentKey = this.getContentKey();
+            if (!StringUtils.startsWith(otherContentKey, thisContentKey)) {
+                // I consider this viable only if otherStorage key starts with current's storage key
+                return null;
+            } else {
+                return otherContentKey.substring(thisContentKey.length());
+            }
+        } else {
+            throw new IllegalStateException("Method cannot be invoked when the storage type is unknow");
         }
-        return Paths.get(thisStorageKey).relativize(Paths.get(otherContentKey)).toString();
     }
 
     public JADEStorageURI resolve(String relativePath) {

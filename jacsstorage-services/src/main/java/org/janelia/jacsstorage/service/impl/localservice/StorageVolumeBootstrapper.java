@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service.impl.localservice;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -118,12 +119,17 @@ public class StorageVolumeBootstrapper {
     }
 
     private Set<JacsStoragePermission> getStorageVolumePermissions(String volumeName) {
-        List<String> permissions = applicationConfig.getStringListPropertyValue(
-                getVolumeConfigPropertyName(volumeName, "VolumePermissions"));
-        return permissions.stream()
-                .filter(StringUtils::isNotBlank)
-                .map(JacsStoragePermission::valueOf)
-                .collect(Collectors.toSet());
+        Stream<JacsStoragePermission> permissions;
+        if (JacsStorageVolume.GENERIC_S3.equals(volumeName)) {
+            permissions = Collections.singletonList(JacsStoragePermission.READ).stream();
+        } else {
+            permissions = applicationConfig.getStringListPropertyValue(
+                    getVolumeConfigPropertyName(volumeName, "VolumePermissions")).stream()
+                    .filter(StringUtils::isNotBlank)
+                    .map(JacsStoragePermission::valueOf)
+            ;
+        }
+        return permissions.collect(Collectors.toSet());
     }
 
 }

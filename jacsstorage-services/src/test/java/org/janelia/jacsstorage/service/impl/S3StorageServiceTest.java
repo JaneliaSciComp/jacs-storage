@@ -1,12 +1,14 @@
 package org.janelia.jacsstorage.service.impl;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
 import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.service.ContentNode;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -80,12 +82,15 @@ public class S3StorageServiceTest {
     }
 
     @Test
-    public void retrievePrefixFromS3() {
+    public void retrievePrefixFromS3() throws IOException {
         S3StorageService storageService = new S3StorageService("janelia-neuronbridge-data-dev");
-//        ByteArrayOutputStream testDataStream = new ByteArrayOutputStream();
-//        storageService.retrieveContent("v3_3_0/schemas", new ContentFilterParams(), testDataStream);
-//        String testDataContent = testDataStream.toString();
-//        assertNotNull(testDataContent);
+        ByteArrayOutputStream testDataStream = new ByteArrayOutputStream();
+        List<ContentNode> contentNodes = storageService.listContentNodes("v3_3_0/schemas", new ContentFilterParams());
+        for (ContentNode n : contentNodes) {
+            ByteStreams.copy(n.getContent(), testDataStream);
+        }
+        String testDataContent = testDataStream.toString();
+        assertNotNull(testDataContent);
     }
 
 }

@@ -10,14 +10,7 @@ subprojects {
 
     sourceSets {
         perf
-//                {
-//            compileClasspath += main.output
-//            runtimeClasspath += main.output
-//        }
         integrationTest
-//            compileClasspath += main.output + test.output
-//            runtimeClasspath += main.output + test.output
-//        }
     }
 
     configurations {
