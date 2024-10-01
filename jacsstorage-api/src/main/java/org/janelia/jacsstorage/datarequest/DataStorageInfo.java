@@ -1,5 +1,11 @@
 package org.janelia.jacsstorage.datarequest;
 
+import java.net.URI;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
@@ -10,15 +16,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
-
-import java.net.URI;
-import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @ApiModel(
         value = "Storage information"

@@ -32,7 +32,7 @@ public class N5ReaderProvider {
             return new S3N5Reader(
                     storageURI.getStorageEndpoint(),
                     storageURI.getContentBucket(),
-                    storageURI.getUserAccessKey(), 
+                    storageURI.getUserAccessKey(),
                     storageURI.getUserSecretKey(),
                     storageURI.getContentKey());
         } else {

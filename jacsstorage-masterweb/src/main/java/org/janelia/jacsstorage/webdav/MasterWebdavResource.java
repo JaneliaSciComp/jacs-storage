@@ -17,9 +17,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.google.common.collect.ImmutableMap;
-
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
@@ -27,7 +25,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ContentStorageResource;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
@@ -69,8 +66,7 @@ public class MasterWebdavResource {
                                                        Propfind propfindRequest,
                                                        @Context SecurityContext securityContext) {
         LOG.info("Find storage by prefix {} for {}", storagePrefixParam, securityContext.getUserPrincipal());
-        OriginalStoragePathURI storagePrefixURI = OriginalStoragePathURI.createAbsolutePathURI(storagePrefixParam);
-        StorageQuery storageQuery = new StorageQuery().setStorageVirtualPath(storagePrefixURI.getStoragePath());
+        StorageQuery storageQuery = new StorageQuery().setStorageVirtualPath(storagePrefixParam);
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.findVolumes(storageQuery);
         if (CollectionUtils.isEmpty(managedVolumes)) {
             LOG.warn("No storage found for prefix {}", storagePrefixParam);
@@ -93,7 +89,7 @@ public class MasterWebdavResource {
                 resourceURI.getBaseUriBuilder()
                         .path(ContentStorageResource.class)
                         .path(ContentStorageResource.class, "redirectForContentCheck")
-                        .build(storagePrefixURI.toString())
+                        .build(storagePrefixParam)
                         .toString()
         );
         return Response.status(207)
@@ -111,11 +107,10 @@ public class MasterWebdavResource {
                                                      Propfind propfindRequest,
                                                      @Context SecurityContext securityContext) {
         LOG.info("Find storage for path {} for {}", dataStoragePathParam, securityContext.getUserPrincipal());
-        OriginalStoragePathURI dataStoragePathURI = OriginalStoragePathURI.createAbsolutePathURI(dataStoragePathParam);
-        StorageQuery storageQuery = new StorageQuery().setDataStoragePath(dataStoragePathURI.getStoragePath());
+        StorageQuery storageQuery = new StorageQuery().setDataStoragePath(dataStoragePathParam);
         List<JacsStorageVolume> managedVolumes = storageVolumeManager.findVolumes(storageQuery);
         if (CollectionUtils.isEmpty(managedVolumes)) {
-            LOG.warn("No storage found for path {} - {}", dataStoragePathParam, dataStoragePathURI);
+            LOG.warn("No storage found for path {} - {}", dataStoragePathParam, dataStoragePathParam);
             Multistatus statusResponse = new Multistatus();
             Propstat propstat = new Propstat();
             propstat.setStatus("HTTP/1.1 404 Not Found");
@@ -135,7 +130,7 @@ public class MasterWebdavResource {
                 resourceURI.getBaseUriBuilder()
                         .path(ContentStorageResource.class)
                         .path(ContentStorageResource.class, "redirectForContentCheck")
-                        .build(dataStoragePathURI.toString())
+                        .build(dataStoragePathParam)
                         .toString()
         );
         return Response.status(207)

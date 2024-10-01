@@ -7,7 +7,6 @@ import java.util.Comparator;
 
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.model.jacsstorage.OriginalStoragePathURI;
 
 public class DataContentUtils {
 
