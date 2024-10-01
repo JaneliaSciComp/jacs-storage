@@ -3,7 +3,7 @@ allprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'idea'
     group = 'org.janelia.jacs-storage'
-    version = '1.21.2.SNAPSHOT'
+    version = '1.22.0.SNAPSHOT'
 }
 
 subprojects {
@@ -146,7 +146,7 @@ subprojects {
 }
 
 tasks.register('updateWrapper', Wrapper) {
-    gradleVersion = "8.9"
+    gradleVersion = "8.10"
 }
 
 tasks.register('printVersion') {
