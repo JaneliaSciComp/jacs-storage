@@ -1,22 +1,5 @@
 package org.janelia.jacsstorage.client;
 
-import com.beust.jcommander.DynamicParameter;
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
-import com.beust.jcommander.Parameters;
-import com.google.common.collect.ImmutableList;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.datarequest.DataStorageInfo;
-import org.janelia.jacsstorage.io.ContentFilterParams;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.janelia.jacsstorage.datatransfer.DataTransferService;
-import org.janelia.jacsstorage.client.clientutils.AuthClientImplHelper;
-import org.janelia.jacsstorage.client.clientutils.StorageClientImplHelper;
-
-import javax.enterprise.inject.se.SeContainer;
-import javax.enterprise.inject.se.SeContainerInitializer;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.UncheckedIOException;
@@ -24,9 +7,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.enterprise.inject.se.SeContainer;
+import javax.enterprise.inject.se.SeContainerInitializer;
+
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
+import com.beust.jcommander.Parameters;
+import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.client.clientutils.AuthClientImplHelper;
+import org.janelia.jacsstorage.client.clientutils.StorageClientImplHelper;
+import org.janelia.jacsstorage.datarequest.DataNodeInfo;
+import org.janelia.jacsstorage.datarequest.DataStorageInfo;
+import org.janelia.jacsstorage.datatransfer.DataTransferService;
+import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 public class StorageClientApp {
 

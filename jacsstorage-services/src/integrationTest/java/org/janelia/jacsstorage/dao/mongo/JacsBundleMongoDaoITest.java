@@ -200,7 +200,7 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
         return v;
     }
 
-    private JacsBundle createTestEntity(String ownerKey, String name, Number storageVolumeId, String path, Long size, int checksumLength, Map<String) {
+    private JacsBundle createTestEntity(String ownerKey, String name, Number storageVolumeId, String path, Long size, int checksumLength) {
         JacsBundle d = new JacsBundle();
         d.setOwnerKey(ownerKey);
         d.setName(name);

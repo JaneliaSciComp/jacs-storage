@@ -9,13 +9,16 @@ allprojects {
 subprojects {
 
     sourceSets {
+        integrationTest {
+            compileClasspath += sourceSets.main.output + sourceSets.test.output
+            runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+        }
         perf
-        integrationTest
     }
 
     configurations {
         integrationTestImplementation.extendsFrom(implementation, testImplementation)
-        integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+        integrationTestRuntimeOnly.extendsFrom(runtimeOnly, testRuntimeOnly)
 
         perfApi.extendsFrom(api)
         perfImplementation.extendsFrom(perfApi, implementation)
