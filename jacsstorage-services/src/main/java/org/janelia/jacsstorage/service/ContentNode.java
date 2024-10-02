@@ -1,7 +1,6 @@
 package org.janelia.jacsstorage.service;
 
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.Date;
 
 import javax.activation.MimetypesFileTypeMap;
@@ -10,19 +9,23 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ContentNode {
+    private static final Logger LOG = LoggerFactory.getLogger(ContentNode.class);
     private static final MimetypesFileTypeMap MIMETYPES_FILE_TYPE_MAP = new MimetypesFileTypeMap();
 
     private String prefix;
     private String name;
     private long size;
     private Date lastModified;
-    private JADEStorageURI rootStorageURi;
+    private JADEStorageURI jadeStorageURI;
     private final ContentReader contentReader;
 
     public ContentNode(JADEStorageURI rootStorageURI, ContentReader contentReader) {
-        this.rootStorageURi = rootStorageURI;
+        LOG.debug("!!!!!! CREATE content node for {}", rootStorageURI.getJadeStorage());
+        this.jadeStorageURI = rootStorageURI;
         this.contentReader = contentReader;
     }
 
@@ -84,7 +87,8 @@ public class ContentNode {
     }
 
     public JADEStorageURI getNodeStorageURI() {
-        return rootStorageURi.resolve(getObjectKey());
+        LOG.debug("!!!!!!! NODE storage URI: {}", jadeStorageURI.resolve(getObjectKey()));
+        return jadeStorageURI.resolve(getObjectKey());
     }
 
     public InputStream getContent() {
