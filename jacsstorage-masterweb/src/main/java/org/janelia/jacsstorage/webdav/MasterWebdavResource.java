@@ -155,7 +155,7 @@ public class MasterWebdavResource {
     )
     @MKCOL
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("storage/{storageName}format/DATA_DIRECTORY")
+    @Path("storage/{storageName}/format/DATA_DIRECTORY")
     public Response createDataStorage(@PathParam("storageName") String storageName,
                                       @HeaderParam("pathPrefix") String pathPrefix,
                                       @HeaderParam("storageTags") String storageTags,
