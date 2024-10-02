@@ -33,6 +33,7 @@ import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -424,6 +425,7 @@ public class VolumeStorageResource {
                                        @QueryParam("includeInactive") boolean includeInactive,
                                        @QueryParam("includeInaccessibleVolumes") boolean includeInaccessibleVolumes,
                                        @Context SecurityContext securityContext) {
+        JADEStorageURI jadeStorageURI = JADEStorageURI.createStoragePathURI(dataStoragePathParam);
         StorageQuery storageQuery = new StorageQuery()
                 .setStorageType(JacsStorageType.fromName(storageType))
                 .setId(storageVolumeId)
@@ -432,7 +434,7 @@ public class VolumeStorageResource {
                 .setAccessibleOnAgent(agentState.getLocalAgentId())
                 .setStorageTags(storageTags)
                 .setStorageVirtualPath(storageVirtualPath)
-                .setDataStoragePath(dataStoragePathParam)
+                .setDataStoragePath(jadeStorageURI.getJadeStorage())
                 .setIncludeInactiveVolumes(includeInactive)
                 .setIncludeInaccessibleVolumes(includeInaccessibleVolumes);
         LOG.info("List storage volumes filtered with: {}", storageQuery);
