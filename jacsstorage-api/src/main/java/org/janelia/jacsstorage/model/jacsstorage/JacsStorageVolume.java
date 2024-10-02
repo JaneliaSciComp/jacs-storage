@@ -36,7 +36,7 @@ public class JacsStorageVolume extends AbstractEntity {
     private String storageAgentId; // storage agentId
     // if a volume is set to a network disk that could be mounted on multiple hosts
     private String name; // volume name
-    private JacsStorageType storageType; // storage type
+    private JacsStorageType storageType = JacsStorageType.FILE_SYSTEM; // storage type - default to FileSystem
     private String storageVirtualPath; // storage path mapping - this will always be formatted as a UNIX path
     private String storageRootTemplate; // template for storage real root directory
     private List<String> storageTags; // storage tags - identify certain features of the physical storage
@@ -96,7 +96,6 @@ public class JacsStorageVolume extends AbstractEntity {
         return storageRootTemplate != null ? ExprHelper.eval(storageRootTemplate, evalContext) : null;
     }
 
-    @JsonIgnore
     public @Nullable String getStorageRootLocation() {
         if (StringUtils.isBlank(storageRootTemplate)) {
             return null;
