@@ -44,7 +44,8 @@ public class WebdavUtils {
         ms.getResponse().addAll(storageVolumes.stream()
                 .map(storageVolume -> {
                     String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
-                    LOG.debug("Storage service URL for {}: {}", storageVolume, storageServiceURL);
+                    LOG.debug("Storage service URL for {}: {}, root: {}, binding: {}, ",
+                            storageVolume, storageVolume.getStorageRootLocation(), storageVolume.getStorageVirtualPath(), storageServiceURL);
                     PropContainer propContainer = new PropContainer();
                     propContainer.setDisplayname(storageVolume.getName());
                     propContainer.setEtag(storageVolume.getStorageVirtualPath());
