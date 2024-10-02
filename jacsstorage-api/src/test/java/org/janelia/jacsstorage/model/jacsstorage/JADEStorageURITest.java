@@ -215,6 +215,17 @@ public class JADEStorageURITest {
                         JacsStorageType.S3,
                         "s3://scicompsoft-public15"
                 ),
+                new TestData(
+                        "scicompsoft-public16/scicompsoft/flynp/pipeline_info/software_versions.yml",
+                        "",
+                        "",
+                        "",
+                        "/scicompsoft-public16/scicompsoft/flynp/pipeline_info/software_versions.yml",
+                        "/scicompsoft-public16/scicompsoft/flynp/pipeline_info/software_versions.yml",
+                        JacsStorageType.FILE_SYSTEM,
+                        "/scicompsoft-public16/scicompsoft/flynp/pipeline_info/software_versions.yml"
+                ),
+
         };
 
         for (TestData td : testData) {
