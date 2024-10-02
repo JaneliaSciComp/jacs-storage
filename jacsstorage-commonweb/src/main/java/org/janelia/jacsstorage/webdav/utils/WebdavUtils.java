@@ -9,6 +9,8 @@ import org.janelia.jacsstorage.webdav.propfind.Multistatus;
 import org.janelia.jacsstorage.webdav.propfind.PropContainer;
 import org.janelia.jacsstorage.webdav.propfind.PropfindResponse;
 import org.janelia.jacsstorage.webdav.propfind.Propstat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.function.Function;
@@ -16,6 +18,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class WebdavUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(WebdavUtils.class);
+
     private static int MAX_ALLOWED_DEPTH = 20;
 
     public static int getDepth(String depth) {
@@ -35,10 +39,12 @@ public class WebdavUtils {
     }
 
     public static Multistatus convertStorageVolumes(List<JacsStorageVolume> storageVolumes, String defaultPropResourceURL) {
+        LOG.debug("Create multistatus response for {} with {}", storageVolumes, defaultPropResourceURL);
         Multistatus ms = new Multistatus();
         ms.getResponse().addAll(storageVolumes.stream()
                 .map(storageVolume -> {
                     String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
+                    LOG.debug("Storage service URL for {}: {}", storageVolume, storageServiceURL);
                     PropContainer propContainer = new PropContainer();
                     propContainer.setDisplayname(storageVolume.getName());
                     propContainer.setEtag(storageVolume.getStorageVirtualPath());

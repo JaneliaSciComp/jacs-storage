@@ -3,9 +3,6 @@ package org.janelia.jacsstorage.rest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -27,7 +24,6 @@ import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
 import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
 import org.janelia.jacsstorage.testrest.TestResourceBinder;
 import org.junit.Test;
-import org.powermock.api.mockito.PowerMockito;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;

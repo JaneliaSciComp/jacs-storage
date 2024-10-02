@@ -10,13 +10,9 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.ConnectionState;
 import org.janelia.jacsstorage.service.NotificationService;
-import org.janelia.jacsstorage.service.impl.distributedservice.AgentConnectionTester;
-import org.janelia.jacsstorage.service.impl.distributedservice.StorageAgentConnection;
-import org.janelia.jacsstorage.service.impl.distributedservice.StorageAgentManagerImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
