@@ -66,7 +66,8 @@ public class JADEStorageURI {
 
     public JacsStorageType getStorageType() {
         if (StringUtils.isNotBlank(storageURI.getHost())) {
-            if (StringUtils.equalsIgnoreCase(storageURI.getScheme(), "file") ||
+            if (storageURI.getScheme() == null || // this happens if the source uri was like: //volume/f1/f2 - we treat this as filesystem locations
+                    StringUtils.equalsIgnoreCase(storageURI.getScheme(), "file") ||
                     StringUtils.equalsIgnoreCase(storageURI.getScheme(), "jade")) {
                 return JacsStorageType.FILE_SYSTEM;
             } else {

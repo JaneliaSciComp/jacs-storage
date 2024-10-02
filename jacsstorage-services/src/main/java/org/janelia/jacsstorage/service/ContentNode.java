@@ -26,7 +26,7 @@ public class ContentNode {
     private final ContentReader contentReader;
 
     public ContentNode(JacsStorageType storageType, JADEStorageURI rootStorageURI, ContentReader contentReader) {
-        LOG.debug("!!!!!! CREATE content node for {}", rootStorageURI.getJadeStorage());
+        LOG.debug("!!!!!! CREATE content node for {}: {}", storageType, rootStorageURI.getJadeStorage());
         this.storageType = storageType;
         this.jadeStorageURI = rootStorageURI;
         this.contentReader = contentReader;
