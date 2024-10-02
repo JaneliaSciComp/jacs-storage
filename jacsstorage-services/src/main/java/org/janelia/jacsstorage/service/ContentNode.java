@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,7 @@ public class ContentNode {
     private static final Logger LOG = LoggerFactory.getLogger(ContentNode.class);
     private static final MimetypesFileTypeMap MIMETYPES_FILE_TYPE_MAP = new MimetypesFileTypeMap();
 
+    private JacsStorageType storageType;
     private String prefix;
     private String name;
     private long size;
@@ -23,8 +25,9 @@ public class ContentNode {
     private JADEStorageURI jadeStorageURI;
     private final ContentReader contentReader;
 
-    public ContentNode(JADEStorageURI rootStorageURI, ContentReader contentReader) {
+    public ContentNode(JacsStorageType storageType, JADEStorageURI rootStorageURI, ContentReader contentReader) {
         LOG.debug("!!!!!! CREATE content node for {}", rootStorageURI.getJadeStorage());
+        this.storageType = storageType;
         this.jadeStorageURI = rootStorageURI;
         this.contentReader = contentReader;
     }
@@ -87,7 +90,7 @@ public class ContentNode {
     }
 
     public JADEStorageURI getNodeStorageURI() {
-        LOG.debug("!!!!!!! NODE storage URI: {}", jadeStorageURI.resolve(getObjectKey()));
+        LOG.debug("!!!!!!! NODE storage for {}:{} URI: {}", this, getObjectKey(), jadeStorageURI.resolve(getObjectKey()));
         return jadeStorageURI.resolve(getObjectKey());
     }
 
@@ -98,6 +101,7 @@ public class ContentNode {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
+                .append("storageType", storageType)
                 .append("prefix", prefix)
                 .append("name", name)
                 .toString();

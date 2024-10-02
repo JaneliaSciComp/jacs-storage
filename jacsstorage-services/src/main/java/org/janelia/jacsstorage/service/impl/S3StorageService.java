@@ -12,6 +12,7 @@ import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
@@ -88,7 +89,7 @@ public class S3StorageService implements ContentStorageService {
             String key = s3Object.key();
             Path p = Paths.get(key);
             Path parent = p.getParent();
-            return new ContentNode(s3Adapter.getStorageURI(), new S3ObjectContentReader(s3Adapter.getS3Client(), s3Adapter.getBucket(), key))
+            return new ContentNode(JacsStorageType.S3, s3Adapter.getStorageURI(), new S3ObjectContentReader(s3Adapter.getS3Client(), s3Adapter.getBucket(), key))
                     .setName(p.getFileName().toString())
                     .setPrefix(parent != null ? parent.toString() : "")
                     .setSize(s3Object.size())
