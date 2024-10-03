@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.expr.ExprHelper;
@@ -96,6 +97,7 @@ public class JacsStorageVolume extends AbstractEntity {
         return storageRootTemplate != null ? ExprHelper.eval(storageRootTemplate, evalContext) : null;
     }
 
+    @JsonProperty("baseStorageRootDir")
     public @Nullable String getStorageRootLocation() {
         if (StringUtils.isBlank(storageRootTemplate)) {
             return null;
