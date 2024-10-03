@@ -23,9 +23,7 @@ public class IllegalStateRequestHandler implements ExceptionMapper<IllegalStateE
         LOG.error("Illegal state for {}", request.getMethod(), exception);
         Response.ResponseBuilder responseBuilder = Response
                 .status(Response.Status.INTERNAL_SERVER_ERROR);
-        if (StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
-            responseBuilder.header("Content-Length", 0);
-        } else {
+        if (!StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
             String errorMessage = StringUtils.defaultIfBlank(exception.getMessage(), "Server state error");
             responseBuilder
                     .entity(new ErrorResponse(errorMessage))

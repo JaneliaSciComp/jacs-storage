@@ -23,9 +23,7 @@ public class InvalidArgumentRequestHandler implements ExceptionMapper<IllegalArg
         LOG.error("Invalid argument for {}: {}", request.getMethod(), exception.getMessage(), exception);
         Response.ResponseBuilder responseBuilder = Response
                 .status(Response.Status.NOT_FOUND);
-        if (StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
-            responseBuilder.header("Content-Length", 0);
-        } else {
+        if (!StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
             String errorMessage = StringUtils.defaultIfBlank(exception.getMessage(), "Invalid argument");
             responseBuilder
                     .entity(new ErrorResponse(errorMessage))

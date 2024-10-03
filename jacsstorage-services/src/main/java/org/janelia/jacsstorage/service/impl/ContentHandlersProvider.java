@@ -6,7 +6,7 @@ import javax.inject.Inject;
 import com.google.common.collect.Streams;
 import org.janelia.jacsstorage.io.ContentFilterParams;
 import org.janelia.jacsstorage.service.impl.contenthandling.NoFilter;
-import org.janelia.jacsstorage.service.impl.contenthandling.NoOpMetadataReader;
+import org.janelia.jacsstorage.service.impl.contenthandling.SimpleMetadataReader;
 
 public class ContentHandlersProvider {
 
@@ -32,7 +32,7 @@ public class ContentHandlersProvider {
         return Streams.stream(contentMetadataReaderProvider)
                 .filter(contentMetadataReader -> contentMetadataReader.support(mimeType))
                 .findFirst()
-                .orElse(new NoOpMetadataReader());
+                .orElse(new SimpleMetadataReader());
     }
 
 }

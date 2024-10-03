@@ -5,15 +5,16 @@ import java.util.Map;
 
 import javax.enterprise.inject.Vetoed;
 
+import com.google.common.collect.ImmutableMap;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.impl.ContentMetadataReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Vetoed
-public class NoOpMetadataReader implements ContentMetadataReader {
+public class SimpleMetadataReader implements ContentMetadataReader {
 
-    private static final Logger LOG = LoggerFactory.getLogger(NoOpMetadataReader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SimpleMetadataReader.class);
 
     @Override
     public boolean support(String mimeType) {
@@ -22,6 +23,8 @@ public class NoOpMetadataReader implements ContentMetadataReader {
 
     @Override
     public Map<String, Object> getMetadata(ContentNode contentNode) {
-        return Collections.emptyMap();
+        return ImmutableMap.<String, Object>builder()
+                .put("size", contentNode.getSize())
+                .build();
     }
 }

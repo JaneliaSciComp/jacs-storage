@@ -24,9 +24,7 @@ public class DataAlreadyExistRequestHandler implements ExceptionMapper<DataAlrea
         LOG.error("Invalid argument - data already exist for {}", request.getMethod(), exception);
         Response.ResponseBuilder responseBuilder = Response
                 .status(Response.Status.CONFLICT);
-        if (StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
-            responseBuilder.header("Content-Length", 0);
-        } else {
+        if (!StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
             String errorMessage = StringUtils.defaultIfBlank(exception.getMessage(), "Data entry or file already exists");
             responseBuilder
                     .entity(new ErrorResponse(errorMessage))

@@ -24,9 +24,7 @@ public class InvalidJsonRequestHandler implements ExceptionMapper<InvalidFormatE
         LOG.error("Error parsing JSON for {}", request.getRequestURI(), exception);
         Response.ResponseBuilder responseBuilder = Response
                 .status(Response.Status.BAD_REQUEST);
-        if (StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
-            responseBuilder.header("Content-Length", 0);
-        } else {
+        if (!StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
             String errorMessage = StringUtils.defaultIfBlank(exception.getMessage(), "Invalid JSON request body");
             responseBuilder
                     .entity(new ErrorResponse(errorMessage))

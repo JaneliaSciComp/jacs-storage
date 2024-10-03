@@ -25,7 +25,9 @@ public class TiffMetadataReader implements ContentMetadataReader {
     @Override
     public Map<String, Object> getMetadata(ContentNode contentNode) {
         RenderedImageInfo imageInfo = ImageUtils.loadImageInfoFromTiffStream(contentNode.getContent());
+        long size = (long) (imageInfo.sx * imageInfo.sy * imageInfo.sz * imageInfo.getBytesPerPixel());
         return ImmutableMap.<String, Object>builder()
+                .put("size", size)
                 .put("sx", imageInfo.sx)
                 .put("sy", imageInfo.sy)
                 .put("sz", imageInfo.sz)

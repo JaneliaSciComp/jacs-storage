@@ -23,9 +23,7 @@ public class IllegalAccessRequestHandler implements ExceptionMapper<SecurityExce
         LOG.error("Invalid access for {}", request.getMethod(), exception);
         Response.ResponseBuilder responseBuilder = Response
                 .status(Response.Status.FORBIDDEN);
-        if (StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
-            responseBuilder.header("Content-Length", 0);
-        } else {
+        if (!StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
             String errorMessage = StringUtils.defaultIfBlank(exception.getMessage(), "Access denied");
             responseBuilder
                     .entity(new ErrorResponse(errorMessage))

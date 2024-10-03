@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.rest;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -98,15 +99,12 @@ public class VolumeStorageResource {
                     .map(resolvedContentURI -> {
                         List<ContentNode> contentNodes = dataContentService.listDataNodes(resolvedContentURI, new ContentFilterParams());
                         if (contentNodes.isEmpty()) {
-                            return Response.status(Response.Status.NOT_FOUND)
-                                    .header("Content-Length", 0);
+                            return Response.status(Response.Status.NOT_FOUND);
                         } else {
-                            return Response.ok()
-                                    .header("Content-Length", 0);
+                            return Response.ok();
                         }
                     })
-                    .orElse(Response.status(Response.Status.NOT_FOUND)
-                            .header("Content-Length", 0))
+                    .orElse(Response.status(Response.Status.NOT_FOUND))
                     .build();
         } finally {
             LOG.debug("Complete check data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
@@ -146,18 +144,18 @@ public class VolumeStorageResource {
             ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
             return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
+                        Map<String, Object> contentMetadata = dataContentService.readNodeMetadata(resolvedContentURI);
                         StreamingOutput outputStream = output -> {
                             dataContentService.readDataStream(resolvedContentURI, filterParams, output);
                             output.flush();
                         };
                         return Response
                                 .ok(outputStream, MediaType.APPLICATION_OCTET_STREAM)
-                                .header("Content-Length", null)
+                                .header("Content-Length", contentMetadata.getOrDefault("size", null))
                                 .header("Content-Disposition", "attachment; filename = " + resolvedContentURI.getObjectName())
                                 ;
                     })
-                    .orElse(Response.status(Response.Status.NOT_FOUND)
-                            .header("Content-Length", 0))
+                    .orElse(Response.status(Response.Status.NOT_FOUND))
                     .build();
         } finally {
             LOG.debug("Complete retrieving data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
@@ -194,8 +192,7 @@ public class VolumeStorageResource {
             }
             return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> Response.ok(dataContentService.readNodeMetadata(resolvedContentURI)))
-                    .orElse(Response.status(Response.Status.NOT_FOUND)
-                            .header("Content-Length", 0))
+                    .orElse(Response.status(Response.Status.NOT_FOUND))
                     .build();
         } finally {
             LOG.debug("Complete retrieving metadata from volume {}:{}", storageVolumeId, storageRelativeFilePath);
