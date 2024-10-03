@@ -250,6 +250,7 @@ public class VolumeStorageResource {
                                     dataNode.setStorageRootLocation(storageVolume.getStorageRootLocation());
                                     dataNode.setStorageRootBinding(storageVolume.getStorageVirtualPath());
                                     dataNode.setNodeRelativePath(storageVolume.getContentRelativePath(contentNode.getNodeStorageURI()));
+                                    dataNode.setMimeType(contentNode.getMimeType());
                                     dataNode.setSize(contentNode.getSize());
                                     dataNode.setCollectionFlag(false);
                                     dataNode.setLastModified(contentNode.getLastModified());

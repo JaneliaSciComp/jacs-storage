@@ -1,8 +1,12 @@
 package org.janelia.jacsstorage.webdav.utils;
 
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
-import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.webdav.propfind.Multistatus;
@@ -12,15 +16,9 @@ import org.janelia.jacsstorage.webdav.propfind.Propstat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 public class WebdavUtils {
     private static final Logger LOG = LoggerFactory.getLogger(WebdavUtils.class);
-
-    private static int MAX_ALLOWED_DEPTH = 20;
+    private static final int MAX_ALLOWED_DEPTH = 20;
 
     public static int getDepth(String depth) {
         if (StringUtils.isBlank(depth) || "infinity".equalsIgnoreCase(depth)) {

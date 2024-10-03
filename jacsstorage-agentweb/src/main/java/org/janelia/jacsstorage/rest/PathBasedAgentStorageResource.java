@@ -439,6 +439,7 @@ public class PathBasedAgentStorageResource {
                                 DataNodeInfo dataNode = new DataNodeInfo();
                                 dataNode.setStorageRootBinding(storageVolumeURI.getJadeStorage());
                                 dataNode.setNodeRelativePath(storageVolumeURI.relativizeKey(contentNode.getObjectKey()));
+                                dataNode.setMimeType(contentNode.getMimeType());
                                 dataNode.setSize(contentNode.getSize());
                                 dataNode.setCollectionFlag(false);
                                 dataNode.setLastModified(contentNode.getLastModified());
