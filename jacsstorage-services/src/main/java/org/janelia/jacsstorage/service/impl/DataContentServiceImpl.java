@@ -36,10 +36,7 @@ public class DataContentServiceImpl implements DataContentService {
         }
         ContentStorageService contentStorageService = contentAccess.storageService;
         String contentKey = contentAccess.contentKey;
-        // artificially set the filter to only select the first item
-        ContentFilterParams filterParams = new ContentFilterParams().setEntriesCount(1);
-        List<ContentNode> contentNodes = contentStorageService.listContentNodes(contentKey, filterParams);
-        return !contentNodes.isEmpty();
+        return contentStorageService.canAccess(contentKey);
     }
 
     @Override
