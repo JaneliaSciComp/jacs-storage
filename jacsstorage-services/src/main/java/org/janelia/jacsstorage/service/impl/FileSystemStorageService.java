@@ -87,7 +87,10 @@ public class FileSystemStorageService implements ContentStorageService {
                 } else {
                     selectedFiles = orderedFiles.skip(Math.max(filterParams.getStartEntryIndex(), 0));
                 }
-                return selectedFiles.map(this::createContentNode)
+                // returned nodes only have files - no directories
+                return selectedFiles
+                        .filter(Files::isRegularFile)
+                        .map(this::createContentNode)
                         .collect(Collectors.toList())
                         ;
             } catch (Exception e) {
