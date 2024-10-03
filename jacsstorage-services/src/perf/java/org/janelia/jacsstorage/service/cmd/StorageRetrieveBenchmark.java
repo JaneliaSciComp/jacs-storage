@@ -3,9 +3,8 @@ package org.janelia.jacsstorage.service.cmd;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -22,10 +21,7 @@ import org.openjdk.jmh.util.NullOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
@@ -51,7 +47,7 @@ public class StorageRetrieveBenchmark {
         OutputStream targetStream = new NullOutputStream();
         JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(trialParams.getRandomEntry());
         try {
-            long nbytes = trialParams.storageContentReader.readDataStream(dataURI, new ContentFilterParams(), targetStream);
+            long nbytes = trialParams.storageContentReader.readDataStream(dataURI, new ContentAccessParams(), targetStream);
             blackhole.consume(nbytes);
         } catch (Exception e) {
             LOG.error("Error reading {}", dataURI, e);

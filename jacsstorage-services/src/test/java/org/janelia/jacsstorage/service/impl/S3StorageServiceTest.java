@@ -6,9 +6,8 @@ import java.io.IOException;
 import java.util.List;
 
 import com.google.common.io.ByteStreams;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentNode;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -25,7 +24,7 @@ public class S3StorageServiceTest {
                 "NNQ20KNJ2YCWWMPE",
                 "IID4TNAS3OXI2UUAAKK21CCYHJRAP3JM"
         );
-        List<ContentNode> contentNodes = storageService.listContentNodes("/scicompsoft/flynp/pipeline_info/software_versions.yml", new ContentFilterParams());
+        List<ContentNode> contentNodes = storageService.listContentNodes("/scicompsoft/flynp/pipeline_info/software_versions.yml", new ContentAccessParams());
         assertEquals(1, contentNodes.size());
         String nodeContent = new String(ByteStreams.toByteArray(contentNodes.get(0).getContent()));
         assertTrue(nodeContent.length() > 0);
@@ -39,7 +38,7 @@ public class S3StorageServiceTest {
                 "NNQ20KNJ2YCWWMPE",
                 "IID4TNAS3OXI2UUAAKK21CCYHJRAP3JM"
         );
-        List<ContentNode> contentNodes = storageService.listContentNodes("scicompsoft/flynp/pipeline_info", new ContentFilterParams());
+        List<ContentNode> contentNodes = storageService.listContentNodes("scicompsoft/flynp/pipeline_info", new ContentAccessParams());
         assertTrue(contentNodes.size() > 0);
     }
 
@@ -47,7 +46,7 @@ public class S3StorageServiceTest {
     public void retrieveSingleFileFromS3() throws IOException {
         S3StorageService storageService = new S3StorageService("janelia-neuronbridge-data-dev");
         List<ContentNode> nodes = storageService.listContentNodes("v3_3_0",
-                new ContentFilterParams()
+                new ContentAccessParams()
                         .setEntryNamePattern("config.json")
                         .setMaxDepth(1));
         assertTrue(nodes.size() == 1);
@@ -59,7 +58,7 @@ public class S3StorageServiceTest {
     public void retrieveSelectedFilesFromS3() throws IOException {
         S3StorageService storageService = new S3StorageService("janelia-neuronbridge-data-dev");
         List<ContentNode> nodes = storageService.listContentNodes("v3_3_0",
-                new ContentFilterParams()
+                new ContentAccessParams()
                         .addSelectedEntry("config.json")
                         .addSelectedEntry("DATA_NOTES.md")
                         .setMaxDepth(1));
@@ -72,12 +71,12 @@ public class S3StorageServiceTest {
         String testContent = "This is some test content";
         long l = storageService.writeContent("myTest.txt", new ByteArrayInputStream(testContent.getBytes()));
         assertTrue(l == testContent.length());
-        List<ContentNode> nodesAfterWrite = storageService.listContentNodes("myTest.txt", new ContentFilterParams());
+        List<ContentNode> nodesAfterWrite = storageService.listContentNodes("myTest.txt", new ContentAccessParams());
         assertTrue(nodesAfterWrite.size() == 1);
         String nodeContent = new String(ByteStreams.toByteArray(nodesAfterWrite.get(0).getContent()));
         assertEquals(testContent, nodeContent);
         storageService.deleteContent("myTest.txt");
-        List<ContentNode> nodesAfterDelete = storageService.listContentNodes("myTest.txt", new ContentFilterParams());
+        List<ContentNode> nodesAfterDelete = storageService.listContentNodes("myTest.txt", new ContentAccessParams());
         assertTrue(nodesAfterDelete.size() == 0);
     }
 
@@ -85,7 +84,7 @@ public class S3StorageServiceTest {
     public void retrievePrefixFromS3() throws IOException {
         S3StorageService storageService = new S3StorageService("janelia-neuronbridge-data-dev");
         ByteArrayOutputStream testDataStream = new ByteArrayOutputStream();
-        List<ContentNode> contentNodes = storageService.listContentNodes("v3_3_0/schemas", new ContentFilterParams());
+        List<ContentNode> contentNodes = storageService.listContentNodes("v3_3_0/schemas", new ContentAccessParams());
         for (ContentNode n : contentNodes) {
             ByteStreams.copy(n.getContent(), testDataStream);
         }

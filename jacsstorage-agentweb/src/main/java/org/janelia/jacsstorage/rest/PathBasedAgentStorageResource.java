@@ -33,7 +33,7 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -102,7 +102,7 @@ public class PathBasedAgentStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
-            ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
+            ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
             return accessibleVolumes.stream()
                     .findFirst()
                     .flatMap(aStorageVolume -> aStorageVolume.resolveAbsoluteLocationURI(contentURI))
@@ -161,7 +161,7 @@ public class PathBasedAgentStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
-            ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
+            ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
             return accessibleVolumes.stream()
                     .findFirst()
                     .flatMap(aStorageVolume -> aStorageVolume.resolveAbsoluteLocationURI(contentURI))
@@ -419,7 +419,7 @@ public class PathBasedAgentStorageResource {
                     .build();
         }
         URI endpointBaseURI = resourceURI.getBaseUri();
-        ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters())
+        ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters())
                 .setMaxDepth(depth)
                 .setEntriesCount(length)
                 .setStartEntryIndex(offset);

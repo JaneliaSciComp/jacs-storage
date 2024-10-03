@@ -98,7 +98,7 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
             logResult = true
     )
     @Override
-    public long estimateDataEntrySize(String source, String entryName, ContentFilterParams filterParams) {
+    public long estimateDataEntrySize(String source, String entryName, ContentAccessParams filterParams) {
         Path sourceEntryPath = getSourceEntryPath(source, entryName);
         try {
             ContentConverter contentConverter = contentHandlerProvider.getContentConverter(filterParams);
@@ -115,7 +115,7 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
             logResult = true
     )
     @Override
-    public long readDataEntry(String source, String entryName, ContentFilterParams filterParams, OutputStream outputStream) {
+    public long readDataEntry(String source, String entryName, ContentAccessParams filterParams, OutputStream outputStream) {
         Path sourceEntryPath = getSourceEntryPath(source, entryName);
         try {
             ContentConverter contentConverter = contentHandlerProvider.getContentConverter(filterParams);
@@ -151,7 +151,7 @@ public class DataDirectoryBundleReader extends AbstractBundleReader {
         return entryPath;
     }
 
-    private DataContent getDataContent(Path entryPath, ContentFilterParams filterParams) {
+    private DataContent getDataContent(Path entryPath, ContentAccessParams filterParams) {
         DataContent dataContent;
         if (Files.isDirectory(entryPath)) {
             int traverseDepth = filterParams.getMaxDepth() >= 0 ? filterParams.getMaxDepth() : Integer.MAX_VALUE;

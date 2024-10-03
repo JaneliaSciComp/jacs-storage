@@ -20,8 +20,8 @@ public class SingleFileDataContent extends AbstractDataContent {
     private final Path dataPath;
     private final Function<Path, InputStream> pathToStreamHandler;
 
-    SingleFileDataContent(ContentFilterParams contentFilterParams, Path dataPath, Function<Path, InputStream> pathToStreamHandler) {
-        super(contentFilterParams);
+    SingleFileDataContent(ContentAccessParams contentAccessParams, Path dataPath, Function<Path, InputStream> pathToStreamHandler) {
+        super(contentAccessParams);
         this.dataPath = dataPath;
         this.pathToStreamHandler = pathToStreamHandler;
     }

@@ -11,7 +11,7 @@ import javax.ws.rs.core.Response;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
@@ -81,7 +81,7 @@ public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 );
         String testContent = "This is the content";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPhysicalRoot).resolve(testPath);
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream os = invocation.getArgument(2);
                     os.write(testContent.getBytes());
@@ -115,7 +115,7 @@ public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 );
         String testContent = "This is the content";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream os = invocation.getArgument(2);
                     os.write(testContent.getBytes());
@@ -152,7 +152,7 @@ public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
                 );
         String testContent = "This is the content";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream os = invocation.getArgument(2);
                     os.write(testContent.getBytes());
@@ -186,7 +186,7 @@ public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
                         .build()
                 );
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPhysicalRoot).resolve(testPath);
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
                 .thenThrow(new NoContentFoundException("error reading file"));
         Response response = target()
                 .path(Constants.AGENTSTORAGE_URI_PATH)
@@ -215,7 +215,7 @@ public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
                         .build()
                 );
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPhysicalRoot).resolve(testPath);
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
                 .thenThrow(new ContentException("error reading file"));
         Response response = target()
                 .path(Constants.AGENTSTORAGE_URI_PATH)

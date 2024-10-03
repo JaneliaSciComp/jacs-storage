@@ -14,23 +14,21 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
-import org.janelia.jacsstorage.service.impl.ContentFilter;
+import org.janelia.jacsstorage.service.impl.ContentAccess;
 import org.janelia.jacsstorage.service.impl.contenthandling.ContentNodeHelper;
 
-public class ZipEntryFilter implements ContentFilter {
-
-    private static final String FILTER_TYPE = "ZIP_ENTRY";
+public class ZippedContentAccess implements ContentAccess {
 
     @Override
-    public boolean support(String filterType) {
-        return FILTER_TYPE.equalsIgnoreCase(filterType);
+    public boolean isSupportedAccessType(String contentAccessType) {
+        return "ZIP_ENTRY".equalsIgnoreCase(contentAccessType);
     }
 
     @Override
-    public long applyContentFilter(ContentFilterParams filterParams, List<ContentNode> contentNodes, OutputStream outputStream) {
+    public long retrieveContent(List<ContentNode> contentNodes, ContentAccessParams filterParams, OutputStream outputStream) {
         String entryName = filterParams.getAsString("zipEntryName", "");
         try {
             if (StringUtils.isBlank(entryName)) {

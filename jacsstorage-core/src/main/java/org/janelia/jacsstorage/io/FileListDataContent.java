@@ -18,11 +18,11 @@ public class FileListDataContent extends AbstractDataContent {
     private final Supplier<Stream<DataNodeInfo>> dataNodeStreamProvider;
     private final Function<Path, InputStream> pathToStreamHandler;
 
-    FileListDataContent(ContentFilterParams contentFilterParams,
+    FileListDataContent(ContentAccessParams contentAccessParams,
                         Path rootPath,
                         Function<Path, InputStream> pathToStreamHandler,
                         Supplier<Stream<Path>> fileListProvider) {
-        super(contentFilterParams);
+        super(contentAccessParams);
         this.rootPath = rootPath;
         this.pathToStreamHandler = pathToStreamHandler;
         this.dataNodeStreamProvider = () -> fileListProvider.get()

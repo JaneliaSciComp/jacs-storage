@@ -17,8 +17,8 @@ public class SingleArchiveEntryDataContent extends AbstractDataContent {
     private final DataNodeInfo dataNode;
     private final InputStream contentStream;
 
-    SingleArchiveEntryDataContent(ContentFilterParams contentFilterParams, String entryName, long size, InputStream contentStream) {
-        super(contentFilterParams);
+    SingleArchiveEntryDataContent(ContentAccessParams contentAccessParams, String entryName, long size, InputStream contentStream) {
+        super(contentAccessParams);
         this.entryName = entryName;
         this.contentStream = contentStream;
         this.dataNode = DataContentUtils.createDataNodeInfo(getEntryNameAsPath(), getEntryNameAsPath(), false, size);

@@ -4,23 +4,21 @@ import java.io.OutputStream;
 import java.util.List;
 
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentNode;
-import org.janelia.jacsstorage.service.impl.ContentFilter;
+import org.janelia.jacsstorage.service.impl.ContentAccess;
 import org.janelia.rendering.NamedSupplier;
 import org.janelia.rendering.utils.ImageUtils;
 
-public class TiffMergeBandsFilter implements ContentFilter {
-
-    private static final String FILTER_TYPE = "TIFF_MERGE_BANDS";
+public class TiffMergeBandsContentAccess implements ContentAccess {
 
     @Override
-    public boolean support(String filterType) {
-        return FILTER_TYPE.equalsIgnoreCase(filterType);
+    public boolean isSupportedAccessType(String contentAccessType) {
+        return "TIFF_MERGE_BANDS".equalsIgnoreCase(contentAccessType);
     }
 
     @Override
-    public long applyContentFilter(ContentFilterParams filterParams, List<ContentNode> contentNodes, OutputStream outputStream) {
+    public long retrieveContent(List<ContentNode> contentNodes, ContentAccessParams filterParams, OutputStream outputStream) {
         if (contentNodes.isEmpty()) {
             return 0L;
         }

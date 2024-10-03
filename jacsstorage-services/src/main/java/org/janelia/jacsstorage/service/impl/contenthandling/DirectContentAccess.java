@@ -11,35 +11,35 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
-import org.janelia.jacsstorage.service.impl.ContentFilter;
+import org.janelia.jacsstorage.service.impl.ContentAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Vetoed
-public class NoFilter implements ContentFilter {
+public class DirectContentAccess implements ContentAccess {
 
-    private static final Logger LOG = LoggerFactory.getLogger(NoFilter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DirectContentAccess.class);
 
     private final boolean alwaysArchive;
 
-    public NoFilter(boolean alwaysArchive) {
+    public DirectContentAccess(boolean alwaysArchive) {
         this.alwaysArchive = alwaysArchive;
     }
 
-    NoFilter() {
+    DirectContentAccess() {
         this(false);
     }
 
     @Override
-    public boolean support(String filterType) {
+    public boolean isSupportedAccessType(String contentAccessType) {
         return true;
     }
 
     @Override
-    public long applyContentFilter(ContentFilterParams filterParams, List<ContentNode> contentNodes, OutputStream outputStream) {
+    public long retrieveContent(List<ContentNode> contentNodes, ContentAccessParams filterParams, OutputStream outputStream) {
         if (alwaysArchive) {
             return archiveContent(contentNodes, outputStream);
         } else {

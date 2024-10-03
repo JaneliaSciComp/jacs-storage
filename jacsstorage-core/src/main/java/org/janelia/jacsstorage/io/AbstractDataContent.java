@@ -3,20 +3,20 @@ package org.janelia.jacsstorage.io;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 abstract class AbstractDataContent implements DataContent {
-    private final ContentFilterParams contentFilterParams;
+    private final ContentAccessParams contentAccessParams;
 
-    AbstractDataContent(ContentFilterParams contentFilterParams) {
-        this.contentFilterParams = contentFilterParams;
+    AbstractDataContent(ContentAccessParams contentAccessParams) {
+        this.contentAccessParams = contentAccessParams;
     }
 
-    public ContentFilterParams getContentFilterParams() {
-        return contentFilterParams;
+    public ContentAccessParams getContentFilterParams() {
+        return contentAccessParams;
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("contentFilterParams", contentFilterParams)
+                .append("contentFilterParams", contentAccessParams)
                 .toString();
     }
 }

@@ -32,7 +32,7 @@ abstract class AbstractBundleReader implements BundleReader {
             logResult = true
     )
     @Override
-    public long readBundle(String source, ContentFilterParams filterParams, OutputStream stream) {
+    public long readBundle(String source, ContentAccessParams filterParams, OutputStream stream) {
         return readDataEntry(source, "", filterParams, stream);
     }
 

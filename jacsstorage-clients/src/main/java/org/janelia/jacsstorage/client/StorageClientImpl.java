@@ -3,7 +3,7 @@ package org.janelia.jacsstorage.client;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datatransfer.StorageMessageResponse;
 import org.janelia.jacsstorage.client.clientutils.StorageClientImplHelper;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +25,7 @@ public class StorageClientImpl implements StorageClient {
         return storageClient.ping(connectionInfo);
     }
 
-    public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo, ContentFilterParams filterParams, String authToken) throws IOException {
+    public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo, ContentAccessParams filterParams, String authToken) throws IOException {
         String storageServiceURL = storageInfo.getConnectionURL();
         return clientImplHelper.allocateStorage(storageServiceURL, storageInfo, authToken)
                 .map(allocatedStorage -> {
@@ -41,7 +41,7 @@ public class StorageClientImpl implements StorageClient {
     }
 
     @Override
-    public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo, ContentFilterParams filterParams, String authToken) throws IOException {
+    public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo, ContentAccessParams filterParams, String authToken) throws IOException {
         String storageServiceURL = storageInfo.getConnectionURL();
         return clientImplHelper.retrieveStorageInfo(storageServiceURL, storageInfo, authToken)
             .map((DataStorageInfo persistedStorageInfo) -> {

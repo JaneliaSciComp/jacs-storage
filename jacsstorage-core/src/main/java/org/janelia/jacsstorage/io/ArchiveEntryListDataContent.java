@@ -22,8 +22,8 @@ public class ArchiveEntryListDataContent extends AbstractDataContent {
     private final Map<DataNodeInfo, byte[]> dataNodeList = new LinkedHashMap<>();
     private final String rootEntry;
 
-    ArchiveEntryListDataContent(ContentFilterParams contentFilterParams, String rootEntry) {
-        super(contentFilterParams);
+    ArchiveEntryListDataContent(ContentAccessParams contentAccessParams, String rootEntry) {
+        super(contentAccessParams);
         this.rootEntry = rootEntry;
     }
 

@@ -8,7 +8,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
@@ -19,48 +19,42 @@ import org.janelia.jacsstorage.service.StorageCapacity;
 public class DataContentServiceImpl implements DataContentService {
 
     private final ContentStorageServiceProvider contentStorageServiceProvider;
-    private final ContentHandlersProvider contentHandlersProvider;
+    private final ContentAccessProvider contentAccessProvider;
 
     @Inject
     DataContentServiceImpl(ContentStorageServiceProvider contentStorageServiceProvider,
-                           ContentHandlersProvider contentHandlersProvider) {
+                           ContentAccessProvider contentAccessProvider) {
         this.contentStorageServiceProvider = contentStorageServiceProvider;
-        this.contentHandlersProvider = contentHandlersProvider;
+        this.contentAccessProvider = contentAccessProvider;
     }
 
     @Override
     public boolean exists(JADEStorageURI storageURI) {
-        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
-        if (contentAccess == null) {
+        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
+        if (contentStorageService == null) {
             return false;
         }
-        ContentStorageService contentStorageService = contentAccess.storageService;
-        String contentKey = contentAccess.contentKey;
-        return contentStorageService.canAccess(contentKey);
+        return contentStorageService.canAccess(storageURI.getContentKey());
     }
 
     @Override
     public StorageCapacity storageCapacity(JADEStorageURI storageURI) {
-        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
-        if (contentAccess == null) {
+        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
+        if (contentStorageService == null) {
             return new StorageCapacity(-1, -1);
         }
-        ContentStorageService contentStorageService = contentAccess.storageService;
-        String contentKey = contentAccess.contentKey;
-        return contentStorageService.getStorageCapacity(contentKey);
+        return contentStorageService.getStorageCapacity(storageURI.getContentKey());
     }
 
     @Override
     public Map<String, Object> readNodeMetadata(JADEStorageURI storageURI) {
-        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
-        if (contentAccess == null) {
+        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
+        if (contentStorageService == null) {
             return Collections.emptyMap();
         }
-        ContentStorageService contentStorageService = contentAccess.storageService;
-        String contentKey = contentAccess.contentKey;
         // artificially set the filter to only select the first item
-        ContentFilterParams filterParams = new ContentFilterParams().setEntriesCount(2);
-        List<ContentNode> contentNodes = contentStorageService.listContentNodes(contentKey, filterParams);
+        ContentAccessParams filterParams = new ContentAccessParams().setEntriesCount(2);
+        List<ContentNode> contentNodes = contentStorageService.listContentNodes(storageURI.getContentKey(), filterParams);
         // if there's more than 1 node (a directory or prefix was provided)
         // then retrieve no metadata
         if (contentNodes.isEmpty()) {
@@ -69,55 +63,50 @@ public class DataContentServiceImpl implements DataContentService {
             return Collections.emptyMap();
         } else {
             // if there's exactly 1 match lookup if there's a supported metada reader
-            ContentMetadataReader contentMetadataReader = contentHandlersProvider.getContentMetadataReader(contentNodes.get(0).getMimeType());
+            ContentMetadataReader contentMetadataReader = contentAccessProvider.getContentMetadataReader(contentNodes.get(0).getMimeType());
             return contentMetadataReader.getMetadata(contentNodes.get(0));
         }
     }
 
     @Override
-    public List<ContentNode> listDataNodes(JADEStorageURI storageURI, ContentFilterParams filterParams) {
-        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
-        if (contentAccess == null) {
+    public List<ContentNode> listDataNodes(JADEStorageURI storageURI, ContentAccessParams filterParams) {
+        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
+        if (contentStorageService == null) {
             return Collections.emptyList();
         }
-        ContentStorageService contentStorageService = contentAccess.storageService;
-        String contentKey = contentAccess.contentKey;
-        return contentStorageService.listContentNodes(contentKey, filterParams);
+        return contentStorageService.listContentNodes(storageURI.getContentKey(), filterParams);
     }
 
     @Override
-    public long readDataStream(JADEStorageURI storageURI, ContentFilterParams filterParams, OutputStream dataStream) {
-        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
-        if (contentAccess == null) {
+    public long readDataStream(JADEStorageURI storageURI, ContentAccessParams filterParams, OutputStream dataStream) {
+        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
+        if (contentStorageService == null) {
             throw new IllegalArgumentException("Invalid storage URI");
         }
-        ContentStorageService contentStorageService = contentAccess.storageService;
-        String contentKey = contentAccess.contentKey;
-        List<ContentNode> contentNodes = contentStorageService.listContentNodes(contentKey, filterParams);
+        List<ContentNode> contentNodes = contentStorageService.listContentNodes(storageURI.getContentKey(), filterParams);
         if (contentNodes.isEmpty()) {
             throw new NoContentFoundException("No content found for " + storageURI);
         } else {
-            ContentFilter contentFilter = contentHandlersProvider.getContentFilter(filterParams);
-            return contentFilter.applyContentFilter(filterParams, contentNodes, dataStream);
+            ContentAccess contentAccess = contentAccessProvider.getContentFilter(filterParams);
+            return contentAccess.retrieveContent(contentNodes, filterParams, dataStream);
         }
     }
 
     @Override
     public long writeDataStream(JADEStorageURI storageURI, InputStream dataStream) {
-        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
-        if (contentAccess == null) {
+        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
+        if (contentStorageService == null) {
             throw new IllegalArgumentException("Invalid storage URI");
         }
-        ContentStorageService contentStorageService = contentAccess.storageService;
-        String contentKey = contentAccess.contentKey;
-        return contentStorageService.writeContent(contentKey, dataStream);
+        return contentStorageService.writeContent(storageURI.getContentKey(), dataStream);
     }
 
     @Override
     public void removeData(JADEStorageURI storageURI) {
-        ContentAccess<? extends ContentStorageService> contentAccess = contentStorageServiceProvider.getStorageService(storageURI);
-        ContentStorageService contentStorageService = contentAccess.storageService;
-        String contentKey = contentAccess.contentKey;
-        contentStorageService.deleteContent(contentKey);
+        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
+        if (contentStorageService == null) {
+            throw new IllegalArgumentException("Invalid storage URI");
+        }
+        contentStorageService.deleteContent(storageURI.getContentKey());
     }
 }

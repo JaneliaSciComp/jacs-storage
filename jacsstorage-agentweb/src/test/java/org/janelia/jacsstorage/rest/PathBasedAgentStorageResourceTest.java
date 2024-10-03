@@ -14,7 +14,7 @@ import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
@@ -81,7 +81,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 );
         String testData = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath");
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(2);
                     out.write(testData.getBytes());
@@ -113,7 +113,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 );
         String testData = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath");
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(2);
                     out.write(testData.getBytes());
@@ -143,7 +143,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 );
         String testData = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath");
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(2);
                     out.write(testData.getBytes());
@@ -173,7 +173,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 );
         String testData = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(2);
                     out.write(testData.getBytes());
@@ -200,7 +200,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 );
         String testData = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(2);
                     out.write(testData.getBytes());
@@ -232,7 +232,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 );
         String testData = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentFilterParams.class), any(OutputStream.class)))
+        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
                 .then(invocation -> {
                     OutputStream out = invocation.getArgument(2);
                     out.write(testData.getBytes());

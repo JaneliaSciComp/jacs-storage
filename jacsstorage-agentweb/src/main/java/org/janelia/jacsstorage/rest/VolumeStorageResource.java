@@ -33,7 +33,7 @@ import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
@@ -97,7 +97,7 @@ public class VolumeStorageResource {
             }
             return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
-                        List<ContentNode> contentNodes = dataContentService.listDataNodes(resolvedContentURI, new ContentFilterParams());
+                        List<ContentNode> contentNodes = dataContentService.listDataNodes(resolvedContentURI, new ContentAccessParams());
                         if (contentNodes.isEmpty()) {
                             return Response.status(Response.Status.NOT_FOUND);
                         } else {
@@ -141,7 +141,7 @@ public class VolumeStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
-            ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
+            ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
             return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
                         Map<String, Object> contentMetadata = dataContentService.readNodeMetadata(resolvedContentURI);
@@ -235,7 +235,7 @@ public class VolumeStorageResource {
             int offset = offsetParam != null ? offsetParam : 0;
             int length = lengthParam != null ? lengthParam : -1;
             URI endpointBaseURI = resourceURI.getBaseUri();
-            ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters())
+            ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters())
                     .setMaxDepth(depth)
                     .setEntriesCount(length)
                     .setStartEntryIndex(offset);

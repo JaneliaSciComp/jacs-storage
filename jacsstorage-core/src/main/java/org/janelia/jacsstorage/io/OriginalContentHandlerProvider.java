@@ -20,11 +20,11 @@ public class OriginalContentHandlerProvider {
         this.contentInfoExtractorsSource = contentInfoExtractorsSource;
     }
 
-    public ContentConverter getContentConverter(ContentFilterParams contentFilterParams) {
+    public ContentConverter getContentConverter(ContentAccessParams contentAccessParams) {
         return Streams.stream(contentConverterSource)
-                .filter(contentStreamFilter -> contentFilterParams != null && contentStreamFilter.support(contentFilterParams.getFilterType()))
+                .filter(contentStreamFilter -> contentAccessParams != null && contentStreamFilter.support(contentAccessParams.getFilterType()))
                 .findFirst()
-                .orElseGet(() -> new NoOPContentConverter(contentFilterParams.isAlwaysArchive()));
+                .orElseGet(() -> new NoOPContentConverter(contentAccessParams.isAlwaysArchive()));
     }
 
     public ContentInfoExtractor getContentInfoExtractor(String mimeType) {

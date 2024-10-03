@@ -52,7 +52,7 @@ public class DataDirectoryBundleReaderWriterTest {
     @Before
     public void setUp() throws IOException {
         OriginalContentHandlerProvider contentHandlerProvider = Mockito.mock(OriginalContentHandlerProvider.class);
-        Mockito.when(contentHandlerProvider.getContentConverter(ArgumentMatchers.any(ContentFilterParams.class)))
+        Mockito.when(contentHandlerProvider.getContentConverter(ArgumentMatchers.any(ContentAccessParams.class)))
                 .thenReturn(new NoOPContentConverter(false));
         dataDirectoryBundleReader = new DataDirectoryBundleReader(contentHandlerProvider);
         dataDirectoryBundleWriter = new DataDirectoryBundleWriter();
@@ -86,7 +86,7 @@ public class DataDirectoryBundleReaderWriterTest {
         InputStream testInputStream = null;
         try {
             testOutputStream = new FileOutputStream(testFilePath.toFile());
-            long nReadBytes = dataDirectoryBundleReader.readBundle(testDataDir.toString(), new ContentFilterParams(), testOutputStream);
+            long nReadBytes = dataDirectoryBundleReader.readBundle(testDataDir.toString(), new ContentAccessParams(), testOutputStream);
             testOutputStream.close();
             testOutputStream = null;
             testInputStream = new BufferedInputStream(new FileInputStream(testFilePath.toFile()));
@@ -131,7 +131,7 @@ public class DataDirectoryBundleReaderWriterTest {
         Path testDataPath = testDataDir.resolve("f_1_1");
         byte[] testDataBytes = Files.readAllBytes(testDataPath);
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        long nBytes = dataDirectoryBundleReader.readBundle(testDataPath.toString(), new ContentFilterParams(), output);
+        long nBytes = dataDirectoryBundleReader.readBundle(testDataPath.toString(), new ContentAccessParams(), output);
         assertThat(nBytes, Matchers.equalTo((long) testDataBytes.length));
         assertThat(output.toByteArray().length, Matchers.greaterThanOrEqualTo(testDataBytes.length));
     }
@@ -195,9 +195,9 @@ public class DataDirectoryBundleReaderWriterTest {
         );
         for (String td : testData) {
             ByteArrayOutputStream referenceOutputStream = new ByteArrayOutputStream();
-            dataDirectoryBundleReader.readBundle(testDataDir + "/" + td, new ContentFilterParams(), referenceOutputStream);
+            dataDirectoryBundleReader.readBundle(testDataDir + "/" + td, new ContentAccessParams(), referenceOutputStream);
             ByteArrayOutputStream testDataEntryStream = new ByteArrayOutputStream();
-            dataDirectoryBundleReader.readDataEntry(testDataDir.toString(), td, new ContentFilterParams(), testDataEntryStream);
+            dataDirectoryBundleReader.readDataEntry(testDataDir.toString(), td, new ContentAccessParams(), testDataEntryStream);
             assertArrayEquals("Expected condition not met for " + td, referenceOutputStream.toByteArray(), testDataEntryStream.toByteArray());
         }
     }
@@ -217,7 +217,7 @@ public class DataDirectoryBundleReaderWriterTest {
             ByteArrayOutputStream referenceOutputStream = new ByteArrayOutputStream();
             Files.copy(testDataDir.resolve(td), referenceOutputStream);
             ByteArrayOutputStream testDataEntryStream = new ByteArrayOutputStream();
-            dataDirectoryBundleReader.readDataEntry(testDataDir.toString(), td, new ContentFilterParams(), testDataEntryStream);
+            dataDirectoryBundleReader.readDataEntry(testDataDir.toString(), td, new ContentAccessParams(), testDataEntryStream);
             assertArrayEquals("Expected condition not met for " + td, referenceOutputStream.toByteArray(), testDataEntryStream.toByteArray());
         }
     }
@@ -225,7 +225,7 @@ public class DataDirectoryBundleReaderWriterTest {
     @Test
     public void bundleReadFailureBecauseSourceIsMissing() {
         Path missingDataPath = testDataDir.resolve("missing");
-        assertThatThrownBy(() -> dataDirectoryBundleReader.readBundle(missingDataPath.toString(), new ContentFilterParams(), new ByteArrayOutputStream()))
+        assertThatThrownBy(() -> dataDirectoryBundleReader.readBundle(missingDataPath.toString(), new ContentAccessParams(), new ByteArrayOutputStream()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("No path found for " + missingDataPath);
     }

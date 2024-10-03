@@ -9,27 +9,26 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
-import org.janelia.jacsstorage.service.impl.ContentFilter;
+import org.janelia.jacsstorage.service.impl.ContentAccess;
 import org.janelia.jacsstorage.service.impl.contenthandling.ContentNodeHelper;
 import org.janelia.rendering.utils.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TiffROIPixelsFilter implements ContentFilter {
+public class TiffROIPixelsFilter implements ContentAccess {
 
     private static final Logger LOG = LoggerFactory.getLogger(TiffROIPixelsFilter.class);
-    private static final String FILTER_TYPE = "TIFF_ROI_PIXELS";
 
     @Override
-    public boolean support(String filterType) {
-        return FILTER_TYPE.equalsIgnoreCase(filterType);
+    public boolean isSupportedAccessType(String contentAccessType) {
+        return "TIFF_ROI_PIXELS".equalsIgnoreCase(contentAccessType);
     }
 
     @Override
-    public long applyContentFilter(ContentFilterParams filterParams, List<ContentNode> contentNodes, OutputStream outputStream) {
+    public long retrieveContent(List<ContentNode> contentNodes, ContentAccessParams filterParams, OutputStream outputStream) {
         Integer xCenter = filterParams.getAsInt("xCenter", 0);
         Integer yCenter = filterParams.getAsInt("yCenter", 0);
         Integer zCenter = filterParams.getAsInt("zCenter", 0);

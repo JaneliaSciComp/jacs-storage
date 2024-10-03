@@ -4,7 +4,7 @@ import com.google.common.hash.Hashing;
 import com.google.common.hash.HashingInputStream;
 import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.datatransfer.DataTransferService;
 import org.janelia.jacsstorage.datatransfer.StorageMessageHeader;
@@ -39,7 +39,7 @@ public class StorageClientHttpImpl implements StorageClient {
     }
 
     @Override
-    public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo, ContentFilterParams filterParams, String authToken) throws IOException {
+    public StorageMessageResponse persistData(String localPath, DataStorageInfo storageInfo, ContentAccessParams filterParams, String authToken) throws IOException {
         Path sourcePath = Paths.get(localPath);
         if (Files.notExists(sourcePath)) {
             throw new IllegalArgumentException("No path found for " + localPath);
@@ -83,7 +83,7 @@ public class StorageClientHttpImpl implements StorageClient {
     }
 
     @Override
-    public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo, ContentFilterParams filterParams, String authToken) throws IOException {
+    public StorageMessageResponse retrieveData(String localPath, DataStorageInfo storageInfo, ContentAccessParams filterParams, String authToken) throws IOException {
         JacsStorageFormat localDataFormat;
         if (storageInfo.getStorageFormat() == JacsStorageFormat.SINGLE_DATA_FILE) {
             Files.createDirectories(Paths.get(localPath).getParent());

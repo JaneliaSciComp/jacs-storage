@@ -10,8 +10,7 @@ import java.util.List;
 
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.io.ContentFilterParams;
-import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
@@ -57,7 +56,7 @@ public class S3StorageService implements ContentStorageService {
         }
     }
 
-    public List<ContentNode> listContentNodes(String contentLocation, ContentFilterParams filterParams) {
+    public List<ContentNode> listContentNodes(String contentLocation, ContentAccessParams filterParams) {
         String s3Location = adjustLocation(contentLocation);
 
         ListObjectsV2Request initialRequest = ListObjectsV2Request.builder()

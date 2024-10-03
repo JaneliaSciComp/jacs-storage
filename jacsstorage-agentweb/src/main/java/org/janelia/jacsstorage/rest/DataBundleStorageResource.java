@@ -38,7 +38,7 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
@@ -113,7 +113,7 @@ public class DataBundleStorageResource {
         int offset = offsetParam != null ? offsetParam : 0;
         int length = lengthParam != null ? lengthParam : -1;
         JADEStorageURI storageURI = dataBundle.getStorageURI().resolve(entryName);
-        ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters())
+        ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters())
                 .setMaxDepth(depth)
                 .setEntriesCount(length)
                 .setStartEntryIndex(offset);
@@ -173,7 +173,7 @@ public class DataBundleStorageResource {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         JADEStorageURI storageURI = dataBundle.getStorageURI().resolve(dataEntryPathParam);
-        ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
+        ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
         List<ContentNode> contentNodes = dataContentService.listDataNodes(storageURI, filterParams);
         if (contentNodes.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND).build();
@@ -202,7 +202,7 @@ public class DataBundleStorageResource {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         JADEStorageURI storageURI = dataBundle.getStorageURI().resolve(dataEntryPathParam);
-        ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
+        ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
         StreamingOutput bundleStream = output -> dataContentService.readDataStream(storageURI, filterParams, output);
         return Response
                 .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)

@@ -24,7 +24,7 @@ import org.janelia.jacsstorage.client.clientutils.StorageClientImplHelper;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
 import org.janelia.jacsstorage.datatransfer.DataTransferService;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
 public class StorageClientApp {
@@ -174,7 +174,7 @@ public class StorageClientApp {
                     storageClientHelper.allocateStorage(cmdMain.serverURL, storageInfo, authToken);
                 } else {
                     // allocate and copy
-                    storageClient.persistData(cmdAlloc.localPath, storageInfo, new ContentFilterParams(), authToken);
+                    storageClient.persistData(cmdAlloc.localPath, storageInfo, new ContentAccessParams(), authToken);
                 }
                 break;
             case "get":
@@ -183,7 +183,7 @@ public class StorageClientApp {
                         .setNumericId(cmdGet.getBundleId())
                         .setOwnerKey(cmdGet.getOwnerKey())
                         .setName(cmdGet.name);
-                storageClient.retrieveData(cmdGet.localPath, storageInfo, new ContentFilterParams(), authToken);
+                storageClient.retrieveData(cmdGet.localPath, storageInfo, new ContentAccessParams(), authToken);
                 break;
             case "list":
                 storageInfo = new DataStorageInfo()

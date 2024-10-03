@@ -23,7 +23,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
@@ -85,12 +85,12 @@ public class AgentWebdavResource {
                 ? entry.substring("/entry/".length())
                 : null;
         int depthValue = WebdavUtils.getDepth(depth);
-        ContentFilterParams contentFilterParams = new ContentFilterParams()
+        ContentAccessParams contentAccessParams = new ContentAccessParams()
                 .setMaxDepth(depthValue)
                 .setEntryNamePattern(entryName)
                 .setEntriesCount(MAX_NODE_ENTRIES);
         List<PropfindResponse> contentNodesResponses = propfindResponsesFromContentNodes(
-                dataContentService.listDataNodes(dataBundle.getStorageURI(), contentFilterParams),
+                dataContentService.listDataNodes(dataBundle.getStorageURI(), contentAccessParams),
                 dataBundle.getStorageVolume().get()
         );
         Multistatus propfindResponse = new Multistatus();
@@ -146,7 +146,7 @@ public class AgentWebdavResource {
         if (CollectionUtils.isEmpty(volumeCandidates)) {
             return storageNotFoundHandler.get().build();
         }
-        ContentFilterParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters())
+        ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters())
                 .setMaxDepth(depth);
         return volumeCandidates.stream()
                 .findFirst()

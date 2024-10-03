@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 import org.janelia.jacsstorage.coreutils.ComparatorUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.service.ContentException;
@@ -45,7 +45,7 @@ public class FileSystemStorageService implements ContentStorageService {
     }
 
     @Override
-    public List<ContentNode> listContentNodes(String contentLocation, ContentFilterParams filterParams) {
+    public List<ContentNode> listContentNodes(String contentLocation, ContentAccessParams filterParams) {
         return listContentFromPath(getContentPath(contentLocation), filterParams);
     }
 
@@ -66,7 +66,7 @@ public class FileSystemStorageService implements ContentStorageService {
 
     }
 
-    private List<ContentNode> listContentFromPath(Path contentPath, ContentFilterParams filterParams) {
+    private List<ContentNode> listContentFromPath(Path contentPath, ContentAccessParams filterParams) {
         if (contentPath == null) {
             return Collections.emptyList();
         }

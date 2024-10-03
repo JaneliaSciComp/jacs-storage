@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class ContentFilterParams {
+public class ContentAccessParams {
 
     private static final int DEFAULT_DEPTH = 1;
 
@@ -31,7 +31,7 @@ public class ContentFilterParams {
         return filterType;
     }
 
-    public ContentFilterParams setFilterType(String filterType) {
+    public ContentAccessParams setFilterType(String filterType) {
         this.filterType = filterType;
         return this;
     }
@@ -40,12 +40,12 @@ public class ContentFilterParams {
         return selectedEntries;
     }
 
-    public ContentFilterParams addSelectedEntry(String selectedEntry) {
+    public ContentAccessParams addSelectedEntry(String selectedEntry) {
         this.selectedEntries.add(selectedEntry);
         return this;
     }
 
-    public ContentFilterParams addSelectedEntries(Collection<String> selectedEntries) {
+    public ContentAccessParams addSelectedEntries(Collection<String> selectedEntries) {
         this.selectedEntries.addAll(selectedEntries);
         return this;
     }
@@ -54,7 +54,7 @@ public class ContentFilterParams {
         return entryNamePattern;
     }
 
-    public ContentFilterParams setEntryNamePattern(String entryNamePattern) {
+    public ContentAccessParams setEntryNamePattern(String entryNamePattern) {
         this.entryNamePattern = entryNamePattern;
         if (StringUtils.isNotBlank(entryNamePattern)) {
             regexEntryNamePattern = Pattern.compile(entryNamePattern);
@@ -66,12 +66,12 @@ public class ContentFilterParams {
         return maxDepth;
     }
 
-    public ContentFilterParams setMaxDepth(int maxDepth) {
+    public ContentAccessParams setMaxDepth(int maxDepth) {
         this.maxDepth = maxDepth;
         return this;
     }
 
-    public ContentFilterParams addFilterTypeSpecificParam(String name, String value) {
+    public ContentAccessParams addFilterTypeSpecificParam(String name, String value) {
         if (StringUtils.isNotBlank(value)) {
             filterTypeSpecificParams.put(name, value);
         }
@@ -99,7 +99,7 @@ public class ContentFilterParams {
         return naturalSort;
     }
 
-    public ContentFilterParams setNaturalSort(boolean naturalSort) {
+    public ContentAccessParams setNaturalSort(boolean naturalSort) {
         this.naturalSort = naturalSort;
         return this;
     }
@@ -108,7 +108,7 @@ public class ContentFilterParams {
         return alwaysArchive;
     }
 
-    public ContentFilterParams setAlwaysArchive(boolean alwaysArchive) {
+    public ContentAccessParams setAlwaysArchive(boolean alwaysArchive) {
         this.alwaysArchive = alwaysArchive;
         return this;
     }
@@ -117,7 +117,7 @@ public class ContentFilterParams {
         return startEntryIndex;
     }
 
-    public ContentFilterParams setStartEntryIndex(int startEntryIndex) {
+    public ContentAccessParams setStartEntryIndex(int startEntryIndex) {
         this.startEntryIndex = startEntryIndex;
         return this;
     }
@@ -126,7 +126,7 @@ public class ContentFilterParams {
         return entriesCount;
     }
 
-    public ContentFilterParams setEntriesCount(int entriesCount) {
+    public ContentAccessParams setEntriesCount(int entriesCount) {
         this.entriesCount = entriesCount;
         return this;
     }

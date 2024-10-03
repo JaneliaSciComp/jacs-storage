@@ -4,12 +4,12 @@ import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 
 public class ContentFilterRequestHelper {
 
-    public static ContentFilterParams createContentFilterParamsFromQuery(MultivaluedMap<String, String> queryParameters) {
-        ContentFilterParams filterParams = new ContentFilterParams();
+    public static ContentAccessParams createContentFilterParamsFromQuery(MultivaluedMap<String, String> queryParameters) {
+        ContentAccessParams filterParams = new ContentAccessParams();
         queryParameters.forEach((k, vs) -> {
             if ("filterType".equalsIgnoreCase(k)) {
                 if (CollectionUtils.isNotEmpty(vs))

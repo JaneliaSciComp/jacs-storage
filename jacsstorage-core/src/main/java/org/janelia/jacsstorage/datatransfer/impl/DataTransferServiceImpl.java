@@ -5,7 +5,7 @@ import com.google.common.hash.HashingInputStream;
 import com.google.common.hash.HashingOutputStream;
 import org.janelia.jacsstorage.io.BundleReader;
 import org.janelia.jacsstorage.io.BundleWriter;
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.io.DataBundleIOProvider;
 import org.janelia.jacsstorage.model.jacsstorage.JacsDataLocation;
 import org.janelia.jacsstorage.datatransfer.DataTransferService;
@@ -19,8 +19,6 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
@@ -40,7 +38,7 @@ public class DataTransferServiceImpl implements DataTransferService {
     }
 
     @Override
-    public void beginDataTransfer(ContentFilterParams filterParams, TransferState<StorageMessageHeader> transferState) throws IOException {
+    public void beginDataTransfer(ContentAccessParams filterParams, TransferState<StorageMessageHeader> transferState) throws IOException {
         StorageMessageHeader messageHeader = transferState.getMessageType();
         switch (messageHeader.getOperation()) {
             case PERSIST_DATA:
@@ -54,7 +52,7 @@ public class DataTransferServiceImpl implements DataTransferService {
         }
     }
 
-    private void beginReadingData(JacsDataLocation dataLocation, ContentFilterParams filterParams, TransferState<?> transferState) throws IOException {
+    private void beginReadingData(JacsDataLocation dataLocation, ContentAccessParams filterParams, TransferState<?> transferState) throws IOException {
         LOG.info("Begin reading data from: {}", dataLocation);
         BundleReader bundleReader;
         try {

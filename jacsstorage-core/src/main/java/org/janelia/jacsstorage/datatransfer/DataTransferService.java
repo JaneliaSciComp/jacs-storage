@@ -1,6 +1,6 @@
 package org.janelia.jacsstorage.datatransfer;
 
-import org.janelia.jacsstorage.io.ContentFilterParams;
+import org.janelia.jacsstorage.io.ContentAccessParams;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,7 +21,7 @@ public interface DataTransferService {
      * @return
      * @throws IOException
      */
-    void beginDataTransfer(ContentFilterParams filterParams, TransferState<StorageMessageHeader> transferState) throws IOException;
+    void beginDataTransfer(ContentAccessParams filterParams, TransferState<StorageMessageHeader> transferState) throws IOException;
     /**
      * Terminate the data transfer.
      * @param transferState

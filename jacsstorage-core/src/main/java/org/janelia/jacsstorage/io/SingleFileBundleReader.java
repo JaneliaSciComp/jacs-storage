@@ -70,7 +70,7 @@ public class SingleFileBundleReader extends AbstractBundleReader {
             logResult = true
     )
     @Override
-    public long estimateDataEntrySize(String source, String entryName, ContentFilterParams filterParams) {
+    public long estimateDataEntrySize(String source, String entryName, ContentAccessParams filterParams) {
         Path sourcePath = getSourcePath(source);
         checkSourcePath(sourcePath);
         Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
@@ -82,7 +82,7 @@ public class SingleFileBundleReader extends AbstractBundleReader {
             logResult = true
     )
     @Override
-    public long readDataEntry(String source, String entryName, ContentFilterParams filterParams, OutputStream outputStream) {
+    public long readDataEntry(String source, String entryName, ContentAccessParams filterParams, OutputStream outputStream) {
         Path sourcePath = getSourcePath(source);
         checkSourcePath(sourcePath);
         Preconditions.checkArgument(StringUtils.isBlank(entryName), "A single file (" + source + ") does not have any entry (" + entryName + ")");
