@@ -45,17 +45,26 @@ public class S3StorageService implements ContentStorageService {
     @Override
     public boolean canAccess(String contentLocation) {
         String s3Location = adjustLocation(contentLocation);
-
-        HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+        // we cannot simply do a head request because that only works for existing objects
+        // and contentLocation may be a prefix
+        ListObjectsV2Request initialRequest = ListObjectsV2Request.builder()
                 .bucket(s3Adapter.getBucket())
-                .key(s3Location)
+                .prefix(s3Location)
+                .maxKeys(1)
                 .build();
         try {
-            HeadObjectResponse response = s3Adapter.getS3Client().headObject(headObjectRequest);
-            return true;
+            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
+
+            List<ContentNode> results = new ArrayList<>();
+            for (ListObjectsV2Response r : listObjectsResponses) {
+                for (S3Object s3Object : r.contents()) {
+                    return true;
+                }
+            }
         } catch (S3Exception e) {
             return false;
         }
+        return false;
     }
 
     public List<ContentNode> listContentNodes(String contentLocation, ContentAccessParams filterParams) {

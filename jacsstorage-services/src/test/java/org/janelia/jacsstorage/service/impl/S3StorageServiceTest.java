@@ -76,6 +76,15 @@ public class S3StorageServiceTest {
     }
 
     @Test
+    public void checkAccessRoot() {
+        S3StorageService storageService = new S3StorageService(
+                "us-east-1",
+                "janelia-neuronbridge-data-dev"
+        );
+        assertTrue(storageService.canAccess(""));
+    }
+
+    @Test
     public void writeAndDeleteContentOnS3() throws IOException {
         S3StorageService storageService = new S3StorageService(
                 "us-east-1",
@@ -86,6 +95,7 @@ public class S3StorageServiceTest {
         assertTrue(l == testContent.length());
         List<ContentNode> nodesAfterWrite = storageService.listContentNodes("myTest.txt", new ContentAccessParams());
         assertTrue(nodesAfterWrite.size() == 1);
+        assertTrue(storageService.canAccess("myTest.txt"));
         String nodeContent = new String(ByteStreams.toByteArray(storageService.readContent(nodesAfterWrite.get(0).getObjectKey())));
         assertEquals(testContent, nodeContent);
         storageService.deleteContent("myTest.txt");
