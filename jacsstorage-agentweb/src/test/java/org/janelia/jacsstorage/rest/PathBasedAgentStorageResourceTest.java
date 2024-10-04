@@ -19,6 +19,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
+import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
@@ -30,6 +31,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
@@ -81,10 +83,14 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 );
         String testData = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath");
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(storageContentReader.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(2);
-                    out.write(testData.getBytes());
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testData.getBytes());
                     return (long) testData.length();
                 });
         Response response = target()
@@ -113,10 +119,14 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 );
         String testData = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath");
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(storageContentReader.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(2);
-                    out.write(testData.getBytes());
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testData.getBytes());
                     return (long) testData.length();
                 });
         Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(testPath).request().get();
@@ -143,10 +153,14 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 );
         String testData = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath");
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(storageContentReader.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(2);
-                    out.write(testData.getBytes());
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testData.getBytes());
                     return (long) testData.length();
                 });
         for (String testPath : testPaths) {
@@ -173,10 +187,14 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 );
         String testData = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(storageContentReader.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(2);
-                    out.write(testData.getBytes());
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testData.getBytes());
                     return (long) testData.length();
                 });
         Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(urlEncodedPath).request().get();
@@ -200,10 +218,14 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 );
         String testData = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(storageContentReader.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(2);
-                    out.write(testData.getBytes());
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testData.getBytes());
                     return (long) testData.length();
                 });
         Response response = target()
@@ -232,10 +254,14 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                 );
         String testData = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
-        when(storageContentReader.readDataStream(eq(expectedDataURI), any(ContentAccessParams.class), any(OutputStream.class)))
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(storageContentReader.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(2);
-                    out.write(testData.getBytes());
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testData.getBytes());
                     return (long) testData.length();
                 });
         Response response = target()

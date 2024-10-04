@@ -5,6 +5,7 @@ import com.beust.jcommander.ParameterException;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import org.janelia.jacsstorage.service.ContentGetter;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -47,7 +48,8 @@ public class StorageRetrieveBenchmark {
         OutputStream targetStream = new NullOutputStream();
         JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(trialParams.getRandomEntry());
         try {
-            long nbytes = trialParams.storageContentReader.readDataStream(dataURI, new ContentAccessParams(), targetStream);
+            ContentGetter contentGetter = trialParams.storageContentReader.getDataContent(dataURI, new ContentAccessParams());
+            long nbytes = contentGetter.streamContent(targetStream);
             blackhole.consume(nbytes);
         } catch (Exception e) {
             LOG.error("Error reading {}", dataURI, e);

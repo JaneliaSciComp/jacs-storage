@@ -18,7 +18,9 @@ import org.janelia.jacsstorage.service.ContentStorageService;
 import org.janelia.jacsstorage.service.StorageCapacity;
 import org.janelia.jacsstorage.service.s3.S3Adapter;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
@@ -86,14 +88,37 @@ public class S3StorageService implements ContentStorageService {
     private ContentNode createContentNode(S3Object s3Object) {
         try {
             String key = s3Object.key();
-            Path p = Paths.get(key);
-            Path parent = p.getParent();
-            return new ContentNode(JacsStorageType.S3, s3Adapter.getStorageURI(), new S3ObjectContentReader(s3Adapter.getS3Client(), s3Adapter.getBucket(), key))
-                    .setName(p.getFileName().toString())
-                    .setPrefix(parent != null ? parent.toString() : "")
+            int pathSeparatorIndex = key.lastIndexOf('/');
+            String prefix;
+            String name;
+            if (pathSeparatorIndex == -1) {
+                name = key;
+                prefix = "";
+            } else {
+                name = key.substring(pathSeparatorIndex + 1);
+                prefix = key.substring(0, pathSeparatorIndex);
+            }
+            return new ContentNode(JacsStorageType.S3, s3Adapter.getStorageURI())
+                    .setName(name)
+                    .setPrefix(prefix)
                     .setSize(s3Object.size())
                     .setLastModified(new Date(s3Object.lastModified().toEpochMilli()))
                     ;
+        } catch (Exception e) {
+            throw new ContentException(e);
+        }
+    }
+
+    @Override
+    public InputStream readContent(String contentLocation) {
+        String s3Location = adjustLocation(contentLocation);
+
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(s3Adapter.getBucket())
+                .key(s3Location)
+                .build();
+        try {
+            return s3Adapter.getS3Client().getObject(getObjectRequest, ResponseTransformer.toInputStream());
         } catch (Exception e) {
             throw new ContentException(e);
         }

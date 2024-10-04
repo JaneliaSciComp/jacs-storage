@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service.impl;
 import java.util.Map;
 
 import org.janelia.jacsstorage.service.ContentNode;
+import org.janelia.jacsstorage.service.ContentStreamReader;
 
 /**
  * A filter is something that is applied to a list of nodes either to
@@ -18,10 +19,9 @@ public interface ContentMetadataReader {
     boolean support(String mimeType);
 
     /**
-     *
-     * @param filterParams
      * @param contentNode
+     * @param contentObjectReader object's content reader in case it's needed
      * @return
      */
-    Map<String, Object> getMetadata(ContentNode contentNode);
+    Map<String, Object> getMetadata(ContentNode contentNode, ContentStreamReader contentObjectReader);
 }

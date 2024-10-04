@@ -16,16 +16,14 @@ public class ContentNode {
 
     private final JacsStorageType storageType;
     private final JADEStorageURI jadeStorageURI;
-    private final ContentReader contentReader;
     private String prefix;
     private String name;
     private long size;
     private Date lastModified;
 
-    public ContentNode(JacsStorageType storageType, JADEStorageURI rootStorageURI, ContentReader contentReader) {
+    public ContentNode(JacsStorageType storageType, JADEStorageURI rootStorageURI) {
         this.storageType = storageType;
         this.jadeStorageURI = rootStorageURI;
-        this.contentReader = contentReader;
     }
 
     public String getPrefix() {
@@ -87,10 +85,6 @@ public class ContentNode {
 
     public JADEStorageURI getNodeStorageURI() {
         return jadeStorageURI.resolve(getObjectKey());
-    }
-
-    public InputStream getContent() {
-        return contentReader.getContentInputstream();
     }
 
     @Override

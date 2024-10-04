@@ -29,31 +29,13 @@ public interface DataContentService {
     StorageCapacity storageCapacity(JADEStorageURI storageURI);
 
     /**
-     * List content nodes from the specified URI.
-     *
-     * @param storageURI
-     * @param filterParams
-     * @return
-     */
-    List<ContentNode> listDataNodes(JADEStorageURI storageURI, ContentAccessParams filterParams);
-
-    /**
-     * Read content's node metadata - a map of attributes that depends on the content.
-     *
-     * @param storageURI
-     * @return
-     */
-    Map<String, Object> readNodeMetadata(JADEStorageURI storageURI);
-
-    /**
      * Read data from the specified URI and apply filter based on filterParams.
      *
      * @param contentURI   contentURI
-     * @param filterParams
-     * @param dataStream
+     * @param contentAccessParams
      * @return
      */
-    long readDataStream(JADEStorageURI contentURI, ContentAccessParams filterParams, OutputStream dataStream);
+    ContentGetter getDataContent(JADEStorageURI contentURI, ContentAccessParams contentAccessParams);
 
     /**
      * Write data at the specified URI

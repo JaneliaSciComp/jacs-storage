@@ -23,7 +23,7 @@ public class ContentAccessProvider {
 
     ContentAccess getContentFilter(ContentAccessParams contentAccessParams) {
         return Streams.stream(contentAccessProvider)
-                .filter(contentStreamFilter -> contentAccessParams != null && contentStreamFilter.isSupportedAccessType(contentAccessParams.getFilterType()))
+                .filter(contentStreamFilter -> contentAccessParams != null && contentStreamFilter.isAccessTypeSupported(contentAccessParams.getFilterType()))
                 .findFirst()
                 .orElseGet(() -> new DirectContentAccess(contentAccessParams != null && contentAccessParams.isAlwaysArchive()));
     }

@@ -43,9 +43,10 @@ import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
-import org.janelia.jacsstorage.requesthelpers.ContentFilterRequestHelper;
+import org.janelia.jacsstorage.requesthelpers.ContentAccessRequestHelper;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.securitycontext.SecurityUtils;
+import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
@@ -113,12 +114,13 @@ public class DataBundleStorageResource {
         int offset = offsetParam != null ? offsetParam : 0;
         int length = lengthParam != null ? lengthParam : -1;
         JADEStorageURI storageURI = dataBundle.getStorageURI().resolve(entryName);
-        ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters())
+        ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters())
                 .setMaxDepth(depth)
                 .setEntriesCount(length)
                 .setStartEntryIndex(offset);
 
-        List<DataNodeInfo> contentNodes = dataContentService.listDataNodes(storageURI, filterParams).stream()
+        ContentGetter contentGetter = dataContentService.getDataContent(storageURI, contentAccessParams);
+        List<DataNodeInfo> contentNodes = contentGetter.getObjectsList().stream()
                 .map(contentNode -> {
                     DataNodeInfo dn = new DataNodeInfo();
                     dn.setNumericStorageId(dataBundle.getId());
@@ -173,8 +175,9 @@ public class DataBundleStorageResource {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         JADEStorageURI storageURI = dataBundle.getStorageURI().resolve(dataEntryPathParam);
-        ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
-        List<ContentNode> contentNodes = dataContentService.listDataNodes(storageURI, filterParams);
+        ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters());
+        ContentGetter contentGetter = dataContentService.getDataContent(storageURI, contentAccessParams);
+        List<ContentNode> contentNodes = contentGetter.getObjectsList();
         if (contentNodes.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND).build();
         } else {
@@ -202,10 +205,13 @@ public class DataBundleStorageResource {
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         JADEStorageURI storageURI = dataBundle.getStorageURI().resolve(dataEntryPathParam);
-        ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
-        StreamingOutput bundleStream = output -> dataContentService.readDataStream(storageURI, filterParams, output);
+        ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters());
+        ContentGetter contentGetter = dataContentService.getDataContent(storageURI, contentAccessParams);
+        long contentSize = contentGetter.estimateContentSize();
+        StreamingOutput bundleStream = output -> contentGetter.streamContent(output);
         return Response
                 .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)
+                .header("Content-Length", contentSize)
                 .header("content-disposition","attachment; filename = " + JacsSubjectHelper.getNameFromSubjectKey(dataBundle.getOwnerKey()) + "-" + dataBundle.getName())
                 .build();
     }
@@ -223,12 +229,15 @@ public class DataBundleStorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("{dataBundleId}/data_info{dataEntryPath:/?.*}")
     public Response getEntryContentInfo(@PathParam("dataBundleId") Long dataBundleId,
-                                        @PathParam("dataEntryPath") String dataEntryPathParam) {
+                                        @PathParam("dataEntryPath") String dataEntryPathParam,
+                                        @Context UriInfo requestURI) {
         LOG.info("Get entry {} content from bundle {} ", dataEntryPathParam, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         JADEStorageURI storageURI = dataBundle.getStorageURI().resolve(dataEntryPathParam);
-        return Response.ok(dataContentService.readNodeMetadata(storageURI)).build();
+        ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters());
+        ContentGetter contentGetter = dataContentService.getDataContent(storageURI, contentAccessParams);
+        return Response.ok(contentGetter.getMetaData()).build();
     }
 
     @ApiOperation(value = "Create a new content entry in the specified data bundle.")

@@ -14,6 +14,7 @@ import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
+import org.janelia.jacsstorage.service.ContentStreamReader;
 import org.janelia.jacsstorage.service.impl.ContentAccess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,29 +35,44 @@ public class DirectContentAccess implements ContentAccess {
     }
 
     @Override
-    public boolean isSupportedAccessType(String contentAccessType) {
+    public boolean isAccessTypeSupported(String contentAccessType) {
         return true;
     }
 
     @Override
-    public long retrieveContent(List<ContentNode> contentNodes, ContentAccessParams filterParams, OutputStream outputStream) {
-        if (alwaysArchive) {
-            return archiveContent(contentNodes, outputStream);
+    public long estimateContentSize(List<ContentNode> contentNodes, ContentAccessParams contentAccessParams, ContentStreamReader contentObjectReader) {
+        if (alwaysArchive || contentNodes.size() > 1) {
+            return estimateArchiveSize(contentNodes);
         } else {
             if (contentNodes.isEmpty()) {
                 return 0;
-            } else if (contentNodes.size() == 1) {
-                try (InputStream nodeContentStream = contentNodes.get(0).getContent()) {
+            } else { // contentNodes.size() == 1
+                return contentNodes.get(0).getSize();
+            }
+        }
+    }
+
+    @Override
+    public long retrieveContent(List<ContentNode> contentNodes,
+                                ContentAccessParams contentAccessParams,
+                                ContentStreamReader contentObjectReader,
+                                OutputStream outputStream) {
+        if (alwaysArchive || contentNodes.size() > 1) {
+            return archiveContent(contentNodes, contentObjectReader, outputStream);
+        } else {
+            if (contentNodes.isEmpty()) {
+                return 0;
+            } else { // contentNodes.size() == 1
+                try (InputStream nodeContentStream = contentObjectReader.readContent(contentNodes.get(0).getObjectKey())) {
                     return IOStreamUtils.copyFrom(nodeContentStream, outputStream);
                 } catch (IOException e) {
                     throw new ContentException(e);
                 }
             }
         }
-        return 0;
     }
 
-    private long archiveContent(List<ContentNode> contentNodes, OutputStream outputStream) {
+    private long archiveContent(List<ContentNode> contentNodes, ContentStreamReader contentObjectReader, OutputStream outputStream) {
         TarArchiveOutputStream archiveOutputStream = new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE);
         try {
             String commonPrefix = ContentNodeHelper.commonPrefix(contentNodes);
@@ -66,7 +82,7 @@ public class DirectContentAccess implements ContentAccess {
                 TarArchiveEntry entry = new TarArchiveEntry(entryName);
                 entry.setSize(contentNode.getSize());
                 archiveOutputStream.putArchiveEntry(entry);
-                try (InputStream nodeContent = contentNode.getContent()) {
+                try (InputStream nodeContent = contentObjectReader.readContent(contentNode.getObjectKey())) {
                     IOStreamUtils.copyFrom(nodeContent, archiveOutputStream);
                 }
                 archiveOutputStream.closeArchiveEntry();
@@ -79,4 +95,14 @@ public class DirectContentAccess implements ContentAccess {
             throw new ContentException(e);
         }
     }
+
+    private long estimateArchiveSize(List<ContentNode> contentNodes) {
+        long totalSize = 2 * TarConstants.DEFAULT_RCDSIZE;
+        for (ContentNode contentNode : contentNodes) {
+            long entrySize = contentNode.getSize();
+            totalSize += ContentNodeHelper.calculateTarEntrySize(entrySize);
+        }
+        return totalSize;
+    }
+
 }

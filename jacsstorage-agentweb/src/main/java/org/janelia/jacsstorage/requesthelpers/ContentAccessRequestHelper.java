@@ -6,9 +6,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.io.ContentAccessParams;
 
-public class ContentFilterRequestHelper {
+public class ContentAccessRequestHelper {
 
-    public static ContentAccessParams createContentFilterParamsFromQuery(MultivaluedMap<String, String> queryParameters) {
+    public static ContentAccessParams createContentAccessParamsFromQuery(MultivaluedMap<String, String> queryParameters) {
         ContentAccessParams filterParams = new ContentAccessParams();
         queryParameters.forEach((k, vs) -> {
             if ("filterType".equalsIgnoreCase(k)) {

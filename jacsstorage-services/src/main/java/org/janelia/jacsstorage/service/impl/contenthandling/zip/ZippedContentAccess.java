@@ -17,18 +17,51 @@ import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
+import org.janelia.jacsstorage.service.ContentStreamReader;
 import org.janelia.jacsstorage.service.impl.ContentAccess;
 import org.janelia.jacsstorage.service.impl.contenthandling.ContentNodeHelper;
 
 public class ZippedContentAccess implements ContentAccess {
 
     @Override
-    public boolean isSupportedAccessType(String contentAccessType) {
+    public boolean isAccessTypeSupported(String contentAccessType) {
         return "ZIP_ENTRY".equalsIgnoreCase(contentAccessType);
     }
 
     @Override
-    public long retrieveContent(List<ContentNode> contentNodes, ContentAccessParams filterParams, OutputStream outputStream) {
+    public long estimateContentSize(List<ContentNode> contentNodes, ContentAccessParams contentAccessParams, ContentStreamReader contentObjectReader) {
+        String entryName = contentAccessParams.getAsString("zipEntryName", "");
+        try {
+            if (StringUtils.isBlank(entryName)) {
+                return 0L;
+            } else {
+                if (CollectionUtils.isEmpty(contentNodes)) {
+                    return 0L;
+                } else if (contentNodes.size() == 1) {
+                    try (InputStream nodeContentStream = contentObjectReader.readContent(contentNodes.get(0).getObjectKey())) {
+                        return getZipEntrySize(nodeContentStream, entryName);
+                    }
+                } else {
+                    long totalSize = 0;
+                    for (ContentNode contentNode : contentNodes) {
+                        try (InputStream nodeContentStream = contentObjectReader.readContent(contentNode.getObjectKey())) {
+                            long entrySize = getZipEntrySize(nodeContentStream, entryName);
+                            totalSize += entrySize;
+                        }
+                    }
+                    return totalSize;
+                }
+            }
+        } catch (Exception e) {
+            throw new ContentException(e);
+        }
+    }
+
+    @Override
+    public long retrieveContent(List<ContentNode> contentNodes,
+                                ContentAccessParams filterParams,
+                                ContentStreamReader contentObjectReader,
+                                OutputStream outputStream) {
         String entryName = filterParams.getAsString("zipEntryName", "");
         try {
             if (StringUtils.isBlank(entryName)) {
@@ -37,8 +70,8 @@ public class ZippedContentAccess implements ContentAccess {
                 if (CollectionUtils.isEmpty(contentNodes)) {
                     return 0L;
                 } else if (contentNodes.size() == 1) {
-                    try (InputStream nodeContent = contentNodes.get(0).getContent()) {
-                        return IOStreamUtils.copyFrom(getZipEntryStream(nodeContent, entryName), outputStream);
+                    try (InputStream nodeContentStream = contentObjectReader.readContent(contentNodes.get(0).getObjectKey())) {
+                        return IOStreamUtils.copyFrom(getZipEntryStream(nodeContentStream, entryName), outputStream);
                     }
                 } else {
                     TarArchiveOutputStream archiveOutputStream = new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE);
@@ -47,10 +80,10 @@ public class ZippedContentAccess implements ContentAccess {
                         String tarEntryPrefix = commonPrefix.isEmpty() ? contentNode.getPrefix() : commonPrefix;
                         String tarEntryName = tarEntryPrefix.isEmpty() ? contentNode.getName() : tarEntryPrefix + "/" + contentNode.getName();
                         TarArchiveEntry entry = new TarArchiveEntry(tarEntryName);
-                        entry.setSize(contentNode.getSize());
                         archiveOutputStream.putArchiveEntry(entry);
-                        try (InputStream nodeContent = contentNode.getContent()) {
-                            IOStreamUtils.copyFrom(getZipEntryStream(nodeContent, entryName), archiveOutputStream);
+                        try (InputStream nodeContentStream = contentObjectReader.readContent(contentNode.getObjectKey())) {
+                            long entrySize = IOStreamUtils.copyFrom(getZipEntryStream(nodeContentStream, entryName), archiveOutputStream);
+                            entry.setSize(entrySize);
                         }
                         archiveOutputStream.closeArchiveEntry();
                     }
@@ -74,6 +107,16 @@ public class ZippedContentAccess implements ContentAccess {
             }
         }
         return entryOutputStream.toByteArray();
+    }
+
+    private long getZipEntrySize(InputStream nodeContent, String entryName) throws IOException {
+        ZipInputStream zipInputStream = new ZipInputStream(nodeContent);
+        for (ZipEntry ze = zipInputStream.getNextEntry(); ze != null; ze = zipInputStream.getNextEntry()) {
+            if (ze.getName().equals(entryName)) {
+                return ze.getSize();
+            }
+        }
+        return 0L;
     }
 
 }

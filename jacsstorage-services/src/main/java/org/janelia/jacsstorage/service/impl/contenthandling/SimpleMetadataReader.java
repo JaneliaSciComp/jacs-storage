@@ -1,12 +1,12 @@
 package org.janelia.jacsstorage.service.impl.contenthandling;
 
-import java.util.Collections;
 import java.util.Map;
 
 import javax.enterprise.inject.Vetoed;
 
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacsstorage.service.ContentNode;
+import org.janelia.jacsstorage.service.ContentStreamReader;
 import org.janelia.jacsstorage.service.impl.ContentMetadataReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ public class SimpleMetadataReader implements ContentMetadataReader {
     }
 
     @Override
-    public Map<String, Object> getMetadata(ContentNode contentNode) {
+    public Map<String, Object> getMetadata(ContentNode contentNode, ContentStreamReader contentObjectReader) {
         return ImmutableMap.<String, Object>builder()
                 .put("size", contentNode.getSize())
                 .build();

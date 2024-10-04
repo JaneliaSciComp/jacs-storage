@@ -6,6 +6,7 @@ import java.util.List;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentNode;
+import org.janelia.jacsstorage.service.ContentStreamReader;
 import org.janelia.jacsstorage.service.impl.ContentAccess;
 import org.janelia.rendering.NamedSupplier;
 import org.janelia.rendering.utils.ImageUtils;
@@ -13,21 +14,41 @@ import org.janelia.rendering.utils.ImageUtils;
 public class TiffMergeBandsContentAccess implements ContentAccess {
 
     @Override
-    public boolean isSupportedAccessType(String contentAccessType) {
+    public boolean isAccessTypeSupported(String contentAccessType) {
         return "TIFF_MERGE_BANDS".equalsIgnoreCase(contentAccessType);
     }
 
     @Override
-    public long retrieveContent(List<ContentNode> contentNodes, ContentAccessParams filterParams, OutputStream outputStream) {
+    public long estimateContentSize(List<ContentNode> contentNodes,
+                                    ContentAccessParams contentAccessParams,
+                                    ContentStreamReader contentObjectReader) {
         if (contentNodes.isEmpty()) {
             return 0L;
         }
-        Integer pageNumber = filterParams.getAsInt("z", 0);
+        Integer pageNumber = contentAccessParams.getAsInt("z", 0);
+        return ImageUtils.sizeBandMergedTextureBytesFromImageStreams(
+                contentNodes.stream()
+                        .map(n -> NamedSupplier.namedSupplier(
+                                n.getName(),
+                                () -> contentObjectReader.readContent(n.getObjectKey()))),
+                pageNumber
+        );
+    }
+
+    @Override
+    public long retrieveContent(List<ContentNode> contentNodes,
+                                ContentAccessParams contentAccessParams,
+                                ContentStreamReader contentObjectReader,
+                                OutputStream outputStream) {
+        if (contentNodes.isEmpty()) {
+            return 0L;
+        }
+        Integer pageNumber = contentAccessParams.getAsInt("z", 0);
         byte[] contentBytes = ImageUtils.bandMergedTextureBytesFromImageStreams(
                 contentNodes.stream()
                         .map(n -> NamedSupplier.namedSupplier(
                                 n.getName(),
-                                n::getContent)),
+                                () -> contentObjectReader.readContent(n.getObjectKey()))),
                 pageNumber
         );
         if (contentBytes == null) {

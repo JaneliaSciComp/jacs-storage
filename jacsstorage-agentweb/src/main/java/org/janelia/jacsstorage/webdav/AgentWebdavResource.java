@@ -28,9 +28,10 @@ import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.requesthelpers.ContentFilterRequestHelper;
+import org.janelia.jacsstorage.requesthelpers.ContentAccessRequestHelper;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
+import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageLookupService;
@@ -89,8 +90,9 @@ public class AgentWebdavResource {
                 .setMaxDepth(depthValue)
                 .setEntryNamePattern(entryName)
                 .setEntriesCount(MAX_NODE_ENTRIES);
+        ContentGetter contentGetter = dataContentService.getDataContent(dataBundle.getStorageURI(), contentAccessParams);
         List<PropfindResponse> contentNodesResponses = propfindResponsesFromContentNodes(
-                dataContentService.listDataNodes(dataBundle.getStorageURI(), contentAccessParams),
+                contentGetter.getObjectsList(),
                 dataBundle.getStorageVolume().get()
         );
         Multistatus propfindResponse = new Multistatus();
@@ -146,7 +148,7 @@ public class AgentWebdavResource {
         if (CollectionUtils.isEmpty(volumeCandidates)) {
             return storageNotFoundHandler.get().build();
         }
-        ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters())
+        ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters())
                 .setMaxDepth(depth);
         return volumeCandidates.stream()
                 .findFirst()
@@ -155,8 +157,9 @@ public class AgentWebdavResource {
                 .map((volAndContentURIPair -> {
                     JacsStorageVolume storageVolume = volAndContentURIPair.getLeft();
                     JADEStorageURI resolvedContentURI = volAndContentURIPair.getRight();
+                    ContentGetter contentGetter = dataContentService.getDataContent(resolvedContentURI, contentAccessParams);
                     List<PropfindResponse> contentNodesResponses = propfindResponsesFromContentNodes(
-                            dataContentService.listDataNodes(resolvedContentURI, filterParams),
+                            contentGetter.getObjectsList(),
                             storageVolume
                     );
                     Multistatus ms = new Multistatus();

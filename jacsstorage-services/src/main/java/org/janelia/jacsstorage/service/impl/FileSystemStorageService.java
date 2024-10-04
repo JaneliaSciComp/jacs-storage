@@ -23,6 +23,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
+import org.janelia.jacsstorage.service.NoContentFoundException;
 import org.janelia.jacsstorage.service.StorageCapacity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,7 +108,7 @@ public class FileSystemStorageService implements ContentStorageService {
         try {
             BasicFileAttributes fa = Files.readAttributes(p, BasicFileAttributes.class);
             Path parent = p.getParent();
-            return new ContentNode(JacsStorageType.FILE_SYSTEM, JADEStorageURI.createStoragePathURI(""), new FileContentReader(p))
+            return new ContentNode(JacsStorageType.FILE_SYSTEM, JADEStorageURI.createStoragePathURI(""))
                     .setName(p.getFileName().toString())
                     .setPrefix(parent != null ? parent.toString() : "")
                     .setSize(fa.size())
@@ -115,6 +116,25 @@ public class FileSystemStorageService implements ContentStorageService {
                     ;
         } catch (Exception e) {
             throw new ContentException(e);
+        }
+    }
+
+    @Override
+    public InputStream readContent(String contentLocation) {
+        Path contentPath = Paths.get(contentLocation);
+
+        if (Files.exists(contentPath)) {
+            if (Files.isRegularFile(contentPath)) {
+                try {
+                    return Files.newInputStream(contentPath);
+                } catch (IOException e) {
+                    throw new ContentException(e);
+                }
+            } else {
+                throw new ContentException("Content found at " + contentLocation + " is not a regular file");
+            }
+        } else {
+            throw new NoContentFoundException("No object found at " + contentLocation);
         }
     }
 

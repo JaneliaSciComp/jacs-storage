@@ -3,7 +3,6 @@ package org.janelia.jacsstorage.rest;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -38,9 +37,9 @@ import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.requesthelpers.ContentFilterRequestHelper;
+import org.janelia.jacsstorage.requesthelpers.ContentAccessRequestHelper;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
-import org.janelia.jacsstorage.service.ContentNode;
+import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
@@ -97,11 +96,11 @@ public class VolumeStorageResource {
             }
             return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
-                        List<ContentNode> contentNodes = dataContentService.listDataNodes(resolvedContentURI, new ContentAccessParams());
-                        if (contentNodes.isEmpty()) {
-                            return Response.status(Response.Status.NOT_FOUND);
-                        } else {
+                        boolean contentFound = dataContentService.exists(resolvedContentURI);
+                        if (contentFound) {
                             return Response.ok();
+                        } else {
+                            return Response.status(Response.Status.NOT_FOUND);
                         }
                     })
                     .orElse(Response.status(Response.Status.NOT_FOUND))
@@ -141,17 +140,18 @@ public class VolumeStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
-            ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
+            ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters());
             return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
-                        Map<String, Object> contentMetadata = dataContentService.readNodeMetadata(resolvedContentURI);
+                        ContentGetter contentGetter = dataContentService.getDataContent(resolvedContentURI, contentAccessParams);
+                        long contentSize = contentGetter.estimateContentSize();
                         StreamingOutput outputStream = output -> {
-                            dataContentService.readDataStream(resolvedContentURI, filterParams, output);
+                            contentGetter.streamContent(output);
                             output.flush();
                         };
                         return Response
                                 .ok(outputStream, MediaType.APPLICATION_OCTET_STREAM)
-                                .header("Content-Length", contentMetadata.getOrDefault("size", null))
+                                .header("Content-Length", contentSize)
                                 .header("Content-Disposition", "attachment; filename = " + resolvedContentURI.getObjectName())
                                 ;
                     })
@@ -172,7 +172,8 @@ public class VolumeStorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_volume/{storageVolumeId}/data_info/{storageRelativePath:.+}")
     public Response retrieveMetadataFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
-                                                      @PathParam("storageRelativePath") String storageRelativeFilePath) {
+                                                      @PathParam("storageRelativePath") String storageRelativeFilePath,
+                                                      @Context UriInfo requestURI) {
         try {
             LOG.debug("Retrieve metadata from volume {}:{}", storageVolumeId, storageRelativeFilePath);
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
@@ -190,8 +191,12 @@ public class VolumeStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
+            ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters());
             return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
-                    .map(resolvedContentURI -> Response.ok(dataContentService.readNodeMetadata(resolvedContentURI)))
+                    .map(resolvedContentURI -> {
+                        ContentGetter contentGetter = dataContentService.getDataContent(resolvedContentURI, contentAccessParams);
+                        return Response.ok(contentGetter.getMetaData());
+                    })
                     .orElse(Response.status(Response.Status.NOT_FOUND))
                     .build();
         } finally {
@@ -235,13 +240,14 @@ public class VolumeStorageResource {
             int offset = offsetParam != null ? offsetParam : 0;
             int length = lengthParam != null ? lengthParam : -1;
             URI endpointBaseURI = resourceURI.getBaseUri();
-            ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters())
+            ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters())
                     .setMaxDepth(depth)
                     .setEntriesCount(length)
                     .setStartEntryIndex(offset);
             return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
-                        List<DataNodeInfo> dataNodes = dataContentService.listDataNodes(resolvedContentURI, filterParams).stream()
+                        ContentGetter contentGetter = dataContentService.getDataContent(resolvedContentURI, contentAccessParams);
+                        List<DataNodeInfo> dataNodes = contentGetter.getObjectsList().stream()
                                 .map(contentNode -> {
                                     DataNodeInfo dataNode = new DataNodeInfo();
                                     dataNode.setStorageRootLocation(storageVolume.getStorageRootLocation());

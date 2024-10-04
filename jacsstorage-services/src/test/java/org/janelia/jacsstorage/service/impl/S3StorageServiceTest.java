@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service.impl;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import com.google.common.io.ByteStreams;
@@ -26,7 +27,7 @@ public class S3StorageServiceTest {
         );
         List<ContentNode> contentNodes = storageService.listContentNodes("/scicompsoft/flynp/pipeline_info/software_versions.yml", new ContentAccessParams());
         assertEquals(1, contentNodes.size());
-        String nodeContent = new String(ByteStreams.toByteArray(contentNodes.get(0).getContent()));
+        String nodeContent = new String(ByteStreams.toByteArray(storageService.readContent(contentNodes.get(0).getObjectKey())));
         assertTrue(nodeContent.length() > 0);
     }
 
@@ -50,7 +51,7 @@ public class S3StorageServiceTest {
                         .setEntryNamePattern("config.json")
                         .setMaxDepth(1));
         assertTrue(nodes.size() == 1);
-        String nodeContent = new String(ByteStreams.toByteArray(nodes.get(0).getContent()));
+        String nodeContent = new String(ByteStreams.toByteArray(storageService.readContent(nodes.get(0).getObjectKey())));
         assertNotNull(nodeContent);
     }
 
@@ -73,7 +74,7 @@ public class S3StorageServiceTest {
         assertTrue(l == testContent.length());
         List<ContentNode> nodesAfterWrite = storageService.listContentNodes("myTest.txt", new ContentAccessParams());
         assertTrue(nodesAfterWrite.size() == 1);
-        String nodeContent = new String(ByteStreams.toByteArray(nodesAfterWrite.get(0).getContent()));
+        String nodeContent = new String(ByteStreams.toByteArray(storageService.readContent(nodesAfterWrite.get(0).getObjectKey())));
         assertEquals(testContent, nodeContent);
         storageService.deleteContent("myTest.txt");
         List<ContentNode> nodesAfterDelete = storageService.listContentNodes("myTest.txt", new ContentAccessParams());
@@ -86,7 +87,9 @@ public class S3StorageServiceTest {
         ByteArrayOutputStream testDataStream = new ByteArrayOutputStream();
         List<ContentNode> contentNodes = storageService.listContentNodes("v3_3_0/schemas", new ContentAccessParams());
         for (ContentNode n : contentNodes) {
-            ByteStreams.copy(n.getContent(), testDataStream);
+            try (InputStream nodeContentStream = storageService.readContent(n.getObjectKey())) {
+                ByteStreams.copy(nodeContentStream, testDataStream);
+            }
         }
         String testDataContent = testDataStream.toString();
         assertNotNull(testDataContent);

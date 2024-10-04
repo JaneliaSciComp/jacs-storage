@@ -3,7 +3,6 @@ package org.janelia.jacsstorage.rest;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -37,9 +36,9 @@ import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.requesthelpers.ContentFilterRequestHelper;
+import org.janelia.jacsstorage.requesthelpers.ContentAccessRequestHelper;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
-import org.janelia.jacsstorage.service.ContentNode;
+import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
@@ -72,8 +71,7 @@ public class PathBasedAgentStorageResource {
     @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response checkPath(@PathParam("dataPath") String dataPathParam,
-                              @QueryParam("directoryOnly") Boolean directoryOnlyParam,
-                              @Context UriInfo requestURI) {
+                              @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
         try {
             LOG.debug("Start check path {}", dataPathParam);
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
@@ -102,16 +100,15 @@ public class PathBasedAgentStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
-            ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
             return accessibleVolumes.stream()
                     .findFirst()
                     .flatMap(aStorageVolume -> aStorageVolume.resolveAbsoluteLocationURI(contentURI))
                     .map(resolvedContentURI -> {
-                        List<ContentNode> contentNodes = dataContentService.listDataNodes(resolvedContentURI, filterParams);
-                        if (contentNodes.isEmpty()) {
-                            return Response.status(Response.Status.NOT_FOUND);
-                        } else {
+                        boolean dataFound = dataContentService.exists(resolvedContentURI);
+                        if (dataFound) {
                             return Response.ok();
+                        } else {
+                            return Response.status(Response.Status.NOT_FOUND);
                         }
                     })
                     .orElse(Response.status(Response.Status.NOT_FOUND))
@@ -161,19 +158,20 @@ public class PathBasedAgentStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
-            ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters());
+            ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters());
             return accessibleVolumes.stream()
                     .findFirst()
                     .flatMap(aStorageVolume -> aStorageVolume.resolveAbsoluteLocationURI(contentURI))
                     .map(resolvedContentURI -> {
-                        Map<String, Object> contentMetadata = dataContentService.readNodeMetadata(resolvedContentURI);
+                        ContentGetter contentGetter = dataContentService.getDataContent(resolvedContentURI, contentAccessParams);
+                        long contentSize = contentGetter.estimateContentSize();
                         StreamingOutput outputStream = output -> {
-                            dataContentService.readDataStream(resolvedContentURI, filterParams, output);
+                            contentGetter.streamContent(output);
                             output.flush();
                         };
                         return Response
                                 .ok(outputStream, MediaType.APPLICATION_OCTET_STREAM)
-                                .header("Content-Length", contentMetadata.getOrDefault("size", null))
+                                .header("Content-Length", contentSize)
                                 .header("Content-Disposition", "attachment; filename = " + resolvedContentURI.getObjectName())
                                 ;
                     })
@@ -329,7 +327,7 @@ public class PathBasedAgentStorageResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path/data_info/{dataPath:.+}")
-    public Response retrieveContentMetadata(@PathParam("dataPath") String dataPathParam) {
+    public Response retrieveContentMetadata(@PathParam("dataPath") String dataPathParam, @Context UriInfo requestURI) {
         try {
             LOG.debug("Retrieve metadata from {}", dataPathParam);
             JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam);
@@ -358,10 +356,14 @@ public class PathBasedAgentStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
+            ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters());
             return accessibleVolumes.stream()
                     .findFirst()
                     .flatMap(aStorageVolume -> aStorageVolume.resolveAbsoluteLocationURI(contentURI))
-                    .map(resolvedContentURI -> Response.ok(dataContentService.readNodeMetadata(resolvedContentURI)))
+                    .map(resolvedContentURI -> {
+                        ContentGetter contentGetter = dataContentService.getDataContent(resolvedContentURI, contentAccessParams);
+                        return Response.ok(contentGetter.getMetaData());
+                    })
                     .orElse(Response.status(Response.Status.NOT_FOUND))
                     .build();
         } finally {
@@ -419,7 +421,7 @@ public class PathBasedAgentStorageResource {
                     .build();
         }
         URI endpointBaseURI = resourceURI.getBaseUri();
-        ContentAccessParams filterParams = ContentFilterRequestHelper.createContentFilterParamsFromQuery(requestURI.getQueryParameters())
+        ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters())
                 .setMaxDepth(depth)
                 .setEntriesCount(length)
                 .setStartEntryIndex(offset);
@@ -431,7 +433,8 @@ public class PathBasedAgentStorageResource {
                     JacsStorageVolume storageVolume = volAndContentURIPair.getLeft();
                     JADEStorageURI resolvedContentURI = volAndContentURIPair.getRight();
                     JADEStorageURI storageVolumeURI = storageVolume.getVolumeStorageRootURI();
-                    List<DataNodeInfo> dataNodes = dataContentService.listDataNodes(resolvedContentURI, filterParams).stream()
+                    ContentGetter contentGetter = dataContentService.getDataContent(resolvedContentURI, contentAccessParams);
+                    List<DataNodeInfo> dataNodes = contentGetter.getObjectsList().stream()
                             .map(contentNode -> {
                                 DataNodeInfo dataNode = new DataNodeInfo();
                                 dataNode.setStorageRootBinding(storageVolumeURI.getJadeStorage());

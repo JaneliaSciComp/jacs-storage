@@ -21,6 +21,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
+import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -34,6 +35,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTest {
@@ -115,13 +117,14 @@ public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTe
         DataContentService dataContentService = dependenciesProducer.getDataContentService();
         String testDataContent = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volPrefix/testPath/e1");
-        when(dataContentService.readDataStream(
-                eq(expectedDataURI),
-                any(ContentAccessParams.class),
-                any(OutputStream.class)))
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(dataContentService.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testDataContent.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(2);
-                    out.write(testDataContent.getBytes());
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testDataContent.getBytes());
                     return (long) testDataContent.length();
                 });
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
@@ -157,13 +160,14 @@ public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTe
         DataContentService dataContentService = dependenciesProducer.getDataContentService();
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volPrefix/testPath");
         String testDataContent = "Test data";
-        when(dataContentService.readDataStream(
-                eq(expectedDataURI),
-                any(ContentAccessParams.class),
-                any(OutputStream.class)))
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(dataContentService.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testDataContent.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(2);
-                    out.write(testDataContent.getBytes());
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testDataContent.getBytes());
                     return (long) testDataContent.length();
                 });
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
@@ -198,13 +202,14 @@ public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTe
         DataContentService dataContentService = dependenciesProducer.getDataContentService();
         String testDataContent = "Test data";
         JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volPrefix/testPath");
-        when(dataContentService.readDataStream(
-                eq(expectedDataURI),
-                any(ContentAccessParams.class),
-                any(OutputStream.class)))
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(dataContentService.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testDataContent.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(2);
-                    out.write(testDataContent.getBytes());
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testDataContent.getBytes());
                     return (long) testDataContent.length();
                 });
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
