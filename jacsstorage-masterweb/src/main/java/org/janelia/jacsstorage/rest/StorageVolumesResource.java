@@ -140,14 +140,16 @@ public class StorageVolumesResource {
                                        @QueryParam("includeInactive") boolean includeInactive,
                                        @QueryParam("includeInaccessibleVolumes") boolean includeInaccessibleVolumes,
                                        @Context SecurityContext securityContext) {
+        JADEStorageURI dataStorageURI = JADEStorageURI.createStoragePathURI(dataStoragePathParam);
         StorageQuery storageQuery = new StorageQuery()
                 .setId(storageVolumeId)
                 .setStorageName(volumeName)
+                .setStorageType(dataStorageURI.getStorageType())
                 .setShared(shared)
                 .setAccessibleOnAgent(storageAgent)
                 .setStorageTags(storageTags)
                 .setStorageVirtualPath(storageVirtualPath)
-                .setDataStoragePath(JADEStorageURI.createStoragePathURI(dataStoragePathParam).getJadeStorage())
+                .setDataStoragePath(dataStorageURI.getJadeStorage())
                 .setIncludeInactiveVolumes(includeInactive)
                 .setIncludeInaccessibleVolumes(includeInaccessibleVolumes);
         LOG.info("List storage volumes filtered with: {}", storageQuery);
