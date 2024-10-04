@@ -11,7 +11,8 @@ import java.util.Map;
 public interface ContentGetter {
 
     /**
-     * Estimate content size of the enclosed nodes
+     * Estimate content size of the enclosed nodes. This is needed in order to be able to return content size,
+     * which is required by current clients (mostly Horta)
      * @return size estimate
      */
     long estimateContentSize();
