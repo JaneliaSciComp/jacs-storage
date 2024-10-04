@@ -5,6 +5,7 @@ import java.net.URI;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
 public class S3Adapter {
@@ -14,12 +15,13 @@ public class S3Adapter {
     private final String bucket;
     private final S3Client s3Client;
 
-    public S3Adapter(String endpoint, String bucket, String accessKey, String secretKey) {
+    public S3Adapter(String endpoint, String region, String bucket, String accessKey, String secretKey) {
         this.endpoint = endpoint;
         this.bucket = bucket;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         this.s3Client = S3Client.builder()
+                .region(Region.of(region))
                 .endpointOverride(URI.create(endpoint))
                 .credentialsProvider(() -> AwsBasicCredentials.builder()
                         .accessKeyId(accessKey)
@@ -28,12 +30,14 @@ public class S3Adapter {
                 .build();
     }
 
-    public S3Adapter(String bucket) {
+    public S3Adapter(String region, String bucket) {
         this.endpoint = null;
         this.accessKey = null;
         this.secretKey = null;
         this.bucket = bucket;
-        this.s3Client = S3Client.create();
+        this.s3Client = S3Client.builder()
+                .region(Region.of(region))
+                .build();
     }
 
     public JADEStorageURI getStorageURI() {

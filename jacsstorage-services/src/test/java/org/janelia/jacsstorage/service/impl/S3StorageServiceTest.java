@@ -10,6 +10,7 @@ import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.junit.Test;
+import software.amazon.awssdk.regions.Region;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -21,6 +22,7 @@ public class S3StorageServiceTest {
     public void retrieveSingleFileContentFromS3Endpoint() throws IOException {
         S3StorageService storageService = new S3StorageService(
                 "https://s3.us-east-1.lyvecloud.seagate.com",
+                "us-east-1",
                 "scicompsoft-public",
                 "NNQ20KNJ2YCWWMPE",
                 "IID4TNAS3OXI2UUAAKK21CCYHJRAP3JM"
@@ -35,6 +37,7 @@ public class S3StorageServiceTest {
     public void listFolderContentFromS3Endpoint() throws IOException {
         S3StorageService storageService = new S3StorageService(
                 "https://s3.us-east-1.lyvecloud.seagate.com",
+                "us-east-1",
                 "scicompsoft-public",
                 "NNQ20KNJ2YCWWMPE",
                 "IID4TNAS3OXI2UUAAKK21CCYHJRAP3JM"
@@ -45,7 +48,10 @@ public class S3StorageServiceTest {
 
     @Test
     public void retrieveSingleFileFromS3() throws IOException {
-        S3StorageService storageService = new S3StorageService("janelia-neuronbridge-data-dev");
+        S3StorageService storageService = new S3StorageService(
+                "us-east-1",
+                "janelia-neuronbridge-data-dev"
+        );
         List<ContentNode> nodes = storageService.listContentNodes("v3_3_0",
                 new ContentAccessParams()
                         .setEntryNamePattern("config.json")
@@ -57,7 +63,10 @@ public class S3StorageServiceTest {
 
     @Test
     public void retrieveSelectedFilesFromS3() throws IOException {
-        S3StorageService storageService = new S3StorageService("janelia-neuronbridge-data-dev");
+        S3StorageService storageService = new S3StorageService(
+                "us-east-1",
+                "janelia-neuronbridge-data-dev"
+        );
         List<ContentNode> nodes = storageService.listContentNodes("v3_3_0",
                 new ContentAccessParams()
                         .addSelectedEntry("config.json")
@@ -68,7 +77,10 @@ public class S3StorageServiceTest {
 
     @Test
     public void writeAndDeleteContentOnS3() throws IOException {
-        S3StorageService storageService = new S3StorageService("janelia-neuronbridge-data-dev");
+        S3StorageService storageService = new S3StorageService(
+                "us-east-1",
+                "janelia-neuronbridge-data-dev"
+        );
         String testContent = "This is some test content";
         long l = storageService.writeContent("myTest.txt", new ByteArrayInputStream(testContent.getBytes()));
         assertTrue(l == testContent.length());
@@ -83,7 +95,10 @@ public class S3StorageServiceTest {
 
     @Test
     public void retrievePrefixFromS3() throws IOException {
-        S3StorageService storageService = new S3StorageService("janelia-neuronbridge-data-dev");
+        S3StorageService storageService = new S3StorageService(
+                "us-east-1",
+                "janelia-neuronbridge-data-dev"
+        );
         ByteArrayOutputStream testDataStream = new ByteArrayOutputStream();
         List<ContentNode> contentNodes = storageService.listContentNodes("v3_3_0/schemas", new ContentAccessParams());
         for (ContentNode n : contentNodes) {

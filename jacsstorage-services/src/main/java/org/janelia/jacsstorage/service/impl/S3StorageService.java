@@ -34,12 +34,12 @@ public class S3StorageService implements ContentStorageService {
 
     private final S3Adapter s3Adapter;
 
-    S3StorageService(String endpoint, String bucket, String accessKey, String secretKey) {
-        this.s3Adapter = new S3Adapter(endpoint, bucket, accessKey, secretKey);
+    S3StorageService(String endpoint, String region, String bucket, String accessKey, String secretKey) {
+        this.s3Adapter = new S3Adapter(endpoint, region, bucket, accessKey, secretKey);
     }
 
-    S3StorageService(String bucket) {
-        this.s3Adapter = new S3Adapter(bucket);
+    S3StorageService(String region, String bucket) {
+        this.s3Adapter = new S3Adapter(region, bucket);
     }
 
     @Override
