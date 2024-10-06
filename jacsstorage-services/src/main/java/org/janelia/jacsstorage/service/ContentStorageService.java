@@ -3,8 +3,6 @@ package org.janelia.jacsstorage.service;
 import java.io.InputStream;
 import java.util.List;
 
-import org.janelia.jacsstorage.io.ContentAccessParams;
-
 public interface ContentStorageService extends ContentStreamReader {
 
     boolean canAccess(String contentLocation);

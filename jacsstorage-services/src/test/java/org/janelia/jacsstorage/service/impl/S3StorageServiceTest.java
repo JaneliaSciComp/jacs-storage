@@ -7,10 +7,9 @@ import java.io.InputStream;
 import java.util.List;
 
 import com.google.common.io.ByteStreams;
-import org.janelia.jacsstorage.io.ContentAccessParams;
+import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.junit.Test;
-import software.amazon.awssdk.regions.Region;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

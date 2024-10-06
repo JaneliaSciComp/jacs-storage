@@ -1,11 +1,7 @@
 package org.janelia.jacsstorage.service;
 
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
 
-import org.janelia.jacsstorage.io.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 
 /**

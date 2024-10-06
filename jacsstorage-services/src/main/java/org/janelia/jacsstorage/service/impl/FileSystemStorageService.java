@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 import org.janelia.jacsstorage.coreutils.ComparatorUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
-import org.janelia.jacsstorage.io.ContentAccessParams;
+import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.service.ContentException;

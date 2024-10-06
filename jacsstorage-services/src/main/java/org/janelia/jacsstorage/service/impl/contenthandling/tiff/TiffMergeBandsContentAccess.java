@@ -4,7 +4,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
-import org.janelia.jacsstorage.io.ContentAccessParams;
+import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStreamReader;
 import org.janelia.jacsstorage.service.impl.ContentAccess;

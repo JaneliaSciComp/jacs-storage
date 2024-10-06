@@ -3,7 +3,7 @@ package org.janelia.jacsstorage.service.impl;
 import java.io.OutputStream;
 import java.util.List;
 
-import org.janelia.jacsstorage.io.ContentAccessParams;
+import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStreamReader;
 

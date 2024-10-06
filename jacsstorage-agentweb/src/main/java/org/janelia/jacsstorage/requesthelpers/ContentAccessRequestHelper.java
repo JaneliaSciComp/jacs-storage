@@ -4,7 +4,7 @@ import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.io.ContentAccessParams;
+import org.janelia.jacsstorage.service.ContentAccessParams;
 
 public class ContentAccessRequestHelper {
 

@@ -4,7 +4,7 @@ import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 
 import com.google.common.collect.Streams;
-import org.janelia.jacsstorage.io.ContentAccessParams;
+import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.impl.contenthandling.DirectContentAccess;
 import org.janelia.jacsstorage.service.impl.contenthandling.SimpleMetadataReader;
 
