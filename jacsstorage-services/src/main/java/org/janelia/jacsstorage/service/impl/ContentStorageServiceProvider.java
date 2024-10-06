@@ -21,7 +21,7 @@ class ContentStorageServiceProvider {
     }
 
     @Nullable ContentStorageService getStorageService(@Nullable JADEStorageURI storageURI) {
-        LOG.info("Get content access for {}", storageURI);
+        LOG.trace("Get storage service for {}", storageURI);
         if (storageURI == null) {
             return null;
         } else if (storageURI.getStorageType() == JacsStorageType.S3) {

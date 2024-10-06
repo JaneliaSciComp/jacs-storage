@@ -17,6 +17,8 @@ import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
 import org.janelia.jacsstorage.service.StorageCapacity;
 import org.janelia.jacsstorage.service.s3.S3Adapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -29,6 +31,8 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 
 public class S3StorageService implements ContentStorageService {
+
+    private final static Logger LOG = LoggerFactory.getLogger(S3StorageService.class);
 
     private final S3Adapter s3Adapter;
 
@@ -43,6 +47,7 @@ public class S3StorageService implements ContentStorageService {
     @Override
     public boolean canAccess(String contentLocation) {
         String s3Location = adjustLocation(contentLocation);
+        LOG.debug("Check access to {}", s3Location);
         // we cannot simply do a head request because that only works for existing objects
         // and contentLocation may be a prefix
         ListObjectsV2Request initialRequest = ListObjectsV2Request.builder()
@@ -52,10 +57,8 @@ public class S3StorageService implements ContentStorageService {
                 .build();
         try {
             ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
-
-            List<ContentNode> results = new ArrayList<>();
             for (ListObjectsV2Response r : listObjectsResponses) {
-                for (S3Object s3Object : r.contents()) {
+                if (!r.contents().isEmpty()) {
                     return true;
                 }
             }
@@ -65,8 +68,9 @@ public class S3StorageService implements ContentStorageService {
         return false;
     }
 
-    public List<ContentNode> listContentNodes(String contentLocation, ContentAccessParams filterParams) {
+    public List<ContentNode> listContentNodes(String contentLocation, ContentAccessParams contentAccessParams) {
         String s3Location = adjustLocation(contentLocation);
+        LOG.debug("List content {} with {}", s3Location, contentAccessParams);
 
         ListObjectsV2Request initialRequest = ListObjectsV2Request.builder()
                 .bucket(s3Adapter.getBucket())
@@ -81,11 +85,14 @@ public class S3StorageService implements ContentStorageService {
                 Path keyRelativePath = Paths.get(s3Location).relativize(keyPath);
                 Path parentPath = keyRelativePath.getParent();
                 int currentDepth = parentPath == null ? 0 : parentPath.getNameCount();
-                if (filterParams.getMaxDepth() >= 0 && currentDepth > filterParams.getMaxDepth()) {
+                if (contentAccessParams.getMaxDepth() >= 0 && currentDepth > contentAccessParams.getMaxDepth()) {
                     return results;
                 }
-                if (filterParams.matchEntry(s3Object.key())) {
+                if (contentAccessParams.matchEntry(s3Object.key())) {
                     results.add(createContentNode(s3Object));
+                }
+                if (contentAccessParams.getEntriesCount() > 0 && results.size() >= contentAccessParams.getEntriesCount()) {
+                    return results;
                 }
             }
         }
