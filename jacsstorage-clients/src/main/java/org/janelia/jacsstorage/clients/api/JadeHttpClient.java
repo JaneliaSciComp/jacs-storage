@@ -70,11 +70,11 @@ public class JadeHttpClient {
 
     public List<JadeStorageVolume> findStorageVolumes(String storagePath, String subjectKey, String authToken) {
         return lookupStorageVolumes(null, null, storagePath, subjectKey, authToken).stream()
-                .filter(vsInfo -> storagePath.equals(vsInfo.getStorageVirtualPath())
-                        || storagePath.equals(vsInfo.getBaseStorageRootDir())
-                        || storagePath.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))
-                        || storagePath.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/"))
-                        || "S3".equals(vsInfo.getStorageType()))
+                .filter(vsInfo -> StringUtils.equals(storagePath, vsInfo.getStorageVirtualPath())
+                        || StringUtils.equals(storagePath, vsInfo.getBaseStorageRootDir())
+                        || StringUtils.startsWith(storagePath, StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))
+                        || StringUtils.startsWith(storagePath, StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/"))
+                        || StringUtils.startsWith("S3", vsInfo.getStorageType()))
                 .collect(Collectors.toList());
     }
 
