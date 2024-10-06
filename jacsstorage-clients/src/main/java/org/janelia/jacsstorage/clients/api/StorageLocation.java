@@ -11,11 +11,13 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 public class StorageLocation {
 
     private String storageURL;
+    private String storageType;
     private String pathPrefix;
     private String virtualPath;
 
-    StorageLocation(String storageURL, String pathPrefix, String virtualPath) {
+    StorageLocation(String storageURL, String storageType, String pathPrefix, String virtualPath) {
         this.storageURL = storageURL;
+        this.storageType = storageType;
         this.pathPrefix = StringUtils.appendIfMissing(pathPrefix, "/");
         this.virtualPath = StringUtils.appendIfMissing(virtualPath, "/");
     }
@@ -26,6 +28,10 @@ public class StorageLocation {
      */
     public String getStorageURL() {
         return storageURL;
+    }
+
+    public String getStorageType() {
+        return storageType;
     }
 
     /**
@@ -96,6 +102,7 @@ public class StorageLocation {
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("storageType", storageType)
                 .append("pathPrefix", pathPrefix)
                 .append("virtualPath", virtualPath)
                 .append("storageURL", storageURL)

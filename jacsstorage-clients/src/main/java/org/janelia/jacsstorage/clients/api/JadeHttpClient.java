@@ -15,6 +15,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -50,14 +51,19 @@ public class JadeHttpClient {
                         relativeStoragePath = Paths.get(jadeStorageVolume.getStorageVirtualPath()).relativize(Paths.get(storagePath)).toString();
                     } else if (StringUtils.startsWith(storagePath, StringUtils.appendIfMissing(jadeStorageVolume.getBaseStorageRootDir(), "/"))) {
                         relativeStoragePath = Paths.get(jadeStorageVolume.getBaseStorageRootDir()).relativize(Paths.get(storagePath)).toString();
+                    } else if ("S3".equals(jadeStorageVolume.getStorageType())) {
+                        // S3 volumes may have null root dir - in that case renderedVolume
+                        // is located at the same path as the one used for searching the volume, i.e. dataPath
+                        relativeStoragePath = storagePath;
                     } else {
                         relativeStoragePath = "";
                     }
                     LOG.debug("Found {} for {}; the new path relative to the volume's root is {}", jadeStorageVolume, storagePath, relativeStoragePath);
                     return new StorageLocation(
-                        jadeStorageVolume.getVolumeStorageURI(),
-                        jadeStorageVolume.getBaseStorageRootDir(),
-                        jadeStorageVolume.getStorageVirtualPath()
+                            jadeStorageVolume.getVolumeStorageURI(),
+                            jadeStorageVolume.getStorageType(),
+                            jadeStorageVolume.getBaseStorageRootDir(),
+                            jadeStorageVolume.getStorageVirtualPath()
                     );
                 });
     }
@@ -67,7 +73,8 @@ public class JadeHttpClient {
                 .filter(vsInfo -> storagePath.equals(vsInfo.getStorageVirtualPath())
                         || storagePath.equals(vsInfo.getBaseStorageRootDir())
                         || storagePath.startsWith(StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))
-                        || storagePath.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/")))
+                        || storagePath.startsWith(StringUtils.appendIfMissing(vsInfo.getBaseStorageRootDir(), "/"))
+                        || "S3".equals(vsInfo.getStorageType()))
                 .collect(Collectors.toList());
     }
 
@@ -95,7 +102,8 @@ public class JadeHttpClient {
                 LOG.error("Lookup storage volume request {} returned status {} while trying to get the storage for storageId = {}, storageName={}, storagePath={}", target, responseStatus, storageId, storageName, storagePath);
                 return Collections.emptyList();
             } else {
-                PageResult<JadeStorageVolume> storageInfoResult = response.readEntity(new GenericType<PageResult<JadeStorageVolume>>(){});
+                PageResult<JadeStorageVolume> storageInfoResult = response.readEntity(new GenericType<PageResult<JadeStorageVolume>>() {
+                });
                 return storageInfoResult.getResultList();
             }
         } catch (IllegalStateException e) {
@@ -114,8 +122,7 @@ public class JadeHttpClient {
             WebTarget target = httpclient.target(storageURL).path("list");
             if (StringUtils.isNotBlank(relativePath)) {
                 target = target.path(relativePath);
-            }
-            else {
+            } else {
                 target = target.path("/");
             }
             if (depth > 0) {
@@ -125,22 +132,22 @@ public class JadeHttpClient {
             Invocation.Builder requestBuilder = createRequestWithCredentials(
                     target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
             Response response = requestBuilder.get();
-            if (response.getStatus()==404) {
+            if (response.getStatus() == 404) {
                 throw new StorageObjectNotFoundException(storageLocation, relativePath);
             }
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
             }
-            return response.readEntity(new GenericType<List<JsonNode>>(){})
+            return response.readEntity(new GenericType<List<JsonNode>>() {
+                    })
                     .stream()
                     .map(content -> {
                         StorageEntryInfo storageEntryInfo = extractStorageNodeFromJson(storageURL, null, relativePath, content);
-                        String objectRelativePath =  StringUtils.isBlank(relativePath) ? relativePath : StringUtils.appendIfMissing(relativePath, "/");
-                        return new StorageObject(storageLocation, objectRelativePath+storageEntryInfo.getEntryRelativePath(), storageEntryInfo);
+                        String objectRelativePath = StringUtils.isBlank(relativePath) ? relativePath : StringUtils.appendIfMissing(relativePath, "/");
+                        return new StorageObject(storageLocation, objectRelativePath + storageEntryInfo.getEntryRelativePath(), storageEntryInfo);
                     })
                     .collect(Collectors.toList());
-        }
-        finally {
+        } finally {
             httpclient.close();
         }
     }
@@ -192,11 +199,9 @@ public class JadeHttpClient {
             Response response = requestBuilder.head();
             if (response.getStatus() >= 200 && response.getStatus() < 300) {
                 return true;
-            }
-            else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
                 return false;
-            }
-            else {
+            } else {
                 throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
             }
         } catch (IllegalStateException e) {
@@ -217,8 +222,7 @@ public class JadeHttpClient {
             Response response = requestBuilder.head();
             if (response.getStatus() >= 200 && response.getStatus() < 300) {
                 return response.getLength();
-            }
-            else {
+            } else {
                 throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
             }
         } catch (IllegalStateException e) {
@@ -289,8 +293,9 @@ public class JadeHttpClient {
     /**
      * TODO: this doesn't work yet because it turns out that N5TreeNode is not serializable
      * Discover n5 data sets and return a tree of N5 objects metadata for the given object.
+     *
      * @param storageLocation location of the object
-     * @param relativePath path to the object relative to the storageLocation
+     * @param relativePath    path to the object relative to the storageLocation
      * @return tree of data sets represented by N5TreeNode
      */
     public N5TreeNode getN5Tree(StorageLocation storageLocation, String relativePath, String jacsPrincipal, String authToken) throws StorageObjectNotFoundException {
@@ -300,8 +305,7 @@ public class JadeHttpClient {
             WebTarget target = httpclient.target(storageURL).path("n5tree");
             if (StringUtils.isNotBlank(relativePath)) {
                 target = target.path(relativePath);
-            }
-            else {
+            } else {
                 target = target.path("/");
             }
             LOG.debug("getN5Tree requesting {}", target.getUri().toString());
@@ -314,9 +318,9 @@ public class JadeHttpClient {
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
             }
-            return response.readEntity(new GenericType<N5TreeNode>(){});
-        }
-        finally {
+            return response.readEntity(new GenericType<N5TreeNode>() {
+            });
+        } finally {
             httpclient.close();
         }
     }

@@ -14,6 +14,8 @@ public class JadeStorageVolume {
     @JsonProperty
     private String id;
     @JsonProperty
+    private String storageType;
+    @JsonProperty
     private String baseStorageRootDir;
     @JsonProperty
     private String storageVirtualPath;
@@ -26,6 +28,14 @@ public class JadeStorageVolume {
 
     void setId(String id) {
         this.id = id;
+    }
+
+    public String getStorageType() {
+        return storageType;
+    }
+
+    void setStorageType(String storageType) {
+        this.storageType = storageType;
     }
 
     public String getBaseStorageRootDir() {
