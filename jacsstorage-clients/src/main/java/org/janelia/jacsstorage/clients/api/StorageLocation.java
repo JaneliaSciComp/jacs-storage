@@ -67,16 +67,15 @@ public class StorageLocation {
      * @return
      */
     public String getRelativePath(String absolutePath) {
-        if (absolutePath.startsWith(pathPrefix)) {
+        if (StringUtils.startsWith(absolutePath, pathPrefix)) {
             return absolutePath.replaceFirst(pathPrefix, "");
-        }
-        else if (absolutePath.startsWith(virtualPath)) {
+        } else if (StringUtils.startsWith(absolutePath, virtualPath)) {
             return absolutePath.replaceFirst(virtualPath, "");
-        }
-        else if (!absolutePath.startsWith("/")) {
+        } else if (StringUtils.equals(storageType, "S3")) {
+            return absolutePath;
+        } else if (!absolutePath.startsWith("/")) {
             throw new IllegalArgumentException("Not an absolute path: "+absolutePath);
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Given absolute path (" + absolutePath + ") does not exist in storage location with prefix " + pathPrefix);
         }
     }
