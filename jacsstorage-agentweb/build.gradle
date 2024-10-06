@@ -126,16 +126,16 @@ project(":jacsstorage-agentweb") {
             }
         }
 
-        from ("${buildDir}/install/${project.name}/bin") {
+        from ("${layout.buildDirectory}/install/${project.name}/bin") {
             into "bin"
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
-        from ("${buildDir}/install/${project.name}/lib") {
+        from ("${layout.buildDirectory}/install/${project.name}/lib") {
             into "lib"
         }
 
-        from ("${buildDir}/install/${project.name}/swagger-webapp") {
+        from ("${layout.buildDirectory}/install/${project.name}/swagger-webapp") {
             into "swagger-webapp"
         }
 

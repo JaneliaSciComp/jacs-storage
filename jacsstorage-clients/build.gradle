@@ -13,10 +13,6 @@ plugins {
     id 'nebula.rpm' version '9.1.1'
 }
 
-application {
-    mainClass = 'org.janelia.jacsstorage.client.StorageClientApp'
-}
-
 project(":jacsstorage-clients") {
     dependencies {
         implementation project(":jacsstorage-core"),
@@ -29,92 +25,18 @@ project(":jacsstorage-clients") {
                        JAX_RS_JERSEY_INJECT_LIB,
                        JAX_RS_JERSEY_MEDIA_JSON_LIB,
                        N5_IMGLIB2_LIB
-
-        perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
-
-        perfImplementation project,
-                           COMMONS_RNG_LIB
-    }
-
-    processPerfResources {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 
     tasks.register('createStorageClientApp', CreateStartScripts) {
         dependsOn(startScripts)
 
-        mainClass = "org.janelia.jacsstorage.client.StorageClientApp"
+        mainClass = "org.janelia.jacsstorage.clients.cli.StorageClientApp"
         classpath = startScripts.classpath
         outputDir = startScripts.outputDir
         applicationName = "storageClientApp"
     }
 
-    tasks.register('createNewStorageClientApp', CreateStartScripts) {
-        dependsOn(startScripts)
-
-        mainClass = "org.janelia.jacsstorage.newclient.StorageClientApp"
-        classpath = startScripts.classpath
-        outputDir = startScripts.outputDir
-        applicationName = "jade"
-    }
-
-    tasks.register('createStoragePersistBenchmark', CreateStartScripts) {
-        dependsOn(perfJar, startScripts)
-
-        mainClass = "org.janelia.jacsstorage.benchmarks.StoragePersistBenchmark"
-        classpath = project.perfJar.outputs.files + startScripts.classpath + configurations.perfRuntimeElements
-        outputDir = startScripts.outputDir
-        applicationName = "storagePersistBenchmarks"
-    }
-
-    tasks.register('createStorageRetrieveBenchmark', CreateStartScripts) {
-        dependsOn(perfJar, startScripts)
-
-        mainClass = "org.janelia.jacsstorage.benchmarks.StorageRetrieveBenchmark"
-        classpath = project.perfJar.outputs.files + startScripts.classpath + configurations.perfRuntimeElements
-        outputDir = startScripts.outputDir
-        applicationName = "storageRetrieveBenchmarks"
-    }
-
-    tasks.register('createStorageUpdateBenchmark', CreateStartScripts) {
-        dependsOn(perfJar, startScripts)
-
-        mainClass = "org.janelia.jacsstorage.benchmarks.StorageUpdateBenchmark"
-        classpath = project.perfJar.outputs.files + startScripts.classpath + configurations.perfRuntimeElements
-        outputDir = startScripts.outputDir
-        applicationName = "storageUpdateBenchmarks"
-    }
-
     distributions {
-        benchmarks {
-            contents {
-                duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-                into("bin") {
-                    from(createStoragePersistBenchmark)
-                    from(createStorageRetrieveBenchmark)
-                    from(createStorageUpdateBenchmark)
-                    filePermissions {
-                        user {
-                            read = true
-                            write = true
-                            execute = true
-                        }
-                        group {
-                            read = true
-                            execute = true
-                        }
-                        other {
-                            read = true
-                            execute = true
-                        }
-                    }
-                }
-                into("lib") {
-                    from(project.perfJar.outputs.files)
-                    from(project.configurations.perfRuntimeElements)
-                }
-            }
-        }
         main {
             contents {
                 duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -136,31 +58,12 @@ project(":jacsstorage-clients") {
                         }
                     }
                 }
-                into("bin") {
-                    from(createNewStorageClientApp)
-                    filePermissions {
-                        user {
-                            read = true
-                            write = true
-                            execute = true
-                        }
-                        group {
-                            read = true
-                            execute = true
-                        }
-                        other {
-                            read = true
-                            execute = true
-                        }
-                    }
-                }
             }
         }
     }
 
-    [distTar, distZip, benchmarksDistTar, benchmarksDistZip, installDist, installBenchmarksDist].each {
-        it.dependsOn(createStoragePersistBenchmark, createStorageRetrieveBenchmark, createStorageUpdateBenchmark,
-                createStorageClientApp, createNewStorageClientApp)
+    [distTar, distZip, installDist].each {
+        it.dependsOn(createStorageClientApp)
     }
 
     tasks.register('ospackage', Rpm) {
@@ -183,12 +86,12 @@ project(":jacsstorage-clients") {
 
         into "${rpmInstallDir}"
 
-        from ("${buildDir}/install/${project.name}/bin") {
+        from ("${layout.buildDirectory}/install/${project.name}/bin") {
             into "bin"
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
-        from ("${buildDir}/install/${project.name}/lib") {
+        from ("${layout.buildDirectory}/install/${project.name}/lib") {
             into "lib"
         }
 
