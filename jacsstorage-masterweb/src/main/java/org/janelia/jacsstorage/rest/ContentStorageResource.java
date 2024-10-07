@@ -61,16 +61,13 @@ public class ContentStorageResource {
     })
     @HEAD
     @Path("storage_path_redirect/{filePath:.+}")
-    public Response redirectForContentCheck(@PathParam("filePath") String filePathParam,
-                                            @QueryParam("storagePath") String filePathQueryParam,
-                                            @QueryParam("directoryOnly") Boolean directoryOnlyParam,
-                                            @Context UriInfo requestURI) {
+    public Response redirectForContentCheckFromPathParam(@PathParam("filePath") String filePathParam,
+                                                         @QueryParam("directoryOnly") Boolean directoryOnlyParam,
+                                                         @Context UriInfo requestURI) {
         LOG.info("Check {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
         JADEStorageURI contentURI;
-        if (StringUtils.isNotBlank(filePathQueryParam)) {
-            contentURI = JADEStorageURI.createStoragePathURI(filePathQueryParam);
-        } else if (StringUtils.isNotBlank(filePathParam)) {
+        if (StringUtils.isNotBlank(filePathParam)) {
             contentURI = JADEStorageURI.createStoragePathURI(filePathParam);
         } else {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -106,6 +103,63 @@ public class ContentStorageResource {
     }
 
     /**
+     * Redirect to the agent URL for checking the content using the file path.
+     *
+     * @param filePathQueryParam
+     * @param directoryOnlyParam
+     * @return
+     */
+    @ApiOperation(value = "Get file content",
+            notes = "Return the redirect URL to for retrieving the content based on the file path")
+    @ApiResponses(value = {
+            @ApiResponse(code = 307, message = "Success", response = StreamingOutput.class),
+            @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
+            @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
+    })
+    @HEAD
+    @Path("query_storage_path")
+    public Response redirectForContentCheckFromQueryParam(@QueryParam("storagePath") String filePathQueryParam,
+                                                          @QueryParam("directoryOnly") Boolean directoryOnlyParam,
+                                                          @Context UriInfo requestURI) {
+        LOG.info("Check {}", filePathQueryParam);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
+        JADEStorageURI contentURI;
+        if (StringUtils.isNotBlank(filePathQueryParam)) {
+            contentURI = JADEStorageURI.createStoragePathURI(filePathQueryParam);
+        } else {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Invalid file path"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+        List<JacsStorageVolume> volumeCandidates;
+        try {
+            volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+        return volumeCandidates.stream()
+                .findFirst()
+                .map(storageVolume -> {
+                    URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
+                            .path("agent_storage")
+                            .path("storage_path/data_content")
+                            .path(contentURI.getJadeStorage())
+                            .replaceQuery(requestURI.getRequestUri().getRawQuery())
+                            .build();
+                    LOG.info("Redirect to {} for checking {}", redirectURI, filePathQueryParam);
+                    return Response.temporaryRedirect(redirectURI);
+                })
+                .orElse(Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No managed volume found for " + contentURI))
+                        .type(MediaType.APPLICATION_JSON))
+                .build();
+    }
+
+    /**
      * Redirect to the agent URL for retrieving the content using the file path.
      *
      * @param filePathParam
@@ -122,15 +176,12 @@ public class ContentStorageResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @Path("storage_path_redirect/{filePath:.+}")
-    public Response redirectForContent(@PathParam("filePath") String filePathParam,
-                                       @QueryParam("storagePath") String filePathQueryParam,
-                                       @Context UriInfo requestURI) {
+    public Response redirectForContentFromPathParam(@PathParam("filePath") String filePathParam,
+                                                    @Context UriInfo requestURI) {
         LOG.info("Redirecting to agent for getting content of {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
         JADEStorageURI contentURI;
-        if (StringUtils.isNotBlank(filePathQueryParam)) {
-            contentURI = JADEStorageURI.createStoragePathURI(filePathQueryParam);
-        } else if (StringUtils.isNotBlank(filePathParam)) {
+        if (StringUtils.isNotBlank(filePathParam)) {
             contentURI = JADEStorageURI.createStoragePathURI(filePathParam);
         } else {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -157,6 +208,63 @@ public class ContentStorageResource {
                             .replaceQuery(requestURI.getRequestUri().getRawQuery())
                             .build();
                     LOG.info("Redirect to {} for getting content from {}", redirectURI, filePathParam);
+                    return Response.temporaryRedirect(redirectURI);
+                })
+                .orElse(Response.status(Response.Status.NOT_FOUND)
+                        .entity(new ErrorResponse("No managed volume found for " + contentURI))
+                        .type(MediaType.APPLICATION_JSON))
+                .build();
+    }
+
+    /**
+     * Redirect to the agent URL for retrieving the content using the file path.
+     *
+     * @param filePathQueryParam
+     * @param requestURI
+     * @return
+     */
+    @ApiOperation(value = "Get file content",
+            notes = "Return the redirect URL to for retrieving the content based on the file path")
+    @ApiResponses(value = {
+            @ApiResponse(code = 307, message = "Success", response = StreamingOutput.class),
+            @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
+            @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
+    })
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
+    @Path("storage_path_redirect")
+    public Response redirectForContentFromQueryParam(@QueryParam("storagePath") String filePathQueryParam,
+                                                     @Context UriInfo requestURI) {
+        LOG.info("Redirecting to agent for getting content of {}", filePathQueryParam);
+        StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
+        JADEStorageURI contentURI;
+        if (StringUtils.isNotBlank(filePathQueryParam)) {
+            contentURI = JADEStorageURI.createStoragePathURI(filePathQueryParam);
+        } else {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Invalid file path"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+        List<JacsStorageVolume> volumeCandidates;
+        try {
+            volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
+        return volumeCandidates.stream()
+                .findFirst()
+                .map(storageVolume -> {
+                    URI redirectURI = UriBuilder.fromUri(URI.create(storageVolume.getStorageServiceURL()))
+                            .path("agent_storage")
+                            .path("storage_path/data_content")
+                            .path(contentURI.getJadeStorage())
+                            .replaceQuery(requestURI.getRequestUri().getRawQuery())
+                            .build();
+                    LOG.info("Redirect to {} for getting content from {}", redirectURI, filePathQueryParam);
                     return Response.temporaryRedirect(redirectURI);
                 })
                 .orElse(Response.status(Response.Status.NOT_FOUND)
