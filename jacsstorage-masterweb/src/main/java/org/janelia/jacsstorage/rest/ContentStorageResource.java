@@ -22,6 +22,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
@@ -61,11 +62,22 @@ public class ContentStorageResource {
     @HEAD
     @Path("storage_path_redirect/{filePath:.+}")
     public Response redirectForContentCheck(@PathParam("filePath") String filePathParam,
+                                            @QueryParam("storagePath") String filePathQueryParam,
                                             @QueryParam("directoryOnly") Boolean directoryOnlyParam,
                                             @Context UriInfo requestURI) {
         LOG.info("Check {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
-        JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(filePathParam);
+        JADEStorageURI contentURI;
+        if (StringUtils.isNotBlank(filePathQueryParam)) {
+            contentURI = JADEStorageURI.createStoragePathURI(filePathQueryParam);
+        } else if (StringUtils.isNotBlank(filePathParam)) {
+            contentURI = JADEStorageURI.createStoragePathURI(filePathParam);
+        } else {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Invalid file path"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
         List<JacsStorageVolume> volumeCandidates;
         try {
             volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
@@ -110,10 +122,22 @@ public class ContentStorageResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @Path("storage_path_redirect/{filePath:.+}")
-    public Response redirectForContent(@PathParam("filePath") String filePathParam, @Context UriInfo requestURI) {
+    public Response redirectForContent(@PathParam("filePath") String filePathParam,
+                                       @QueryParam("storagePath") String filePathQueryParam,
+                                       @Context UriInfo requestURI) {
         LOG.info("Redirecting to agent for getting content of {}", filePathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
-        JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(filePathParam);
+        JADEStorageURI contentURI;
+        if (StringUtils.isNotBlank(filePathQueryParam)) {
+            contentURI = JADEStorageURI.createStoragePathURI(filePathQueryParam);
+        } else if (StringUtils.isNotBlank(filePathParam)) {
+            contentURI = JADEStorageURI.createStoragePathURI(filePathParam);
+        } else {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse("Invalid file path"))
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
+        }
         List<JacsStorageVolume> volumeCandidates;
         try {
             volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
