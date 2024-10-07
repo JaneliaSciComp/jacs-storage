@@ -9,6 +9,7 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -49,9 +50,11 @@ import org.slf4j.LoggerFactory;
 public class MasterWebdavResource {
     private static final Logger LOG = LoggerFactory.getLogger(MasterWebdavResource.class);
 
-    @Inject @RemoteInstance
+    @Inject
+    @RemoteInstance
     private StorageAllocatorService storageAllocatorService;
-    @Inject @RemoteInstance
+    @Inject
+    @RemoteInstance
     private StorageVolumeManager storageVolumeManager;
 
     @Context
@@ -62,41 +65,11 @@ public class MasterWebdavResource {
     @Produces({
             MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
     })
-    @Path("storage_prefix/{storagePrefix:.+}")
-    public Response dataStoragePropFindByStoragePrefix(@PathParam("storagePrefix") String storagePrefixParam,
-                                                       Propfind propfindRequest,
-                                                       @Context SecurityContext securityContext) {
-        LOG.info("Find storage by prefix {} for {}", storagePrefixParam, securityContext.getUserPrincipal());
-        JADEStorageURI jadeStorageURI = JADEStorageURI.createStoragePathURI(storagePrefixParam);
-        StorageResourceHelper resourceHelper = new StorageResourceHelper(storageVolumeManager);
-        List<JacsStorageVolume> managedVolumes = resourceHelper.listStorageVolumesForURI(jadeStorageURI);
-        if (CollectionUtils.isEmpty(managedVolumes)) {
-            LOG.warn("No storage found for prefix {}", storagePrefixParam);
-            Multistatus statusResponse = new Multistatus();
-            Propstat propstat = new Propstat();
-            propstat.setStatus("HTTP/1.1 404 Not Found");
-
-            PropfindResponse propfindResponse = new PropfindResponse();
-            propfindResponse.setResponseDescription("No managed volume found for prefix " + storagePrefixParam);
-            propfindResponse.setPropstat(propstat);
-            statusResponse.getResponse().add(propfindResponse);
-
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(statusResponse)
-                    .build();
-        }
-        Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(
-                managedVolumes,
-                resourceURI.getBaseUriBuilder()
-                        .path(ContentStorageResource.class)
-                        .path(ContentStorageResource.class, "redirectForContentCheck")
-                        .build(jadeStorageURI.getJadeStorage())
-                        .toString()
-        );
-        return Response.status(207)
-                .entity(propfindResponse)
-                .build();
+    @Path("storage_prefix")
+    public Response dataStoragePropFindByQueryParamStoragePrefix(@QueryParam("contentPath") String contentPathParam,
+                                                                 Propfind propfindRequest,
+                                                                 @Context SecurityContext securityContext) {
+        return processPropFindDataStorageWithContentPath(contentPathParam, securityContext);
     }
 
     @PROPFIND
@@ -104,22 +77,51 @@ public class MasterWebdavResource {
     @Produces({
             MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
     })
-    @Path("data_storage_path/{dataStoragePath:.+}")
-    public Response dataStoragePropFindByStoragePath(@PathParam("dataStoragePath") String dataStoragePathParam,
-                                                     Propfind propfindRequest,
-                                                     @Context SecurityContext securityContext) {
-        LOG.info("Find storage for path {} for {}", dataStoragePathParam, securityContext.getUserPrincipal());
-        JADEStorageURI jadeStorageURI = JADEStorageURI.createStoragePathURI(dataStoragePathParam);
+    @Path("storage_prefix/{contentPath:.+}")
+    public Response dataStoragePropFindByPathParamStoragePrefix(@PathParam("contentPath") String contentPathParam,
+                                                                Propfind propfindRequest,
+                                                                @Context SecurityContext securityContext) {
+        return processPropFindDataStorageWithContentPath(contentPathParam, securityContext);
+    }
+
+    @PROPFIND
+    @Consumes(MediaType.APPLICATION_XML)
+    @Produces({
+            MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
+    })
+    @Path("data_storage_path")
+    public Response dataStoragePropFindByQueryParamStoragePath(@QueryParam("contentPath") String contentPathParam,
+                                                               Propfind propfindRequest,
+                                                               @Context SecurityContext securityContext) {
+        return processPropFindDataStorageWithContentPath(contentPathParam, securityContext);
+    }
+
+    @PROPFIND
+    @Consumes(MediaType.APPLICATION_XML)
+    @Produces({
+            MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
+    })
+    @Path("data_storage_path/{contentPath:.+}")
+    public Response dataStoragePropFindByPathParamStoragePath(@PathParam("contentPath") String contentPathParam,
+                                                              Propfind propfindRequest,
+                                                              @Context SecurityContext securityContext) {
+        return processPropFindDataStorageWithContentPath(contentPathParam, securityContext);
+    }
+
+    private Response processPropFindDataStorageWithContentPath(String contentPathParam,
+                                                               SecurityContext securityContext) {
+        LOG.info("Find storage by prefix {} for {}", contentPathParam, securityContext.getUserPrincipal());
+        JADEStorageURI jadeStorageURI = JADEStorageURI.createStoragePathURI(contentPathParam);
         StorageResourceHelper resourceHelper = new StorageResourceHelper(storageVolumeManager);
         List<JacsStorageVolume> managedVolumes = resourceHelper.listStorageVolumesForURI(jadeStorageURI);
         if (CollectionUtils.isEmpty(managedVolumes)) {
-            LOG.warn("No storage found for path {} - {}", dataStoragePathParam, dataStoragePathParam);
+            LOG.warn("No storage found for prefix {}", contentPathParam);
             Multistatus statusResponse = new Multistatus();
             Propstat propstat = new Propstat();
             propstat.setStatus("HTTP/1.1 404 Not Found");
 
             PropfindResponse propfindResponse = new PropfindResponse();
-            propfindResponse.setResponseDescription("No managed volume found for " + dataStoragePathParam);
+            propfindResponse.setResponseDescription("No managed volume found for prefix " + contentPathParam);
             propfindResponse.setPropstat(propstat);
             statusResponse.getResponse().add(propfindResponse);
 
@@ -132,8 +134,8 @@ public class MasterWebdavResource {
                 managedVolumes,
                 resourceURI.getBaseUriBuilder()
                         .path(ContentStorageResource.class)
-                        .path(ContentStorageResource.class, "redirectForContentCheck")
-                        .build(jadeStorageURI.getJadeStorage())
+                        .path(ContentStorageResource.class, "redirectForGetContentWithQueryParam")
+                        .queryParam("contentPath", jadeStorageURI.getJadeStorage())
                         .toString()
         );
         return Response.status(207)
@@ -143,8 +145,8 @@ public class MasterWebdavResource {
 
     /**
      * @param storageName
-     * @param pathPrefix - bundle's root relative path to the storage volume, e.g. if the storage volume is /vol/storage and
-     *                   pathPrefix is /my/prefix than the bundle's root will be at /vol/storage/my/prefix
+     * @param pathPrefix      - bundle's root relative path to the storage volume, e.g. if the storage volume is /vol/storage and
+     *                        pathPrefix is /my/prefix than the bundle's root will be at /vol/storage/my/prefix
      * @param storageTags
      * @param securityContext
      * @return
