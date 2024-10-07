@@ -78,9 +78,19 @@ public class S3StorageService implements ContentStorageService {
                 .build();
         ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
 
+        long requestOffset = contentAccessParams.getStartEntryIndex();
+
+        long currentOffset = 0;
         List<ContentNode> results = new ArrayList<>();
         for (ListObjectsV2Response r : listObjectsResponses) {
+            if (currentOffset + r.contents().size() < requestOffset) {
+                currentOffset += r.contents().size();
+                continue;
+            }
             for (S3Object s3Object : r.contents()) {
+                currentOffset++;
+                if (currentOffset <= requestOffset)
+                    continue;
                 Path keyPath = Paths.get(s3Object.key());
                 Path keyRelativePath = Paths.get(s3Location).relativize(keyPath);
                 Path parentPath = keyRelativePath.getParent();
