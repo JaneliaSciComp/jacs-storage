@@ -57,17 +57,15 @@ public class DirectContentAccess implements ContentAccess {
                                 ContentAccessParams contentAccessParams,
                                 ContentStreamReader contentObjectReader,
                                 OutputStream outputStream) {
-        if (alwaysArchive || contentNodes.size() > 1) {
+        if (contentNodes.isEmpty()) {
+            return 0;
+        } else if (alwaysArchive || contentNodes.size() > 1) {
             return archiveContent(contentNodes, contentObjectReader, outputStream);
-        } else {
-            if (contentNodes.isEmpty()) {
-                return 0;
-            } else { // contentNodes.size() == 1
-                try (InputStream nodeContentStream = contentObjectReader.readContent(contentNodes.get(0).getObjectKey())) {
-                    return IOStreamUtils.copyFrom(nodeContentStream, outputStream);
-                } catch (IOException e) {
-                    throw new ContentException(e);
-                }
+        } else { // contentNodes.size() == 1
+            try (InputStream nodeContentStream = contentObjectReader.readContent(contentNodes.get(0).getObjectKey())) {
+                return IOStreamUtils.copyFrom(nodeContentStream, outputStream);
+            } catch (IOException e) {
+                throw new ContentException(e);
             }
         }
     }

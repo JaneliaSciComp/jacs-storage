@@ -89,8 +89,9 @@ public class S3StorageService implements ContentStorageService {
             }
             for (S3Object s3Object : r.contents()) {
                 currentOffset++;
-                if (currentOffset <= requestOffset)
+                if (currentOffset <= requestOffset) {
                     continue;
+                }
                 Path keyPath = Paths.get(s3Object.key());
                 Path keyRelativePath = Paths.get(s3Location).relativize(keyPath);
                 Path parentPath = keyRelativePath.getParent();
