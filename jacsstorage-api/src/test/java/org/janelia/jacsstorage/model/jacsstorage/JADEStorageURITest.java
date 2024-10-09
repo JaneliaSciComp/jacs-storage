@@ -240,8 +240,8 @@ public class JADEStorageURITest {
             JADEStorageURI storagePathURI = JADEStorageURI.createStoragePathURI(
                     td.uriDesc,
                     new JADEStorageOptions()
-                            .setAsString("accessKey", td.accessKey)
-                            .setAsString("secretKey", td.secretKey)
+                            .setAccessKey(td.accessKey)
+                            .setSecretKey(td.secretKey)
             );
             assertThat("Checking JADE key " + td.uriDesc, storagePathURI.getJADEKey(), equalTo(td.expectedJADEKey));
             assertThat("Checking content key " + td.uriDesc, storagePathURI.getContentKey(), equalTo(td.expectedContentKey));

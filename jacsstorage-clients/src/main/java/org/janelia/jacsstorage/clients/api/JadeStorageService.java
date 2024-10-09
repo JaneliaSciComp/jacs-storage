@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.clients.api;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.saalfeldlab.n5.N5TreeNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,8 +43,8 @@ public class JadeStorageService {
      * @param path full JADE path to locate
      * @return
      */
-    public StorageLocation getStorageLocationByPath(String path) {
-        return jadeHttpClient.lookupStorage(path, subjectKey, authToken).orElse(null);
+    public StorageLocation getStorageLocationByPath(String path, JADEStorageOptions storageOptions) {
+        return jadeHttpClient.lookupStorage(path, subjectKey, authToken, storageOptions).orElse(null);
     }
 
     /**

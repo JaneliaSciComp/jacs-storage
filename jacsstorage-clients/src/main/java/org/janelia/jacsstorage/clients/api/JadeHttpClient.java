@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.clients.api;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.PageResult;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.saalfeldlab.n5.N5TreeNode;
 import org.jboss.weld.context.http.Http;
 import org.slf4j.Logger;
@@ -41,9 +42,9 @@ public class JadeHttpClient {
         this.storageServiceApiKey = storageServiceApiKey;
     }
 
-    public Optional<StorageLocation> lookupStorage(String storagePath, String ownerKey, String authToken) {
+    public Optional<StorageLocation> lookupStorage(String storagePath, String ownerKey, String authToken, JADEStorageOptions storageOptions) {
         LOG.debug("Lookup storage for {}", storagePath);
-        return findStorageVolumes(storagePath, ownerKey, authToken)
+        return findStorageVolumes(storagePath, ownerKey, authToken, storageOptions)
                 .stream().findFirst()
                 .map(jadeStorageVolume -> {
                     String relativeStoragePath;
@@ -68,8 +69,8 @@ public class JadeHttpClient {
                 });
     }
 
-    public List<JadeStorageVolume> findStorageVolumes(String storagePath, String subjectKey, String authToken) {
-        return lookupStorageVolumes(null, null, storagePath, subjectKey, authToken).stream()
+    public List<JadeStorageVolume> findStorageVolumes(String storagePath, String subjectKey, String authToken, JADEStorageOptions storageOptions) {
+        return lookupStorageVolumes(null, null, storagePath, subjectKey, authToken, storageOptions).stream()
                 .filter(vsInfo -> StringUtils.equals(storagePath, vsInfo.getStorageVirtualPath())
                         || StringUtils.equals(storagePath, vsInfo.getBaseStorageRootDir())
                         || StringUtils.startsWith(storagePath, StringUtils.appendIfMissing(vsInfo.getStorageVirtualPath(), "/"))
@@ -78,7 +79,12 @@ public class JadeHttpClient {
                 .collect(Collectors.toList());
     }
 
-    public List<JadeStorageVolume> lookupStorageVolumes(String storageId, String storageName, String storagePath, String subjectKey, String authToken) {
+    public List<JadeStorageVolume> lookupStorageVolumes(String storageId,
+                                                        String storageName,
+                                                        String storagePath,
+                                                        String subjectKey,
+                                                        String authToken,
+                                                        JADEStorageOptions  storageOptions) {
         Client httpclient = HttpUtils.createHttpClient();
         try {
             WebTarget target = httpclient.target(masterStorageServiceURL)
@@ -96,6 +102,9 @@ public class JadeHttpClient {
                 target = target.queryParam("ownerKey", subjectKey);
             }
             Invocation.Builder requestBuilder = createRequestWithCredentials(target.request(MediaType.APPLICATION_JSON), subjectKey, authToken);
+            for (String storageAttribute : storageOptions.getAttributeNames()) {
+                requestBuilder.header(storageAttribute, storageOptions.getAsString(storageAttribute, ""));
+            }
             Response response = requestBuilder.get();
             int responseStatus = response.getStatus();
             if (responseStatus >= Response.Status.BAD_REQUEST.getStatusCode()) {
