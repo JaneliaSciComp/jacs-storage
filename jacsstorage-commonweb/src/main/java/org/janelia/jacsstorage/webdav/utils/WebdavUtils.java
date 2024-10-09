@@ -36,7 +36,10 @@ public class WebdavUtils {
         }
     }
 
-    public static Multistatus convertStorageVolumes(List<JacsStorageVolume> storageVolumes, String defaultPropResourceURL) {
+    public static Multistatus convertStorageVolumes(List<JacsStorageVolume> storageVolumes,
+                                                    String accessKey,
+                                                    String secretKey,
+                                                    String defaultPropResourceURL) {
         LOG.debug("Create multistatus response for {} with {}", storageVolumes, defaultPropResourceURL);
         Multistatus ms = new Multistatus();
         ms.getResponse().addAll(storageVolumes.stream()
@@ -53,6 +56,8 @@ public class WebdavUtils {
                     // set custom properties
                     propContainer.setStorageBindName(storageVolume.getStorageVirtualPath());
                     propContainer.setStorageRootDir(storageVolume.getStorageRootLocation());
+                    propContainer.setStorageAccessKey(accessKey);
+                    propContainer.setStorageSecretKey(secretKey);
 
                     Propstat propstat = new Propstat();
                     propstat.setPropContainer(propContainer);

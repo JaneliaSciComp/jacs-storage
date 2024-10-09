@@ -23,7 +23,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.service.AgentStatePersistence;
-import org.janelia.jacsstorage.service.ContentStorageService;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.StorageCapacity;

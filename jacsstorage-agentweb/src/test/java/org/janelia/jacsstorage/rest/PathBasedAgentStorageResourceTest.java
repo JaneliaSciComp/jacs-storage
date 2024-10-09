@@ -14,6 +14,7 @@ import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
@@ -69,10 +70,10 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
 
     @Test
     public void retrieveDataStreamUsingDataPathRelativeToVolumeRoot() throws IOException {
-        String testPath = "/volRoot/testPath";
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath", new JADEStorageOptions());
         DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
+        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testDataURI.getJadeStorage()))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
                                 .storageVirtualPath("/volBinding")
@@ -82,9 +83,8 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                         )
                 );
         String testData = "Test data";
-        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath");
         ContentGetter testContentGetter = mock(ContentGetter.class);
-        when(storageContentReader.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+        when(storageContentReader.getDataContent(eq(testDataURI), any(ContentAccessParams.class)))
                 .thenReturn(testContentGetter);
         when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
         when(testContentGetter.streamContent(any(OutputStream.class)))
@@ -96,7 +96,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         Response response = target()
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path("storage_path/data_content")
-                .path(expectedDataURI.getJadeStorage())
+                .path(testDataURI.getJadeStorage())
                 .request()
                 .get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
@@ -108,6 +108,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         String testPath = "/volBinding/testPath";
         DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath", new JADEStorageOptions());
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
@@ -118,9 +119,8 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                         )
                 );
         String testData = "Test data";
-        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath");
         ContentGetter testContentGetter = mock(ContentGetter.class);
-        when(storageContentReader.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+        when(storageContentReader.getDataContent(eq(testDataURI), any(ContentAccessParams.class)))
                 .thenReturn(testContentGetter);
         when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
         when(testContentGetter.streamContent(any(OutputStream.class)))
@@ -142,6 +142,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         };
         DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath", new JADEStorageOptions());
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/volBinding/testPath"))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
@@ -152,9 +153,8 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                         )
                 );
         String testData = "Test data";
-        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath");
         ContentGetter testContentGetter = mock(ContentGetter.class);
-        when(storageContentReader.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+        when(storageContentReader.getDataContent(eq(testDataURI), any(ContentAccessParams.class)))
                 .thenReturn(testContentGetter);
         when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
         when(testContentGetter.streamContent(any(OutputStream.class)))
@@ -173,7 +173,8 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
     @Test
     public void retrieveDataStreamUsingDataPathWithCharsThatShouldBeEscaped() throws IOException {
         String testPath = "/volRoot/testPath/c1/c2-5%/testFile";
-        String urlEncodedPath = StringUtils.replace(testPath, "%", "%25");
+        String testPathURLEncoded = StringUtils.replace(testPath, "%", "%25");
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI(testPath, new JADEStorageOptions());
         DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
@@ -186,9 +187,8 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                         )
                 );
         String testData = "Test data";
-        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
         ContentGetter testContentGetter = mock(ContentGetter.class);
-        when(storageContentReader.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+        when(storageContentReader.getDataContent(eq(testDataURI), any(ContentAccessParams.class)))
                 .thenReturn(testContentGetter);
         when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
         when(testContentGetter.streamContent(any(OutputStream.class)))
@@ -197,7 +197,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                     os.write(testData.getBytes());
                     return (long) testData.length();
                 });
-        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(urlEncodedPath).request().get();
+        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(testPathURLEncoded).request().get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
     }
@@ -205,6 +205,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
     @Test
     public void retrieveDataStreamFromS3UsingAWSS3URI() throws IOException {
         String testPath = "s3://testBucket/testPrefix/test.key";
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI(testPath, new JADEStorageOptions());
         DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.findVolumes(
@@ -217,9 +218,8 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                         )
                 );
         String testData = "Test data";
-        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
         ContentGetter testContentGetter = mock(ContentGetter.class);
-        when(storageContentReader.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+        when(storageContentReader.getDataContent(eq(testDataURI), any(ContentAccessParams.class)))
                 .thenReturn(testContentGetter);
         when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
         when(testContentGetter.streamContent(any(OutputStream.class)))
@@ -231,7 +231,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         Response response = target()
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path("storage_path/data_content")
-                .path(expectedDataURI.getJadeStorage())
+                .path(testDataURI.getJadeStorage())
                 .request()
                 .get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
@@ -241,10 +241,12 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
     @Test
     public void retrieveDataStreamFromS3UsingEndpointURI() throws IOException {
         String testPath = "https://user:secret@testEndpoint/testBucket/testPrefix/test.key";
+        String testPathParam = "https://testEndpoint/testBucket/testPrefix/test.key"; // no authentication fields
         DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI(testPath, new JADEStorageOptions());
         when(storageVolumeManager.findVolumes(
-                eq(new StorageQuery().setStorageType(JacsStorageType.S3).setDataStoragePath(testPath))))
+                eq(new StorageQuery().setStorageType(JacsStorageType.S3).setDataStoragePath(testPathParam))))
                 .thenReturn(ImmutableList.of(
                                 new JacsStorageVolumeBuilder()
                                         .storageType(JacsStorageType.S3)
@@ -253,9 +255,8 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
                         )
                 );
         String testData = "Test data";
-        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI(testPath);
         ContentGetter testContentGetter = mock(ContentGetter.class);
-        when(storageContentReader.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
+        when(storageContentReader.getDataContent(eq(testDataURI), any(ContentAccessParams.class)))
                 .thenReturn(testContentGetter);
         when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
         when(testContentGetter.streamContent(any(OutputStream.class)))
@@ -267,7 +268,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         Response response = target()
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path("storage_path/data_content")
-                .path(expectedDataURI.getJadeStorage())
+                .path(testDataURI.getJadeStorage())
                 .request()
                 .get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));

@@ -5,6 +5,7 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -30,6 +31,7 @@ import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
@@ -139,8 +141,13 @@ public class StorageVolumesResource {
                                        @QueryParam("dataStoragePath") String dataStoragePathParam,
                                        @QueryParam("includeInactive") boolean includeInactive,
                                        @QueryParam("includeInaccessibleVolumes") boolean includeInaccessibleVolumes,
+                                       @HeaderParam("AccessKey") String accessKey,
+                                       @HeaderParam("SecretKey") String secretKey,
                                        @Context SecurityContext securityContext) {
-        JADEStorageURI dataStorageURI = JADEStorageURI.createStoragePathURI(dataStoragePathParam);
+        JADEStorageOptions storageOptions = new JADEStorageOptions()
+                .setAccessKey(accessKey)
+                .setSecretKey(secretKey);
+        JADEStorageURI dataStorageURI = JADEStorageURI.createStoragePathURI(dataStoragePathParam, storageOptions);
         StorageQuery storageQuery = new StorageQuery()
                 .setId(storageVolumeId)
                 .setStorageName(volumeName)

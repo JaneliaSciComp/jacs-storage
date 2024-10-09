@@ -40,6 +40,12 @@ public class PropContainer {
     @JacksonXmlProperty(localName = "jade:storageRootDir")
     String storageRootDir;
 
+    @JacksonXmlProperty(localName = "jade:accessKey")
+    String storageAccessKey;
+
+    @JacksonXmlProperty(localName = "jade:secretKey")
+    String storageSecretKey;
+
     public String getResourceType() {
         return resourceType;
     }
@@ -118,6 +124,22 @@ public class PropContainer {
 
     public void setStorageRootDir(String storageRootDir) {
         this.storageRootDir = storageRootDir;
+    }
+
+    public String getStorageAccessKey() {
+        return storageAccessKey;
+    }
+
+    public void setStorageAccessKey(String storageAccessKey) {
+        this.storageAccessKey = storageAccessKey;
+    }
+
+    public String getStorageSecretKey() {
+        return storageSecretKey;
+    }
+
+    public void setStorageSecretKey(String storageSecretKey) {
+        this.storageSecretKey = storageSecretKey;
     }
 
     @Override

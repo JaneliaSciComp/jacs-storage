@@ -72,9 +72,9 @@ public class JacsBundle extends AbstractEntity {
             storageRoot = null;
         }
         if (StringUtils.isNotBlank(storageRoot)) {
-            return JADEStorageURI.createStoragePathURI(storageRoot).resolve(path);
+            return JADEStorageURI.createStoragePathURI(storageRoot, storageVolume.getStorageOptions()).resolve(path);
         } else if (StringUtils.isNotBlank(path)) {
-            return JADEStorageURI.createStoragePathURI(path);
+            return JADEStorageURI.createStoragePathURI(path, new JADEStorageOptions());
         } else {
             return null;
         }

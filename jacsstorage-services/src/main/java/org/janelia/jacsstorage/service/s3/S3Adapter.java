@@ -3,41 +3,38 @@ package org.janelia.jacsstorage.service.s3;
 import java.net.URI;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
 
 public class S3Adapter {
+    private final String bucket;
+    private final String region;
     private final String endpoint;
     private final String accessKey;
     private final String secretKey;
-    private final String bucket;
     private final S3Client s3Client;
 
-    public S3Adapter(String endpoint, String region, String bucket, String accessKey, String secretKey) {
-        this.endpoint = endpoint;
+    public S3Adapter(String bucket, String endpoint, String region, String accessKey, String secretKey) {
         this.bucket = bucket;
+        this.endpoint = endpoint;
+        this.region = region;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
-        this.s3Client = S3Client.builder()
-                .region(Region.of(region))
-                .endpointOverride(URI.create(endpoint))
-                .credentialsProvider(() -> AwsBasicCredentials.builder()
-                        .accessKeyId(accessKey)
-                        .secretAccessKey(secretKey)
-                        .build())
-                .build();
-    }
-
-    public S3Adapter(String region, String bucket) {
-        this.endpoint = null;
-        this.accessKey = null;
-        this.secretKey = null;
-        this.bucket = bucket;
-        this.s3Client = S3Client.builder()
-                .region(Region.of(region))
-                .build();
+        S3ClientBuilder s3ClientBuilder = S3Client.builder();
+        if (StringUtils.isNotBlank(region)) {
+            s3ClientBuilder.region(Region.of(region));
+        }
+        if (StringUtils.isNotBlank(endpoint)) {
+            s3ClientBuilder.endpointOverride(URI.create(endpoint));
+        }
+        if (StringUtils.isNotBlank(accessKey) && StringUtils.isNotBlank(secretKey)) {
+            s3ClientBuilder.credentialsProvider(() -> AwsBasicCredentials.create(accessKey, secretKey));
+        }
+        this.s3Client = s3ClientBuilder.build();
     }
 
     public JADEStorageURI getStorageURI() {
@@ -52,12 +49,15 @@ public class S3Adapter {
             appendedBucket = "";
         }
         uriBuilder.append(endpointURI.getScheme()).append("://");
-        if (StringUtils.isNotBlank(accessKey)) {
-            uriBuilder.append(accessKey).append(':').append(secretKey).append('@');
-        }
         uriBuilder.append(endpointURI.getHost())
                 .append(appendedBucket);
-        return JADEStorageURI.createStoragePathURI(uriBuilder.toString());
+        return JADEStorageURI.createStoragePathURI(
+                uriBuilder.toString(),
+                new JADEStorageOptions()
+                        .setAccessKey(accessKey)
+                        .setSecretKey(secretKey)
+                        .setRegion(region)
+        );
     }
 
     public String getBucket() {

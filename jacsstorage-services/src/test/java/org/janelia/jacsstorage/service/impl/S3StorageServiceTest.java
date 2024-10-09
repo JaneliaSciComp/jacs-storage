@@ -20,9 +20,9 @@ public class S3StorageServiceTest {
     @Test
     public void retrieveSingleFileContentFromS3Endpoint() throws IOException {
         S3StorageService storageService = new S3StorageService(
+                "scicompsoft-public",
                 "https://s3.us-east-1.lyvecloud.seagate.com",
                 "us-east-1",
-                "scicompsoft-public",
                 "NNQ20KNJ2YCWWMPE",
                 "IID4TNAS3OXI2UUAAKK21CCYHJRAP3JM"
         );
@@ -35,9 +35,9 @@ public class S3StorageServiceTest {
     @Test
     public void listFolderContentFromS3Endpoint() throws IOException {
         S3StorageService storageService = new S3StorageService(
+                "scicompsoft-public",
                 "https://s3.us-east-1.lyvecloud.seagate.com",
                 "us-east-1",
-                "scicompsoft-public",
                 "NNQ20KNJ2YCWWMPE",
                 "IID4TNAS3OXI2UUAAKK21CCYHJRAP3JM"
         );
@@ -48,8 +48,11 @@ public class S3StorageServiceTest {
     @Test
     public void retrieveSingleFileFromS3() throws IOException {
         S3StorageService storageService = new S3StorageService(
+                "janelia-neuronbridge-data-dev",
+                null,
                 "us-east-1",
-                "janelia-neuronbridge-data-dev"
+                null,
+                null
         );
         List<ContentNode> nodes = storageService.listContentNodes("v3_3_0",
                 new ContentAccessParams()
@@ -63,8 +66,11 @@ public class S3StorageServiceTest {
     @Test
     public void retrieveSelectedFilesFromS3() throws IOException {
         S3StorageService storageService = new S3StorageService(
+                "janelia-neuronbridge-data-dev",
+                null,
                 "us-east-1",
-                "janelia-neuronbridge-data-dev"
+                null,
+                null
         );
         List<ContentNode> nodes = storageService.listContentNodes("v3_3_0",
                 new ContentAccessParams()
@@ -77,8 +83,11 @@ public class S3StorageServiceTest {
     @Test
     public void checkAccessRoot() {
         S3StorageService storageService = new S3StorageService(
+                "janelia-neuronbridge-data-dev",
+                null,
                 "us-east-1",
-                "janelia-neuronbridge-data-dev"
+                null,
+                null
         );
         assertTrue(storageService.canAccess(""));
     }
@@ -86,8 +95,11 @@ public class S3StorageServiceTest {
     @Test
     public void writeAndDeleteContentOnS3() throws IOException {
         S3StorageService storageService = new S3StorageService(
+                "janelia-neuronbridge-data-dev",
+                null,
                 "us-east-1",
-                "janelia-neuronbridge-data-dev"
+                null,
+                null
         );
         String testContent = "This is some test content";
         long l = storageService.writeContent("myTest.txt", new ByteArrayInputStream(testContent.getBytes()));
@@ -105,8 +117,11 @@ public class S3StorageServiceTest {
     @Test
     public void retrievePrefixFromS3() throws IOException {
         S3StorageService storageService = new S3StorageService(
+                "janelia-neuronbridge-data-dev",
+                null,
                 "us-east-1",
-                "janelia-neuronbridge-data-dev"
+                null,
+                null
         );
         ByteArrayOutputStream testDataStream = new ByteArrayOutputStream();
         List<ContentNode> contentNodes = storageService.listContentNodes("v3_3_0/schemas", new ContentAccessParams());

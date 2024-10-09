@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.rest;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -15,6 +16,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -31,7 +33,8 @@ public class N5StorageResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(N5StorageResource.class);
 
-    @Inject @LocalInstance
+    @Inject
+    @LocalInstance
     private StorageVolumeManager storageVolumeManager;
     @Inject
     private N5ContentService n5ContentService;
@@ -46,9 +49,10 @@ public class N5StorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_volume/{storageVolumeId}/n5tree/{storageRelativePath:.+}")
     public Response retrieveDataInfoFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
-                                                      @PathParam("storageRelativePath") String storageRelativeFilePath) {
+                                                      @PathParam("storageRelativePath") String storageRelativeFilePath,
+                                                      @HeaderParam("AccessKey") String accessKey,
+                                                      @HeaderParam("SecretKey") String secretKey) {
         LOG.debug("Retrieve N5 data sets from volume {}:{}", storageVolumeId, storageRelativeFilePath);
-
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
             LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -58,11 +62,17 @@ public class N5StorageResource {
                     .build();
         }
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
-            JADEStorageURI n5ContainerURI = storageVolume.resolveRelativeLocation(storageRelativeFilePath).orElse(null);
+            JADEStorageOptions storageOptions = new JADEStorageOptions()
+                    .setAccessKey(accessKey)
+                    .setSecretKey(secretKey);
+            JADEStorageURI n5ContainerURI = storageVolume
+                    .setStorageOptions(storageOptions)
+                    .resolveRelativeLocation(storageRelativeFilePath)
+                    .orElse(null);
             if (n5ContainerURI == null) {
                 return Response
                         .serverError()
-                        .entity(ImmutableMap.of("errormessage", "Could not resolve relative path: "+storageRelativeFilePath))
+                        .entity(ImmutableMap.of("errormessage", "Could not resolve relative path: " + storageRelativeFilePath))
                         .build();
             }
             N5TreeNode n5RootNode = n5ContentService.getN5Container(n5ContainerURI);

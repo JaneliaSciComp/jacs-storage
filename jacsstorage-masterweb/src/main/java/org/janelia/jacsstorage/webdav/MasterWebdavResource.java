@@ -22,6 +22,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
@@ -67,9 +68,11 @@ public class MasterWebdavResource {
     })
     @Path("storage_prefix")
     public Response dataStoragePropFindByQueryParamStoragePrefix(@QueryParam("contentPath") String contentPathParam,
+                                                                 @HeaderParam("AccessKey") String accessKey,
+                                                                 @HeaderParam("SecretKey") String secretKey,
                                                                  Propfind propfindRequest,
                                                                  @Context SecurityContext securityContext) {
-        return processPropFindDataStorageWithContentPath(contentPathParam, securityContext);
+        return processPropFindDataStorageWithContentPath(contentPathParam, accessKey, secretKey, securityContext);
     }
 
     @PROPFIND
@@ -79,9 +82,11 @@ public class MasterWebdavResource {
     })
     @Path("storage_prefix/{contentPath:.+}")
     public Response dataStoragePropFindByPathParamStoragePrefix(@PathParam("contentPath") String contentPathParam,
+                                                                @HeaderParam("AccessKey") String accessKey,
+                                                                @HeaderParam("SecretKey") String secretKey,
                                                                 Propfind propfindRequest,
                                                                 @Context SecurityContext securityContext) {
-        return processPropFindDataStorageWithContentPath(contentPathParam, securityContext);
+        return processPropFindDataStorageWithContentPath(contentPathParam, accessKey, secretKey, securityContext);
     }
 
     @PROPFIND
@@ -91,9 +96,11 @@ public class MasterWebdavResource {
     })
     @Path("data_storage_path")
     public Response dataStoragePropFindByQueryParamStoragePath(@QueryParam("contentPath") String contentPathParam,
+                                                               @HeaderParam("AccessKey") String accessKey,
+                                                               @HeaderParam("SecretKey") String secretKey,
                                                                Propfind propfindRequest,
                                                                @Context SecurityContext securityContext) {
-        return processPropFindDataStorageWithContentPath(contentPathParam, securityContext);
+        return processPropFindDataStorageWithContentPath(contentPathParam, accessKey, secretKey, securityContext);
     }
 
     @PROPFIND
@@ -103,15 +110,24 @@ public class MasterWebdavResource {
     })
     @Path("data_storage_path/{contentPath:.+}")
     public Response dataStoragePropFindByPathParamStoragePath(@PathParam("contentPath") String contentPathParam,
+                                                              @HeaderParam("AccessKey") String accessKey,
+                                                              @HeaderParam("SecretKey") String secretKey,
                                                               Propfind propfindRequest,
                                                               @Context SecurityContext securityContext) {
-        return processPropFindDataStorageWithContentPath(contentPathParam, securityContext);
+        return processPropFindDataStorageWithContentPath(contentPathParam, accessKey, secretKey, securityContext);
     }
 
     private Response processPropFindDataStorageWithContentPath(String contentPathParam,
+                                                               String accessKey,
+                                                               String secretKey,
                                                                SecurityContext securityContext) {
         LOG.info("Find storage by prefix {} for {}", contentPathParam, securityContext.getUserPrincipal());
-        JADEStorageURI jadeStorageURI = JADEStorageURI.createStoragePathURI(contentPathParam);
+        JADEStorageURI jadeStorageURI = JADEStorageURI.createStoragePathURI(
+                contentPathParam,
+                new JADEStorageOptions()
+                        .setAccessKey(accessKey)
+                        .setSecretKey(secretKey)
+        );
         StorageResourceHelper resourceHelper = new StorageResourceHelper(storageVolumeManager);
         List<JacsStorageVolume> managedVolumes = resourceHelper.listStorageVolumesForURI(jadeStorageURI);
         if (CollectionUtils.isEmpty(managedVolumes)) {
@@ -132,6 +148,8 @@ public class MasterWebdavResource {
         }
         Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(
                 managedVolumes,
+                accessKey,
+                secretKey,
                 resourceURI.getBaseUriBuilder()
                         .path(ContentStorageResource.class)
                         .path(ContentStorageResource.class, "redirectForGetContentWithQueryParam")
@@ -163,10 +181,9 @@ public class MasterWebdavResource {
                                       @HeaderParam("storageTags") String storageTags,
                                       @Context SecurityContext securityContext) {
         LOG.info("Create storage {} prefix {} for {}", storageName, pathPrefix, securityContext.getUserPrincipal());
-        JacsStorageFormat storageFormat = JacsStorageFormat.DATA_DIRECTORY;
         JacsBundle dataBundle = new JacsBundleBuilder()
                 .name(storageName)
-                .storageFormat(storageFormat)
+                .storageFormat(JacsStorageFormat.DATA_DIRECTORY)
                 .storageTags(storageTags)
                 .build();
         Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(pathPrefix, dataBundle, SecurityUtils.getUserPrincipal(securityContext));

@@ -38,11 +38,23 @@ class ContentStorageServiceProvider {
     private S3StorageService createS3StorageServiceInstance(JADEStorageURI storageURI) {
         if (storageURI.getStorageScheme() == JADEStorageURI.JADEStorageScheme.S3) {
             // use only the bucket to instantiate the storage service
-            return new S3StorageService(defaultAWSRegion, storageURI.getContentBucket());
+            return new S3StorageService(
+                    storageURI.getContentBucket(),
+                    null,
+                    defaultAWSRegion,
+                    storageURI.getStorageOptions().getAccessKey(null),
+                    storageURI.getStorageOptions().getSecretKey(null)
+            );
         } else if (storageURI.getStorageScheme() == JADEStorageURI.JADEStorageScheme.HTTP) {
             String s3Bucket = storageURI.getContentBucket();
             // use the full endpoint to instantiate the storage service
-            return new S3StorageService(storageURI.getStorageEndpoint(), defaultAWSRegion, s3Bucket, storageURI.getUserAccessKey(), storageURI.getUserSecretKey());
+            return new S3StorageService(
+                    s3Bucket,
+                    storageURI.getStorageEndpoint(),
+                    defaultAWSRegion,
+                    storageURI.getStorageOptions().getAccessKey(null),
+                    storageURI.getStorageOptions().getSecretKey(null)
+            );
         } else {
             throw new IllegalArgumentException("Cannot create S3 storage service instance for " + storageURI);
         }

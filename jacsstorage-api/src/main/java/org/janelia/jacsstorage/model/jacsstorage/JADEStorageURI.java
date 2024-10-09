@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.model.jacsstorage;
 
 import java.net.URI;
 import java.nio.file.Paths;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -31,8 +32,11 @@ public class JADEStorageURI {
      * @param storageURIDesc source URI descriptor
      * @return create a JADEStorageURI from the given URI descriptor
      */
-    public static JADEStorageURI createStoragePathURI(String storageURIDesc) {
-        return new JADEStorageURI(URI.create(normalizeURIDesc(storageURIDesc).replace("%", "%25")));
+    public static JADEStorageURI createStoragePathURI(String storageURIDesc, JADEStorageOptions storageOptions) {
+        return new JADEStorageURI(
+                URI.create(normalizeURIDesc(storageURIDesc).replace("%", "%25")),
+                storageOptions
+        );
     }
 
     private static String normalizeURIDesc(String uriDesc) {
@@ -59,9 +63,17 @@ public class JADEStorageURI {
     }
 
     private final URI storageURI;
+    private final JADEStorageOptions storageOptions;
 
-    private JADEStorageURI(URI storageURI) {
+    /**
+     * Create a storage URI. The access and secret key must be passed explicitly not through the URI using scheme://auth@/host/path.
+     *
+     * @param storageURI
+     * @param storageOptions
+     */
+    private JADEStorageURI(URI storageURI, JADEStorageOptions storageOptions) {
         this.storageURI = storageURI;
+        this.storageOptions = storageOptions;
     }
 
     public JacsStorageType getStorageType() {
@@ -208,24 +220,8 @@ public class JADEStorageURI {
         return Paths.get(storageURI.getPath()).getFileName().toString();
     }
 
-    public String getUserAccessKey() {
-        if (StringUtils.isNotBlank(storageURI.getUserInfo())) {
-            String accessKeyAndSecret = storageURI.getUserInfo();
-            int separatorIndex = accessKeyAndSecret.indexOf(":");
-            return separatorIndex == -1 ? accessKeyAndSecret : accessKeyAndSecret.substring(0, separatorIndex);
-        } else {
-            return "";
-        }
-    }
-
-    public String getUserSecretKey() {
-        if (StringUtils.isNotBlank(storageURI.getUserInfo())) {
-            String accessKeyAndSecret = storageURI.getUserInfo();
-            int separatorIndex = accessKeyAndSecret.indexOf(":");
-            return separatorIndex == -1 ? "" : accessKeyAndSecret.substring(separatorIndex + 1);
-        } else {
-            return "";
-        }
+    public JADEStorageOptions getStorageOptions() {
+        return storageOptions;
     }
 
     public boolean isEmpty() {
@@ -244,15 +240,8 @@ public class JADEStorageURI {
         if (getStorageType() == JacsStorageType.FILE_SYSTEM) {
             jadeStorageBuilder.append(getFileSystemContentKey());
         } else if (getStorageType() == JacsStorageType.S3) {
-            jadeStorageBuilder.append(getStorageScheme().value).append("://");
-            if (StringUtils.isNotBlank(getUserAccessKey())) {
-                jadeStorageBuilder.append(getUserAccessKey());
-                if (StringUtils.isNotBlank(getUserSecretKey())) {
-                    jadeStorageBuilder.append(':').append(getUserSecretKey());
-                }
-                jadeStorageBuilder.append('@');
-            }
             jadeStorageBuilder
+                    .append(getStorageScheme().value).append("://")
                     .append(getStorageHost())
                     .append(getJADEKey());
         } else {
@@ -303,7 +292,7 @@ public class JADEStorageURI {
     }
 
     public JADEStorageURI resolve(String relativePath) {
-        return JADEStorageURI.createStoragePathURI(resolveJadeStorage(relativePath));
+        return JADEStorageURI.createStoragePathURI(resolveJadeStorage(relativePath), storageOptions);
     }
 
     @Override

@@ -9,6 +9,7 @@ import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -32,6 +33,7 @@ import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
@@ -75,9 +77,14 @@ public class VolumeStorageResource {
     @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     public Response checkDataPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                    @PathParam("storageRelativePath") String storageRelativeFilePath,
-                                                   @QueryParam("directoryOnly") Boolean directoryOnlyParam) {
+                                                   @QueryParam("directoryOnly") Boolean directoryOnlyParam,
+                                                   @HeaderParam("AccessKey") String accessKey,
+                                                   @HeaderParam("SecretKey") String secretKey) {
         try {
             LOG.debug("Check data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
+            JADEStorageOptions storageOptions = new JADEStorageOptions()
+                    .setAccessKey(accessKey)
+                    .setSecretKey(secretKey);
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -94,7 +101,9 @@ public class VolumeStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
-            return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
+            return storageVolume
+                    .setStorageOptions(storageOptions)
+                    .resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
                         boolean contentFound = dataContentService.exists(resolvedContentURI);
                         if (contentFound) {
@@ -121,9 +130,14 @@ public class VolumeStorageResource {
     @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     public Response retrieveDataContentFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                          @PathParam("storageRelativePath") String storageRelativeFilePath,
+                                                         @HeaderParam("AccessKey") String accessKey,
+                                                         @HeaderParam("SecretKey") String secretKey,
                                                          @Context UriInfo requestURI) {
         try {
             LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
+            JADEStorageOptions storageOptions = new JADEStorageOptions()
+                    .setAccessKey(accessKey)
+                    .setSecretKey(secretKey);
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -141,7 +155,9 @@ public class VolumeStorageResource {
                         .build();
             }
             ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters());
-            return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
+            return storageVolume
+                    .setStorageOptions(storageOptions)
+                    .resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
                         ContentGetter contentGetter = dataContentService.getDataContent(resolvedContentURI, contentAccessParams);
                         long contentSize = contentGetter.estimateContentSize();
@@ -173,9 +189,14 @@ public class VolumeStorageResource {
     @Path("storage_volume/{storageVolumeId}/data_info/{storageRelativePath:.+}")
     public Response retrieveMetadataFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                       @PathParam("storageRelativePath") String storageRelativeFilePath,
+                                                      @HeaderParam("AccessKey") String accessKey,
+                                                      @HeaderParam("SecretKey") String secretKey,
                                                       @Context UriInfo requestURI) {
         try {
             LOG.debug("Retrieve metadata from volume {}:{}", storageVolumeId, storageRelativeFilePath);
+            JADEStorageOptions storageOptions = new JADEStorageOptions()
+                    .setAccessKey(accessKey)
+                    .setSecretKey(secretKey);
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -192,7 +213,9 @@ public class VolumeStorageResource {
                         .build();
             }
             ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters());
-            return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
+            return storageVolume
+                    .setStorageOptions(storageOptions)
+                    .resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
                         ContentGetter contentGetter = dataContentService.getDataContent(resolvedContentURI, contentAccessParams);
                         return Response.ok(contentGetter.getMetaData());
@@ -219,9 +242,14 @@ public class VolumeStorageResource {
                                               @QueryParam("depth") Integer depthParam,
                                               @QueryParam("offset") Integer offsetParam,
                                               @QueryParam("length") Integer lengthParam,
+                                              @HeaderParam("AccessKey") String accessKey,
+                                              @HeaderParam("SecretKey") String secretKey,
                                               @Context UriInfo requestURI) {
         try {
             LOG.debug("List data from volume {}:{} with a depthParameter {}", storageVolumeId, storageRelativeFilePath, depthParam);
+            JADEStorageOptions storageOptions = new JADEStorageOptions()
+                    .setAccessKey(accessKey)
+                    .setSecretKey(secretKey);
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -244,7 +272,9 @@ public class VolumeStorageResource {
                     .setMaxDepth(depth)
                     .setEntriesCount(length)
                     .setStartEntryIndex(offset);
-            return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
+            return storageVolume
+                    .setStorageOptions(storageOptions)
+                    .resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
                         ContentGetter contentGetter = dataContentService.getDataContent(resolvedContentURI, contentAccessParams);
                         List<DataNodeInfo> dataNodes = contentGetter.getObjectsList().stream()
@@ -304,10 +334,15 @@ public class VolumeStorageResource {
     @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     public Response storeDataContentOnStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                     @PathParam("storageRelativePath") String storageRelativeFilePath,
+                                                    @HeaderParam("AccessKey") String accessKey,
+                                                    @HeaderParam("SecretKey") String secretKey,
                                                     @Context SecurityContext securityContext,
                                                     InputStream contentStream) {
         try {
             LOG.debug("Store data to {}: {}", storageVolumeId, storageRelativeFilePath);
+            JADEStorageOptions storageOptions = new JADEStorageOptions()
+                    .setAccessKey(accessKey)
+                    .setSecretKey(secretKey);
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -324,7 +359,9 @@ public class VolumeStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
-            return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
+            return storageVolume
+                    .setStorageOptions(storageOptions)
+                    .resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
                         long size = dataContentService.writeDataStream(resolvedContentURI, contentStream);
                         URI newContentURI = UriBuilder.fromUri(resourceURI.getBaseUri())
@@ -365,9 +402,14 @@ public class VolumeStorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     public Response deleteDataContentFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
-                                                       @PathParam("storageRelativePath") String storageRelativeFilePath) {
+                                                       @PathParam("storageRelativePath") String storageRelativeFilePath,
+                                                       @HeaderParam("AccessKey") String accessKey,
+                                                       @HeaderParam("SecretKey") String secretKey) {
         try {
             LOG.debug("Delete data {}:{}", storageVolumeId, storageRelativeFilePath);
+            JADEStorageOptions storageOptions = new JADEStorageOptions()
+                    .setAccessKey(accessKey)
+                    .setSecretKey(secretKey);
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -384,7 +426,9 @@ public class VolumeStorageResource {
                         .type(MediaType.APPLICATION_JSON)
                         .build();
             }
-            return storageVolume.resolveRelativeLocation(storageRelativeFilePath)
+            return storageVolume
+                    .setStorageOptions(storageOptions)
+                    .resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
                         dataContentService.removeData(resolvedContentURI);
                         return Response.noContent();
@@ -428,8 +472,13 @@ public class VolumeStorageResource {
                                        @QueryParam("dataStoragePath") String dataStoragePathParam,
                                        @QueryParam("includeInactive") boolean includeInactive,
                                        @QueryParam("includeInaccessibleVolumes") boolean includeInaccessibleVolumes,
+                                       @HeaderParam("AccessKey") String accessKey,
+                                       @HeaderParam("SecretKey") String secretKey,
                                        @Context SecurityContext securityContext) {
-        JADEStorageURI jadeStorageURI = JADEStorageURI.createStoragePathURI(dataStoragePathParam);
+        JADEStorageOptions storageOptions = new JADEStorageOptions()
+                .setAccessKey(accessKey)
+                .setSecretKey(secretKey);
+        JADEStorageURI jadeStorageURI = JADEStorageURI.createStoragePathURI(dataStoragePathParam, storageOptions);
         StorageQuery storageQuery = new StorageQuery()
                 .setStorageType(JacsStorageType.fromName(storageType))
                 .setId(storageVolumeId)

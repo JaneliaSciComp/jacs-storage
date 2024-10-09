@@ -15,6 +15,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -116,7 +117,7 @@ public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTe
                         .build());
         DataContentService dataContentService = dependenciesProducer.getDataContentService();
         String testDataContent = "Test data";
-        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volPrefix/testPath/e1");
+        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volPrefix/testPath/e1", new JADEStorageOptions());
         ContentGetter testContentGetter = mock(ContentGetter.class);
         when(dataContentService.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
                 .thenReturn(testContentGetter);
@@ -158,7 +159,7 @@ public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTe
                         .storageFormat(testFormat)
                         .build());
         DataContentService dataContentService = dependenciesProducer.getDataContentService();
-        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volPrefix/testPath");
+        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volPrefix/testPath", new JADEStorageOptions());
         String testDataContent = "Test data";
         ContentGetter testContentGetter = mock(ContentGetter.class);
         when(dataContentService.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
@@ -201,7 +202,7 @@ public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTe
                         .build());
         DataContentService dataContentService = dependenciesProducer.getDataContentService();
         String testDataContent = "Test data";
-        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volPrefix/testPath");
+        JADEStorageURI expectedDataURI = JADEStorageURI.createStoragePathURI("/volPrefix/testPath", new JADEStorageOptions());
         ContentGetter testContentGetter = mock(ContentGetter.class);
         when(dataContentService.getDataContent(eq(expectedDataURI), any(ContentAccessParams.class)))
                 .thenReturn(testContentGetter);

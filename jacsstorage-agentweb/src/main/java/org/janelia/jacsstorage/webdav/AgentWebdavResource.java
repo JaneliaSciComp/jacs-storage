@@ -23,6 +23,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -111,6 +112,8 @@ public class AgentWebdavResource {
     public Response dataStoragePropFindByPath(@PathParam("dataPath") String dataPathParam,
                                               @HeaderParam("Depth") String depthParam,
                                               Propfind propfindRequest,
+                                              @HeaderParam("AccessKey") String accessKey,
+                                              @HeaderParam("SecretKey") String secretKey,
                                               @Context UriInfo requestURI,
                                               @Context SecurityContext securityContext) {
         LOG.debug("PROPFIND data storage by path: {}, Depth: {} for {}", dataPathParam, depthParam, securityContext.getUserPrincipal());
@@ -133,7 +136,10 @@ public class AgentWebdavResource {
                     .entity(statusResponse)
                     ;
         };
-        JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam);
+        JADEStorageOptions storageOptions = new JADEStorageOptions()
+                .setAccessKey(accessKey)
+                .setSecretKey(secretKey);
+        JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
         List<JacsStorageVolume> volumeCandidates;
         try {
             volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI).stream()

@@ -34,14 +34,20 @@ public class N5ReaderProvider {
 
     private S3N5Reader createN5S3Reader(JADEStorageURI storageURI) {
         if (storageURI.getStorageScheme() == JADEStorageURI.JADEStorageScheme.S3) {
-            return new S3N5Reader(defaultAWSRegion, storageURI.getContentBucket(), storageURI.getContentKey());
+            return new S3N5Reader(
+                    storageURI.getContentBucket(),
+                    null,
+                    storageURI.getStorageOptions().getRegion(defaultAWSRegion),
+                    storageURI.getStorageOptions().getAccessKey(null),
+                    storageURI.getStorageOptions().getSecretKey(null),
+                    storageURI.getContentKey());
         } else if (storageURI.getStorageScheme() == JADEStorageURI.JADEStorageScheme.HTTP) {
             return new S3N5Reader(
-                    storageURI.getStorageEndpoint(),
-                    defaultAWSRegion,
                     storageURI.getContentBucket(),
-                    storageURI.getUserAccessKey(),
-                    storageURI.getUserSecretKey(),
+                    storageURI.getStorageEndpoint(),
+                    storageURI.getStorageOptions().getRegion(defaultAWSRegion),
+                    storageURI.getStorageOptions().getAccessKey(null),
+                    storageURI.getStorageOptions().getSecretKey(null),
                     storageURI.getContentKey());
         } else {
             throw new IllegalArgumentException("Cannot create S3 N5 reader instance for " + storageURI);

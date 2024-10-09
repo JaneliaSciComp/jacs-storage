@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service.cmd;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.ContentGetter;
@@ -46,7 +47,7 @@ public class StorageRetrieveBenchmark {
 
     private void streamPathContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         OutputStream targetStream = new NullOutputStream();
-        JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(trialParams.getRandomEntry());
+        JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(trialParams.getRandomEntry(), new JADEStorageOptions());
         try {
             ContentGetter contentGetter = trialParams.storageContentReader.getDataContent(dataURI, new ContentAccessParams());
             long nbytes = contentGetter.streamContent(targetStream);

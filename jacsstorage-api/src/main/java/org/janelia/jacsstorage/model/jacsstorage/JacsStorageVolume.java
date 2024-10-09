@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,7 +11,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -40,6 +38,7 @@ public class JacsStorageVolume extends AbstractEntity {
     private JacsStorageType storageType = JacsStorageType.FILE_SYSTEM; // storage type - default to FileSystem
     private String storageVirtualPath; // storage path mapping - this will always be formatted as a UNIX path
     private String storageRootTemplate; // template for storage real root directory
+    private JADEStorageOptions storageOptions;
     private List<String> storageTags; // storage tags - identify certain features of the physical storage
     private String storageServiceURL;
     private Long availableSpaceInBytes;
@@ -103,6 +102,16 @@ public class JacsStorageVolume extends AbstractEntity {
             return null;
         } else
             return StringUtils.removeEnd(ExprHelper.getConstPrefix(storageRootTemplate), "/");
+    }
+
+    @JsonIgnore
+    public JADEStorageOptions getStorageOptions() {
+        return storageOptions;
+    }
+
+    public JacsStorageVolume setStorageOptions(JADEStorageOptions storageOptions) {
+        this.storageOptions = storageOptions;
+        return this;
     }
 
     public List<String> getStorageTags() {
@@ -237,7 +246,7 @@ public class JacsStorageVolume extends AbstractEntity {
         if (rootLocation == null) {
             return null;
         } else {
-            return JADEStorageURI.createStoragePathURI(rootLocation);
+            return JADEStorageURI.createStoragePathURI(rootLocation, storageOptions);
         }
     }
 
@@ -304,7 +313,7 @@ public class JacsStorageVolume extends AbstractEntity {
     public Optional<JADEStorageURI> resolveRelativeLocation(String locationRelativeToRoot) {
         JADEStorageURI storageRootURI = getVolumeStorageRootURI();
         if (storageRootURI == null) {
-            JADEStorageURI contentStorageURI = JADEStorageURI.createStoragePathURI(locationRelativeToRoot);
+            JADEStorageURI contentStorageURI = JADEStorageURI.createStoragePathURI(locationRelativeToRoot, getStorageOptions());
             // this is supported only for S3 URIs
             return contentStorageURI.getStorageType() == JacsStorageType.S3
                     ? Optional.of(contentStorageURI)
@@ -316,7 +325,7 @@ public class JacsStorageVolume extends AbstractEntity {
         }
         volumeContentURIBuilder.append(locationRelativeToRoot);
         return Optional.of(
-                JADEStorageURI.createStoragePathURI(volumeContentURIBuilder.toString())
+                JADEStorageURI.createStoragePathURI(volumeContentURIBuilder.toString(), getStorageOptions())
         );
     }
 

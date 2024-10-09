@@ -11,6 +11,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -169,6 +170,8 @@ public class DataBundleStorageResource {
     public Response checkEntryContent(@PathParam("dataBundleId") Long dataBundleId,
                                       @PathParam("dataEntryPath") String dataEntryPathParam,
                                       @QueryParam("directoryOnly") Boolean directoryOnlyParam,
+                                      @HeaderParam("AccessKey") String accessKey,
+                                      @HeaderParam("SecretKey") String secretKey,
                                       @Context UriInfo requestURI,
                                       @Context SecurityContext securityContext) {
         LOG.info("Get entry {} content from bundle {} ", dataEntryPathParam, dataBundleId);
