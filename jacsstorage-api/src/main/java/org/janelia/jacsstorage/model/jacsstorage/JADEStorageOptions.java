@@ -1,15 +1,10 @@
 package org.janelia.jacsstorage.model.jacsstorage;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class JADEStorageOptions {
     private Map<String, Object> options = new HashMap<>();
-
-    public Collection<String> getAttributeNames() {
-        return options.keySet();
-    }
 
     public String getAsString(String key, String defaultValue) {
         return (String) options.getOrDefault(key, defaultValue);

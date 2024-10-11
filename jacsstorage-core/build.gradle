@@ -3,11 +3,7 @@ project(":jacsstorage-core") {
         api project(":jacsstorage-api"),
             CDI_API_LIB
 
-        implementation COMMONS_COMPRESS_LIB,
-                       JACS_MODEL_RENDERING_LIB,
-                       JAVAX_ACTIVATION,
-                       JWT_API_LIB,
-                       MESSAGEPACK_LIB
+        implementation JWT_API_LIB
 
         runtimeOnly JWT_IMPL_LIB,
                     JWT_JACKSON_LIB

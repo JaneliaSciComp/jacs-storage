@@ -7,11 +7,11 @@ import com.beust.jcommander.Parameters;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
 import org.janelia.jacsstorage.clients.api.JadeStorageService;
 import org.janelia.jacsstorage.clients.api.StorageLocation;
 import org.janelia.jacsstorage.clients.api.StorageObject;
 import org.janelia.jacsstorage.coreutils.PathUtils;
-import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.saalfeldlab.n5.N5TreeNode;
 
 import java.io.FileInputStream;
@@ -27,9 +27,9 @@ import java.util.List;
 public class StorageClientApp {
 
     private static class CommandMain {
-        @Parameter(names = {"-s","--server"}, description = "URL of the Master JADE API")
+        @Parameter(names = {"-s", "--server"}, description = "URL of the Master JADE API")
         private String serverURL = "http://localhost:8080/jacsstorage/master_api/v1";
-        @Parameter(names = {"-k","--key"}, description = "API Key for JADE service")
+        @Parameter(names = {"-k", "--key"}, description = "API Key for JADE service")
         private String apiKey;
     }
 
@@ -39,10 +39,10 @@ public class StorageClientApp {
         @Parameter(names = {"--secret-key"}, description = "secret key")
         private String secretKey;
 
-        JADEStorageOptions getStorageOptions() {
-            return new JADEStorageOptions()
-                    .setAccessKey(accessKey)
-                    .setSecretKey(secretKey);
+        JadeStorageAttributes getStorageOptions() {
+            return new JadeStorageAttributes()
+                    .setAttributeValue("AccessKey", accessKey)
+                    .setAttributeValue("SecretKey", secretKey);
         }
     }
 
@@ -50,7 +50,7 @@ public class StorageClientApp {
     private static class CommandList extends AbstractCommand {
         @Parameter(description = "<path>")
         private String path;
-        @Parameter(names = {"-d","--depth"}, description = "Depth of tree to list")
+        @Parameter(names = {"-d", "--depth"}, description = "Depth of tree to list")
         private int depth = 1;
     }
 
@@ -61,7 +61,7 @@ public class StorageClientApp {
     }
 
     @Parameters(commandDescription = "Read a file at the given path")
-    private static class CommandRead  extends AbstractCommand {
+    private static class CommandRead extends AbstractCommand {
         @Parameter(description = "<path>")
         private String path;
     }
@@ -76,7 +76,7 @@ public class StorageClientApp {
     private static class CommandCopy extends AbstractCommand {
         @Parameter(description = "<source> <target>", arity = 2)
         private List<String> paths = new ArrayList<>();
-        @Parameter(names = {"-v","--verify"}, description = "Verify by reading the entire file after writing")
+        @Parameter(names = {"-v", "--verify"}, description = "Verify by reading the entire file after writing")
         private boolean verify = false;
     }
 
@@ -116,8 +116,7 @@ public class StorageClientApp {
 
         try {
             jc.parse(args);
-        }
-        catch (ParameterException e) {
+        } catch (ParameterException e) {
             usage("Error parsing parameters", jc);
         }
 
@@ -126,8 +125,7 @@ public class StorageClientApp {
         String parsedCommand = jc.getParsedCommand();
         if (parsedCommand == null) {
             usage("Specify a command to execute", jc);
-        }
-        else {
+        } else {
             switch (parsedCommand) {
                 case "list":
                     commandList(argsList);
@@ -158,7 +156,7 @@ public class StorageClientApp {
         List<StorageObject> descendants = helper.getDescendants(storageLocation, storageLocation.getRelativePath(args.path), args.depth);
         descendants.sort(Comparator.comparing(StorageObject::getAbsolutePath));
         descendants.forEach(storageObject -> {
-            String size = StringUtils.leftPad(storageObject.getSizeBytes() + "", 12)+" bytes";
+            String size = StringUtils.leftPad(storageObject.getSizeBytes() + "", 12) + " bytes";
             System.out.println(size + " - " + storageObject.getAbsolutePath());
         });
     }
@@ -202,21 +200,18 @@ public class StorageClientApp {
         if (Files.exists(sourcePath) && Files.exists(targetPath.getParent())) {
             // Both paths are locally available, so just copy
             PathUtils.copyFiles(sourcePath, targetPath);
-        }
-        else {
+        } else {
             if (Files.exists(sourcePath)) {
                 // Read locally and write to JADE
                 try (InputStream inputStream = new FileInputStream(sourcePath.toFile())) {
                     setFileStream(targetPath, args.getStorageOptions(), inputStream);
                 }
-            }
-            else if (Files.exists(targetPath.getParent())) {
+            } else if (Files.exists(targetPath.getParent())) {
                 // Read from JADE and write locally
                 try (InputStream source = getFileStream(sourcePath, args.getStorageOptions())) {
                     FileUtils.copyInputStreamToFile(source, targetPath.toFile());
                 }
-            }
-            else {
+            } else {
                 // Read from JADE and write to JADE
                 try (InputStream source = getFileStream(sourcePath, args.getStorageOptions())) {
                     setFileStream(targetPath, args.getStorageOptions(), source);
@@ -230,8 +225,7 @@ public class StorageClientApp {
             InputStream target = getFileStream(targetPath, args.getStorageOptions());
             if (IOUtils.contentEquals(source, target)) {
                 System.out.println("Verified target bytes");
-            }
-            else {
+            } else {
                 System.err.println("Post-copy verification failed!");
                 System.exit(1);
             }
@@ -253,16 +247,16 @@ public class StorageClientApp {
         }
     }
 
-    private StorageLocation getStorageLocation(String path, JADEStorageOptions storageOptions) {
+    private StorageLocation getStorageLocation(String path, JadeStorageAttributes storageOptions) {
         StorageLocation storageLocation = helper.getStorageLocationByPath(path, storageOptions);
         if (storageLocation == null) {
-            System.err.println("Path not found in JADE: "+path);
+            System.err.println("Path not found in JADE: " + path);
             System.exit(1);
         }
         return storageLocation;
     }
 
-    private InputStream getFileStream(Path path, JADEStorageOptions storageOptions) throws FileNotFoundException {
+    private InputStream getFileStream(Path path, JadeStorageAttributes storageOptions) throws FileNotFoundException {
 
         if (Files.exists(path)) {
             return new FileInputStream(path.toFile());
@@ -271,15 +265,15 @@ public class StorageClientApp {
         StorageLocation sourceStorageLocation = getStorageLocation(path.toString(), storageOptions);
         String sourceRelativePath = sourceStorageLocation.getRelativePath(path.toString());
         InputStream stream = helper.getContent(sourceStorageLocation, sourceRelativePath);
-        System.out.println("Found "+sourceRelativePath+" in "+sourceStorageLocation.getStorageURL());
+        System.out.println("Found " + sourceRelativePath + " in " + sourceStorageLocation.getStorageURL());
         return stream;
     }
 
-    private void setFileStream(Path path, JADEStorageOptions storageOptions, InputStream inputStream) {
+    private void setFileStream(Path path, JadeStorageAttributes storageOptions, InputStream inputStream) {
         StorageLocation storageLocation = getStorageLocation(path.toString(), storageOptions);
         String relativePath = storageLocation.getRelativePath(path.toString());
         helper.setContent(storageLocation, relativePath, inputStream);
-        System.out.println("Wrote "+relativePath+" to "+storageLocation);
+        System.out.println("Wrote " + relativePath + " to " + storageLocation);
     }
 
     private void usage(String message, JCommander jc) {

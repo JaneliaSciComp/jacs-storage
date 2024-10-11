@@ -1,5 +1,8 @@
 package org.janelia.jacsstorage.clients.api;
 
+import java.util.Collections;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -14,12 +17,14 @@ public class StorageLocation {
     private String storageType;
     private String pathPrefix;
     private String virtualPath;
+    private JadeStorageAttributes storageAttributes;
 
-    StorageLocation(String storageURL, String storageType, String pathPrefix, String virtualPath) {
+    StorageLocation(String storageURL, String storageType, String pathPrefix, String virtualPath, JadeStorageAttributes storageAttributes) {
         this.storageURL = storageURL;
         this.storageType = storageType;
         this.pathPrefix = StringUtils.appendIfMissing(pathPrefix, "/");
         this.virtualPath = StringUtils.appendIfMissing(virtualPath, "/");
+        this.storageAttributes = storageAttributes;
     }
 
     /**
@@ -96,6 +101,14 @@ public class StorageLocation {
      */
     public String getVirtualPath(String relativePath) {
         return virtualPath + relativePath;
+    }
+
+    JadeStorageAttributes getStorageAttributes() {
+        return storageAttributes;
+    }
+
+    Map<String, Object> getStorageAttributesAsMap() {
+        return storageAttributes != null ? storageAttributes.getAsMap() : Collections.emptyMap();
     }
 
     @Override
