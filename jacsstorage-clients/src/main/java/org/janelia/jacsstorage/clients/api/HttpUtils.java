@@ -1,9 +1,12 @@
 package org.janelia.jacsstorage.clients.api;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJsonProvider;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 
 import javax.net.ssl.SSLContext;
@@ -23,7 +26,9 @@ public class HttpUtils {
     public static Client createHttpClient() {
         SSLContext sslContext = createSSLContext();
         ObjectMapper objectMapper = ObjectMapperFactory.instance().newObjectMapper();
-        JacksonJaxbJsonProvider jacksonProvider = new JacksonJaxbJsonProvider();
+        JacksonJsonProvider jacksonProvider = new JacksonJaxbJsonProvider()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         jacksonProvider.setMapper(objectMapper);
         ClientConfig clientConfig = new ClientConfig()
                 .register(jacksonProvider);

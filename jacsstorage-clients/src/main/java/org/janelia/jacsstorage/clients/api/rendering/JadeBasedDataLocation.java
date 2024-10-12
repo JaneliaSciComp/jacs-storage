@@ -17,6 +17,7 @@ import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.clients.api.HttpUtils;
 import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
+import org.janelia.jacsstorage.clients.api.http.HttpClientProvider;
 import org.janelia.rendering.DataLocation;
 import org.janelia.rendering.Streamable;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ public class JadeBasedDataLocation implements DataLocation {
     final String authToken;
     final String storageServiceApiKey;
     final JadeStorageAttributes storageAttributes;
+    final HttpClientProvider httpClientProvider;
 
     public JadeBasedDataLocation(String jadeConnectionURI,
                                  String jadeBaseDataStorageURI,
@@ -39,6 +41,16 @@ public class JadeBasedDataLocation implements DataLocation {
                                  String authToken,
                                  String storageServiceApiKey,
                                  JadeStorageAttributes storageAttributes) {
+        this(jadeConnectionURI, jadeBaseDataStorageURI, baseDataStoragePath, authToken, storageServiceApiKey, storageAttributes, HttpUtils::createHttpClient);
+    }
+
+    public JadeBasedDataLocation(String jadeConnectionURI,
+                                 String jadeBaseDataStorageURI,
+                                 String baseDataStoragePath,
+                                 String authToken,
+                                 String storageServiceApiKey,
+                                 JadeStorageAttributes storageAttributes,
+                                 HttpClientProvider httpClientProvider) {
         Preconditions.checkArgument(StringUtils.isNotBlank(jadeConnectionURI));
         this.jadeConnectionURI = jadeConnectionURI;
         this.jadeBaseDataStorageURI = jadeBaseDataStorageURI;
@@ -46,6 +58,7 @@ public class JadeBasedDataLocation implements DataLocation {
         this.authToken = authToken;
         this.storageServiceApiKey = storageServiceApiKey;
         this.storageAttributes = storageAttributes;
+        this.httpClientProvider = httpClientProvider;
     }
 
     @Override
@@ -116,7 +129,7 @@ public class JadeBasedDataLocation implements DataLocation {
     }
 
     Streamable<InputStream> openContentStreamFromRelativePathToVolumeRoot(String contentRelativePath, Multimap<String, String> queryParams) {
-        Client httpClient = HttpUtils.createHttpClient();
+        Client httpClient = httpClientProvider.getClient();
         try {
             WebTarget target = httpClient.target(jadeBaseDataStorageURI)
                     .path("data_content")
@@ -134,7 +147,7 @@ public class JadeBasedDataLocation implements DataLocation {
     }
 
     Streamable<InputStream> openContentStreamFromAbsolutePath(String contentAbsolutePath, Multimap<String, String> queryParams) {
-        Client httpClient = HttpUtils.createHttpClient();
+        Client httpClient = httpClientProvider.getClient();
         try {
             WebTarget target = httpClient.target(jadeConnectionURI)
                     .path("agent_storage/storage_path/data_content")
@@ -180,7 +193,7 @@ public class JadeBasedDataLocation implements DataLocation {
     @Override
     public boolean checkContentAtAbsolutePath(String absolutePath) {
         Preconditions.checkArgument(StringUtils.isNotBlank(absolutePath));
-        Client httpClient = HttpUtils.createHttpClient();
+        Client httpClient = httpClientProvider.getClient();
         try {
             WebTarget target = httpClient.target(jadeConnectionURI)
                     .path("agent_storage/storage_path/data_content")
@@ -197,7 +210,7 @@ public class JadeBasedDataLocation implements DataLocation {
     }
 
     private boolean checkContentAtRelativePathToVolumeRoot(String contentRelativePath) {
-        Client httpClient = HttpUtils.createHttpClient();
+        Client httpClient = httpClientProvider.getClient();
         try {
             WebTarget target = httpClient.target(jadeBaseDataStorageURI)
                     .path("data_content")

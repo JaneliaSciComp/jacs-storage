@@ -3,7 +3,6 @@ package org.janelia.jacsstorage.clients.api.rendering;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Paths;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,28 +13,23 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.clients.api.HttpUtils;
 import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
 import org.janelia.jacsstorage.clients.api.StorageEntryInfo;
-import org.janelia.rendering.JADEBasedDataLocation;
-import org.janelia.rendering.JADEBasedRenderedVolumeLocation;
+import org.janelia.jacsstorage.clients.api.http.HttpClientProvider;
 import org.janelia.rendering.RenderedImageInfo;
 import org.janelia.rendering.RenderedVolumeLocation;
 import org.janelia.rendering.Streamable;
-import org.janelia.rendering.utils.ClientProxy;
-import org.janelia.rendering.utils.HttpClientProvider;
 import org.janelia.rendering.utils.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class JadeBasedRenderedVolumeLocation extends JadeBasedDataLocation implements RenderedVolumeLocation {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JADEBasedRenderedVolumeLocation.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JadeBasedRenderedVolumeLocation.class);
 
     public JadeBasedRenderedVolumeLocation(String jadeConnectionURI,
                                            String jadeBaseDataStorageURI,
@@ -43,34 +37,45 @@ public class JadeBasedRenderedVolumeLocation extends JadeBasedDataLocation imple
                                            String authToken,
                                            String storageServiceApiKey,
                                            JadeStorageAttributes storageAttributes) {
-        super(jadeConnectionURI, jadeBaseDataStorageURI, renderedVolumePath, authToken, storageServiceApiKey, storageAttributes);
+        this(jadeConnectionURI, jadeBaseDataStorageURI, renderedVolumePath, authToken, storageServiceApiKey, storageAttributes, () -> HttpUtils.createHttpClient());
     }
 
     public JadeBasedRenderedVolumeLocation(JadeBasedDataLocation jadeBasedDataLocation) {
-        super(jadeBasedDataLocation.jadeConnectionURI,
-                jadeBasedDataLocation.jadeBaseDataStorageURI,
-                jadeBasedDataLocation.baseDataStoragePath,
-                jadeBasedDataLocation.authToken,
-                jadeBasedDataLocation.storageServiceApiKey,
-                jadeBasedDataLocation.storageAttributes);
+        this(jadeBasedDataLocation.jadeConnectionURI,
+             jadeBasedDataLocation.jadeBaseDataStorageURI,
+             jadeBasedDataLocation.baseDataStoragePath,
+             jadeBasedDataLocation.authToken,
+             jadeBasedDataLocation.storageServiceApiKey,
+             jadeBasedDataLocation.storageAttributes,
+             jadeBasedDataLocation.httpClientProvider);
+    }
+
+    public JadeBasedRenderedVolumeLocation(String jadeConnectionURI,
+                                           String jadeBaseDataStorageURI,
+                                           String renderedVolumePath,
+                                           String authToken,
+                                           String storageServiceApiKey,
+                                           JadeStorageAttributes storageAttributes,
+                                           HttpClientProvider clientProvider) {
+        super(jadeConnectionURI, jadeBaseDataStorageURI, renderedVolumePath, authToken, storageServiceApiKey, storageAttributes, clientProvider);
     }
 
     @Override
     public List<URI> listImageUris(int level) {
-        Client httpClient = HttpUtils.createHttpClient();
+        Client httpClient = httpClientProvider.getClient();
         try {
             int detailLevel = level + 1;
             WebTarget target = httpClient.target(getDataStorageURI())
                     .path("list")
                     .path(getBaseDataStoragePath())
-                    .queryParam("depth", detailLevel)
-                    ;
+                    .queryParam("depth", detailLevel);
             LOG.debug("List images from URI {}, volume path {}, level {} using {}", getDataStorageURI(), getBaseDataStoragePath(), level, target.getUri());
             Response response = createRequestWithCredentials(target, MediaType.APPLICATION_JSON).get();
             int responseStatus = response.getStatus();
             List<URI> result;
             if (responseStatus == Response.Status.OK.getStatusCode()) {
-                List<StorageEntryInfo> storageCotent = response.readEntity(new GenericType<List<StorageEntryInfo>>(){});
+                List<StorageEntryInfo> storageCotent = response.readEntity(new GenericType<List<StorageEntryInfo>>() {
+                });
                 result = storageCotent.stream()
                         .filter(ce -> StringUtils.isNotBlank(ce.getEntryRelativePath()))
                         .filter(ce -> {
@@ -104,13 +109,12 @@ public class JadeBasedRenderedVolumeLocation extends JadeBasedDataLocation imple
     @Override
     public RenderedImageInfo readTileImageInfo(String tileRelativePath) {
         long startTime = System.currentTimeMillis();
-        Client httpClient = HttpUtils.createHttpClient();
+        Client httpClient = httpClientProvider.getClient();
         try {
             WebTarget target = httpClient.target(getDataStorageURI())
                     .path("data_info")
                     .path(getBaseDataStoragePath())
-                    .path(tileRelativePath.replace('\\', '/'))
-                    ;
+                    .path(tileRelativePath.replace('\\', '/'));
             LOG.debug("Read tile imageInfo from URI {}, volume path {}, tile path {} using {}", getDataStorageURI(), getBaseDataStoragePath(), tileRelativePath, target.getUri());
             Response response = createRequestWithCredentials(target, MediaType.APPLICATION_JSON).get();
             int responseStatus = response.getStatus();
@@ -141,12 +145,12 @@ public class JadeBasedRenderedVolumeLocation extends JadeBasedDataLocation imple
             return openContentStreamFromRelativePathToVolumeRoot(
                     imageRelativePath,
                     ImmutableMultimap.<String, String>builder()
-                        .put("filterType", "TIFF_MERGE_BANDS")
-                        .put("z", String.valueOf(pageNumber))
-                        .putAll("selectedEntries", channelImageNames.stream().map(this::fileNameFromChannelImagePath).collect(Collectors.toList()))
-                        .put("entryPattern", "")
-                        .put("maxDepth", String.valueOf(1))
-                        .build())
+                            .put("filterType", "TIFF_MERGE_BANDS")
+                            .put("z", String.valueOf(pageNumber))
+                            .putAll("selectedEntries", channelImageNames.stream().map(this::fileNameFromChannelImagePath).collect(Collectors.toList()))
+                            .put("entryPattern", "")
+                            .put("maxDepth", String.valueOf(1))
+                            .build())
                     .consume(textureStream -> {
                         try {
                             return ByteStreams.toByteArray(textureStream);
