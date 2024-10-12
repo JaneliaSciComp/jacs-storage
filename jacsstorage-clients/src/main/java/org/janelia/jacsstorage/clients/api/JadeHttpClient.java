@@ -104,7 +104,7 @@ public class JadeHttpClient {
                 LOG.error("Lookup storage volume request {} returned status {} while trying to get the storage for storageId = {}, storageName={}, storagePath={}", target, responseStatus, storageId, storageName, storagePath);
                 return Collections.emptyList();
             } else {
-                ListResultWrapper<JadeStorageVolume> storageInfoResult = response.readEntity(new GenericType<ListResultWrapper<JadeStorageVolume>>() {
+                JadeResults<JadeStorageVolume> storageInfoResult = response.readEntity(new GenericType<JadeResults<JadeStorageVolume>>() {
                 });
                 return storageInfoResult.getResultList();
             }

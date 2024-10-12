@@ -2,7 +2,7 @@ package org.janelia.jacsstorage.clients.api;
 
 import java.util.List;
 
-public class ListResultWrapper<T> {
+public class JadeResults<T> {
     private List<T> resultList;
 
     public List<T> getResultList() {
