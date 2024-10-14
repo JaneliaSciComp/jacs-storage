@@ -89,7 +89,7 @@ public class JadeBasedRenderedVolumeLocation extends JadeBasedDataLocation imple
                         })
                         .filter(ce -> !ce.isCollection())
                         .filter(ce -> "image/tiff".equals(ce.getMimeType()))
-                        .map(ce -> URI.create(ce.getStorageURL()))
+                        .map(ce -> URI.create(ce.getEntryURL()))
                         .collect(Collectors.toList());
             } else {
                 LOG.warn("List images from URI {}, volume path {}, level {} ({}) returned status {}", getDataStorageURI(), getBaseDataStoragePath(), level, target.getUri(), responseStatus);
