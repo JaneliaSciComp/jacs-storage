@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.clients.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.ws.rs.core.UriBuilder;
@@ -10,6 +11,7 @@ import java.net.URISyntaxException;
 /**
  * This is the client equivalent of the JacsStorageVolume type.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JadeStorageVolume {
     @JsonProperty
     private String id;
