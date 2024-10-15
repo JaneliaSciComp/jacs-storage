@@ -46,7 +46,7 @@ public class MasterAppBenchmarks {
     }
 
     private Future<ContainerResponse> redirectPathContentFuture(String dataEntry, RetrieveBenchmarkResourceTrialParams trialParams) {
-        URI requestURI = UriBuilder.fromPath("/storage_content").path("storage_path_redirect").path(dataEntry)
+        URI requestURI = UriBuilder.fromPath("/storage_content").path("storage_path_redirect").queryParam("contentPath", dataEntry)
                 .build(dataEntry);
         try {
             return trialParams.appHandler().apply(trialParams.request(requestURI, "GET"));

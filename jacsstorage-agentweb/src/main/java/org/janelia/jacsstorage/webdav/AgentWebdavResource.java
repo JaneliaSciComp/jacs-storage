@@ -10,6 +10,7 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -109,13 +110,38 @@ public class AgentWebdavResource {
     })
     @PROPFIND
     @Path("data_storage_path/{dataPath:.+}")
-    public Response dataStoragePropFindByPath(@PathParam("dataPath") String dataPathParam,
-                                              @HeaderParam("Depth") String depthParam,
-                                              Propfind propfindRequest,
-                                              @HeaderParam("AccessKey") String accessKey,
-                                              @HeaderParam("SecretKey") String secretKey,
-                                              @Context UriInfo requestURI,
-                                              @Context SecurityContext securityContext) {
+    public Response dataStoragePropFindByPathParam(@PathParam("dataPath") String dataPathParam,
+                                                   @HeaderParam("Depth") String depthParam,
+                                                   Propfind propfindRequest,
+                                                   @HeaderParam("AccessKey") String accessKey,
+                                                   @HeaderParam("SecretKey") String secretKey,
+                                                   @Context UriInfo requestURI,
+                                                   @Context SecurityContext securityContext) {
+        return processDataStoragePropFind(dataPathParam, depthParam, accessKey, secretKey, requestURI, securityContext);
+    }
+
+    @Consumes(MediaType.APPLICATION_XML)
+    @Produces({
+            MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
+    })
+    @PROPFIND
+    @Path("data_storage_path")
+    public Response dataStoragePropFindByQueryParam(@QueryParam("dataPath") String dataPathParam,
+                                                    @HeaderParam("Depth") String depthParam,
+                                                    Propfind propfindRequest,
+                                                    @HeaderParam("AccessKey") String accessKey,
+                                                    @HeaderParam("SecretKey") String secretKey,
+                                                    @Context UriInfo requestURI,
+                                                    @Context SecurityContext securityContext) {
+        return processDataStoragePropFind(dataPathParam, depthParam, accessKey, secretKey, requestURI, securityContext);
+    }
+
+    private Response processDataStoragePropFind(String dataPathParam,
+                                                String depthParam,
+                                                String accessKey,
+                                                String secretKey,
+                                                UriInfo requestURI,
+                                                SecurityContext securityContext) {
         LOG.debug("PROPFIND data storage by path: {}, Depth: {} for {}", dataPathParam, depthParam, securityContext.getUserPrincipal());
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
         int depth = WebdavUtils.getDepth(depthParam);
