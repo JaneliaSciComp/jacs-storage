@@ -15,6 +15,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -75,7 +76,8 @@ public class PathBasedAgentStorageResource {
     public Response checkPath(@PathParam("dataPath") String dataPathParam,
                               @QueryParam("directoryOnly") Boolean directoryOnlyParam,
                               @HeaderParam("AccessKey") String accessKey,
-                              @HeaderParam("SecretKey") String secretKey) {
+                              @HeaderParam("SecretKey") String secretKey,
+                              @Context ContainerRequestContext containerRequestContext) {
         try {
             LOG.debug("Start check path {}", dataPathParam);
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
