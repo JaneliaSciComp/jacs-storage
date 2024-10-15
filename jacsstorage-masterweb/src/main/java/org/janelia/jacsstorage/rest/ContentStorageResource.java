@@ -126,9 +126,9 @@ public class ContentStorageResource {
                             .replaceQuery(requestURI.getRequestUri().getRawQuery())
                             .build();
                     LOG.info("Redirect to {} for checking {}", redirectURI, contentPathParam);
-                    return Response.temporaryRedirect(redirectURI)
-                            .header("AccessKey", accessKeyParam)
-                            .header("SecretKey", secretKeyParam);
+                    return Response.temporaryRedirect(redirectURI);
+//                            .header("AccessKey", accessKeyParam)
+//                            .header("SecretKey", secretKeyParam);
                 })
                 .orElse(Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("No managed volume found for " + contentURI))
