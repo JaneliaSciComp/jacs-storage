@@ -29,11 +29,11 @@ public class JacksonCodecProvider implements CodecProvider {
             return new Codec<T>() {
                 @Override
                 public T decode(BsonReader reader, DecoderContext decoderContext) {
+                    Document document = rawBsonDocumentCodec.decode(reader, decoderContext);
                     try {
-                        Document document = rawBsonDocumentCodec.decode(reader, decoderContext);
                         return objectMapper.readValue(document.toJson(), clazz);
                     } catch (IOException e) {
-                        throw new UncheckedIOException(e);
+                        throw new UncheckedIOException("Error reading " + document, e);
                     }
                 }
 

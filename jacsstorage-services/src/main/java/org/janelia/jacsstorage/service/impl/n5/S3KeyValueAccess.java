@@ -128,9 +128,9 @@ public class S3KeyValueAccess implements KeyValueAccess {
      */
     @Override
     public URI uri(String normalPath) throws URISyntaxException {
-        JADEStorageURI containerURI = s3Adapter.getStorageURI().resolve(basePrefix);
+        JADEStorageURI storageURI = s3Adapter.getStorageURI();
 
-        return uriResolve(URI.create(containerURI.getJadeStorage()), normalPath);
+        return uriResolve(URI.create(storageURI.getJadeStorage()), normalPath);
     }
 
     private URI uriResolve(URI uri, String normalPath) throws URISyntaxException {
