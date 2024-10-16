@@ -5,7 +5,15 @@ import java.net.URI;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
+import software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
@@ -33,6 +41,13 @@ public class S3Adapter {
         }
         if (StringUtils.isNotBlank(accessKey) && StringUtils.isNotBlank(secretKey)) {
             s3ClientBuilder.credentialsProvider(() -> AwsBasicCredentials.create(accessKey, secretKey));
+        } else {
+            s3ClientBuilder.credentialsProvider(
+                    AwsCredentialsProviderChain.of(
+                            DefaultCredentialsProvider.create(),
+                            AnonymousCredentialsProvider.create() // chaining anonymous credentials to be able to access open buckets if no credentials are set
+                    )
+            );
         }
         this.s3Client = s3ClientBuilder.build();
     }

@@ -6,7 +6,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
+import software.amazon.awssdk.services.s3.model.CommonPrefix;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
@@ -68,41 +71,63 @@ public class S3StorageService implements ContentStorageService {
         String s3Location = adjustLocation(contentLocation);
         LOG.debug("List content {} with {}", s3Location, contentAccessParams);
 
-        ListObjectsV2Request initialRequest = ListObjectsV2Request.builder()
-                .bucket(s3Adapter.getBucket())
-                .prefix(s3Location)
-                .build();
-        ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
+
+        Queue<String> prefixQueue = new LinkedList<>();
+        prefixQueue.add(s3Location);
 
         long requestOffset = contentAccessParams.getStartEntryIndex();
 
         long currentOffset = 0;
+        boolean exactMatchFound = false;
         List<ContentNode> results = new ArrayList<>();
-        for (ListObjectsV2Response r : listObjectsResponses) {
-            if (currentOffset + r.contents().size() < requestOffset) {
-                currentOffset += r.contents().size();
-                continue;
+        while (!prefixQueue.isEmpty()) {
+            String currentPrefix = prefixQueue.poll();
+            String relativePrefix = StringUtils.removeEnd(
+                    StringUtils.removeStart(currentPrefix.substring(s3Location.length()), '/'),
+                    "/");
+            int currentDepth = StringUtils.isEmpty(relativePrefix) ? 0 : StringUtils.countMatches(relativePrefix, '/') + 1;
+            if (contentAccessParams.getMaxDepth() >= 0 && currentDepth > contentAccessParams.getMaxDepth()) {
+                return results;
             }
-            for (S3Object s3Object : r.contents()) {
-                currentOffset++;
-                if (currentOffset <= requestOffset) {
+
+            ListObjectsV2Request initialRequest = ListObjectsV2Request.builder()
+                    .bucket(s3Adapter.getBucket())
+                    .prefix(currentPrefix)
+                    .delimiter("/")
+                    .build();
+            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
+            for (ListObjectsV2Response r : listObjectsResponses) {
+
+                if (currentOffset + r.contents().size()  <= requestOffset) {
+                    currentOffset += r.contents().size();
+                    for (CommonPrefix commonPrefix : r.commonPrefixes()) {
+                        prefixQueue.add(commonPrefix.prefix());
+                    }
                     continue;
                 }
-                Path keyPath = Paths.get(s3Object.key());
-                Path keyRelativePath = Paths.get(s3Location).relativize(keyPath);
-                Path parentPath = keyRelativePath.getParent();
-                int currentDepth = parentPath == null ? 0 : parentPath.getNameCount();
-                if (contentAccessParams.getMaxDepth() >= 0 && currentDepth > contentAccessParams.getMaxDepth()) {
-                    return results;
+
+                for (S3Object s3Object : r.contents()) {
+                    currentOffset++;
+                    if (currentOffset <= requestOffset) {
+                        continue;
+                    }
+
+                    if (s3Object.key().equals(s3Location)) exactMatchFound = true;
+
+                    if (contentAccessParams.matchEntry(s3Object.key())) {
+                        results.add(createContentNode(s3Object));
+                    }
+                    if (contentAccessParams.getEntriesCount() > 0 && results.size() >= contentAccessParams.getEntriesCount() || exactMatchFound) {
+                        return results;
+                    }
                 }
-                if (contentAccessParams.matchEntry(s3Object.key())) {
-                    results.add(createContentNode(s3Object));
-                }
-                if (contentAccessParams.getEntriesCount() > 0 && results.size() >= contentAccessParams.getEntriesCount()) {
-                    return results;
+
+                for (CommonPrefix commonPrefix : r.commonPrefixes()) {
+                    prefixQueue.add(commonPrefix.prefix());
                 }
             }
         }
+
         return results;
     }
 

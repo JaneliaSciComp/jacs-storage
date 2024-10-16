@@ -64,7 +64,7 @@ public class S3StorageServiceTest {
     }
 
     @Test
-    public void retrieveSelectedFilesFromS3() throws IOException {
+    public void retrieveSelectedFilesFromS3() {
         S3StorageService storageService = new S3StorageService(
                 "janelia-neuronbridge-data-dev",
                 null,
@@ -78,6 +78,86 @@ public class S3StorageServiceTest {
                         .addSelectedEntry("DATA_NOTES.md")
                         .setMaxDepth(1));
         assertEquals(2, nodes.size());
+    }
+
+    @Test
+    public void listContentOnPublicBucket() {
+        S3StorageService storageService = new S3StorageService(
+                "janelia-mouselight-imagery",
+                null,
+                "us-east-1",
+                null,
+                null
+        );
+        class TestData {
+            final String contentLocation;
+            final int depth;
+            final int offset;
+            final int expectedNodes;
+
+            TestData(String contentLocation, int depth, int offset, int expectedNodes) {
+                this.contentLocation = contentLocation;
+                this.depth = depth;
+                this.offset = offset;
+                this.expectedNodes = expectedNodes;
+            }
+        }
+        TestData[] testData = new TestData[] {
+                new TestData("images/2021-10-19", 0, 0, 4),
+                new TestData("images/2021-10-19/", 0, 0, 4),
+                new TestData("images/2021-10-19", 1, 0, 5),
+                new TestData("images/2021-10-19", 1, 3, 2),
+                new TestData("images/2021-10-19", 1, 4, 1),
+                new TestData("images/2021-10-19/transform.txt", 2, 0, 1),
+                // be careful of this case - when one asks for an exact match with an offset > 0
+                new TestData("images/2021-10-19/transform.txt", 2, 1, 0),
+        };
+        for (TestData td : testData) {
+            List<ContentNode> nodes = storageService.listContentNodes(td.contentLocation,
+                    new ContentAccessParams()
+                            .setMaxDepth(td.depth)
+                            .setStartEntryIndex(td.offset)
+            );
+            assertEquals(td.expectedNodes, nodes.size());
+        }
+    }
+
+    /**
+     * I only run this test from the IDE to check open buckets from a different region
+     */
+    @Test
+    public void listContentOnPublicBucketFromDifferentRegion() {
+        S3StorageService storageService = new S3StorageService(
+                "aind-msma-morphology-data",
+                null,
+                "us-west-2", // if any system credentials (~/.aws) are set the correct region must be used
+                null,
+                null
+        );
+        class TestData {
+            final String contentLocation;
+            final int depth;
+            final int offset;
+            final int expectedNodes;
+
+            TestData(String contentLocation, int depth, int offset, int expectedNodes) {
+                this.contentLocation = contentLocation;
+                this.depth = depth;
+                this.offset = offset;
+                this.expectedNodes = expectedNodes;
+            }
+        }
+        TestData[] testData = new TestData[] {
+                new TestData("segmentation/exaSPIM_653159_zarr/", 0, 0, 8),
+        };
+        for (TestData td : testData) {
+            List<ContentNode> nodes = storageService.listContentNodes(td.contentLocation,
+                    new ContentAccessParams()
+                            .setMaxDepth(td.depth)
+                            .setStartEntryIndex(td.offset)
+            );
+            assertEquals(td.expectedNodes, nodes.size());
+        }
     }
 
     @Test
