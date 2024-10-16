@@ -22,9 +22,9 @@ public class N5ReaderProvider {
             return null;
         }
         if (storageURI.getStorageType() == JacsStorageType.S3) {
-            return createN5FSReader(storageURI);
-        } else {
             return createN5S3Reader(storageURI);
+        } else {
+            return createN5FSReader(storageURI);
         }
     }
 
