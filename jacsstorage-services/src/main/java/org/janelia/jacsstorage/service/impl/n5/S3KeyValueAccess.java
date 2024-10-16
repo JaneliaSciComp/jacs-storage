@@ -162,14 +162,28 @@ public class S3KeyValueAccess implements KeyValueAccess {
         // append '/' (if normalPath is not root) to force looking for a prefix not an object
         String key = StringUtils.removeStart(StringUtils.appendIfMissing(s3Key, "/"), '/');
         ListObjectsV2Iterable iterableContent = queryIfExists(key);
-        return iterableContent.contents().stream().count() > 0;
+        for (ListObjectsV2Response r : iterableContent ) {
+            if (r.contents().size() > 0 || r.commonPrefixes().size() > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return false;
     }
 
     @Override
     public boolean isFile(String normalPath) {
         String s3Key = s3Adapter.getStorageURI().resolve(normalPath).getContentKey();
         ListObjectsV2Iterable iterableContent = queryIfExists(s3Key);
-        return iterableContent.contents().stream().count() > 0;
+        for (ListObjectsV2Response r : iterableContent ) {
+            if (r.contents().size() > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -232,6 +246,7 @@ public class S3KeyValueAccess implements KeyValueAccess {
         ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
                 .bucket(s3Adapter.getBucket())
                 .prefix(keyOrPrefix)
+                .delimiter("/")
                 .maxKeys(1)
                 .build();
 

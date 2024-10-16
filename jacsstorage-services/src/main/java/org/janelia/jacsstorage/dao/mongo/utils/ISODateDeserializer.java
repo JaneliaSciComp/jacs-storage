@@ -24,7 +24,11 @@ public class ISODateDeserializer extends JsonDeserializer<Date> {
         Date date = null;
         if (StringUtils.isNotBlank(dateValue)) {
             if (dateValue.contains("T"))
-                return ISODateTimeFormat.dateTime().parseDateTime(dateValue).toDate();
+                if (dateValue.indexOf('.') == -1) {
+                    return ISODateTimeFormat.dateTimeNoMillis().parseDateTime(dateValue).toDate();
+                } else {
+                    return ISODateTimeFormat.dateTime().parseDateTime(dateValue).toDate();
+                }
             else
                 return new Date(Long.parseLong(dateValue));
         }
