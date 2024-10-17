@@ -14,11 +14,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import org.janelia.jacsstorage.service.ContentAccessParams;
+import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.s3.S3Adapter;
 import org.janelia.saalfeldlab.n5.KeyValueAccess;
 import org.janelia.saalfeldlab.n5.LockedChannel;
@@ -29,6 +33,7 @@ import software.amazon.awssdk.services.s3.model.CommonPrefix;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 
 /**
@@ -199,12 +204,15 @@ public class S3KeyValueAccess implements KeyValueAccess {
 
     @Override
     public String[] listDirectories(String normalPath) throws IOException {
-        return list(normalPath, true);
+        String s3Key = s3Adapter.getStorageURI().resolve(normalPath).getContentKey();
+        String prefix = StringUtils.removeStart(StringUtils.appendIfMissing(s3Key, "/"), '/');
+        return listAllPrefixes(prefix).toArray(new String[0]);
     }
 
     @Override
     public String[] list(String normalPath) throws IOException {
-        return list(normalPath, false);
+        String s3Key = s3Adapter.getStorageURI().resolve(normalPath).getContentKey();
+        return listPrefixesAndObjects(s3Key).toArray(new String[0]);
     }
 
     @Override
@@ -217,29 +225,64 @@ public class S3KeyValueAccess implements KeyValueAccess {
         throw new UnsupportedOperationException("Write operations are not implemented");
     }
 
-    private String[] list(final String normalPath, final boolean onlyDirectories) {
-        String s3Key = s3Adapter.getStorageURI().resolve(normalPath).getContentKey();
-        String prefix = onlyDirectories
-                ? StringUtils.removeStart(StringUtils.appendIfMissing(s3Key, "/"), '/')
-                : s3Key;
-
-        List<String> subGroups = new ArrayList<>();
-        ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
-                .bucket(s3Adapter.getBucket())
-                .prefix(prefix)
-                .build();
-        ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(listObjectsRequest);
-        for (ListObjectsV2Response r : listObjectsResponses) {
-            for (CommonPrefix commonPrefix : r.commonPrefixes()) {
-                if (!onlyDirectories || commonPrefix.prefix().endsWith("/")) {
-                    final String relativePath = relativize(commonPrefix.prefix(), prefix);
-                    if (!relativePath.isEmpty()) {
-                        subGroups.add(relativePath);
+    private List<String> listAllPrefixes(String normalPath)  {
+        Queue<String> prefixQueue = new LinkedList<>();
+        prefixQueue.add(normalPath);
+        List<String> allPrefixes = new ArrayList<>();
+        while (!prefixQueue.isEmpty()) {
+            String currentPrefix = prefixQueue.poll();
+            ListObjectsV2Request initialRequest = ListObjectsV2Request.builder()
+                    .bucket(s3Adapter.getBucket())
+                    .prefix(currentPrefix)
+                    .delimiter("/")
+                    .build();
+            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
+            for (ListObjectsV2Response r : listObjectsResponses) {
+                for (CommonPrefix commonPrefix : r.commonPrefixes()) {
+                    prefixQueue.add(commonPrefix.prefix());
+                    String relativePath = relativize(commonPrefix.prefix(), normalPath);
+                    if (StringUtils.isEmpty(relativePath)) {
+                        allPrefixes.add(relativePath);
                     }
                 }
             }
         }
-        return subGroups.toArray(new String[0]);
+        return allPrefixes;
+    }
+
+    private List<String> listPrefixesAndObjects(String s3Location) {
+        Queue<String> prefixQueue = new LinkedList<>();
+        prefixQueue.add(s3Location);
+
+        List<String> allResults = new ArrayList<>();
+        while (!prefixQueue.isEmpty()) {
+            String currentPrefix = prefixQueue.poll();
+
+            ListObjectsV2Request initialRequest = ListObjectsV2Request.builder()
+                    .bucket(s3Adapter.getBucket())
+                    .prefix(currentPrefix)
+                    .delimiter("/")
+                    .build();
+            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
+            for (ListObjectsV2Response r : listObjectsResponses) {
+
+                for (S3Object s3Object : r.contents()) {
+                    String relativePath = relativize(s3Object.key(), s3Location);
+                    if (StringUtils.isEmpty(relativePath)) {
+                        allResults.add(relativePath);
+                    }
+                }
+
+                for (CommonPrefix commonPrefix : r.commonPrefixes()) {
+                    prefixQueue.add(commonPrefix.prefix());
+                    String relativePath = relativize(commonPrefix.prefix(), s3Location);
+                    if (StringUtils.isEmpty(relativePath)) {
+                        allResults.add(relativePath);
+                    }
+                }
+            }
+        }
+        return allResults;
     }
 
     private ListObjectsV2Iterable queryIfExists(final String keyOrPrefix) {
