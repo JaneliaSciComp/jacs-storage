@@ -6,6 +6,8 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -50,8 +52,7 @@ public class N5StorageResource {
     @Path("storage_volume/{storageVolumeId}/n5tree/{storageRelativePath:.+}")
     public Response retrieveDataInfoFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                       @PathParam("storageRelativePath") String storageRelativeFilePath,
-                                                      @HeaderParam("AccessKey") String accessKey,
-                                                      @HeaderParam("SecretKey") String secretKey) {
+                                                      @Context ContainerRequestContext requestContext) {
         LOG.debug("Retrieve N5 data sets from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
@@ -63,8 +64,8 @@ public class N5StorageResource {
         }
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
             JADEStorageOptions storageOptions = new JADEStorageOptions()
-                    .setAccessKey(accessKey)
-                    .setSecretKey(secretKey);
+                    .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
             JADEStorageURI n5ContainerURI = storageVolume
                     .setStorageOptions(storageOptions)
                     .resolveRelativeLocation(storageRelativeFilePath)

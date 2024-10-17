@@ -225,25 +225,19 @@ public class S3KeyValueAccess implements KeyValueAccess {
         throw new UnsupportedOperationException("Write operations are not implemented");
     }
 
-    private List<String> listAllPrefixes(String normalPath)  {
-        Queue<String> prefixQueue = new LinkedList<>();
-        prefixQueue.add(normalPath);
+    private List<String> listAllPrefixes(String s3Prefix)  {
         List<String> allPrefixes = new ArrayList<>();
-        while (!prefixQueue.isEmpty()) {
-            String currentPrefix = prefixQueue.poll();
-            ListObjectsV2Request initialRequest = ListObjectsV2Request.builder()
-                    .bucket(s3Adapter.getBucket())
-                    .prefix(currentPrefix)
-                    .delimiter("/")
-                    .build();
-            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
-            for (ListObjectsV2Response r : listObjectsResponses) {
-                for (CommonPrefix commonPrefix : r.commonPrefixes()) {
-                    prefixQueue.add(commonPrefix.prefix());
-                    String relativePath = relativize(commonPrefix.prefix(), normalPath);
-                    if (StringUtils.isEmpty(relativePath)) {
-                        allPrefixes.add(relativePath);
-                    }
+        ListObjectsV2Request initialRequest = ListObjectsV2Request.builder()
+                .bucket(s3Adapter.getBucket())
+                .prefix(s3Prefix)
+                .delimiter("/")
+                .build();
+        ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
+        for (ListObjectsV2Response r : listObjectsResponses) {
+            for (CommonPrefix commonPrefix : r.commonPrefixes()) {
+                String relativePath = relativize(commonPrefix.prefix(), s3Prefix);
+                if (StringUtils.isEmpty(relativePath)) {
+                    allPrefixes.add(relativePath);
                 }
             }
         }

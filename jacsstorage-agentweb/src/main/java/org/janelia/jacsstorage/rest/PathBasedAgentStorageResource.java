@@ -75,15 +75,13 @@ public class PathBasedAgentStorageResource {
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response checkPath(@PathParam("dataPath") String dataPathParam,
                               @QueryParam("directoryOnly") Boolean directoryOnlyParam,
-                              @HeaderParam("AccessKey") String accessKey,
-                              @HeaderParam("SecretKey") String secretKey,
-                              @Context ContainerRequestContext containerRequestContext) {
+                              @Context ContainerRequestContext requestContext) {
         try {
             LOG.debug("Start check path {}", dataPathParam);
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
-                    .setAccessKey(accessKey)
-                    .setSecretKey(secretKey);
+                    .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
             JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
             List<JacsStorageVolume> volumeCandidates;
             try {
@@ -138,14 +136,13 @@ public class PathBasedAgentStorageResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response retrieveContent(@PathParam("dataPath") String dataPathParam,
-                                    @HeaderParam("AccessKey") String accessKey,
-                                    @HeaderParam("SecretKey") String secretKey,
-                                    @Context UriInfo requestURI) {
+                                    @Context UriInfo requestURI,
+                                    @Context ContainerRequestContext requestContext) {
         try {
             LOG.debug("Start retrieve data from {}", dataPathParam);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
-                    .setAccessKey(accessKey)
-                    .setSecretKey(secretKey);
+                    .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
             JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
             List<JacsStorageVolume> volumeCandidates;
@@ -212,14 +209,13 @@ public class PathBasedAgentStorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response removeData(@PathParam("dataPath") String dataPathParam,
-                               @HeaderParam("AccessKey") String accessKey,
-                               @HeaderParam("SecretKey") String secretKey,
+                               @Context ContainerRequestContext requestContext,
                                @Context SecurityContext securityContext) {
         try {
             LOG.debug("Remove data from {}", dataPathParam);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
-                    .setAccessKey(accessKey)
-                    .setSecretKey(secretKey);
+                    .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
             JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
             List<JacsStorageVolume> volumeCandidates;
@@ -276,14 +272,13 @@ public class PathBasedAgentStorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path/data_content/{dataPath:.+}")
     public Response storeData(@PathParam("dataPath") String dataPathParam,
-                              @HeaderParam("AccessKey") String accessKey,
-                              @HeaderParam("SecretKey") String secretKey,
+                              @Context ContainerRequestContext requestContext,
                               @Context SecurityContext securityContext,
                               InputStream contentStream) {
         LOG.debug("Retrieve data from {}", dataPathParam);
         JADEStorageOptions storageOptions = new JADEStorageOptions()
-                .setAccessKey(accessKey)
-                .setSecretKey(secretKey);
+                .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                .setSecretKey(requestContext.getHeaderString("SecretKey"));
         JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
         List<JacsStorageVolume> volumeCandidates;
@@ -355,14 +350,13 @@ public class PathBasedAgentStorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path/data_info/{dataPath:.+}")
     public Response retrieveContentMetadata(@PathParam("dataPath") String dataPathParam,
-                                            @HeaderParam("AccessKey") String accessKey,
-                                            @HeaderParam("SecretKey") String secretKey,
+                                            @Context ContainerRequestContext requestContext,
                                             @Context UriInfo requestURI) {
         try {
             LOG.debug("Retrieve metadata from {}", dataPathParam);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
-                    .setAccessKey(accessKey)
-                    .setSecretKey(secretKey);
+                    .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
             JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
             List<JacsStorageVolume> volumeCandidates;
@@ -421,15 +415,14 @@ public class PathBasedAgentStorageResource {
                                 @QueryParam("depth") Integer depthParam,
                                 @QueryParam("offset") Integer offsetParam,
                                 @QueryParam("length") Integer lengthParam,
-                                @HeaderParam("AccessKey") String accessKey,
-                                @HeaderParam("SecretKey") String secretKey,
                                 @Context UriInfo requestURI,
+                                @Context ContainerRequestContext requestContext,
                                 @Context SecurityContext securityContext) {
         LOG.debug("List content from location {} with a depthParameter {}", dataPathParam, depthParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
         JADEStorageOptions storageOptions = new JADEStorageOptions()
-                .setAccessKey(accessKey)
-                .setSecretKey(secretKey);
+                .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                .setSecretKey(requestContext.getHeaderString("SecretKey"));
         JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
         int offset = offsetParam != null ? offsetParam : 0;
