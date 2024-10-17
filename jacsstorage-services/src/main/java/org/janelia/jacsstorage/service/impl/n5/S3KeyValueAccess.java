@@ -236,7 +236,7 @@ public class S3KeyValueAccess implements KeyValueAccess {
         for (ListObjectsV2Response r : listObjectsResponses) {
             for (CommonPrefix commonPrefix : r.commonPrefixes()) {
                 String relativePath = relativize(commonPrefix.prefix(), s3Prefix);
-                if (StringUtils.isEmpty(relativePath)) {
+                if (StringUtils.isNotEmpty(relativePath)) {
                     allPrefixes.add(relativePath);
                 }
             }
