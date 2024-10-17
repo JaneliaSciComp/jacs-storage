@@ -123,7 +123,7 @@ public class N5ContentService {
                 parentNode.addChild(new N5Node(fullNodePath, null));
             }
         }
-        if (currentDepth + 1 < maxDepth) {
+        if (currentDepth < maxDepth) {
             for (N5Node childNode : parentNode.getChildren()) {
                 discoverAndParseRecursive(n5Reader, childNode, currentDepth + 1, maxDepth);
             }
