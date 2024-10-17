@@ -2,7 +2,7 @@ package org.janelia.jacsstorage.clients.api;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.clients.N5Node;
+import org.janelia.jacsstorage.clients.api.n5.N5Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

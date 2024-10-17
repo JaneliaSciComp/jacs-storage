@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.clients;
+package org.janelia.jacsstorage.clients.api.n5;
 
 import java.nio.file.Paths;
 import java.util.List;
@@ -9,10 +9,10 @@ import org.janelia.saalfeldlab.n5.DatasetAttributes;
 public class N5Node {
     private final String path;
     private final List<N5Node> children;
-    private final DatasetAttributes metadata;
+    private final N5Attributes metadata;
 
     @JsonCreator
-    public N5Node(String path, List<N5Node> children, DatasetAttributes metadata) {
+    public N5Node(String path, List<N5Node> children, N5Attributes metadata) {
         this.path = path;
         this.children = children;
         this.metadata = metadata;
@@ -30,7 +30,7 @@ public class N5Node {
         return children;
     }
 
-    public DatasetAttributes getMetadata() {
+    public N5Attributes getMetadata() {
         return metadata;
     }
 }

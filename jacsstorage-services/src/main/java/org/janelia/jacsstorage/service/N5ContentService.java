@@ -3,9 +3,12 @@ package org.janelia.jacsstorage.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
+import com.google.common.collect.ImmutableMap;
+import org.checkerframework.checker.units.qual.N;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.impl.n5.N5ReaderProvider;
 import org.janelia.saalfeldlab.n5.DatasetAttributes;
@@ -23,11 +26,12 @@ public class N5ContentService {
     public static class N5Node {
         private final String path;
         private final List<N5Node> children;
-        private DatasetAttributes metadata;
+        private final N5Attributes metadata;
 
-        private N5Node(String path) {
+        private N5Node(String path, DatasetAttributes datasetAttributes) {
             this.path = path;
             this.children = new ArrayList<>();
+            this.metadata = datasetAttributes != null ? new N5Attributes(datasetAttributes) : null;
         }
 
         public String getPath() {
@@ -38,12 +42,8 @@ public class N5ContentService {
             return children;
         }
 
-        public DatasetAttributes getMetadata() {
+        public N5Attributes getMetadata() {
             return metadata;
-        }
-
-        void setMetadata(DatasetAttributes metadata) {
-            this.metadata = metadata;
         }
 
         public boolean isDatasetFlag() {
@@ -52,6 +52,30 @@ public class N5ContentService {
 
         void addChild(N5Node node) {
             children.add(node);
+        }
+    }
+
+    public static class N5Attributes {
+        private final DatasetAttributes datasetAttributes;
+
+        N5Attributes(DatasetAttributes datasetAttributes) {
+            this.datasetAttributes = datasetAttributes;
+        }
+
+        public int[] getBlockSize() {
+            return datasetAttributes.getBlockSize();
+        }
+
+        public long[] getDimensions() {
+            return datasetAttributes.getDimensions();
+        }
+
+        public String getDataType() {
+            return datasetAttributes.getDataType().name();
+        }
+
+        public Map<String, String> getCompression() {
+            return ImmutableMap.of("type", datasetAttributes.getCompression().getType());
         }
     }
 
@@ -70,7 +94,12 @@ public class N5ContentService {
      */
     public N5Node getN5Container(JADEStorageURI storageURI, int maxDepth) {
         N5Reader n5Reader = n5ReaderProvider.getN5Reader(storageURI);
-        N5Node root = new N5Node("/");
+        N5Node root;
+        if (n5Reader.datasetExists("/")) {
+            root = new N5Node("/", n5Reader.getDatasetAttributes("/"));
+        } else {
+            root = new N5Node("/", null);
+        }
         discoverAndParseRecursive(n5Reader, root, 0, maxDepth);
         return root;
     }
@@ -85,17 +114,18 @@ public class N5ContentService {
     }
 
     private void updateChildren(N5Reader n5Reader, N5Node parentNode, String[] nodePaths, int currentDepth, int maxDepth) {
-        Arrays.sort(nodePaths);
-
         for (String nodePath : nodePaths) {
             String fullNodePath = parentNode.getPath().equals("/") ? "/" + nodePath : parentNode.getPath() + "/" + nodePath;
-            N5Node node = new N5Node(fullNodePath);
             if (n5Reader.datasetExists(fullNodePath)) {
-                node.setMetadata(n5Reader.getDatasetAttributes(fullNodePath));
+                DatasetAttributes  datasetAttributes = n5Reader.getDatasetAttributes(fullNodePath);
+                parentNode.addChild(new N5Node(fullNodePath, datasetAttributes));
+            } else {
+                parentNode.addChild(new N5Node(fullNodePath, null));
             }
-            parentNode.addChild(node);
-            if (currentDepth + 1 < maxDepth) {
-                discoverAndParseRecursive(n5Reader, node, currentDepth + 1, maxDepth);
+        }
+        if (currentDepth + 1 < maxDepth) {
+            for (N5Node childNode : parentNode.getChildren()) {
+                discoverAndParseRecursive(n5Reader, childNode, currentDepth + 1, maxDepth);
             }
         }
     }

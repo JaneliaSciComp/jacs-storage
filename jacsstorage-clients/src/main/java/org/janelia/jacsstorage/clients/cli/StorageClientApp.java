@@ -17,7 +17,7 @@ import com.beust.jcommander.Parameters;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.clients.N5Node;
+import org.janelia.jacsstorage.clients.api.n5.N5Node;
 import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
 import org.janelia.jacsstorage.clients.api.JadeStorageService;
 import org.janelia.jacsstorage.clients.api.StorageLocation;
