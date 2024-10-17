@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 
 import javax.inject.Inject;
 
+import com.google.common.collect.Streams;
 import org.janelia.jacsstorage.cdi.qualifier.PooledResource;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.impl.n5.N5ReaderProvider;
@@ -19,6 +20,7 @@ import org.janelia.saalfeldlab.n5.metadata.N5CosemMultiScaleMetadata;
 import org.janelia.saalfeldlab.n5.metadata.N5GenericSingleScaleMetadataParser;
 import org.janelia.saalfeldlab.n5.metadata.N5Metadata;
 import org.janelia.saalfeldlab.n5.metadata.N5MetadataParser;
+import org.janelia.saalfeldlab.n5.metadata.N5MultiScaleMetadata;
 import org.janelia.saalfeldlab.n5.metadata.N5SingleScaleMetadataParser;
 import org.janelia.saalfeldlab.n5.metadata.N5ViewerMultiscaleMetadataParser;
 import org.janelia.saalfeldlab.n5.metadata.canonical.CanonicalMetadataParser;
@@ -41,11 +43,12 @@ public class N5ContentService {
             new N5ViewerMultichannelMetadata.N5ViewerMultichannelMetadataParser()
     };
 
-    public static final N5MetadataParser<?>[] N5_METADATA_PARSERS = new N5MetadataParser[] {
+    public static final N5MetadataParser<?>[] N5_METADATA_PARSERS = new N5MetadataParser[]{
             new N5CosemMetadataParser(),
             new N5SingleScaleMetadataParser(),
             new CanonicalMetadataParser(),
-            new N5GenericSingleScaleMetadataParser()
+            new N5GenericSingleScaleMetadataParser(),
+            new N5MultiScaleMetadata.MultiScaleParser()
     };
 
     private final N5ReaderProvider n5ReaderProvider;
@@ -89,9 +92,11 @@ public class N5ContentService {
                 System.out.println("Dataset: " + childPath);
 
                 // Attempt to parse metadata using available parsers
-                N5Metadata metadata = parseMetadata(n5Reader, childPath);
+                N5Metadata metadata = tryAllParsers(n5Reader, childPath);
                 if (metadata != null) {
                     System.out.println("Metadata: " + metadata);
+                } else {
+                    LOG.info("Metadata from {} could not be parsed with the currently registered parsers", childPath);
                 }
             } else {
                 System.out.println("Group: " + childPath);
@@ -101,18 +106,24 @@ public class N5ContentService {
         }
     }
 
-    private static N5Metadata parseMetadata(N5Reader n5Reader, String datasetPath) {
-        for (N5MetadataParser<? extends N5Metadata> parser : N5_METADATA_PARSERS) {
+    private static N5Metadata tryAllParsers(N5Reader n5Reader, String datasetPath) {
+        return parseMetadata(n5Reader, datasetPath, N5_METADATA_PARSERS)
+                .map(md -> (N5Metadata) md)
+                .orElseGet(() -> parseMetadata(n5Reader, datasetPath, N5_GROUP_PARSERS).orElse(null));
+    }
+
+    private static Optional<? extends N5Metadata> parseMetadata(N5Reader n5Reader, String datasetPath, N5MetadataParser<? extends N5Metadata>[] parsers) {
+        for (N5MetadataParser<? extends N5Metadata> parser : parsers) {
             try {
                 Optional<? extends N5Metadata> metadata = parser.parseMetadata(n5Reader, datasetPath);
                 if (metadata.isPresent()) {
                     LOG.info("Successfully parsed {} with {}", datasetPath, parser.getClass().getSimpleName());
-                    return metadata.get();
+                    return metadata;
                 }
             } catch (Exception e) {
-                LOG.info("Failed to parse {} with {}: {}", datasetPath, parser.getClass().getSimpleName(), e.getMessage());
+                LOG.warn("Failed to parse {} with {}: {}", datasetPath, parser.getClass().getSimpleName(), e.getMessage());
             }
         }
-        return null;
+        return Optional.empty();
     }
 }
