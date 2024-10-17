@@ -2,7 +2,7 @@ package org.janelia.jacsstorage.clients.api;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.saalfeldlab.n5.N5TreeNode;
+import org.janelia.jacsstorage.clients.N5Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,7 +153,7 @@ public class JadeStorageService {
      * @param path path to the object, either absolute or relative to the storageLocation
      * @return tree of data sets represented by N5TreeNode
      */
-    public N5TreeNode getN5Tree(StorageLocation storageLocation, String path) throws StorageObjectNotFoundException {
+    public N5Node getN5Tree(StorageLocation storageLocation, String path) throws StorageObjectNotFoundException {
         throw new UnsupportedOperationException("This isn't supported yet");
     }
 

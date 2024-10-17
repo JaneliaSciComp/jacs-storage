@@ -1,19 +1,5 @@
 package org.janelia.jacsstorage.clients.cli;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
-import com.beust.jcommander.Parameters;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
-import org.janelia.jacsstorage.clients.api.JadeStorageService;
-import org.janelia.jacsstorage.clients.api.StorageLocation;
-import org.janelia.jacsstorage.clients.api.StorageObject;
-import org.janelia.jacsstorage.coreutils.PathUtils;
-import org.janelia.saalfeldlab.n5.N5TreeNode;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -23,6 +9,20 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
+import com.beust.jcommander.Parameters;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.clients.N5Node;
+import org.janelia.jacsstorage.clients.api.JadeStorageAttributes;
+import org.janelia.jacsstorage.clients.api.JadeStorageService;
+import org.janelia.jacsstorage.clients.api.StorageLocation;
+import org.janelia.jacsstorage.clients.api.StorageObject;
+import org.janelia.jacsstorage.coreutils.PathUtils;
 
 public class StorageClientApp {
 
@@ -234,15 +234,15 @@ public class StorageClientApp {
 
     private void commandN5Tree(CommandN5Tree args) throws Exception {
         StorageLocation storageLocation = getStorageLocation(args.path, args.getStorageOptions());
-        N5TreeNode n5Tree = helper.getN5Tree(storageLocation, storageLocation.getRelativePath(args.path));
+        N5Node n5Tree = helper.getN5Tree(storageLocation, storageLocation.getRelativePath(args.path));
         if (n5Tree != null) {
             printN5Tree(n5Tree, "");
         }
     }
 
-    private void printN5Tree(N5TreeNode node, String indent) {
+    private void printN5Tree(N5Node node, String indent) {
         System.out.println(node.getNodeName());
-        for (N5TreeNode n5TreeNode : node.childrenList()) {
+        for (N5Node n5TreeNode : node.getChildren()) {
             printN5Tree(n5TreeNode, indent + "  ");
         }
     }

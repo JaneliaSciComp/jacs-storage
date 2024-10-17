@@ -17,7 +17,7 @@ import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.saalfeldlab.n5.N5TreeNode;
+import org.janelia.jacsstorage.clients.N5Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -284,7 +284,7 @@ public class JadeHttpClient {
      * @param relativePath    path to the object relative to the storageLocation
      * @return tree of data sets represented by N5TreeNode
      */
-    public N5TreeNode getN5Tree(StorageLocation storageLocation, String relativePath, String jacsPrincipal, String authToken, JadeStorageAttributes storageAttributes) throws StorageObjectNotFoundException {
+    public N5Node getN5Tree(StorageLocation storageLocation, String relativePath, String jacsPrincipal, String authToken, JadeStorageAttributes storageAttributes) throws StorageObjectNotFoundException {
         Client httpclient = HttpUtils.createHttpClient();
         String storageURL = storageLocation.getStorageURL();
         try {
@@ -305,7 +305,7 @@ public class JadeHttpClient {
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
             }
-            return response.readEntity(new GenericType<N5TreeNode>() {
+            return response.readEntity(new GenericType<N5Node>() {
             });
         } finally {
             httpclient.close();

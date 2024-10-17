@@ -13,7 +13,7 @@ public class N5ReaderProvider {
     private final String defaultAWSRegion;
 
     @Inject
-    N5ReaderProvider(@PropertyValue(name = "AWS.Region", defaultValue = "us-east-1") String defaultAWSRegion) {
+    public N5ReaderProvider(@PropertyValue(name = "AWS.Region", defaultValue = "us-east-1") String defaultAWSRegion) {
         this.defaultAWSRegion = defaultAWSRegion;
     }
 

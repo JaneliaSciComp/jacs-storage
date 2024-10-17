@@ -2,10 +2,10 @@ package org.janelia.jacsstorage.rest;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -24,7 +24,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.N5ContentService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.saalfeldlab.n5.N5TreeNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +51,7 @@ public class N5StorageResource {
     @Path("storage_volume/{storageVolumeId}/n5tree/{storageRelativePath:.+}")
     public Response retrieveDataInfoFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                       @PathParam("storageRelativePath") String storageRelativeFilePath,
+                                                      @QueryParam("depth") Integer depthParam,
                                                       @Context ContainerRequestContext requestContext) {
         LOG.debug("Retrieve N5 data sets from volume {}:{}", storageVolumeId, storageRelativeFilePath);
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
@@ -76,7 +76,8 @@ public class N5StorageResource {
                         .entity(ImmutableMap.of("errormessage", "Could not resolve relative path: " + storageRelativeFilePath))
                         .build();
             }
-            N5TreeNode n5RootNode = n5ContentService.getN5Container(n5ContainerURI);
+            int depth = depthParam != null ? depthParam : 1;
+            N5ContentService.N5Node n5RootNode = n5ContentService.getN5Container(n5ContainerURI, depth);
             return Response
                     .ok(n5RootNode, MediaType.APPLICATION_JSON)
                     .build();
