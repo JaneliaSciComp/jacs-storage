@@ -108,8 +108,10 @@ public class N5ContentService {
         try {
             String[] datasetPaths = n5Reader.list(root.getPath());
             updateChildren(n5Reader, root, datasetPaths, currentDepth, maxDepth);
+        } catch (ContentException e) {
+            throw e;
         } catch (Exception e) {
-            throw new ContentException(e);
+            throw new ContentException("Error discovering " + root.getPath(), e);
         }
     }
 
