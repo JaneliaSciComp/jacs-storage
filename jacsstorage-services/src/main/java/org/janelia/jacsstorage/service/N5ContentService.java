@@ -22,6 +22,7 @@ public class N5ContentService {
 
     private static final Logger LOG = LoggerFactory.getLogger(N5ContentService.class);
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public static class N5Node {
         private final String path;
         private final List<N5Node> children;
@@ -37,12 +38,10 @@ public class N5ContentService {
             return path;
         }
 
-        @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public List<N5Node> getChildren() {
             return children;
         }
 
-        @JsonInclude(JsonInclude.Include.NON_NULL)
         public N5Attributes getMetadata() {
             return metadata;
         }
