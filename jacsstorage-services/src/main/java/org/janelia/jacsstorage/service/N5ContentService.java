@@ -1,14 +1,13 @@
 package org.janelia.jacsstorage.service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.collect.ImmutableMap;
-import org.checkerframework.checker.units.qual.N;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.impl.n5.N5ReaderProvider;
 import org.janelia.saalfeldlab.n5.DatasetAttributes;
@@ -38,10 +37,12 @@ public class N5ContentService {
             return path;
         }
 
+        @JsonInclude(JsonInclude.Include.NON_EMPTY)
         public List<N5Node> getChildren() {
             return children;
         }
 
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public N5Attributes getMetadata() {
             return metadata;
         }
@@ -123,7 +124,7 @@ public class N5ContentService {
                 parentNode.addChild(new N5Node(fullNodePath, null));
             }
         }
-        if (currentDepth < maxDepth) {
+        if (currentDepth + 1 < maxDepth) {
             for (N5Node childNode : parentNode.getChildren()) {
                 discoverAndParseRecursive(n5Reader, childNode, currentDepth + 1, maxDepth);
             }
