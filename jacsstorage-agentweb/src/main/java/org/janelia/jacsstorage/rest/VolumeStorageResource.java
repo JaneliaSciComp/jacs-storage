@@ -15,6 +15,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -78,13 +79,12 @@ public class VolumeStorageResource {
     public Response checkDataPathFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                    @PathParam("storageRelativePath") String storageRelativeFilePath,
                                                    @QueryParam("directoryOnly") Boolean directoryOnlyParam,
-                                                   @HeaderParam("AccessKey") String accessKey,
-                                                   @HeaderParam("SecretKey") String secretKey) {
+                                                   @Context ContainerRequestContext requestContext) {
         try {
             LOG.debug("Check data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
-                    .setAccessKey(accessKey)
-                    .setSecretKey(secretKey);
+                    .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -130,14 +130,13 @@ public class VolumeStorageResource {
     @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     public Response retrieveDataContentFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                          @PathParam("storageRelativePath") String storageRelativeFilePath,
-                                                         @HeaderParam("AccessKey") String accessKey,
-                                                         @HeaderParam("SecretKey") String secretKey,
+                                                         @Context ContainerRequestContext requestContext,
                                                          @Context UriInfo requestURI) {
         try {
             LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
-                    .setAccessKey(accessKey)
-                    .setSecretKey(secretKey);
+                    .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -189,14 +188,13 @@ public class VolumeStorageResource {
     @Path("storage_volume/{storageVolumeId}/data_info/{storageRelativePath:.+}")
     public Response retrieveMetadataFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                       @PathParam("storageRelativePath") String storageRelativeFilePath,
-                                                      @HeaderParam("AccessKey") String accessKey,
-                                                      @HeaderParam("SecretKey") String secretKey,
+                                                      @Context ContainerRequestContext requestContext,
                                                       @Context UriInfo requestURI) {
         try {
             LOG.debug("Retrieve metadata from volume {}:{}", storageVolumeId, storageRelativeFilePath);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
-                    .setAccessKey(accessKey)
-                    .setSecretKey(secretKey);
+                    .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -242,14 +240,13 @@ public class VolumeStorageResource {
                                               @QueryParam("depth") Integer depthParam,
                                               @QueryParam("offset") Integer offsetParam,
                                               @QueryParam("length") Integer lengthParam,
-                                              @HeaderParam("AccessKey") String accessKey,
-                                              @HeaderParam("SecretKey") String secretKey,
+                                              @Context ContainerRequestContext requestContext,
                                               @Context UriInfo requestURI) {
         try {
             LOG.debug("List data from volume {}:{} with a depthParameter {}", storageVolumeId, storageRelativeFilePath, depthParam);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
-                    .setAccessKey(accessKey)
-                    .setSecretKey(secretKey);
+                    .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -334,15 +331,14 @@ public class VolumeStorageResource {
     @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     public Response storeDataContentOnStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                     @PathParam("storageRelativePath") String storageRelativeFilePath,
-                                                    @HeaderParam("AccessKey") String accessKey,
-                                                    @HeaderParam("SecretKey") String secretKey,
+                                                    @Context ContainerRequestContext requestContext,
                                                     @Context SecurityContext securityContext,
                                                     InputStream contentStream) {
         try {
             LOG.debug("Store data to {}: {}", storageVolumeId, storageRelativeFilePath);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
-                    .setAccessKey(accessKey)
-                    .setSecretKey(secretKey);
+                    .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -403,13 +399,12 @@ public class VolumeStorageResource {
     @Path("storage_volume/{storageVolumeId}/data_content/{storageRelativePath:.+}")
     public Response deleteDataContentFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
                                                        @PathParam("storageRelativePath") String storageRelativeFilePath,
-                                                       @HeaderParam("AccessKey") String accessKey,
-                                                       @HeaderParam("SecretKey") String secretKey) {
+                                                       @Context ContainerRequestContext requestContext) {
         try {
             LOG.debug("Delete data {}:{}", storageVolumeId, storageRelativeFilePath);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
-                    .setAccessKey(accessKey)
-                    .setSecretKey(secretKey);
+                    .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -472,12 +467,11 @@ public class VolumeStorageResource {
                                        @QueryParam("dataStoragePath") String dataStoragePathParam,
                                        @QueryParam("includeInactive") boolean includeInactive,
                                        @QueryParam("includeInaccessibleVolumes") boolean includeInaccessibleVolumes,
-                                       @HeaderParam("AccessKey") String accessKey,
-                                       @HeaderParam("SecretKey") String secretKey,
+                                       @Context ContainerRequestContext requestContext,
                                        @Context SecurityContext securityContext) {
         JADEStorageOptions storageOptions = new JADEStorageOptions()
-                .setAccessKey(accessKey)
-                .setSecretKey(secretKey);
+                .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                .setSecretKey(requestContext.getHeaderString("SecretKey"));
         JADEStorageURI jadeStorageURI = JADEStorageURI.createStoragePathURI(dataStoragePathParam, storageOptions);
         StorageQuery storageQuery = new StorageQuery()
                 .setStorageType(JacsStorageType.fromName(storageType))

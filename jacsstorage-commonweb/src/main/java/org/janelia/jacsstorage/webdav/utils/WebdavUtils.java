@@ -5,6 +5,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.ws.rs.container.ContainerRequestContext;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -37,8 +39,7 @@ public class WebdavUtils {
     }
 
     public static Multistatus convertStorageVolumes(List<JacsStorageVolume> storageVolumes,
-                                                    String accessKey,
-                                                    String secretKey,
+                                                    ContainerRequestContext requestContext,
                                                     String defaultPropResourceURL) {
         LOG.debug("Create multistatus response for {} with {}", storageVolumes, defaultPropResourceURL);
         Multistatus ms = new Multistatus();
@@ -56,8 +57,8 @@ public class WebdavUtils {
                     // set custom properties
                     propContainer.setStorageBindName(storageVolume.getStorageVirtualPath());
                     propContainer.setStorageRootDir(storageVolume.getStorageRootLocation());
-                    propContainer.setStorageAccessKey(accessKey);
-                    propContainer.setStorageSecretKey(secretKey);
+                    propContainer.setStorageAccessKey(requestContext.getHeaderString("AccessKey"));
+                    propContainer.setStorageSecretKey(requestContext.getHeaderString("SecretKey"));
 
                     Propstat propstat = new Propstat();
                     propstat.setPropContainer(propContainer);

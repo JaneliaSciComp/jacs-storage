@@ -12,6 +12,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -141,12 +142,11 @@ public class StorageVolumesResource {
                                        @QueryParam("dataStoragePath") String dataStoragePathParam,
                                        @QueryParam("includeInactive") boolean includeInactive,
                                        @QueryParam("includeInaccessibleVolumes") boolean includeInaccessibleVolumes,
-                                       @HeaderParam("AccessKey") String accessKey,
-                                       @HeaderParam("SecretKey") String secretKey,
+                                       @Context ContainerRequestContext requestContext,
                                        @Context SecurityContext securityContext) {
         JADEStorageOptions storageOptions = new JADEStorageOptions()
-                .setAccessKey(accessKey)
-                .setSecretKey(secretKey);
+                .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                .setSecretKey(requestContext.getHeaderString("SecretKey"));
         JADEStorageURI dataStorageURI = JADEStorageURI.createStoragePathURI(dataStoragePathParam, storageOptions);
         StorageQuery storageQuery = new StorageQuery()
                 .setId(storageVolumeId)

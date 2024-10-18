@@ -12,6 +12,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -62,10 +63,9 @@ public class ContentStorageResource {
     @HEAD
     @Path("storage_path_redirect")
     public Response redirectForCheckContentWithQueryParam(@QueryParam("contentPath") String contentPath,
-                                                          @HeaderParam("AccessKey") String accessKey,
-                                                          @HeaderParam("SecretKey") String secretKey,
+                                                          @Context ContainerRequestContext requestContext,
                                                           @Context UriInfo requestURI) {
-        return processHeadToCheckContent(contentPath, accessKey, secretKey, requestURI);
+        return processHeadToCheckContent(contentPath, requestContext, requestURI);
     }
 
     /**
@@ -84,22 +84,23 @@ public class ContentStorageResource {
     @HEAD
     @Path("storage_path_redirect/{contentPath:.+}")
     public Response redirectForCheckContentWithPathParam(@PathParam("contentPath") String contentPath,
-                                                         @HeaderParam("AccessKey") String accessKey,
-                                                         @HeaderParam("SecretKey") String secretKey,
+                                                         @Context ContainerRequestContext requestContext,
                                                          @Context UriInfo requestURI) {
-        return processHeadToCheckContent(contentPath, accessKey, secretKey, requestURI);
+        return processHeadToCheckContent(contentPath, requestContext, requestURI);
     }
 
-    private Response processHeadToCheckContent(String contentPathParam, String accessKeyParam, String secretKeyParam, UriInfo requestURI) {
+    private Response processHeadToCheckContent(String contentPathParam, ContainerRequestContext requestContext, UriInfo requestURI) {
         LOG.info("Check {}", contentPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
         JADEStorageURI contentURI;
+        String accessKey = requestContext.getHeaderString("AccessKey");
+        String secretKey = requestContext.getHeaderString("SecretKey");
         if (StringUtils.isNotBlank(contentPathParam)) {
             contentURI = JADEStorageURI.createStoragePathURI(
                     contentPathParam,
                     new JADEStorageOptions()
-                            .setAccessKey(accessKeyParam)
-                            .setSecretKey(secretKeyParam)
+                            .setAccessKey(accessKey)
+                            .setSecretKey(secretKey)
             );
         } else {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -127,8 +128,8 @@ public class ContentStorageResource {
                             .build();
                     LOG.info("Redirect to {} for checking {}", redirectURI, contentPathParam);
                     return Response.temporaryRedirect(redirectURI)
-                            .header("AccessKey", accessKeyParam)
-                            .header("SecretKey", secretKeyParam);
+                            .header("AccessKey", accessKey)
+                            .header("SecretKey", secretKey);
                 })
                 .orElse(Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("No managed volume found for " + contentURI))
@@ -154,18 +155,16 @@ public class ContentStorageResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @Path("storage_path_redirect")
     public Response redirectForGetContentWithQueryParam(@QueryParam("contentPath") String contentPath,
-                                                        @HeaderParam("AccessKey") String accessKey,
-                                                        @HeaderParam("SecretKey") String secretKey,
+                                                        @Context ContainerRequestContext requestContext,
                                                         @Context UriInfo requestURI) {
-        return processGetToRetrieveContent(contentPath, accessKey, secretKey, requestURI);
+        return processGetToRetrieveContent(contentPath, requestContext, requestURI);
     }
 
     /**
      * Redirect to the agent URL for retrieving the content using the file path.
      *
      * @param contentPath
-     * @param accessKey
-     * @param secretKey
+     * @param requestContext
      * @param requestURI
      * @return
      */
@@ -180,25 +179,25 @@ public class ContentStorageResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
     @Path("storage_path_redirect/{contentPath:.+}")
     public Response redirectForGetContentWithPathParam(@PathParam("contentPath") String contentPath,
-                                                       @HeaderParam("AccessKey") String accessKey,
-                                                       @HeaderParam("SecretKey") String secretKey,
+                                                       @Context ContainerRequestContext requestContext,
                                                        @Context UriInfo requestURI) {
-        return processGetToRetrieveContent(contentPath, accessKey, secretKey, requestURI);
+        return processGetToRetrieveContent(contentPath, requestContext, requestURI);
     }
 
     private Response processGetToRetrieveContent(String contentPathParam,
-                                                 String accessKeyParam,
-                                                 String secretKeyParam,
+                                                 ContainerRequestContext requestContext,
                                                  UriInfo requestURI) {
         LOG.info("Redirecting to agent for getting content of {}", contentPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
         JADEStorageURI contentURI;
+        String accessKey = requestContext.getHeaderString("AccessKey");
+        String secretKey = requestContext.getHeaderString("SecretKey");
         if (StringUtils.isNotBlank(contentPathParam)) {
             contentURI = JADEStorageURI.createStoragePathURI(
                     contentPathParam,
                     new JADEStorageOptions()
-                            .setAccessKey(accessKeyParam)
-                            .setSecretKey(secretKeyParam)
+                            .setAccessKey(accessKey)
+                            .setSecretKey(secretKey)
             );
         } else {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -226,8 +225,8 @@ public class ContentStorageResource {
                             .build();
                     LOG.info("Redirect to {} for getting content from {}", redirectURI, contentPathParam);
                     return Response.temporaryRedirect(redirectURI)
-                            .header("AccessKey", accessKeyParam)
-                            .header("SecretKey", secretKeyParam);
+                            .header("AccessKey", accessKey)
+                            .header("SecretKey", secretKey);
                 })
                 .orElse(Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("No managed volume found for " + contentURI))
@@ -253,10 +252,9 @@ public class ContentStorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path_redirect/{contentPath:.+}")
     public Response redirectForDeleteContentWithPathParam(@PathParam("contentPath") String contentPath,
-                                                          @HeaderParam("AccessKey") String accessKey,
-                                                          @HeaderParam("SecretKey") String secretKey,
+                                                          @Context ContainerRequestContext requestContext,
                                                           @Context UriInfo requestURI) {
-        return processDeleteToRemoveContent(contentPath, accessKey, secretKey, requestURI);
+        return processDeleteToRemoveContent(contentPath, requestContext, requestURI);
     }
 
     /**
@@ -277,23 +275,23 @@ public class ContentStorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_path_redirect")
     public Response redirectForDeleteContentWithQueryParam(@QueryParam("contentPath") String contentPath,
-                                                           @HeaderParam("AccessKey") String accessKey,
-                                                           @HeaderParam("SecretKey") String secretKey,
+                                                           @Context ContainerRequestContext requestContext,
                                                            @Context UriInfo requestURI) {
-        return processDeleteToRemoveContent(contentPath, accessKey, secretKey, requestURI);
+        return processDeleteToRemoveContent(contentPath, requestContext, requestURI);
     }
 
     private Response processDeleteToRemoveContent(String contentPathParam,
-                                                  String accessKeyParam,
-                                                  String secretKeyParam,
+                                                  ContainerRequestContext requestContext,
                                                   UriInfo requestURI) {
         LOG.info("Redirect to agent for deleting content of {}", contentPathParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
+        String accessKey = requestContext.getHeaderString("AccessKey");
+        String secretKey = requestContext.getHeaderString("SecretKey");
         JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(
                 contentPathParam,
                 new JADEStorageOptions()
-                        .setAccessKey(accessKeyParam)
-                        .setSecretKey(secretKeyParam)
+                        .setAccessKey(accessKey)
+                        .setSecretKey(secretKey)
         );
         List<JacsStorageVolume> volumeCandidates;
         try {
@@ -315,8 +313,8 @@ public class ContentStorageResource {
                             .build();
                     LOG.info("Redirect to {} for getting content from {}", redirectURI, contentPathParam);
                     return Response.temporaryRedirect(redirectURI)
-                            .header("AccessKey", accessKeyParam)
-                            .header("SecretKey", secretKeyParam);
+                            .header("AccessKey", accessKey)
+                            .header("SecretKey", secretKey);
                 })
                 .orElse(Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("No managed volume found for " + contentURI))

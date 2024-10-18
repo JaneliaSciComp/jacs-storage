@@ -10,6 +10,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -68,11 +69,10 @@ public class MasterWebdavResource {
     })
     @Path("storage_prefix")
     public Response dataStoragePropFindByQueryParamStoragePrefix(@QueryParam("contentPath") String contentPathParam,
-                                                                 @HeaderParam("AccessKey") String accessKey,
-                                                                 @HeaderParam("SecretKey") String secretKey,
                                                                  Propfind propfindRequest,
+                                                                 @Context ContainerRequestContext requestContext,
                                                                  @Context SecurityContext securityContext) {
-        return processPropFindDataStorageWithContentPath(contentPathParam, accessKey, secretKey, securityContext);
+        return processPropFindDataStorageWithContentPath(contentPathParam, requestContext, securityContext);
     }
 
     @PROPFIND
@@ -82,11 +82,10 @@ public class MasterWebdavResource {
     })
     @Path("storage_prefix/{contentPath:.+}")
     public Response dataStoragePropFindByPathParamStoragePrefix(@PathParam("contentPath") String contentPathParam,
-                                                                @HeaderParam("AccessKey") String accessKey,
-                                                                @HeaderParam("SecretKey") String secretKey,
+                                                                @Context ContainerRequestContext requestContext,
                                                                 Propfind propfindRequest,
                                                                 @Context SecurityContext securityContext) {
-        return processPropFindDataStorageWithContentPath(contentPathParam, accessKey, secretKey, securityContext);
+        return processPropFindDataStorageWithContentPath(contentPathParam, requestContext, securityContext);
     }
 
     @PROPFIND
@@ -96,11 +95,10 @@ public class MasterWebdavResource {
     })
     @Path("data_storage_path")
     public Response dataStoragePropFindByQueryParamStoragePath(@QueryParam("contentPath") String contentPathParam,
-                                                               @HeaderParam("AccessKey") String accessKey,
-                                                               @HeaderParam("SecretKey") String secretKey,
                                                                Propfind propfindRequest,
+                                                               @Context ContainerRequestContext requestContext,
                                                                @Context SecurityContext securityContext) {
-        return processPropFindDataStorageWithContentPath(contentPathParam, accessKey, secretKey, securityContext);
+        return processPropFindDataStorageWithContentPath(contentPathParam, requestContext, securityContext);
     }
 
     @PROPFIND
@@ -110,23 +108,21 @@ public class MasterWebdavResource {
     })
     @Path("data_storage_path/{contentPath:.+}")
     public Response dataStoragePropFindByPathParamStoragePath(@PathParam("contentPath") String contentPathParam,
-                                                              @HeaderParam("AccessKey") String accessKey,
-                                                              @HeaderParam("SecretKey") String secretKey,
                                                               Propfind propfindRequest,
+                                                              @Context ContainerRequestContext requestContext,
                                                               @Context SecurityContext securityContext) {
-        return processPropFindDataStorageWithContentPath(contentPathParam, accessKey, secretKey, securityContext);
+        return processPropFindDataStorageWithContentPath(contentPathParam, requestContext, securityContext);
     }
 
     private Response processPropFindDataStorageWithContentPath(String contentPathParam,
-                                                               String accessKey,
-                                                               String secretKey,
+                                                               ContainerRequestContext requestContext,
                                                                SecurityContext securityContext) {
         LOG.info("Find storage by prefix {} for {}", contentPathParam, securityContext.getUserPrincipal());
         JADEStorageURI jadeStorageURI = JADEStorageURI.createStoragePathURI(
                 contentPathParam,
                 new JADEStorageOptions()
-                        .setAccessKey(accessKey)
-                        .setSecretKey(secretKey)
+                        .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                        .setSecretKey(requestContext.getHeaderString("SecretKey"))
         );
         StorageResourceHelper resourceHelper = new StorageResourceHelper(storageVolumeManager);
         List<JacsStorageVolume> managedVolumes = resourceHelper.listStorageVolumesForURI(jadeStorageURI);
@@ -148,8 +144,7 @@ public class MasterWebdavResource {
         }
         Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(
                 managedVolumes,
-                accessKey,
-                secretKey,
+                requestContext,
                 resourceURI.getBaseUriBuilder()
                         .path(ContentStorageResource.class)
                         .path(ContentStorageResource.class, "redirectForGetContentWithQueryParam")

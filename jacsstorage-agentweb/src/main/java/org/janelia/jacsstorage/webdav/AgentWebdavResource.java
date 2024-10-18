@@ -11,6 +11,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -111,13 +112,11 @@ public class AgentWebdavResource {
     @PROPFIND
     @Path("data_storage_path/{dataPath:.+}")
     public Response dataStoragePropFindByPathParam(@PathParam("dataPath") String dataPathParam,
-                                                   @HeaderParam("Depth") String depthParam,
                                                    Propfind propfindRequest,
-                                                   @HeaderParam("AccessKey") String accessKey,
-                                                   @HeaderParam("SecretKey") String secretKey,
+                                                   @Context ContainerRequestContext requestContext,
                                                    @Context UriInfo requestURI,
                                                    @Context SecurityContext securityContext) {
-        return processDataStoragePropFind(dataPathParam, depthParam, accessKey, secretKey, requestURI, securityContext);
+        return processDataStoragePropFind(dataPathParam, requestContext, requestURI, securityContext);
     }
 
     @Consumes(MediaType.APPLICATION_XML)
@@ -127,22 +126,21 @@ public class AgentWebdavResource {
     @PROPFIND
     @Path("data_storage_path")
     public Response dataStoragePropFindByQueryParam(@QueryParam("dataPath") String dataPathParam,
-                                                    @HeaderParam("Depth") String depthParam,
                                                     Propfind propfindRequest,
-                                                    @HeaderParam("AccessKey") String accessKey,
-                                                    @HeaderParam("SecretKey") String secretKey,
+                                                    @Context ContainerRequestContext requestContext,
                                                     @Context UriInfo requestURI,
                                                     @Context SecurityContext securityContext) {
-        return processDataStoragePropFind(dataPathParam, depthParam, accessKey, secretKey, requestURI, securityContext);
+        return processDataStoragePropFind(dataPathParam, requestContext, requestURI, securityContext);
     }
 
     private Response processDataStoragePropFind(String dataPathParam,
-                                                String depthParam,
-                                                String accessKey,
-                                                String secretKey,
+                                                ContainerRequestContext requestContext,
                                                 UriInfo requestURI,
                                                 SecurityContext securityContext) {
-        LOG.debug("PROPFIND data storage by path: {}, Depth: {} for {}", dataPathParam, depthParam, securityContext.getUserPrincipal());
+        LOG.debug("PROPFIND data storage by path: {}, for {}", dataPathParam, securityContext.getUserPrincipal());
+        String depthParam = requestContext.getHeaderString("Depth");
+        String accessKeyParam = requestContext.getHeaderString("AccessKey");
+        String secretKeyParam = requestContext.getHeaderString("SecretKey");
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
         int depth = WebdavUtils.getDepth(depthParam);
         Supplier<Response.ResponseBuilder> storageNotFoundHandler = () -> {
@@ -163,8 +161,8 @@ public class AgentWebdavResource {
                     ;
         };
         JADEStorageOptions storageOptions = new JADEStorageOptions()
-                .setAccessKey(accessKey)
-                .setSecretKey(secretKey);
+                .setAccessKey(accessKeyParam)
+                .setSecretKey(secretKeyParam);
         JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
         List<JacsStorageVolume> volumeCandidates;
         try {

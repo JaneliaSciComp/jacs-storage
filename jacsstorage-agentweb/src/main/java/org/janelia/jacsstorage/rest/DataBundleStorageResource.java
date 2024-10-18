@@ -18,6 +18,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -170,9 +171,8 @@ public class DataBundleStorageResource {
     public Response checkEntryContent(@PathParam("dataBundleId") Long dataBundleId,
                                       @PathParam("dataEntryPath") String dataEntryPathParam,
                                       @QueryParam("directoryOnly") Boolean directoryOnlyParam,
-                                      @HeaderParam("AccessKey") String accessKey,
-                                      @HeaderParam("SecretKey") String secretKey,
                                       @Context UriInfo requestURI,
+                                      @Context ContainerRequestContext requestContext,
                                       @Context SecurityContext securityContext) {
         LOG.info("Get entry {} content from bundle {} ", dataEntryPathParam, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
