@@ -8,6 +8,7 @@ import javax.inject.Inject;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.impl.n5.N5ReaderProvider;
 import org.janelia.saalfeldlab.n5.DatasetAttributes;
@@ -52,6 +53,13 @@ public class N5ContentService {
 
         void addChild(N5Node node) {
             children.add(node);
+        }
+
+        @Override
+        public String toString() {
+            return new ToStringBuilder(this)
+                    .append("path", path)
+                    .toString();
         }
     }
 
@@ -106,8 +114,10 @@ public class N5ContentService {
 
     private void discoverAndParseRecursive(N5Reader n5Reader, N5Node root, int currentDepth, int maxDepth) {
         try {
+            LOG.debug("Discover {}", root);
             String[] datasetPaths = n5Reader.list(root.getPath());
             updateChildren(n5Reader, root, datasetPaths, currentDepth, maxDepth);
+            LOG.debug("Finished discover {}", root);
         } catch (ContentException e) {
             throw e;
         } catch (Exception e) {
@@ -116,6 +126,7 @@ public class N5ContentService {
     }
 
     private void updateChildren(N5Reader n5Reader, N5Node parentNode, String[] nodePaths, int currentDepth, int maxDepth) {
+        LOG.debug("Update children for {}", parentNode);
         for (String nodePath : nodePaths) {
             String fullNodePath = parentNode.getPath().equals("/") ? "/" + nodePath : parentNode.getPath() + "/" + nodePath;
             if (n5Reader.datasetExists(fullNodePath)) {
@@ -125,6 +136,7 @@ public class N5ContentService {
                 parentNode.addChild(new N5Node(fullNodePath, null));
             }
         }
+        LOG.debug("Finished updating children for {}", parentNode);
         if (currentDepth + 1 < maxDepth) {
             for (N5Node childNode : parentNode.getChildren()) {
                 discoverAndParseRecursive(n5Reader, childNode, currentDepth + 1, maxDepth);
