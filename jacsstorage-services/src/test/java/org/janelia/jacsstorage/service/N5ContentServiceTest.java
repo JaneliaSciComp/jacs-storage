@@ -16,9 +16,9 @@ public class N5ContentServiceTest {
                 new N5ReaderProvider("us-east-1")
         );
         N5ContentService.N5Node node = testService.getN5Container(JADEStorageURI.createStoragePathURI(
-                "s3://janelia-bigstitcher-spark/Stitching/dataset.n5",
+                "s3://janelia-bigstitcher-spark/Stitching/dataset.n5/setup0/timepoint0/s0",
                 new JADEStorageOptions()),
-                3);
+                1);
         assertNotNull(node);
         assertFalse(node.getChildren().isEmpty());
     }

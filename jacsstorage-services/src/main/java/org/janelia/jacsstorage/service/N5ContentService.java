@@ -12,6 +12,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.impl.n5.N5ReaderProvider;
 import org.janelia.saalfeldlab.n5.DatasetAttributes;
+import org.janelia.saalfeldlab.n5.N5KeyValueReader;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,7 +104,7 @@ public class N5ContentService {
     public N5Node getN5Container(JADEStorageURI storageURI, int maxDepth) {
         N5Reader n5Reader = n5ReaderProvider.getN5Reader(storageURI);
         N5Node root;
-        if (n5Reader.datasetExists("/")) {
+        if (n5Reader.exists("/" + N5KeyValueReader.ATTRIBUTES_JSON)) {
             root = new N5Node("/", n5Reader.getDatasetAttributes("/"));
         } else {
             root = new N5Node("/", null);
@@ -129,7 +130,7 @@ public class N5ContentService {
         LOG.debug("Update children for {}", parentNode);
         for (String nodePath : nodePaths) {
             String fullNodePath = parentNode.getPath().equals("/") ? "/" + nodePath : parentNode.getPath() + "/" + nodePath;
-            if (n5Reader.datasetExists(fullNodePath)) {
+            if (n5Reader.exists(fullNodePath + "/" + N5KeyValueReader.ATTRIBUTES_JSON)) {
                 DatasetAttributes  datasetAttributes = n5Reader.getDatasetAttributes(fullNodePath);
                 parentNode.addChild(new N5Node(fullNodePath, datasetAttributes));
             } else {
