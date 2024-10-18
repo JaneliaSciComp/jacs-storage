@@ -25,7 +25,7 @@ project(":jacsstorage-agentweb") {
                        JAX_RS_JERSEY_CDI_SERVLET_LIB,
                        JAX_RS_JERSEY_INJECT_LIB,
                        JAX_RS_JERSEY_MEDIA_JSON_LIB,
-                       N5_IMGLIB2_LIB
+                       N5_UNIVERSE_LIB
 
         testImplementation JAX_RS_JERSEY_TEST_LIB,
                            JAX_RS_JERSEY_TEST_PROVIDER_LIB

@@ -26,7 +26,7 @@ project(":jacsstorage-clients") {
                        JAX_RS_JERSEY_MEDIA_LIB,
                        JAX_RS_JERSEY_INJECT_LIB,
                        JAX_RS_JERSEY_MEDIA_JSON_LIB,
-                       N5_IMGLIB2_LIB
+                       N5_UNIVERSE_LIB
     }
 
     tasks.register('createStorageClientApp', CreateStartScripts) {

@@ -1,147 +1,74 @@
 package org.janelia.jacsstorage.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
 
 import javax.inject.Inject;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacsstorage.cdi.qualifier.PooledResource;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.impl.n5.N5ReaderProvider;
-import org.janelia.saalfeldlab.n5.DatasetAttributes;
-import org.janelia.saalfeldlab.n5.N5KeyValueReader;
+import org.janelia.jacsstorage.service.impl.n5.N5ViewerMultichannelMetadata;
 import org.janelia.saalfeldlab.n5.N5Reader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
+import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5CosemMetadataParser;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5CosemMultiScaleMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5GenericSingleScaleMetadataParser;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5Metadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5MetadataParser;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5MultiScaleMetadata;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5SingleScaleMetadataParser;
+import org.janelia.saalfeldlab.n5.universe.metadata.N5ViewerMultiscaleMetadataParser;
+import org.janelia.saalfeldlab.n5.universe.metadata.canonical.CanonicalMetadataParser;
 
 /**
  * Service for reading and writing content to a specified storage URI
  */
 public class N5ContentService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(N5ContentService.class);
+    private static final N5MetadataParser<? extends N5Metadata>[] N5_GROUP_PARSERS = new N5MetadataParser<?>[]{
+            new N5CosemMultiScaleMetadata.CosemMultiScaleParser(),
+            new N5ViewerMultiscaleMetadataParser(),
+            new CanonicalMetadataParser(),
+            new N5ViewerMultichannelMetadata.N5ViewerMultichannelMetadataParser()
+    };
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public static class N5Node {
-        private final String path;
-        private final List<N5Node> children;
-        private final N5Attributes metadata;
-
-        private N5Node(String path, DatasetAttributes datasetAttributes) {
-            this.path = path;
-            this.children = new ArrayList<>();
-            this.metadata = datasetAttributes != null ? new N5Attributes(datasetAttributes) : null;
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        public List<N5Node> getChildren() {
-            return children;
-        }
-
-        public N5Attributes getMetadata() {
-            return metadata;
-        }
-
-        public boolean isDatasetFlag() {
-            return metadata != null;
-        }
-
-        void addChild(N5Node node) {
-            children.add(node);
-        }
-
-        @Override
-        public String toString() {
-            return new ToStringBuilder(this)
-                    .append("path", path)
-                    .toString();
-        }
-    }
-
-    public static class N5Attributes {
-        private final DatasetAttributes datasetAttributes;
-
-        N5Attributes(DatasetAttributes datasetAttributes) {
-            this.datasetAttributes = datasetAttributes;
-        }
-
-        public int[] getBlockSize() {
-            return datasetAttributes.getBlockSize();
-        }
-
-        public long[] getDimensions() {
-            return datasetAttributes.getDimensions();
-        }
-
-        public String getDataType() {
-            return datasetAttributes.getDataType().name();
-        }
-
-        public Map<String, String> getCompression() {
-            return ImmutableMap.of("type", datasetAttributes.getCompression().getType());
-        }
-    }
+    private static final N5MetadataParser<? extends N5Metadata>[] N5_METADATA_PARSERS = new N5MetadataParser<?>[]{
+            new N5CosemMetadataParser(),
+            new N5SingleScaleMetadataParser(),
+            new CanonicalMetadataParser(),
+            new N5MultiScaleMetadata.MultiScaleParser(),
+            new N5GenericSingleScaleMetadataParser()
+    };
 
     private final N5ReaderProvider n5ReaderProvider;
+    private final ExecutorService executorService;
 
     @Inject
-    N5ContentService(N5ReaderProvider n5ReaderProvider) {
+    N5ContentService(N5ReaderProvider n5ReaderProvider, @PooledResource ExecutorService executorService) {
         this.n5ReaderProvider = n5ReaderProvider;
+        this.executorService = executorService;
     }
 
     /**
      * Check if the content identified by the specified URI exists.
      *
-     * @param storageURI
-     * @return
+     * @param storageURI N5 container location
+     * @return N5TreeNode
      */
-    public N5Node getN5Container(JADEStorageURI storageURI, int maxDepth) {
-        N5Reader n5Reader = n5ReaderProvider.getN5Reader(storageURI);
-        N5Node root;
-        if (n5Reader.exists("/" + N5KeyValueReader.ATTRIBUTES_JSON)) {
-            root = new N5Node("/", n5Reader.getDatasetAttributes("/"));
-        } else {
-            root = new N5Node("/", null);
-        }
-        discoverAndParseRecursive(n5Reader, root, 0, maxDepth);
-        return root;
-    }
-
-    private void discoverAndParseRecursive(N5Reader n5Reader, N5Node root, int currentDepth, int maxDepth) {
+    public N5TreeNode getN5Container(JADEStorageURI storageURI) {
         try {
-            LOG.debug("Discover {}", root);
-            String[] datasetPaths = n5Reader.list(root.getPath());
-            updateChildren(n5Reader, root, datasetPaths, currentDepth, maxDepth);
-            LOG.debug("Finished discover {}", root);
-        } catch (ContentException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ContentException("Error discovering " + root.getPath(), e);
-        }
-    }
-
-    private void updateChildren(N5Reader n5Reader, N5Node parentNode, String[] nodePaths, int currentDepth, int maxDepth) {
-        LOG.debug("Update children for {}", parentNode);
-        for (String nodePath : nodePaths) {
-            String fullNodePath = parentNode.getPath().equals("/") ? "/" + nodePath : parentNode.getPath() + "/" + nodePath;
-            if (n5Reader.datasetExists(fullNodePath)) {
-                DatasetAttributes  datasetAttributes = n5Reader.getDatasetAttributes(fullNodePath);
-                parentNode.addChild(new N5Node(fullNodePath, datasetAttributes));
-            } else {
-                parentNode.addChild(new N5Node(fullNodePath, null));
-            }
-        }
-        LOG.debug("Finished updating children for {}", parentNode);
-        if (currentDepth + 1 < maxDepth) {
-            for (N5Node childNode : parentNode.getChildren()) {
-                discoverAndParseRecursive(n5Reader, childNode, currentDepth + 1, maxDepth);
-            }
+            N5Reader n5Reader = n5ReaderProvider.getN5Reader(storageURI);
+            N5DatasetDiscoverer datasetDiscoverer = new N5DatasetDiscoverer(
+                    n5Reader,
+                    executorService,
+                    Arrays.asList(N5_METADATA_PARSERS),
+                    Arrays.asList(N5_GROUP_PARSERS));
+            return datasetDiscoverer.discoverAndParseRecursive("/");
+        } catch (IOException e) {
+            throw new ContentException(e);
         }
     }
 }

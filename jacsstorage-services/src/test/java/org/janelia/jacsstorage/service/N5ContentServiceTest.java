@@ -1,8 +1,11 @@
 package org.janelia.jacsstorage.service;
 
+import java.util.concurrent.Executors;
+
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.impl.n5.N5ReaderProvider;
+import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
@@ -13,13 +16,13 @@ public class N5ContentServiceTest {
     @Test
     public void readN5TreeFromS3() {
         N5ContentService testService = new N5ContentService(
-                new N5ReaderProvider("us-east-1")
+                new N5ReaderProvider("us-east-1"),
+                Executors.newSingleThreadExecutor()
         );
-        N5ContentService.N5Node node = testService.getN5Container(JADEStorageURI.createStoragePathURI(
+        N5TreeNode node = testService.getN5Container(JADEStorageURI.createStoragePathURI(
                 "s3://janelia-bigstitcher-spark/Stitching/dataset.n5/setup0/timepoint0",
-                new JADEStorageOptions()),
-                2);
+                new JADEStorageOptions()));
         assertNotNull(node);
-        assertFalse(node.getChildren().isEmpty());
+        assertFalse(node.childrenList().isEmpty());
     }
 }

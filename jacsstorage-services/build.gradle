@@ -23,7 +23,7 @@ project(":jacsstorage-services") {
                        MONGODB_DRIVER_LIB,
                        MONGODB_BSON_LIB,
                        N5_LIB,
-                       N5_IMGLIB2_LIB,
+                       N5_UNIVERSE_LIB,
                        REFLECTIONS_LIB
 
         perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB

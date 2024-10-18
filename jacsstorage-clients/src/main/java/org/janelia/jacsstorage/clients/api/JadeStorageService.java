@@ -1,16 +1,16 @@
 package org.janelia.jacsstorage.clients.api;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.clients.api.n5.N5Node;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A client for JADE which exposes the service as a file-like API.
@@ -153,7 +153,7 @@ public class JadeStorageService {
      * @param path path to the object, either absolute or relative to the storageLocation
      * @return tree of data sets represented by N5TreeNode
      */
-    public N5Node getN5Tree(StorageLocation storageLocation, String path) throws StorageObjectNotFoundException {
+    public N5TreeNode getN5Tree(StorageLocation storageLocation, String path) throws StorageObjectNotFoundException {
         throw new UnsupportedOperationException("This isn't supported yet");
     }
 
