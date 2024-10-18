@@ -130,7 +130,7 @@ public class N5ContentService {
         LOG.debug("Update children for {}", parentNode);
         for (String nodePath : nodePaths) {
             String fullNodePath = parentNode.getPath().equals("/") ? "/" + nodePath : parentNode.getPath() + "/" + nodePath;
-            if (n5Reader.exists(fullNodePath + "/" + N5KeyValueReader.ATTRIBUTES_JSON)) {
+            if (n5Reader.datasetExists(fullNodePath)) {
                 DatasetAttributes  datasetAttributes = n5Reader.getDatasetAttributes(fullNodePath);
                 parentNode.addChild(new N5Node(fullNodePath, datasetAttributes));
             } else {

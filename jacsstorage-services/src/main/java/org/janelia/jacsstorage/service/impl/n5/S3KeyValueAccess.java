@@ -33,6 +33,7 @@ import software.amazon.awssdk.services.s3.model.CommonPrefix;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Iterable;
 
@@ -318,11 +319,15 @@ public class S3KeyValueAccess implements KeyValueAccess {
         }
 
         private InputStream createInputStream() {
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                    .bucket(s3Adapter.getBucket())
-                    .key(objectKey)
-                    .build();
-            return s3Adapter.getS3Client().getObject(getObjectRequest, ResponseTransformer.toInputStream());
+            try {
+                GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                        .bucket(s3Adapter.getBucket())
+                        .key(objectKey)
+                        .build();
+                return s3Adapter.getS3Client().getObject(getObjectRequest, ResponseTransformer.toInputStream());
+            } catch (NoSuchKeyException e) {
+                throw new N5Exception.N5NoSuchKeyException(objectKey, e);
+            }
         }
 
         @Override
