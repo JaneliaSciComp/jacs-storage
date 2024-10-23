@@ -125,7 +125,7 @@ public class AgentWebdavResource {
     })
     @PROPFIND
     @Path("data_storage_path")
-    public Response dataStoragePropFindByQueryParam(@QueryParam("dataPath") String dataPathParam,
+    public Response dataStoragePropFindByQueryParam(@QueryParam("contentPath") String dataPathParam,
                                                     Propfind propfindRequest,
                                                     @Context ContainerRequestContext requestContext,
                                                     @Context UriInfo requestURI,
