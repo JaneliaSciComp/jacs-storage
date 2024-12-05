@@ -217,28 +217,6 @@ public class JadeHttpClient {
         }
     }
 
-//    public long getContentLength(String storageURI, String subjectKey, String authToken, JadeStorageAttributes storageAttributes) {
-//        Client httpclient = HttpUtils.createHttpClient();
-//        try {
-//            WebTarget target = httpclient.target(storageURI);
-//            Invocation.Builder requestBuilder = createRequestWithCredentials(
-//                    target.request(MediaType.APPLICATION_JSON), subjectKey, authToken, storageAttributes
-//            );
-//            Response response = requestBuilder.head();
-//            if (response.getStatus() >= 200 && response.getStatus() < 300) {
-//                return response.getLength();
-//            } else {
-//                throw new IllegalStateException(target.getUri() + " returned with " + response.getStatus());
-//            }
-//        } catch (IllegalStateException e) {
-//            throw e;
-//        } catch (Exception e) {
-//            throw new IllegalStateException(e);
-//        } finally {
-//            httpclient.close();
-//        }
-//    }
-
     StorageEntryInfo extractStorageNodeFromJson(String storageUrl, String storageEntryUrl, String storagePath, JsonNode jsonNode) {
         JsonNode storageIdNode = jsonNode.get("storageId");
         JsonNode storageRootLocationNode = jsonNode.get("storageRootLocation");
@@ -264,12 +242,18 @@ public class JadeHttpClient {
                 actualEntryURL = storageUrl;
             }
         }
+        String storageRootLocation = storageRootLocationNode != null
+                ? storageRootLocationNode.asText()
+                : null;
+        String storageRootPathURI = storageRootPathURINode != null
+                ? storageRootPathURINode.asText()
+                : null;
         return new StorageEntryInfo(
                 storageId,
                 storageUrl,
                 actualEntryURL,
-                storageRootLocationNode.asText(),
-                new StoragePathURI(storageRootPathURINode.asText()),
+                storageRootLocation,
+                new StoragePathURI(storageRootPathURI),
                 nodeRelativePathNode.asText(),
                 sizeNode.asLong(),
                 collectionFlagNode.asBoolean(),
