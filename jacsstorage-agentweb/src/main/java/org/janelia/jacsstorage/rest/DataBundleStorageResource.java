@@ -129,8 +129,10 @@ public class DataBundleStorageResource {
                     dn.setSize(contentNode.getSize());
                     dn.setMimeType(contentNode.getMimeType());
                     dn.setLastModified(contentNode.getLastModified());
+                    dn.setStorageType(contentNode.getStorageType().name());
                     dn.setStorageRootLocation(dataBundle.getStorageURI().getJadeStorage());
                     dn.setStorageRootBinding(dataBundle.getStorageRootBinding());
+                    dn.setCollectionFlag(contentNode.isCollection());
                     dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
                             .path(Constants.AGENTSTORAGE_URI_PATH)
                             .path(dataBundle.getId().toString())
@@ -316,6 +318,7 @@ public class DataBundleStorageResource {
         );
         DataNodeInfo newDataNode = new DataNodeInfo();
         newDataNode.setNumericStorageId(dataBundleId);
+        newDataNode.setStorageType(dataBundle.getStorageURI().getStorageType().name());
         newDataNode.setStorageRootLocation(dataBundle.getStorageURI().getJadeStorage());
         newDataNode.setStorageRootBinding(dataBundle.getStorageRootBinding());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());

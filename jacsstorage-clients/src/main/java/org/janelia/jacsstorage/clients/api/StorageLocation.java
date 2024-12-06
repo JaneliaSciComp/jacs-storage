@@ -40,6 +40,10 @@ public class StorageLocation {
         return storageType;
     }
 
+    public boolean isFileSystemStorage() {
+        return storageType == null || "FILE_SYSTEM".equals(storageType);
+    }
+
     /**
      * Prefix for all paths in this StorageLocation.
      *

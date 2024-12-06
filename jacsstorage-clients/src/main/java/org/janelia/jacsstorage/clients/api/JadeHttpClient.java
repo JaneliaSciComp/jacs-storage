@@ -150,8 +150,22 @@ public class JadeHttpClient {
                     .stream()
                     .map(content -> {
                         StorageEntryInfo storageEntryInfo = extractStorageNodeFromJson(storageURL, null, relativePath, content);
-                        String objectRelativePath = StringUtils.isBlank(relativePath) ? relativePath : StringUtils.appendIfMissing(relativePath, "/");
-                        return new StorageObject(storageLocation, objectRelativePath + storageEntryInfo.getEntryRelativePath(), storageEntryInfo);
+                        // setting the objectRelativePath is convoluted because when
+                        // the entry is an S3 entry the service requires the full S3 URI (S3 volumes have no root location)
+                        // so in that case we don't want to prepend anything to the returned entry relative path
+                        // but, if the entry comes from the file system, the returned entry path is a relative child path
+                        // to the input 'relativePath' argument
+                        String objectRelativePath;
+                        if (storageLocation.isFileSystemStorage()) {
+                            if (StringUtils.isBlank(relativePath)) {
+                                objectRelativePath = storageEntryInfo.getEntryRelativePath();
+                            } else {
+                                objectRelativePath = StringUtils.appendIfMissing(relativePath, "/") + storageEntryInfo.getEntryRelativePath();
+                            }
+                        } else {
+                            objectRelativePath = storageEntryInfo.getEntryRelativePath();
+                        }
+                        return new StorageObject(storageLocation, objectRelativePath, storageEntryInfo);
                     })
                     .collect(Collectors.toList());
         } finally {
@@ -221,7 +235,7 @@ public class JadeHttpClient {
         }
     }
 
-    StorageEntryInfo extractStorageNodeFromJson(String storageUrl, String storageEntryUrl, String storagePath, JsonNode jsonNode) {
+    private StorageEntryInfo extractStorageNodeFromJson(String storageUrl, String storageEntryUrl, String storagePath, JsonNode jsonNode) {
         JsonNode storageIdNode = jsonNode.get("storageId");
         JsonNode storageRootLocationNode = jsonNode.get("storageRootLocation");
         JsonNode storageRootPathURINode = jsonNode.get("storageRootPathURI");

@@ -319,6 +319,9 @@ public class PathBasedAgentStorageResource {
                             .path(resolvedContentURI.getJadeStorage())
                             .build();
                     DataNodeInfo newContentNode = new DataNodeInfo();
+                    newContentNode.setStorageType(
+                        storageVolume.getStorageType() != null ? storageVolume.getStorageType().name() : null
+                    );
                     newContentNode.setStorageRootLocation(storageVolume.getStorageRootLocation());
                     newContentNode.setNodeInfoURL(UriBuilder.fromUri(resourceURI.getBaseUri())
                             .path(Constants.AGENTSTORAGE_URI_PATH)
@@ -471,6 +474,7 @@ public class PathBasedAgentStorageResource {
                     List<DataNodeInfo> dataNodes = contentGetter.getObjectsList().stream()
                             .map(contentNode -> {
                                 DataNodeInfo dataNode = new DataNodeInfo();
+                                dataNode.setStorageType(contentNode.getStorageType().name());
                                 dataNode.setStorageRootLocation(storageVolume.getStorageRootLocation());
                                 dataNode.setStorageRootBinding(storageVolumeURI.getJadeStorage());
                                 dataNode.setNodeRelativePath(storageVolumeURI.relativizeKey(contentNode.getObjectKey()));

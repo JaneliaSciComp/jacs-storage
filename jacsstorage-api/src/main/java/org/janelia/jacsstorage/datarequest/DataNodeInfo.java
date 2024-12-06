@@ -11,6 +11,7 @@ import java.util.Date;
 
 public class DataNodeInfo {
     private String storageId;
+    private String storageType;
     private String storageRootLocation;
     private String storageRootBinding;
     private String nodeAccessURL;
@@ -37,6 +38,14 @@ public class DataNodeInfo {
 
     public void setNumericStorageId(Number storageId) {
         this.storageId = storageId.toString();
+    }
+
+    public String getStorageType() {
+        return storageType;
+    }
+
+    public void setStorageType(String storageType) {
+        this.storageType = storageType;
     }
 
     public String getStorageRootLocation() {

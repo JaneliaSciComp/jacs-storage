@@ -26,6 +26,10 @@ public class ContentNode {
         this.jadeStorageURI = rootStorageURI;
     }
 
+    public JacsStorageType getStorageType() {
+        return storageType;
+    }
+
     public String getPrefix() {
         return prefix;
     }
