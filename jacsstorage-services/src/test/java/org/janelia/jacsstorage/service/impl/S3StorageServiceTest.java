@@ -58,7 +58,7 @@ public class S3StorageServiceTest {
                 new ContentAccessParams()
                         .setEntryNamePattern("config.json")
                         .setMaxDepth(1));
-        assertTrue(nodes.stream().filter(ContentNode::isNotCollection).count() == 1);
+        assertTrue(nodes.size() == 1);
         String nodeContent = new String(ByteStreams.toByteArray(storageService.readContent(nodes.get(0).getObjectKey())));
         assertNotNull(nodeContent);
     }
@@ -77,7 +77,7 @@ public class S3StorageServiceTest {
                         .addSelectedEntry("config.json")
                         .addSelectedEntry("DATA_NOTES.md")
                         .setMaxDepth(1));
-        assertEquals(2L, nodes.stream().filter(n->n.isNotCollection()).count());
+        assertEquals(2L, nodes.size());
     }
 
     @Test
@@ -94,33 +94,42 @@ public class S3StorageServiceTest {
             final String contentLocation;
             final int depth;
             final int offset;
+            final boolean directoriesOnly;
             final int expectedNodes;
 
-            TestData(String testName, String contentLocation, int depth, int offset, int expectedNodes) {
+            TestData(String testName, String contentLocation, int depth, int offset, boolean directoriesOnly, int expectedNodes) {
                 this.testName = testName;
                 this.contentLocation = contentLocation;
                 this.depth = depth;
                 this.offset = offset;
+                this.directoriesOnly = directoriesOnly;
                 this.expectedNodes = expectedNodes;
             }
         }
         TestData[] testData = new TestData[] {
-                new TestData("Test 0", "images/2021-10-19", 0, 0, 4),
-                new TestData("Test 1", "images/2021-10-19/", 0, 0, 4),
-                new TestData("Test 2","images/2021-10-19", 1, 0, 5),
-                new TestData("Test 3","images/2021-10-19", 1, 3, 2),
-                new TestData("Test 4","images/2021-10-19", 1, 4, 1),
-                new TestData("Test 5","images/2021-10-19/transform.txt", 2, 0, 1),
+//                new TestData("Test 0", "images/2021-10-19", 0, 0, true, 2),
+//                new TestData("Test 1", "images/2021-10-19/", 0, 0, true, 2),
+                new TestData("Test depth 0, offset 0", "images/2021-10-19", 0, 0, false, 6),
+                new TestData("Test depth 0, offset 0, / ending", "images/2021-10-19/", 0, 0, false, 6),
+                new TestData("Test depth 0, offset 1", "images/2021-10-19", 0, 1, false, 5),
+                new TestData("Test depth 0, offset 1, / ending", "images/2021-10-19/", 0, 1, false, 5),
+                new TestData("Test depth 0, offset 2", "images/2021-10-19", 0, 2, false, 4),
+                new TestData("Test depth 0, offset 2, / ending", "images/2021-10-19/", 0, 2, false, 4),
+                new TestData("Test depth 1, offset 0","images/2021-10-19", 1, 0, false, 15),
+                new TestData("Test depth 1, offset 3","images/2021-10-19", 1, 3, false, 12),
+                new TestData("Test depth 1, offset 4","images/2021-10-19", 1, 4, false, 10),
+                new TestData("Test exact match","images/2021-10-19/transform.txt", 2, 0, false, 1),
                 // be careful of this case - when one asks for an exact match with an offset > 0
-                new TestData("Test 6","images/2021-10-19/transform.txt", 2, 1, 0),
+                new TestData("Test exact match bad offset","images/2021-10-19/transform.txt", 2, 1, false, 0),
         };
         for (TestData td : testData) {
             List<ContentNode> nodes = storageService.listContentNodes(td.contentLocation,
                     new ContentAccessParams()
                             .setMaxDepth(td.depth)
                             .setStartEntryIndex(td.offset)
+                            .setDirectoriesOnly(td.directoriesOnly)
             );
-            assertEquals(td.testName, td.expectedNodes, nodes.stream().filter(ContentNode::isNotCollection).count());
+            assertEquals(td.testName, td.expectedNodes, nodes.size());
         }
     }
 
@@ -150,7 +159,7 @@ public class S3StorageServiceTest {
             }
         }
         TestData[] testData = new TestData[] {
-                new TestData("segmentation/exaSPIM_653159_zarr/", 0, 0, 8),
+                new TestData("segmentation/exaSPIM_653159_zarr/", 0, 0, 9),
         };
         for (TestData td : testData) {
             List<ContentNode> nodes = storageService.listContentNodes(td.contentLocation,
@@ -208,8 +217,10 @@ public class S3StorageServiceTest {
         ByteArrayOutputStream testDataStream = new ByteArrayOutputStream();
         List<ContentNode> contentNodes = storageService.listContentNodes("v3_3_0/schemas", new ContentAccessParams());
         for (ContentNode n : contentNodes) {
-            try (InputStream nodeContentStream = storageService.readContent(n.getObjectKey())) {
-                ByteStreams.copy(nodeContentStream, testDataStream);
+            if (n.isNotCollection()) {
+                try (InputStream nodeContentStream = storageService.readContent(n.getObjectKey())) {
+                    ByteStreams.copy(nodeContentStream, testDataStream);
+                }
             }
         }
         String testDataContent = testDataStream.toString();

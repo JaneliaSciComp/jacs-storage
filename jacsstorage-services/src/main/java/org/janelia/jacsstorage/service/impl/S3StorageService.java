@@ -102,7 +102,12 @@ public class S3StorageService implements ContentStorageService {
             ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
             for (ListObjectsV2Response r : listObjectsResponses) {
                 for (CommonPrefix commonPrefix : r.commonPrefixes()) {
-                    results.add(createPrefixNode(commonPrefix));
+                    if (results.isEmpty() && contentAccessParams.matchEntry(s3Location)) {
+                        results.add(createPrefixNode(s3Location));
+                    }
+                    if (contentAccessParams.matchEntry(commonPrefix.prefix())) {
+                        results.add(createPrefixNode(commonPrefix.prefix()));
+                    }
                     prefixQueue.add(commonPrefix.prefix());
                 }
             }
@@ -120,7 +125,6 @@ public class S3StorageService implements ContentStorageService {
         long requestOffset = contentAccessParams.getStartEntryIndex();
 
         long currentOffset = 0;
-        boolean exactMatchFound = false;
         List<ContentNode> results = new ArrayList<>();
         while (!prefixQueue.isEmpty()) {
             String currentPrefix = prefixQueue.poll();
@@ -149,25 +153,40 @@ public class S3StorageService implements ContentStorageService {
                 }
 
                 for (S3Object s3Object : r.contents()) {
-                    currentOffset++;
-                    if (currentOffset <= requestOffset) {
+                    if (++currentOffset < requestOffset) {
                         continue;
                     }
 
-                    if (s3Object.key().equals(s3Location)) exactMatchFound = true;
+                    if (s3Object.key().equals(s3Location)) {
+                        // if an exact match is found create the node and return
+                        results.add(createObjectNode(s3Object));
+                        return results;
+                    }
 
+                    if (currentOffset-1 == requestOffset && results.isEmpty()) {
+                        // if there are no results yet add the current prefix
+                        if (contentAccessParams.matchEntry(currentPrefix)) {
+                            results.add(createPrefixNode(currentPrefix));
+                        }
+                        currentOffset++;
+                    }
                     if (contentAccessParams.matchEntry(s3Object.key())) {
                         results.add(createObjectNode(s3Object));
                     }
-                    if (contentAccessParams.getEntriesCount() > 0 && results.size() >= contentAccessParams.getEntriesCount() || exactMatchFound) {
+
+                    if (contentAccessParams.getEntriesCount() > 0 && results.size() >= contentAccessParams.getEntriesCount()) {
                         return results;
                     }
                 }
 
                 for (CommonPrefix commonPrefix : r.commonPrefixes()) {
-                    results.add(createPrefixNode(commonPrefix));
+                    if (contentAccessParams.matchEntry(commonPrefix.prefix())) {
+                        results.add(createPrefixNode(commonPrefix.prefix()));
+                    }
                     prefixQueue.add(commonPrefix.prefix());
+                    currentOffset++;
                 }
+
             }
         }
 
@@ -199,9 +218,9 @@ public class S3StorageService implements ContentStorageService {
         }
     }
 
-    private ContentNode createPrefixNode(CommonPrefix s3Prefix) {
+    private ContentNode createPrefixNode(String s3Prefix) {
         try {
-            String key = StringUtils.removeEnd(s3Prefix.prefix(), "/");
+            String key = StringUtils.removeEnd(s3Prefix, "/");
             int pathSeparatorIndex = key.lastIndexOf('/');
             String prefix;
             String name;

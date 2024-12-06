@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.ImmutableMap;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.ContentNode;
@@ -42,7 +43,11 @@ public class ContentGetterImpl implements ContentGetter {
             ContentMetadataReader contentMetadataReader = contentAccessProvider.getContentMetadataReader(contentNodes.get(0).getMimeType());
             return contentMetadataReader.getMetadata(contentNodes.get(0), contentStorageService);
         }
-        return Collections.emptyMap(); // !!!! FIXME
+        long nobjects = contentNodes.stream().filter(ContentNode::isNotCollection).count();
+        return ImmutableMap.of(
+                "nentries", contentNodes.size(),
+                "nobjects", nobjects
+        );
     }
 
     @Override
