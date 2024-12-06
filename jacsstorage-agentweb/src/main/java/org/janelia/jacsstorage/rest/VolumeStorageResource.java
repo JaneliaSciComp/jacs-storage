@@ -282,7 +282,7 @@ public class VolumeStorageResource {
                                     dataNode.setNodeRelativePath(storageVolume.getContentRelativePath(contentNode.getNodeStorageURI()));
                                     dataNode.setMimeType(contentNode.getMimeType());
                                     dataNode.setSize(contentNode.getSize());
-                                    dataNode.setCollectionFlag(false);
+                                    dataNode.setCollectionFlag(contentNode.isCollection());
                                     dataNode.setLastModified(contentNode.getLastModified());
                                     dataNode.setNodeInfoURL(
                                             UriBuilder.fromUri(endpointBaseURI)

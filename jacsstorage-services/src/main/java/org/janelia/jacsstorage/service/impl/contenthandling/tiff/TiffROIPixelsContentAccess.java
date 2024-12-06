@@ -43,6 +43,9 @@ public class TiffROIPixelsContentAccess implements ContentAccess {
             if (CollectionUtils.isEmpty(contentNodes)) {
                 return 0L;
             } else if (contentNodes.size() == 1) {
+                if (contentNodes.get(0).isCollection()) {
+                    return 0L;
+                }
                 try (InputStream nodeContentStream = contentObjectReader.readContent(contentNodes.get(0).getObjectKey())) {
                     return ImageUtils.sizeImagePixelBytesFromTiffStream(
                             nodeContentStream,
@@ -53,6 +56,9 @@ public class TiffROIPixelsContentAccess implements ContentAccess {
             } else {
                 long totalSize = 2 * TarConstants.DEFAULT_RCDSIZE;
                 for (ContentNode contentNode : contentNodes) {
+                    if (contentNode.isCollection()) {
+                        continue; // skip dirs
+                    }
                     try (InputStream nodeContentStream = contentObjectReader.readContent(contentNode.getObjectKey())) {
                         long entrySize = ImageUtils.sizeImagePixelBytesFromTiffStream(
                                 nodeContentStream,
@@ -85,6 +91,9 @@ public class TiffROIPixelsContentAccess implements ContentAccess {
             if (CollectionUtils.isEmpty(contentNodes)) {
                 return 0L;
             } else if (contentNodes.size() == 1) {
+                if (contentNodes.get(0).isCollection()) {
+                    return 0L;
+                }
                 try (InputStream nodeContentStream = contentObjectReader.readContent(contentNodes.get(0).getObjectKey())) {
                     return IOStreamUtils.copyFrom(ImageUtils.loadImagePixelBytesFromTiffStream(
                             nodeContentStream,
@@ -96,6 +105,9 @@ public class TiffROIPixelsContentAccess implements ContentAccess {
                 TarArchiveOutputStream archiveOutputStream = new TarArchiveOutputStream(outputStream, TarConstants.DEFAULT_RCDSIZE);
                 String commonPrefix = ContentNodeHelper.commonPrefix(contentNodes);
                 for (ContentNode contentNode : contentNodes) {
+                    if (contentNode.isCollection()) {
+                        continue; // skip dirs
+                    }
                     String tarEntryPrefix = commonPrefix.isEmpty() ? contentNode.getPrefix() : commonPrefix;
                     String tarEntryName = tarEntryPrefix.isEmpty() ? contentNode.getName() : tarEntryPrefix + "/" + contentNode.getName();
                     TarArchiveEntry entry = new TarArchiveEntry(tarEntryName);

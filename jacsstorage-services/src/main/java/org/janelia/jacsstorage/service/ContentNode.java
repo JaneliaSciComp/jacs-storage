@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.service;
 
-import java.io.InputStream;
 import java.util.Date;
 
 import javax.activation.MimetypesFileTypeMap;
@@ -20,6 +19,7 @@ public class ContentNode {
     private String name;
     private long size;
     private Date lastModified;
+    private boolean collection;
 
     public ContentNode(JacsStorageType storageType, JADEStorageURI rootStorageURI) {
         this.storageType = storageType;
@@ -68,6 +68,19 @@ public class ContentNode {
 
     public ContentNode setLastModified(Date lastModified) {
         this.lastModified = lastModified;
+        return this;
+    }
+
+    public boolean isCollection() {
+        return collection;
+    }
+
+    public boolean isNotCollection() {
+        return !collection;
+    }
+
+    public ContentNode setCollection(boolean collection) {
+        this.collection = collection;
         return this;
     }
 

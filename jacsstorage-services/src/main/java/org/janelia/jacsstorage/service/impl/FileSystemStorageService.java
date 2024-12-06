@@ -91,7 +91,7 @@ public class FileSystemStorageService implements ContentStorageService {
                 }
                 // returned nodes only have files - no directories
                 return selectedFiles
-                        .filter(Files::isRegularFile)
+                        .filter(p -> !filterParams.isDirectoriesOnly() || Files.isDirectory(p))
                         .map(this::createContentNode)
                         .collect(Collectors.toList())
                         ;
@@ -112,8 +112,9 @@ public class FileSystemStorageService implements ContentStorageService {
             return new ContentNode(JacsStorageType.FILE_SYSTEM, JADEStorageURI.createStoragePathURI("", new JADEStorageOptions()))
                     .setName(p.getFileName().toString())
                     .setPrefix(parent != null ? parent.toString() : "")
-                    .setSize(fa.size())
+                    .setSize(Files.isDirectory(p) ? 0 : fa.size())
                     .setLastModified(new Date(fa.lastModifiedTime().toMillis()))
+                    .setCollection(Files.isDirectory(p))
                     ;
         } catch (Exception e) {
             throw new ContentException(e);

@@ -415,6 +415,7 @@ public class PathBasedAgentStorageResource {
                                 @QueryParam("depth") Integer depthParam,
                                 @QueryParam("offset") Integer offsetParam,
                                 @QueryParam("length") Integer lengthParam,
+                                @QueryParam("directoriesOnly") Boolean directoriesOnlyParam,
                                 @Context UriInfo requestURI,
                                 @Context ContainerRequestContext requestContext,
                                 @Context SecurityContext securityContext) {
@@ -427,6 +428,7 @@ public class PathBasedAgentStorageResource {
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
         int offset = offsetParam != null ? offsetParam : 0;
         int length = lengthParam != null ? lengthParam : -1;
+        boolean directoriesOnly = directoriesOnlyParam != null ? directoriesOnlyParam : false;
         List<JacsStorageVolume> volumeCandidates;
         try {
             volumeCandidates = storageResourceHelper.listStorageVolumesForURI(contentURI);
@@ -455,7 +457,8 @@ public class PathBasedAgentStorageResource {
         ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters())
                 .setMaxDepth(depth)
                 .setEntriesCount(length)
-                .setStartEntryIndex(offset);
+                .setStartEntryIndex(offset)
+                .setDirectoriesOnly(directoriesOnly);
         return accessibleVolumes.stream()
                 .findFirst()
                 .flatMap(aStorageVolume -> aStorageVolume.setStorageOptions(storageOptions).resolveAbsoluteLocationURI(contentURI)
@@ -473,7 +476,7 @@ public class PathBasedAgentStorageResource {
                                 dataNode.setNodeRelativePath(storageVolumeURI.relativizeKey(contentNode.getObjectKey()));
                                 dataNode.setMimeType(contentNode.getMimeType());
                                 dataNode.setSize(contentNode.getSize());
-                                dataNode.setCollectionFlag(false);
+                                dataNode.setCollectionFlag(contentNode.isCollection());
                                 dataNode.setLastModified(contentNode.getLastModified());
                                 dataNode.setNodeInfoURL(
                                         UriBuilder.fromUri(endpointBaseURI)

@@ -117,7 +117,8 @@ public class JadeHttpClient {
         }
     }
 
-    public List<StorageObject> listStorageContent(StorageLocation storageLocation, String relativePath, int depth, String subjectKey, String authToken) throws StorageObjectNotFoundException {
+    public List<StorageObject> listStorageContent(StorageLocation storageLocation, String relativePath, int depth, boolean dirsOnly,
+                                                  String subjectKey, String authToken) throws StorageObjectNotFoundException {
         Client httpclient = HttpUtils.createHttpClient();
         String storageURL = storageLocation.getStorageURL();
         try {
@@ -129,6 +130,9 @@ public class JadeHttpClient {
             }
             if (depth > 0) {
                 target = target.queryParam("depth", depth);
+            }
+            if (dirsOnly) {
+                target = target.queryParam("directoriesOnly", true);
             }
             LOG.debug("listStorageContent requesting {}", target.getUri().toString());
             Invocation.Builder requestBuilder = createRequestWithCredentials(

@@ -2,8 +2,6 @@ package org.janelia.jacsstorage.service.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -71,6 +69,50 @@ public class S3StorageService implements ContentStorageService {
         String s3Location = adjustLocation(contentLocation);
         LOG.debug("List content {} with {}", s3Location, contentAccessParams);
 
+        if (contentAccessParams.isDirectoriesOnly()) {
+            return listPrefixNodes(StringUtils.appendIfMissing(s3Location, "/"), contentAccessParams);
+        } else {
+            return listObjectNodes(s3Location, contentAccessParams);
+        }
+    }
+
+    private List<ContentNode> listPrefixNodes(String s3Location, ContentAccessParams contentAccessParams) {
+        LOG.debug("List prefix nodes at {}", s3Location);
+
+        Queue<String> prefixQueue = new LinkedList<>();
+        prefixQueue.add(s3Location);
+
+        List<ContentNode> results = new ArrayList<>();
+        while (!prefixQueue.isEmpty()) {
+            String currentPrefix = prefixQueue.poll();
+            String relativePrefix = StringUtils.removeEnd(
+                    StringUtils.removeStart(currentPrefix.substring(s3Location.length()), '/'),
+                    "/");
+            int currentDepth = StringUtils.isEmpty(relativePrefix) ? 0 : StringUtils.countMatches(relativePrefix, '/') + 1;
+            if (contentAccessParams.getMaxDepth() >= 0 && currentDepth > contentAccessParams.getMaxDepth()) {
+                return results;
+            }
+
+            ListObjectsV2Request initialRequest = ListObjectsV2Request.builder()
+                    .bucket(s3Adapter.getBucket())
+                    .prefix(currentPrefix)
+                    .delimiter("/")
+                    .build();
+
+            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
+            for (ListObjectsV2Response r : listObjectsResponses) {
+                for (CommonPrefix commonPrefix : r.commonPrefixes()) {
+                    results.add(createPrefixNode(commonPrefix));
+                    prefixQueue.add(commonPrefix.prefix());
+                }
+            }
+        }
+
+        return results;
+    }
+
+    private List<ContentNode> listObjectNodes(String s3Location, ContentAccessParams contentAccessParams) {
+        LOG.debug("List object nodes at {} with {}", s3Location, contentAccessParams);
 
         Queue<String> prefixQueue = new LinkedList<>();
         prefixQueue.add(s3Location);
@@ -115,7 +157,7 @@ public class S3StorageService implements ContentStorageService {
                     if (s3Object.key().equals(s3Location)) exactMatchFound = true;
 
                     if (contentAccessParams.matchEntry(s3Object.key())) {
-                        results.add(createContentNode(s3Object));
+                        results.add(createObjectNode(s3Object));
                     }
                     if (contentAccessParams.getEntriesCount() > 0 && results.size() >= contentAccessParams.getEntriesCount() || exactMatchFound) {
                         return results;
@@ -123,6 +165,7 @@ public class S3StorageService implements ContentStorageService {
                 }
 
                 for (CommonPrefix commonPrefix : r.commonPrefixes()) {
+                    results.add(createPrefixNode(commonPrefix));
                     prefixQueue.add(commonPrefix.prefix());
                 }
             }
@@ -131,7 +174,7 @@ public class S3StorageService implements ContentStorageService {
         return results;
     }
 
-    private ContentNode createContentNode(S3Object s3Object) {
+    private ContentNode createObjectNode(S3Object s3Object) {
         try {
             String key = s3Object.key();
             int pathSeparatorIndex = key.lastIndexOf('/');
@@ -149,6 +192,31 @@ public class S3StorageService implements ContentStorageService {
                     .setPrefix(prefix)
                     .setSize(s3Object.size())
                     .setLastModified(new Date(s3Object.lastModified().toEpochMilli()))
+                    .setCollection(false)
+                    ;
+        } catch (Exception e) {
+            throw new ContentException(e);
+        }
+    }
+
+    private ContentNode createPrefixNode(CommonPrefix s3Prefix) {
+        try {
+            String key = StringUtils.removeEnd(s3Prefix.prefix(), "/");
+            int pathSeparatorIndex = key.lastIndexOf('/');
+            String prefix;
+            String name;
+            if (pathSeparatorIndex == -1) {
+                name = key;
+                prefix = "";
+            } else {
+                name = key.substring(pathSeparatorIndex + 1);
+                prefix = key.substring(0, pathSeparatorIndex);
+            }
+            return new ContentNode(JacsStorageType.S3, s3Adapter.getStorageURI())
+                    .setName(name + "/")
+                    .setPrefix(prefix)
+                    .setSize(0)
+                    .setCollection(true)
                     ;
         } catch (Exception e) {
             throw new ContentException(e);
@@ -212,8 +280,10 @@ public class S3StorageService implements ContentStorageService {
     }
 
     private String adjustLocation(String contentLocation) {
-        String currentContentLocation = StringUtils.removeStart(contentLocation, '/');
-        return StringUtils.isBlank(currentContentLocation) ? "" : currentContentLocation;
+        return normalizedNonBlank(StringUtils.removeStart(contentLocation, '/'));
     }
 
+    private String normalizedNonBlank(String s) {
+        return StringUtils.isBlank(s) ? "" : s;
+    }
 }

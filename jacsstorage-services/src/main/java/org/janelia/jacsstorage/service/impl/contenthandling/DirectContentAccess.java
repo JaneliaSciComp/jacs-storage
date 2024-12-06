@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.enterprise.inject.Vetoed;
 
+import com.google.common.io.ByteStreams;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
@@ -80,8 +81,10 @@ public class DirectContentAccess implements ContentAccess {
                 TarArchiveEntry entry = new TarArchiveEntry(entryName);
                 entry.setSize(contentNode.getSize());
                 archiveOutputStream.putArchiveEntry(entry);
-                try (InputStream nodeContent = contentObjectReader.readContent(contentNode.getObjectKey())) {
-                    IOStreamUtils.copyFrom(nodeContent, archiveOutputStream);
+                if (!contentNode.isCollection()) {
+                    try (InputStream nodeContent = contentObjectReader.readContent(contentNode.getObjectKey())) {
+                        IOStreamUtils.copyFrom(nodeContent, archiveOutputStream);
+                    }
                 }
                 archiveOutputStream.closeArchiveEntry();
             }

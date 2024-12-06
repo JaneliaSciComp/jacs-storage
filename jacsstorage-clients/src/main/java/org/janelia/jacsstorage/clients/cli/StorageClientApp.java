@@ -52,12 +52,16 @@ public class StorageClientApp {
         private String path;
         @Parameter(names = {"-d", "--depth"}, description = "Depth of tree to list")
         private int depth = 1;
+        @Parameter(names = {"--dirs-only"}, description = "Only list subdirectories")
+        private boolean dirsOnly = false;
     }
 
     @Parameters(commandDescription = "Prints metadata for the given path.")
     private static class CommandMeta extends AbstractCommand {
         @Parameter(description = "<path>")
         private String path;
+        @Parameter(names = {"--dirs-only"}, description = "Only list subdirectories")
+        private boolean dirsOnly = false;
     }
 
     @Parameters(commandDescription = "Read a file at the given path")
@@ -153,7 +157,7 @@ public class StorageClientApp {
 
     private void commandList(CommandList args) throws Exception {
         StorageLocation storageLocation = getStorageLocation(args.path, args.getStorageOptions());
-        List<StorageObject> descendants = helper.getDescendants(storageLocation, storageLocation.getRelativePath(args.path), args.depth);
+        List<StorageObject> descendants = helper.getDescendants(storageLocation, storageLocation.getRelativePath(args.path), args.depth, args.dirsOnly);
         descendants.sort(Comparator.comparing(StorageObject::getAbsolutePath));
         descendants.forEach(storageObject -> {
             String size = StringUtils.leftPad(storageObject.getSizeBytes() + "", 12) + " bytes";
@@ -163,7 +167,7 @@ public class StorageClientApp {
 
     private void commandMeta(CommandMeta args) throws Exception {
         StorageLocation storageLocation = getStorageLocation(args.path, args.getStorageOptions());
-        StorageObject metadata = helper.getMetadata(storageLocation, storageLocation.getRelativePath(args.path));
+        StorageObject metadata = helper.getMetadata(storageLocation, storageLocation.getRelativePath(args.path), args.dirsOnly);
         if (metadata != null) {
             System.out.println("Object name:   " + metadata.getObjectName());
             System.out.println("Absolute path: " + metadata.getAbsolutePath());

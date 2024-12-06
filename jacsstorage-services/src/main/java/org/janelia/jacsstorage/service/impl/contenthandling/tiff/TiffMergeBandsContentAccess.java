@@ -28,6 +28,7 @@ public class TiffMergeBandsContentAccess implements ContentAccess {
         Integer pageNumber = contentAccessParams.getAsInt("z", 0);
         return ImageUtils.sizeBandMergedTextureBytesFromImageStreams(
                 contentNodes.stream()
+                        .filter(ContentNode::isNotCollection)
                         .map(n -> NamedSupplier.namedSupplier(
                                 n.getName(),
                                 () -> contentObjectReader.readContent(n.getObjectKey()))),
@@ -46,6 +47,7 @@ public class TiffMergeBandsContentAccess implements ContentAccess {
         Integer pageNumber = contentAccessParams.getAsInt("z", 0);
         byte[] contentBytes = ImageUtils.bandMergedTextureBytesFromImageStreams(
                 contentNodes.stream()
+                        .filter(ContentNode::isNotCollection)
                         .map(n -> NamedSupplier.namedSupplier(
                                 n.getName(),
                                 () -> contentObjectReader.readContent(n.getObjectKey()))),

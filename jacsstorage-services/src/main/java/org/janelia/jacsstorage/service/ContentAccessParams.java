@@ -24,6 +24,7 @@ public class ContentAccessParams {
     private boolean alwaysArchive;
     private int startEntryIndex;
     private int entriesCount;
+    private boolean directoriesOnly;
     private boolean estimateSizeDisabled;
     private Map<String, String> filterTypeSpecificParams = new HashMap<>();
 
@@ -101,6 +102,15 @@ public class ContentAccessParams {
 
     public ContentAccessParams setNaturalSort(boolean naturalSort) {
         this.naturalSort = naturalSort;
+        return this;
+    }
+
+    public boolean isDirectoriesOnly() {
+        return directoriesOnly;
+    }
+
+    public ContentAccessParams setDirectoriesOnly(boolean directoriesOnly) {
+        this.directoriesOnly = directoriesOnly;
         return this;
     }
 
