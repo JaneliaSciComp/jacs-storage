@@ -29,6 +29,7 @@ public class StorageLocation {
 
     /**
      * Base URL to this storage location.
+     *
      * @return
      */
     public String getStorageURL() {
@@ -41,6 +42,7 @@ public class StorageLocation {
 
     /**
      * Prefix for all paths in this StorageLocation.
+     *
      * @return
      */
     public String getPathPrefix() {
@@ -49,6 +51,7 @@ public class StorageLocation {
 
     /**
      * Given an absolute JADE path, generate the storage URL for the content.
+     *
      * @param absolutePath
      * @return
      */
@@ -59,6 +62,7 @@ public class StorageLocation {
 
     /**
      * Given a JADE path relative to this StorageLocation, generate a storage URL for the content.
+     *
      * @param relativePath
      * @return
      */
@@ -68,6 +72,7 @@ public class StorageLocation {
 
     /**
      * Given an absolute JADE path, generate the path relative to this StorageLocation.
+     *
      * @param absolutePath
      * @return
      */
@@ -79,7 +84,7 @@ public class StorageLocation {
         } else if (StringUtils.equals(storageType, "S3")) {
             return absolutePath;
         } else if (!absolutePath.startsWith("/")) {
-            throw new IllegalArgumentException("Not an absolute path: "+absolutePath);
+            throw new IllegalArgumentException("Not an absolute path: " + absolutePath);
         } else {
             throw new IllegalArgumentException("Given absolute path (" + absolutePath + ") does not exist in storage location with prefix " + pathPrefix);
         }
@@ -87,20 +92,26 @@ public class StorageLocation {
 
     /**
      * Given a relative JADE path, generate the full absolute path.
+     *
      * @param relativePath
      * @return
      */
     public String getAbsolutePath(String relativePath) {
-        return pathPrefix + relativePath;
+        return StringUtils.isNotBlank(pathPrefix)
+                ? pathPrefix + relativePath
+                : relativePath;
     }
 
     /**
      * Given a relative JADE path, generate the full absolute virtual path.
+     *
      * @param relativePath
      * @return
      */
     public String getVirtualPath(String relativePath) {
-        return virtualPath + relativePath;
+        return StringUtils.isNotBlank(virtualPath)
+                ? virtualPath + relativePath
+                : relativePath;
     }
 
     JadeStorageAttributes getStorageAttributes() {
