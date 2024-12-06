@@ -1,10 +1,12 @@
 package org.janelia.jacsstorage.service.impl;
 
 import java.io.InputStream;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.inject.Inject;
 
+import org.janelia.jacsstorage.coreutils.ComparatorUtils;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.ContentGetter;
@@ -50,6 +52,7 @@ public class DataContentServiceImpl implements DataContentService {
             throw new IllegalArgumentException("Invalid storage URI");
         }
         List<ContentNode> contentNodes = contentStorageService.listContentNodes(storageURI.getContentKey(), contentAccessParams);
+        contentNodes.sort((n1, n2) -> ComparatorUtils.naturalCompare(n1.getObjectKey(), n2.getObjectKey(), true)); // sort by key
         return new ContentGetterImpl(
                 contentStorageService,
                 contentAccessProvider,

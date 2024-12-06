@@ -76,20 +76,15 @@ public class FileSystemStorageService implements ContentStorageService {
             int traverseDepth = filterParams.getMaxDepth() >= 0 ? filterParams.getMaxDepth() : Integer.MAX_VALUE;
             try (Stream<Path> files = Files.walk(contentPath, traverseDepth)) {
                 Stream<Path> matchingFiles = files.filter(p -> Files.isDirectory(p) || filterParams.matchEntry(p.toString()));
-                Stream<Path> orderedFiles;
-                if (filterParams.isNaturalSort()) {
-                    orderedFiles = matchingFiles.sorted((p1, p2) -> ComparatorUtils.naturalCompare(p1.toString(), p2.toString(), true));
-                } else {
-                    orderedFiles = matchingFiles; // no ordering
-                }
                 Stream<Path> selectedFiles;
                 if (filterParams.getEntriesCount() > 0) {
-                    selectedFiles = orderedFiles.skip(Math.max(filterParams.getStartEntryIndex(), 0))
+                    selectedFiles = matchingFiles.skip(Math.max(filterParams.getStartEntryIndex(), 0))
                             .limit(filterParams.getEntriesCount());
                 } else {
-                    selectedFiles = orderedFiles.skip(Math.max(filterParams.getStartEntryIndex(), 0));
+                    selectedFiles = matchingFiles.skip(Math.max(filterParams.getStartEntryIndex(), 0));
                 }
-                // returned nodes only have files - no directories
+                // if directories only returned nodes only have directories,
+                // otherwise they will have both files and directories
                 return selectedFiles
                         .filter(p -> !filterParams.isDirectoriesOnly() || Files.isDirectory(p))
                         .map(this::createContentNode)

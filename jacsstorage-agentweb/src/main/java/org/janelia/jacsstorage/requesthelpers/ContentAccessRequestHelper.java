@@ -21,9 +21,6 @@ public class ContentAccessRequestHelper {
                 if (CollectionUtils.isNotEmpty(vs)) {
                     filterParams.setMaxDepth(vs.stream().filter(StringUtils::isNotBlank).map(s -> Integer.valueOf(s)).findFirst().orElse(1));
                 }
-            } else if ("useNaturalSort".equalsIgnoreCase(k)) {
-                if (CollectionUtils.isNotEmpty(vs))
-                    filterParams.setNaturalSort(Boolean.parseBoolean(vs.get(0)));
             } else if ("noSize".equalsIgnoreCase(k)) {
                 if (CollectionUtils.isNotEmpty(vs))
                     filterParams.setEstimateSizeDisabled(Boolean.parseBoolean(vs.get(0)));

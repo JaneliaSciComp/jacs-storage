@@ -20,7 +20,6 @@ public class ContentAccessParams {
     private String entryNamePattern;
     private Pattern regexEntryNamePattern;
     private int maxDepth = DEFAULT_DEPTH;
-    private boolean naturalSort;
     private boolean alwaysArchive;
     private int startEntryIndex;
     private int entriesCount;
@@ -94,15 +93,6 @@ public class ContentAccessParams {
         } else {
             return defaultValue;
         }
-    }
-
-    public boolean isNaturalSort() {
-        return naturalSort;
-    }
-
-    public ContentAccessParams setNaturalSort(boolean naturalSort) {
-        this.naturalSort = naturalSort;
-        return this;
     }
 
     public boolean isDirectoriesOnly() {
