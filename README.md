@@ -1,6 +1,6 @@
 # JADE - The JACS Storage Engine
 
-[![CircleCI](https://circleci.com/gh/JaneliaSciComp/jacs-storage.svg?style=svg)](https://circleci.com/gh/JaneliaSciComp/jacs-storage)
+[![Java CI with Gradle](https://github.com/JaneliaSciComp/jacs-storage/actions/workflows/gradle.yml/badge.svg)](https://github.com/JaneliaSciComp/jacs-storage/actions/workflows/gradle.yml)
 
 ## General Notes
 
