@@ -1,11 +1,11 @@
-# JADE - The JACS Storage Engine
+# JADE Storage Engine
 
 [![Java CI with Gradle](https://github.com/JaneliaSciComp/jacs-storage/actions/workflows/gradle.yml/badge.svg)](https://github.com/JaneliaSciComp/jacs-storage/actions/workflows/gradle.yml)
 [![DOI](https://zenodo.org/badge/103445945.svg)](https://doi.org/10.5281/zenodo.14341280)
 
 ## General Notes
 
-JADE is a distributed storage system that can manage a set of configured volumes local to the machine or shared 
+JADE (JAnelia Data Environment) is a distributed storage system that can manage a set of configured volumes local to the machine or shared 
 - NFS-mounted from a remote host. Typically the shared volumes are read only with the exception of 
 the special OVERFLOW_VOLUME which is selected when a node runs out of available space on the local volumes.
 The system consists of a master node (service) that manages the resource allocation and one or more workers or 
