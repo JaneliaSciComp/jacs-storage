@@ -89,7 +89,7 @@ public class S3StorageService implements ContentStorageService {
                     StringUtils.removeStart(currentPrefix.substring(s3Location.length()), '/'),
                     "/");
             int currentDepth = StringUtils.isEmpty(relativePrefix) ? 0 : StringUtils.countMatches(relativePrefix, '/') + 1;
-            if (contentAccessParams.getMaxDepth() >= 0 && currentDepth > contentAccessParams.getMaxDepth()) {
+            if (contentAccessParams.getMaxDepth() >= 0 && currentDepth >= contentAccessParams.getMaxDepth()) {
                 return results;
             }
 
@@ -132,7 +132,7 @@ public class S3StorageService implements ContentStorageService {
                     StringUtils.removeStart(currentPrefix.substring(s3Location.length()), '/'),
                     "/");
             int currentDepth = StringUtils.isEmpty(relativePrefix) ? 0 : StringUtils.countMatches(relativePrefix, '/') + 1;
-            if (contentAccessParams.getMaxDepth() >= 0 && currentDepth > contentAccessParams.getMaxDepth()) {
+            if (contentAccessParams.getMaxDepth() >= 0 && currentDepth >= contentAccessParams.getMaxDepth()) {
                 return results;
             }
 

@@ -107,17 +107,19 @@ public class S3StorageServiceTest {
             }
         }
         TestData[] testData = new TestData[] {
-//                new TestData("Test 0", "images/2021-10-19", 0, 0, true, 2),
-//                new TestData("Test 1", "images/2021-10-19/", 0, 0, true, 2),
-                new TestData("Test depth 0, offset 0", "images/2021-10-19", 0, 0, false, 6),
-                new TestData("Test depth 0, offset 0, / ending", "images/2021-10-19/", 0, 0, false, 6),
-                new TestData("Test depth 0, offset 1", "images/2021-10-19", 0, 1, false, 5),
-                new TestData("Test depth 0, offset 1, / ending", "images/2021-10-19/", 0, 1, false, 5),
-                new TestData("Test depth 0, offset 2", "images/2021-10-19", 0, 2, false, 4),
-                new TestData("Test depth 0, offset 2, / ending", "images/2021-10-19/", 0, 2, false, 4),
-                new TestData("Test depth 1, offset 0","images/2021-10-19", 1, 0, false, 15),
-                new TestData("Test depth 1, offset 3","images/2021-10-19", 1, 3, false, 12),
-                new TestData("Test depth 1, offset 4","images/2021-10-19", 1, 4, false, 10),
+                new TestData("Test dirsOnly, depth 0", "images/2021-10-19", 0, 0, true, 0),
+                new TestData("Test dirsOnly, depth 0, ending /", "images/2021-10-19/", 0, 0, true, 0),
+                new TestData("Test dirsOnly, depth 1", "images/2021-10-19", 1, 0, true, 2),
+                new TestData("Test dirsOnly, depth 1, ending /", "images/2021-10-19/", 1, 0, true, 2),
+                new TestData("Test depth 1, offset 0", "images/2021-10-19", 1, 0, false, 6),
+                new TestData("Test depth 1, offset 0, / ending", "images/2021-10-19/", 1, 0, false, 6),
+                new TestData("Test depth 1, offset 1", "images/2021-10-19", 1, 1, false, 5),
+                new TestData("Test depth 1, offset 1, / ending", "images/2021-10-19/", 1, 1, false, 5),
+                new TestData("Test depth 1, offset 2", "images/2021-10-19", 1, 2, false, 4),
+                new TestData("Test depth 1, offset 2, / ending", "images/2021-10-19/", 1, 2, false, 4),
+                new TestData("Test depth 2, offset 0","images/2021-10-19", 2, 0, false, 15),
+                new TestData("Test depth 2, offset 3","images/2021-10-19", 2, 3, false, 12),
+                new TestData("Test depth 2, offset 4","images/2021-10-19", 2, 4, false, 10),
                 new TestData("Test exact match","images/2021-10-19/transform.txt", 2, 0, false, 1),
                 // be careful of this case - when one asks for an exact match with an offset > 0
                 new TestData("Test exact match bad offset","images/2021-10-19/transform.txt", 2, 1, false, 0),
@@ -159,7 +161,7 @@ public class S3StorageServiceTest {
             }
         }
         TestData[] testData = new TestData[] {
-                new TestData("segmentation/exaSPIM_653159_zarr/", 0, 0, 9),
+                new TestData("segmentation/exaSPIM_653159_zarr/", 1, 0, 9),
         };
         for (TestData td : testData) {
             List<ContentNode> nodes = storageService.listContentNodes(td.contentLocation,
