@@ -95,12 +95,14 @@ public class ContentStorageResource {
         JADEStorageURI contentURI;
         String accessKey = requestContext.getHeaderString("AccessKey");
         String secretKey = requestContext.getHeaderString("SecretKey");
+        String awsRegion = requestContext.getHeaderString("AWSRegion");
         if (StringUtils.isNotBlank(contentPathParam)) {
             contentURI = JADEStorageURI.createStoragePathURI(
                     contentPathParam,
                     new JADEStorageOptions()
                             .setAccessKey(accessKey)
                             .setSecretKey(secretKey)
+                            .setAWSRegion(awsRegion)
             );
         } else {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -192,12 +194,14 @@ public class ContentStorageResource {
         JADEStorageURI contentURI;
         String accessKey = requestContext.getHeaderString("AccessKey");
         String secretKey = requestContext.getHeaderString("SecretKey");
+        String awsRegion = requestContext.getHeaderString("AWSRegion");
         if (StringUtils.isNotBlank(contentPathParam)) {
             contentURI = JADEStorageURI.createStoragePathURI(
                     contentPathParam,
                     new JADEStorageOptions()
                             .setAccessKey(accessKey)
                             .setSecretKey(secretKey)
+                            .setAWSRegion(awsRegion)
             );
         } else {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -287,11 +291,13 @@ public class ContentStorageResource {
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
         String accessKey = requestContext.getHeaderString("AccessKey");
         String secretKey = requestContext.getHeaderString("SecretKey");
+        String awsRegion = requestContext.getHeaderString("AWSRegion");
         JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(
                 contentPathParam,
                 new JADEStorageOptions()
                         .setAccessKey(accessKey)
                         .setSecretKey(secretKey)
+                        .setAWSRegion(awsRegion)
         );
         List<JacsStorageVolume> volumeCandidates;
         try {

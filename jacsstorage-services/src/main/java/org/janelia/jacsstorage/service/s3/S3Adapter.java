@@ -71,7 +71,7 @@ public class S3Adapter {
                 new JADEStorageOptions()
                         .setAccessKey(accessKey)
                         .setSecretKey(secretKey)
-                        .setRegion(region)
+                        .setAWSRegion(region)
         );
     }
 

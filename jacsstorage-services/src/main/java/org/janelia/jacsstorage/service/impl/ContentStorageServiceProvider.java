@@ -41,7 +41,7 @@ class ContentStorageServiceProvider {
             return new S3StorageService(
                     storageURI.getContentBucket(),
                     null,
-                    defaultAWSRegion,
+                    storageURI.getStorageOptions().getAWSRegion(defaultAWSRegion),
                     storageURI.getStorageOptions().getAccessKey(null),
                     storageURI.getStorageOptions().getSecretKey(null)
             );
@@ -51,7 +51,7 @@ class ContentStorageServiceProvider {
             return new S3StorageService(
                     s3Bucket,
                     storageURI.getStorageEndpoint(),
-                    defaultAWSRegion,
+                    storageURI.getStorageOptions().getAWSRegion(defaultAWSRegion),
                     storageURI.getStorageOptions().getAccessKey(null),
                     storageURI.getStorageOptions().getSecretKey(null)
             );

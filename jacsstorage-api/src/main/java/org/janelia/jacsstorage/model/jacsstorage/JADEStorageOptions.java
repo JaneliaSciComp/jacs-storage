@@ -45,15 +45,15 @@ public class JADEStorageOptions {
         return this;
     }
 
-    public String getRegion(String defaultRegion) {
-        return (String) options.getOrDefault("Region", defaultRegion);
+    public String getAWSRegion(String defaultAWSRegion) {
+        return (String) options.getOrDefault("AWSRegion", defaultAWSRegion);
     }
 
-    public JADEStorageOptions setRegion(String region) {
+    public JADEStorageOptions setAWSRegion(String region) {
         if (region != null) {
-            options.put("Region", region);
+            options.put("AWSRegion", region);
         } else {
-            options.remove("Region");
+            options.remove("AWSRegion");
         }
         return this;
     }

@@ -146,7 +146,8 @@ public class StorageVolumesResource {
                                        @Context SecurityContext securityContext) {
         JADEStorageOptions storageOptions = new JADEStorageOptions()
                 .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
         JADEStorageURI dataStorageURI = JADEStorageURI.createStoragePathURI(dataStoragePathParam, storageOptions);
         StorageQuery storageQuery = new StorageQuery()
                 .setId(storageVolumeId)

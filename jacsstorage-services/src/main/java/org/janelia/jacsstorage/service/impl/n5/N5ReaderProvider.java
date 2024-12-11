@@ -37,7 +37,7 @@ public class N5ReaderProvider {
             return new S3N5Reader(
                     storageURI.getContentBucket(),
                     null,
-                    storageURI.getStorageOptions().getRegion(defaultAWSRegion),
+                    storageURI.getStorageOptions().getAWSRegion(defaultAWSRegion),
                     storageURI.getStorageOptions().getAccessKey(null),
                     storageURI.getStorageOptions().getSecretKey(null),
                     storageURI.getContentKey());
@@ -45,7 +45,7 @@ public class N5ReaderProvider {
             return new S3N5Reader(
                     storageURI.getContentBucket(),
                     storageURI.getStorageEndpoint(),
-                    storageURI.getStorageOptions().getRegion(defaultAWSRegion),
+                    storageURI.getStorageOptions().getAWSRegion(defaultAWSRegion),
                     storageURI.getStorageOptions().getAccessKey(null),
                     storageURI.getStorageOptions().getSecretKey(null),
                     storageURI.getContentKey());

@@ -141,6 +141,7 @@ public class AgentWebdavResource {
         String depthParam = requestContext.getHeaderString("Depth");
         String accessKeyParam = requestContext.getHeaderString("AccessKey");
         String secretKeyParam = requestContext.getHeaderString("SecretKey");
+        String awsRegionParam = requestContext.getHeaderString("AWSRegion");
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
         int depth = WebdavUtils.getDepth(depthParam);
         Supplier<Response.ResponseBuilder> storageNotFoundHandler = () -> {
@@ -162,7 +163,8 @@ public class AgentWebdavResource {
         };
         JADEStorageOptions storageOptions = new JADEStorageOptions()
                 .setAccessKey(accessKeyParam)
-                .setSecretKey(secretKeyParam);
+                .setSecretKey(secretKeyParam)
+                .setAWSRegion(awsRegionParam);
         JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
         List<JacsStorageVolume> volumeCandidates;
         try {

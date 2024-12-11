@@ -140,20 +140,17 @@ public class S3StorageServiceTest {
      */
     @Test
     public void listContentOnPublicBucketFromDifferentRegion() {
-        S3StorageService storageService = new S3StorageService(
-                "aind-msma-morphology-data",
-                null,
-                "us-west-2", // if any system credentials (~/.aws) are set the correct region must be used
-                null,
-                null
-        );
         class TestData {
+            final String bucket;
+            final String region;
             final String contentLocation;
             final int depth;
             final int offset;
             final int expectedNodes;
 
-            TestData(String contentLocation, int depth, int offset, int expectedNodes) {
+            TestData(String bucket, String region, String contentLocation, int depth, int offset, int expectedNodes) {
+                this.bucket = bucket;
+                this.region = region;
                 this.contentLocation = contentLocation;
                 this.depth = depth;
                 this.offset = offset;
@@ -161,9 +158,25 @@ public class S3StorageServiceTest {
             }
         }
         TestData[] testData = new TestData[] {
-                new TestData("segmentation/exaSPIM_653159_zarr/", 1, 0, 9),
+                new TestData(
+                        "aind-msma-morphology-data",
+                        "us-west-2", // region must match if credentials are available
+                        "segmentation/exaSPIM_653159_zarr/",
+                        1, 0, 9),
+                new TestData(
+                        "aind-open-data",
+                        "us-west-2", // region must match if credentials are available
+                        "/exaSPIM_653158_2023-06-01_20-41-38_fusion_2023-06-12_11-58-05/",
+                        1, 0, 7),
         };
         for (TestData td : testData) {
+            S3StorageService storageService = new S3StorageService(
+                    td.bucket,
+                    null,
+                    td.region,
+                    null,
+                    null
+            );
             List<ContentNode> nodes = storageService.listContentNodes(td.contentLocation,
                     new ContentAccessParams()
                             .setMaxDepth(td.depth)

@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service.impl;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -19,11 +20,14 @@ import org.janelia.jacsstorage.service.StorageCapacity;
 import org.janelia.jacsstorage.service.s3.S3Adapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.model.CommonPrefix;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -251,7 +255,8 @@ public class S3StorageService implements ContentStorageService {
                 .key(s3Location)
                 .build();
         try {
-            return s3Adapter.getS3Client().getObject(getObjectRequest, ResponseTransformer.toInputStream());
+            ResponseBytes<GetObjectResponse>  objectBytes = s3Adapter.getS3Client().getObject(getObjectRequest, ResponseTransformer.toBytes());
+            return new ByteArrayInputStream(objectBytes.asByteArray());
         } catch (Exception e) {
             throw new ContentException(e);
         }

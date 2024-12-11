@@ -123,6 +123,7 @@ public class MasterWebdavResource {
                 new JADEStorageOptions()
                         .setAccessKey(requestContext.getHeaderString("AccessKey"))
                         .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                        .setAWSRegion(requestContext.getHeaderString("AWSRegion"))
         );
         StorageResourceHelper resourceHelper = new StorageResourceHelper(storageVolumeManager);
         List<JacsStorageVolume> managedVolumes = resourceHelper.listStorageVolumesForURI(jadeStorageURI);

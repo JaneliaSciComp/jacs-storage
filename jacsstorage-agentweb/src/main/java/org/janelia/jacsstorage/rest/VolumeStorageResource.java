@@ -84,7 +84,8 @@ public class VolumeStorageResource {
             LOG.debug("Check data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                    .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -136,7 +137,8 @@ public class VolumeStorageResource {
             LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                    .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -158,11 +160,14 @@ public class VolumeStorageResource {
                     .setStorageOptions(storageOptions)
                     .resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
+                        long startTime = System.currentTimeMillis();
                         ContentGetter contentGetter = dataContentService.getDataContent(resolvedContentURI, contentAccessParams);
                         long contentSize = contentGetter.estimateContentSize();
+                        LOG.debug("Retrieved {} size ({}) in {} secs", resolvedContentURI, contentSize, (System.currentTimeMillis()-startTime)/1000.);
                         StreamingOutput outputStream = output -> {
                             contentGetter.streamContent(output);
                             output.flush();
+                            LOG.debug("Finished streaming {} in {} secs", resolvedContentURI, (System.currentTimeMillis()-startTime)/1000.);
                         };
                         return Response
                                 .ok(outputStream, MediaType.APPLICATION_OCTET_STREAM)
@@ -194,7 +199,8 @@ public class VolumeStorageResource {
             LOG.debug("Retrieve metadata from volume {}:{}", storageVolumeId, storageRelativeFilePath);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                    .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -247,7 +253,8 @@ public class VolumeStorageResource {
             LOG.debug("List data from volume {}:{} with a depthParameter {}", storageVolumeId, storageRelativeFilePath, depthParam);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                    .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -342,7 +349,8 @@ public class VolumeStorageResource {
             LOG.debug("Store data to {}: {}", storageVolumeId, storageRelativeFilePath);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                    .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -411,7 +419,8 @@ public class VolumeStorageResource {
             LOG.debug("Delete data {}:{}", storageVolumeId, storageRelativeFilePath);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                    .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
             JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
             if (storageVolume == null) {
                 LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -478,7 +487,8 @@ public class VolumeStorageResource {
                                        @Context SecurityContext securityContext) {
         JADEStorageOptions storageOptions = new JADEStorageOptions()
                 .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
         JADEStorageURI jadeStorageURI = JADEStorageURI.createStoragePathURI(dataStoragePathParam, storageOptions);
         StorageQuery storageQuery = new StorageQuery()
                 .setStorageType(JacsStorageType.fromName(storageType))

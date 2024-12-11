@@ -64,7 +64,8 @@ public class N5StorageResource {
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
             JADEStorageOptions storageOptions = new JADEStorageOptions()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                    .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
             JADEStorageURI n5ContainerURI = storageVolume
                     .setStorageOptions(storageOptions)
                     .resolveRelativeLocation(storageRelativeFilePath)

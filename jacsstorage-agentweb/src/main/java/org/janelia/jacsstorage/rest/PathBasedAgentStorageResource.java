@@ -81,7 +81,8 @@ public class PathBasedAgentStorageResource {
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                    .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
             JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
             List<JacsStorageVolume> volumeCandidates;
             try {
@@ -142,7 +143,8 @@ public class PathBasedAgentStorageResource {
             LOG.debug("Start retrieve data from {}", dataPathParam);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                    .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
             JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
             List<JacsStorageVolume> volumeCandidates;
@@ -215,7 +217,8 @@ public class PathBasedAgentStorageResource {
             LOG.debug("Remove data from {}", dataPathParam);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                    .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
             JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
             List<JacsStorageVolume> volumeCandidates;
@@ -278,7 +281,8 @@ public class PathBasedAgentStorageResource {
         LOG.debug("Retrieve data from {}", dataPathParam);
         JADEStorageOptions storageOptions = new JADEStorageOptions()
                 .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
         JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
         List<JacsStorageVolume> volumeCandidates;
@@ -359,7 +363,8 @@ public class PathBasedAgentStorageResource {
             LOG.debug("Retrieve metadata from {}", dataPathParam);
             JADEStorageOptions storageOptions = new JADEStorageOptions()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                    .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                    .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
             JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
             List<JacsStorageVolume> volumeCandidates;
@@ -426,7 +431,8 @@ public class PathBasedAgentStorageResource {
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
         JADEStorageOptions storageOptions = new JADEStorageOptions()
                 .setAccessKey(requestContext.getHeaderString("AccessKey"))
-                .setSecretKey(requestContext.getHeaderString("SecretKey"));
+                .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
         JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(dataPathParam, storageOptions);
         int depth = depthParam != null && depthParam >= 0 && depthParam < Constants.MAX_ALLOWED_DEPTH ? depthParam : Constants.MAX_ALLOWED_DEPTH;
         int offset = offsetParam != null ? offsetParam : 0;
