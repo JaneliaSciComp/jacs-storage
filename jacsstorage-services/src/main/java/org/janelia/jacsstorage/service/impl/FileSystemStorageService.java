@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.service.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.janelia.jacsstorage.coreutils.ComparatorUtils;
+import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.service.ContentAccessParams;
@@ -117,13 +119,13 @@ public class FileSystemStorageService implements ContentStorageService {
     }
 
     @Override
-    public InputStream readContent(String contentLocation) {
+    public long streamContentTo(String contentLocation, OutputStream outputStream) {
         Path contentPath = Paths.get(contentLocation);
 
         if (Files.exists(contentPath)) {
             if (Files.isRegularFile(contentPath)) {
                 try {
-                    return Files.newInputStream(contentPath);
+                    return IOStreamUtils.copyFrom(Files.newInputStream(contentPath), outputStream);
                 } catch (IOException e) {
                     throw new ContentException(e);
                 }

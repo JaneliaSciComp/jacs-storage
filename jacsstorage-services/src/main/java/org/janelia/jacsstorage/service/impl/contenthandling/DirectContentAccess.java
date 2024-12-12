@@ -66,11 +66,7 @@ public class DirectContentAccess implements ContentAccess {
             if (contentNodes.get(0).isCollection()) {
                 return 0;
             }
-            try (InputStream nodeContentStream = contentObjectReader.readContent(contentNodes.get(0).getObjectKey())) {
-                return IOStreamUtils.copyFrom(nodeContentStream, outputStream);
-            } catch (IOException e) {
-                throw new ContentException(e);
-            }
+            return contentObjectReader.streamContentTo(contentNodes.get(0).getObjectKey(), outputStream);
         }
     }
 
@@ -85,9 +81,7 @@ public class DirectContentAccess implements ContentAccess {
                 entry.setSize(contentNode.getSize());
                 archiveOutputStream.putArchiveEntry(entry);
                 if (contentNode.isNotCollection()) {
-                    try (InputStream nodeContent = contentObjectReader.readContent(contentNode.getObjectKey())) {
-                        IOStreamUtils.copyFrom(nodeContent, archiveOutputStream);
-                    }
+                    contentObjectReader.streamContentTo(contentNode.getObjectKey(), outputStream);
                 }
                 archiveOutputStream.closeArchiveEntry();
             }

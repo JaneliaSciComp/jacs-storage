@@ -3,19 +3,22 @@ package org.janelia.jacsstorage.service.impl;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class S3StorageServiceTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(S3StorageServiceTest.class);
 
     @Test
     public void retrieveSingleFileContentFromS3Endpoint() throws IOException {
@@ -28,7 +31,7 @@ public class S3StorageServiceTest {
         );
         List<ContentNode> contentNodes = storageService.listContentNodes("/scicompsoft/flynp/pipeline_info/software_versions.yml", new ContentAccessParams());
         assertEquals(1, contentNodes.size());
-        String nodeContent = new String(ByteStreams.toByteArray(storageService.readContent(contentNodes.get(0).getObjectKey())));
+        String nodeContent = new String(ByteStreams.toByteArray(storageService.streamContent(contentNodes.get(0).getObjectKey())));
         assertTrue(nodeContent.length() > 0);
     }
 
@@ -59,7 +62,7 @@ public class S3StorageServiceTest {
                         .setEntryNamePattern("config.json")
                         .setMaxDepth(1));
         assertTrue(nodes.size() == 1);
-        String nodeContent = new String(ByteStreams.toByteArray(storageService.readContent(nodes.get(0).getObjectKey())));
+        String nodeContent = new String(ByteStreams.toByteArray(storageService.streamContent(nodes.get(0).getObjectKey())));
         assertNotNull(nodeContent);
     }
 
@@ -135,11 +138,8 @@ public class S3StorageServiceTest {
         }
     }
 
-    /**
-     * I only run this test from the IDE to check open buckets from a different region
-     */
     @Test
-    public void listContentOnPublicBucketFromDifferentRegion() {
+    public void listContentFromPublicBucketInDifferentRegion() {
         class TestData {
             final String bucket;
             final String region;
@@ -187,6 +187,45 @@ public class S3StorageServiceTest {
     }
 
     @Test
+    public void syncReadContentFromPublicBucketInDifferentRegion() {
+        class TestData {
+            final String bucket;
+            final String region;
+            final String contentLocation;
+            final int expectedSize;
+
+            TestData(String bucket, String region, String contentLocation, int expectedSize) {
+                this.bucket = bucket;
+                this.region = region;
+                this.contentLocation = contentLocation;
+                this.expectedSize = expectedSize;
+            }
+        }
+        TestData[] testData = new TestData[]{
+                new TestData(
+                        "aind-open-data",
+                        "us-west-2", // region must match if credentials are available
+                        "exaSPIM_653158_2023-06-01_20-41-38_fusion_2023-06-12_11-58-05/fused.zarr/4/0/0/1/3/6",
+                        7505274),
+        };
+        for (TestData td : testData) {
+            S3StorageService storageService = new S3StorageService(
+                    td.bucket,
+                    null,
+                    td.region,
+                    null,
+                    null
+            );
+            long startTime = System.currentTimeMillis();
+            ByteArrayOutputStream retrievedStream = new ByteArrayOutputStream();
+            long nbytes = storageService.streamContentTo(td.contentLocation, retrievedStream);
+            assertEquals(td.expectedSize, nbytes);
+            double accessTime = (System.currentTimeMillis() - startTime) / 1000.;
+            LOG.info("Finished sync processing stream after {} secs", accessTime);
+        }
+    }
+
+    @Test
     public void checkAccessRoot() {
         S3StorageService storageService = new S3StorageService(
                 "janelia-neuronbridge-data-dev",
@@ -213,7 +252,7 @@ public class S3StorageServiceTest {
         List<ContentNode> nodesAfterWrite = storageService.listContentNodes("myTest.txt", new ContentAccessParams());
         assertTrue(nodesAfterWrite.size() == 1);
         assertTrue(storageService.canAccess("myTest.txt"));
-        String nodeContent = new String(ByteStreams.toByteArray(storageService.readContent(nodesAfterWrite.get(0).getObjectKey())));
+        String nodeContent = new String(ByteStreams.toByteArray(storageService.streamContent(nodesAfterWrite.get(0).getObjectKey())));
         assertEquals(testContent, nodeContent);
         storageService.deleteContent("myTest.txt");
         List<ContentNode> nodesAfterDelete = storageService.listContentNodes("myTest.txt", new ContentAccessParams());
@@ -221,7 +260,7 @@ public class S3StorageServiceTest {
     }
 
     @Test
-    public void retrievePrefixFromS3() throws IOException {
+    public void retrievePrefixFromS3() {
         S3StorageService storageService = new S3StorageService(
                 "janelia-neuronbridge-data-dev",
                 null,
@@ -233,9 +272,7 @@ public class S3StorageServiceTest {
         List<ContentNode> contentNodes = storageService.listContentNodes("v3_3_0/schemas", new ContentAccessParams());
         for (ContentNode n : contentNodes) {
             if (n.isNotCollection()) {
-                try (InputStream nodeContentStream = storageService.readContent(n.getObjectKey())) {
-                    ByteStreams.copy(nodeContentStream, testDataStream);
-                }
+                storageService.streamContentTo(n.getObjectKey(), testDataStream);
             }
         }
         String testDataContent = testDataStream.toString();

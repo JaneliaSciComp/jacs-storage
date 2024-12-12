@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.service.impl;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -247,7 +248,7 @@ public class S3StorageService implements ContentStorageService {
     }
 
     @Override
-    public InputStream readContent(String contentLocation) {
+    public long streamContentTo(String contentLocation, OutputStream outputStream) {
         String s3Location = adjustLocation(contentLocation);
 
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
@@ -255,8 +256,8 @@ public class S3StorageService implements ContentStorageService {
                 .key(s3Location)
                 .build();
         try {
-            ResponseBytes<GetObjectResponse>  objectBytes = s3Adapter.getS3Client().getObject(getObjectRequest, ResponseTransformer.toBytes());
-            return new ByteArrayInputStream(objectBytes.asByteArray());
+            GetObjectResponse getResponse = s3Adapter.getS3Client().getObject(getObjectRequest, ResponseTransformer.toOutputStream(outputStream));
+            return getResponse.contentLength();
         } catch (Exception e) {
             throw new ContentException(e);
         }
