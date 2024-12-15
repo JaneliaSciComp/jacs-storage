@@ -104,6 +104,7 @@ dependencies {
         // AWS SDK
         AWS_SDK_VERSION = "2.27.21"
         AWS_S3_LIB = "software.amazon.awssdk:s3:${AWS_SDK_VERSION}"
+        AWS_CRT_LIB = "software.amazon.awssdk.crt:aws-crt:0.33.6"
 
         // testing
         JUNIT_VERSION = "4.13.1"

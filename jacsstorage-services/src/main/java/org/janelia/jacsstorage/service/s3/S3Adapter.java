@@ -7,49 +7,73 @@ import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
-import software.amazon.awssdk.auth.credentials.ContainerCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.S3CrtAsyncClientBuilder;
 
 public class S3Adapter {
+    private static final long MB = 1024L * 1024L * 1024L;
+
     private final String bucket;
     private final String region;
     private final String endpoint;
     private final String accessKey;
     private final String secretKey;
     private final S3Client s3Client;
+    private final S3AsyncClient asyncS3Client;
 
-    public S3Adapter(String bucket, String endpoint, String region, String accessKey, String secretKey) {
+    S3Adapter(String bucket, String endpoint, String region, String accessKey, String secretKey) {
         this.bucket = bucket;
         this.endpoint = endpoint;
         this.region = region;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         S3ClientBuilder s3ClientBuilder = S3Client.builder();
+        S3CrtAsyncClientBuilder asyncS3ClientBuilder = S3AsyncClient.crtBuilder();
         if (StringUtils.isNotBlank(region)) {
-            s3ClientBuilder.region(Region.of(region));
+            Region s3Region = Region.of(region);
+            s3ClientBuilder.region(s3Region);
+            asyncS3ClientBuilder.region(s3Region);
         }
         if (StringUtils.isNotBlank(endpoint)) {
-            s3ClientBuilder.endpointOverride(URI.create(endpoint));
+            URI endpointURI = URI.create(endpoint);
+            s3ClientBuilder.endpointOverride(endpointURI);
+            asyncS3ClientBuilder.endpointOverride(endpointURI);
         }
+        AwsCredentialsProvider credentialsProvider;
         if (StringUtils.isNotBlank(accessKey) && StringUtils.isNotBlank(secretKey)) {
-            s3ClientBuilder.credentialsProvider(() -> AwsBasicCredentials.create(accessKey, secretKey));
+            credentialsProvider = () -> AwsBasicCredentials.create(accessKey, secretKey);
         } else {
-            s3ClientBuilder.credentialsProvider(
-                    AwsCredentialsProviderChain.of(
-                            DefaultCredentialsProvider.create(),
-                            AnonymousCredentialsProvider.create() // chaining anonymous credentials to be able to access open buckets if no credentials are set
-                    )
+            credentialsProvider = AwsCredentialsProviderChain.of(
+                    ProfileCredentialsProvider.create(),
+                    SystemPropertyCredentialsProvider.create(),
+                    EnvironmentVariableCredentialsProvider.create(),
+                    AnonymousCredentialsProvider.create()
             );
         }
-        this.s3Client = s3ClientBuilder.build();
+        s3ClientBuilder.credentialsProvider(credentialsProvider);
+
+        S3Configuration s3Configuration = S3Configuration.builder()
+                .checksumValidationEnabled(false)
+                .build();
+        this.s3Client = s3ClientBuilder
+                .crossRegionAccessEnabled(true)
+                .serviceConfiguration(s3Configuration)
+                .build();
+        this.asyncS3Client = asyncS3ClientBuilder
+                .crossRegionAccessEnabled(true)
+                .checksumValidationEnabled(false)
+                .initialReadBufferSizeInBytes(16 * MB)
+                .build();
+
     }
 
     public JADEStorageURI getStorageURI() {
@@ -81,5 +105,9 @@ public class S3Adapter {
 
     public S3Client getS3Client() {
         return s3Client;
+    }
+
+    public S3AsyncClient getAsyncS3Client() {
+        return asyncS3Client;
     }
 }

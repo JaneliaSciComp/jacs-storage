@@ -1,17 +1,13 @@
 package org.janelia.jacsstorage.service.impl.contenthandling;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
 import javax.enterprise.inject.Vetoed;
 
-import com.google.common.io.ByteStreams;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
-import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
@@ -66,7 +62,7 @@ public class DirectContentAccess implements ContentAccess {
             if (contentNodes.get(0).isCollection()) {
                 return 0;
             }
-            return contentObjectReader.streamContentTo(contentNodes.get(0).getObjectKey(), outputStream);
+            return contentObjectReader.streamContentToOutput(contentNodes.get(0).getObjectKey(), outputStream);
         }
     }
 
@@ -81,7 +77,7 @@ public class DirectContentAccess implements ContentAccess {
                 entry.setSize(contentNode.getSize());
                 archiveOutputStream.putArchiveEntry(entry);
                 if (contentNode.isNotCollection()) {
-                    contentObjectReader.streamContentTo(contentNode.getObjectKey(), outputStream);
+                    contentObjectReader.streamContentToOutput(contentNode.getObjectKey(), outputStream);
                 }
                 archiveOutputStream.closeArchiveEntry();
             }

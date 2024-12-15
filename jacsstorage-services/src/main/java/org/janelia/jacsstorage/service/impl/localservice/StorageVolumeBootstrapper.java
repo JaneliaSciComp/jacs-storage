@@ -83,7 +83,7 @@ public class StorageVolumeBootstrapper {
     private void fillVolumeInfo(JacsStorageVolume storageVolume) {
         storageVolume.setStorageRootTemplate(applicationConfig.getStringPropertyValue(
                 getVolumeConfigPropertyName(storageVolume.getName(), "RootDir")));
-        storageVolume.setStorageVirtualPath(getStorageVirtualPath(storageVolume.getName()));
+        storageVolume.setStorageVirtualPath(getStoragePathBinding(storageVolume.getName()));
         storageVolume.setQuotaFailPercent(applicationConfig.getDoublePropertyValue(
                 getVolumeConfigPropertyName(storageVolume.getName(), "QuotaFailPercent")));
         storageVolume.setQuotaWarnPercent(applicationConfig.getDoublePropertyValue(
@@ -101,7 +101,7 @@ public class StorageVolumeBootstrapper {
         return "StorageVolume." + volumeName + "." + configProperty;
     }
 
-    private String getStorageVirtualPath(String volumeName) {
+    private String getStoragePathBinding(String volumeName) {
         String storagePathPrefix = applicationConfig.getStringPropertyValue(
                 getVolumeConfigPropertyName(volumeName, "VirtualPath"));
         String resolvedStoragePathPrefix = configValueResolver.resolve(

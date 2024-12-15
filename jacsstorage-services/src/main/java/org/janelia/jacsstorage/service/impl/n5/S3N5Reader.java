@@ -6,8 +6,8 @@ import org.janelia.saalfeldlab.n5.N5KeyValueReader;
 
 public class S3N5Reader extends N5KeyValueReader {
 
-    public S3N5Reader(String bucket, String endpoint, String region, String accessKey, String secretKey, String basePrefix) {
-        super(new S3KeyValueAccess(new S3Adapter(bucket, endpoint, region, accessKey, secretKey), basePrefix),
+    public S3N5Reader(S3Adapter s3Adapter, String basePrefix) {
+        super(new S3KeyValueAccess(s3Adapter, basePrefix),
                 basePrefix,
                 new GsonBuilder(),
                 false);

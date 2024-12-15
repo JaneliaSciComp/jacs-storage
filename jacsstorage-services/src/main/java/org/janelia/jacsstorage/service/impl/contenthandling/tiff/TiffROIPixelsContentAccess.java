@@ -46,7 +46,7 @@ public class TiffROIPixelsContentAccess implements ContentAccess {
                 if (contentNodes.get(0).isCollection()) {
                     return 0L;
                 }
-                try (InputStream nodeContentStream = contentObjectReader.streamContent(contentNodes.get(0).getObjectKey())) {
+                try (InputStream nodeContentStream = contentObjectReader.getContentInputStream(contentNodes.get(0).getObjectKey())) {
                     return ImageUtils.sizeImagePixelBytesFromTiffStream(
                             nodeContentStream,
                             xCenter, yCenter, zCenter,
@@ -59,7 +59,7 @@ public class TiffROIPixelsContentAccess implements ContentAccess {
                     if (contentNode.isCollection()) {
                         continue; // skip dirs
                     }
-                    try (InputStream nodeContentStream = contentObjectReader.streamContent(contentNode.getObjectKey())) {
+                    try (InputStream nodeContentStream = contentObjectReader.getContentInputStream(contentNode.getObjectKey())) {
                         long entrySize = ImageUtils.sizeImagePixelBytesFromTiffStream(
                                 nodeContentStream,
                                 xCenter, yCenter, zCenter,
@@ -94,7 +94,7 @@ public class TiffROIPixelsContentAccess implements ContentAccess {
                 if (contentNodes.get(0).isCollection()) {
                     return 0L;
                 }
-                try (InputStream nodeContentStream = contentObjectReader.streamContent(contentNodes.get(0).getObjectKey())) {
+                try (InputStream nodeContentStream = contentObjectReader.getContentInputStream(contentNodes.get(0).getObjectKey())) {
                     return IOStreamUtils.copyFrom(ImageUtils.loadImagePixelBytesFromTiffStream(
                             nodeContentStream,
                             xCenter, yCenter, zCenter,
@@ -113,7 +113,7 @@ public class TiffROIPixelsContentAccess implements ContentAccess {
                     TarArchiveEntry entry = new TarArchiveEntry(tarEntryName);
                     entry.setSize(contentNode.getSize());
                     archiveOutputStream.putArchiveEntry(entry);
-                    try (InputStream nodeContent = contentObjectReader.streamContent(contentNode.getObjectKey())) {
+                    try (InputStream nodeContent = contentObjectReader.getContentInputStream(contentNode.getObjectKey())) {
                         IOStreamUtils.copyFrom(ImageUtils.loadImagePixelBytesFromTiffStream(
                                 nodeContent,
                                 xCenter, yCenter, zCenter,

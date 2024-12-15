@@ -31,7 +31,7 @@ public class TiffMergeBandsContentAccess implements ContentAccess {
                         .filter(ContentNode::isNotCollection)
                         .map(n -> NamedSupplier.namedSupplier(
                                 n.getName(),
-                                () -> contentObjectReader.streamContent(n.getObjectKey()))),
+                                () -> contentObjectReader.getContentInputStream(n.getObjectKey()))),
                 pageNumber
         );
     }
@@ -50,7 +50,7 @@ public class TiffMergeBandsContentAccess implements ContentAccess {
                         .filter(ContentNode::isNotCollection)
                         .map(n -> NamedSupplier.namedSupplier(
                                 n.getName(),
-                                () -> contentObjectReader.streamContent(n.getObjectKey()))),
+                                () -> contentObjectReader.getContentInputStream(n.getObjectKey()))),
                 pageNumber
         );
         if (contentBytes == null) {

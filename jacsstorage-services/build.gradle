@@ -13,6 +13,7 @@ project(":jacsstorage-services") {
         api project(":jacsstorage-core")
 
         implementation AWS_S3_LIB,
+                       AWS_CRT_LIB,
                        COMMONS_COMPRESS_LIB,
                        COMMONS_RNG_LIB,
                        JACS_MODEL_RENDERING_LIB,
@@ -25,6 +26,9 @@ project(":jacsstorage-services") {
                        N5_LIB,
                        N5_UNIVERSE_LIB,
                        REFLECTIONS_LIB
+
+        implementation platform('io.projectreactor:reactor-bom:2023.0.8'),
+                       'io.projectreactor:reactor-core'
 
         perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
 

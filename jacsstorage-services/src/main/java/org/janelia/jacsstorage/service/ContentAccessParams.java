@@ -71,6 +71,10 @@ public class ContentAccessParams {
         return this;
     }
 
+    public boolean checkDepth(int currentDepth) {
+        return maxDepth < 0 || currentDepth < maxDepth;
+    }
+
     public ContentAccessParams addFilterTypeSpecificParam(String name, String value) {
         if (StringUtils.isNotBlank(value)) {
             filterTypeSpecificParams.put(name, value);

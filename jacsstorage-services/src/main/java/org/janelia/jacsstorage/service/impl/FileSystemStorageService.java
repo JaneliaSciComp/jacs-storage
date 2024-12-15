@@ -119,13 +119,13 @@ public class FileSystemStorageService implements ContentStorageService {
     }
 
     @Override
-    public long streamContentTo(String contentLocation, OutputStream outputStream) {
+    public InputStream getContentInputStream(String contentLocation) {
         Path contentPath = Paths.get(contentLocation);
 
         if (Files.exists(contentPath)) {
             if (Files.isRegularFile(contentPath)) {
                 try {
-                    return IOStreamUtils.copyFrom(Files.newInputStream(contentPath), outputStream);
+                    return Files.newInputStream(contentPath);
                 } catch (IOException e) {
                     throw new ContentException(e);
                 }
@@ -134,6 +134,15 @@ public class FileSystemStorageService implements ContentStorageService {
             }
         } else {
             throw new NoContentFoundException("No object found at " + contentLocation);
+        }
+    }
+
+    @Override
+    public long streamContentToOutput(String contentLocation, OutputStream outputStream) {
+        try {
+            return IOStreamUtils.copyFrom(getContentInputStream(contentLocation), outputStream);
+        } catch (Exception e) {
+            throw new ContentException(e);
         }
     }
 
