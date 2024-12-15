@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Queue;
 
 import com.google.common.io.ByteStreams;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
@@ -73,10 +72,6 @@ public class SyncS3StorageService extends AbstractS3StorageService {
         int level = 0;
         while (!prefixQueue.isEmpty()) {
             String currentPrefix = prefixQueue.poll();
-//            int currentDepth = getPathDepth(s3Location, currentPrefix);
-//            if (contentAccessParams.getMaxDepth() >= 0 && currentDepth >= contentAccessParams.getMaxDepth()) {
-//                return results;
-//            }
 
             ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
                     .bucket(s3Adapter.getBucket())
