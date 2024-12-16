@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service.impl;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
@@ -161,9 +163,12 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
                 .key(s3Location)
                 .build();
 
-        CompletableFuture<ResponseInputStream<GetObjectResponse>> getContentPromise = s3Adapter.getAsyncS3Client().getObject(getObjectRequest,
-                AsyncResponseTransformer.toBlockingInputStream());
-        return getContentPromise.join();
+        CompletableFuture<byte[]> getContentPromise = s3Adapter.getAsyncS3Client().getObject(
+                getObjectRequest, AsyncResponseTransformer.toBytes())
+                .thenApply(rb -> rb.asByteArray())
+                ;
+
+        return new ByteArrayInputStream(getContentPromise.join());
     }
 
     @Override

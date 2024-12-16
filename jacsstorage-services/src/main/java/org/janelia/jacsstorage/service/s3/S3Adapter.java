@@ -2,24 +2,37 @@ package org.janelia.jacsstorage.service.s3;
 
 import java.net.URI;
 
+import com.amazonaws.auth.NoOpSigner;
+import com.amazonaws.auth.Signer;
+import com.amazonaws.services.s3.internal.AWSS3V4Signer;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
+import software.amazon.awssdk.auth.signer.internal.AbstractAws4Signer;
+import software.amazon.awssdk.auth.signer.params.Aws4PresignerParams;
+import software.amazon.awssdk.core.client.config.SdkAdvancedClientOption;
+import software.amazon.awssdk.core.interceptor.Context;
+import software.amazon.awssdk.core.interceptor.ExecutionAttributes;
+import software.amazon.awssdk.core.interceptor.ExecutionInterceptor;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
+import software.amazon.awssdk.services.s3.S3AsyncClientBuilder;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
-import software.amazon.awssdk.services.s3.S3CrtAsyncClientBuilder;
 
 public class S3Adapter {
+    private static final Logger LOG = LoggerFactory.getLogger(S3Adapter.class);
     private static final long MB = 1024L * 1024L * 1024L;
 
     private final String bucket;
@@ -37,7 +50,7 @@ public class S3Adapter {
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         S3ClientBuilder s3ClientBuilder = S3Client.builder();
-        S3CrtAsyncClientBuilder asyncS3ClientBuilder = S3AsyncClient.crtBuilder();
+        S3AsyncClientBuilder asyncS3ClientBuilder = S3AsyncClient.builder();
         if (StringUtils.isNotBlank(region)) {
             Region s3Region = Region.of(region);
             s3ClientBuilder.region(s3Region);
@@ -50,7 +63,10 @@ public class S3Adapter {
         }
         AwsCredentialsProvider credentialsProvider;
         if (StringUtils.isNotBlank(accessKey) && StringUtils.isNotBlank(secretKey)) {
-            credentialsProvider = () -> AwsBasicCredentials.create(accessKey, secretKey);
+            credentialsProvider = AwsCredentialsProviderChain.of(
+                    StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)),
+                    AnonymousCredentialsProvider.create()
+            );
         } else {
             credentialsProvider = AwsCredentialsProviderChain.of(
                     ProfileCredentialsProvider.create(),
@@ -62,18 +78,18 @@ public class S3Adapter {
         s3ClientBuilder.credentialsProvider(credentialsProvider);
 
         S3Configuration s3Configuration = S3Configuration.builder()
-                .checksumValidationEnabled(false)
+                .checksumValidationEnabled(true)
                 .build();
+
         this.s3Client = s3ClientBuilder
                 .crossRegionAccessEnabled(true)
                 .serviceConfiguration(s3Configuration)
                 .build();
+
         this.asyncS3Client = asyncS3ClientBuilder
                 .crossRegionAccessEnabled(true)
-                .checksumValidationEnabled(false)
-                .initialReadBufferSizeInBytes(16 * MB)
+                .serviceConfiguration(s3Configuration)
                 .build();
-
     }
 
     public JADEStorageURI getStorageURI() {
