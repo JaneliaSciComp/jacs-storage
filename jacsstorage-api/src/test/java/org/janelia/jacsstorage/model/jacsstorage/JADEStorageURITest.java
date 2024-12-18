@@ -239,7 +239,7 @@ public class JADEStorageURITest {
         for (TestData td : testData) {
             JADEStorageURI storagePathURI = JADEStorageURI.createStoragePathURI(
                     td.uriDesc,
-                    new JADEStorageOptions()
+                    JADEOptions.create()
                             .setAccessKey(td.accessKey)
                             .setSecretKey(td.secretKey)
             );
@@ -247,8 +247,8 @@ public class JADEStorageURITest {
             assertThat("Checking content key " + td.uriDesc, storagePathURI.getContentKey(), equalTo(td.expectedContentKey));
             assertThat("Checking host " + td.expectedHost, storagePathURI.getStorageHost(), equalTo(td.expectedHost));
             assertThat("Checking access key " + td.uriDesc, storagePathURI.getStorageType(), equalTo(td.expectedStorageType));
-            assertThat("Checking access key " + td.uriDesc, storagePathURI.getStorageOptions().getAccessKey(null), equalTo(td.accessKey));
-            assertThat("Checking secret key " + td.uriDesc, storagePathURI.getStorageOptions().getSecretKey(null), equalTo(td.secretKey));
+            assertThat("Checking access key " + td.uriDesc, storagePathURI.getStorageOptions().getAccessKey(), equalTo(td.accessKey));
+            assertThat("Checking secret key " + td.uriDesc, storagePathURI.getStorageOptions().getSecretKey(), equalTo(td.secretKey));
             assertThat("Checking storage " + td.uriDesc, storagePathURI.getJadeStorage(), equalTo(td.expectedJadeStorage));
         }
     }

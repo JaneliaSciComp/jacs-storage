@@ -17,7 +17,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -62,7 +62,7 @@ public class N5StorageResource {
                     .build();
         }
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
-            JADEStorageOptions storageOptions = new JADEStorageOptions()
+            JADEOptions storageOptions = JADEOptions.create()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
                     .setSecretKey(requestContext.getHeaderString("SecretKey"))
                     .setAWSRegion(requestContext.getHeaderString("AWSRegion"));

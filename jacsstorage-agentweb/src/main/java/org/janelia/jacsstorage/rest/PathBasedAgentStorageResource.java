@@ -9,7 +9,6 @@ import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
-import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -34,13 +33,13 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
-import org.janelia.jacsstorage.service.ContentAccessParams;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.requesthelpers.ContentAccessRequestHelper;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
+import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -79,7 +78,7 @@ public class PathBasedAgentStorageResource {
         try {
             LOG.debug("Start check path {}", dataPathParam);
             StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
-            JADEStorageOptions storageOptions = new JADEStorageOptions()
+            JADEOptions storageOptions = JADEOptions.create()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
                     .setSecretKey(requestContext.getHeaderString("SecretKey"))
                     .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
@@ -141,7 +140,7 @@ public class PathBasedAgentStorageResource {
                                     @Context ContainerRequestContext requestContext) {
         try {
             LOG.debug("Start retrieve data from {}", dataPathParam);
-            JADEStorageOptions storageOptions = new JADEStorageOptions()
+            JADEOptions storageOptions = JADEOptions.create()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
                     .setSecretKey(requestContext.getHeaderString("SecretKey"))
                     .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
@@ -215,7 +214,7 @@ public class PathBasedAgentStorageResource {
                                @Context SecurityContext securityContext) {
         try {
             LOG.debug("Remove data from {}", dataPathParam);
-            JADEStorageOptions storageOptions = new JADEStorageOptions()
+            JADEOptions storageOptions = JADEOptions.create()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
                     .setSecretKey(requestContext.getHeaderString("SecretKey"))
                     .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
@@ -279,7 +278,7 @@ public class PathBasedAgentStorageResource {
                               @Context SecurityContext securityContext,
                               InputStream contentStream) {
         LOG.debug("Retrieve data from {}", dataPathParam);
-        JADEStorageOptions storageOptions = new JADEStorageOptions()
+        JADEOptions storageOptions = JADEOptions.create()
                 .setAccessKey(requestContext.getHeaderString("AccessKey"))
                 .setSecretKey(requestContext.getHeaderString("SecretKey"))
                 .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
@@ -361,7 +360,7 @@ public class PathBasedAgentStorageResource {
                                             @Context UriInfo requestURI) {
         try {
             LOG.debug("Retrieve metadata from {}", dataPathParam);
-            JADEStorageOptions storageOptions = new JADEStorageOptions()
+            JADEOptions storageOptions = JADEOptions.create()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
                     .setSecretKey(requestContext.getHeaderString("SecretKey"))
                     .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
@@ -429,7 +428,7 @@ public class PathBasedAgentStorageResource {
                                 @Context SecurityContext securityContext) {
         LOG.debug("List content from location {} with a depthParameter {}", dataPathParam, depthParam);
         StorageResourceHelper storageResourceHelper = new StorageResourceHelper(storageVolumeManager);
-        JADEStorageOptions storageOptions = new JADEStorageOptions()
+        JADEOptions storageOptions = JADEOptions.create()
                 .setAccessKey(requestContext.getHeaderString("AccessKey"))
                 .setSecretKey(requestContext.getHeaderString("SecretKey"))
                 .setAWSRegion(requestContext.getHeaderString("AWSRegion"));

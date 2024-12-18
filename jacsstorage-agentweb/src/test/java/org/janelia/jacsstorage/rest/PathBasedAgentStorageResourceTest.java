@@ -14,7 +14,7 @@ import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
-import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
@@ -70,7 +70,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
 
     @Test
     public void retrieveDataStreamUsingDataPathRelativeToVolumeRoot() throws IOException {
-        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath", new JADEStorageOptions());
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath", JADEOptions.create());
         DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testDataURI.getJadeStorage()))))
@@ -108,7 +108,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         String testPath = "/volBinding/testPath";
         DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath", new JADEStorageOptions());
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath", JADEOptions.create());
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
@@ -142,7 +142,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         };
         DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath", new JADEStorageOptions());
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath", JADEOptions.create());
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/volBinding/testPath"))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
@@ -174,7 +174,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
     public void retrieveDataStreamUsingDataPathWithCharsThatShouldBeEscaped() throws IOException {
         String testPath = "/volRoot/testPath/c1/c2-5%/testFile";
         String testPathURLEncoded = StringUtils.replace(testPath, "%", "%25");
-        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI(testPath, new JADEStorageOptions());
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI(testPath, JADEOptions.create());
         DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
@@ -205,7 +205,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
     @Test
     public void retrieveDataStreamFromS3UsingAWSS3URI() throws IOException {
         String testPath = "s3://testBucket/testPrefix/test.key";
-        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI(testPath, new JADEStorageOptions());
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI(testPath, JADEOptions.create());
         DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.findVolumes(
@@ -244,7 +244,7 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
         String testPathParam = "https://testEndpoint/testBucket/testPrefix/test.key"; // no authentication fields
         DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI(testPath, new JADEStorageOptions());
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI(testPath, JADEOptions.create());
         when(storageVolumeManager.findVolumes(
                 eq(new StorageQuery().setStorageType(JacsStorageType.S3).setDataStoragePath(testPathParam))))
                 .thenReturn(ImmutableList.of(

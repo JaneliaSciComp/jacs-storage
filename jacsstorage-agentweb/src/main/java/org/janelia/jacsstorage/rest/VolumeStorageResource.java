@@ -9,7 +9,6 @@ import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
-import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -34,14 +33,14 @@ import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
-import org.janelia.jacsstorage.service.ContentAccessParams;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.requesthelpers.ContentAccessRequestHelper;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
+import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
@@ -82,7 +81,7 @@ public class VolumeStorageResource {
                                                    @Context ContainerRequestContext requestContext) {
         try {
             LOG.debug("Check data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
-            JADEStorageOptions storageOptions = new JADEStorageOptions()
+            JADEOptions storageOptions = JADEOptions.create()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
                     .setSecretKey(requestContext.getHeaderString("SecretKey"))
                     .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
@@ -135,7 +134,7 @@ public class VolumeStorageResource {
                                                          @Context UriInfo requestURI) {
         try {
             LOG.debug("Retrieve data from volume {}:{}", storageVolumeId, storageRelativeFilePath);
-            JADEStorageOptions storageOptions = new JADEStorageOptions()
+            JADEOptions storageOptions = JADEOptions.create()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
                     .setSecretKey(requestContext.getHeaderString("SecretKey"))
                     .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
@@ -197,7 +196,7 @@ public class VolumeStorageResource {
                                                       @Context UriInfo requestURI) {
         try {
             LOG.debug("Retrieve metadata from volume {}:{}", storageVolumeId, storageRelativeFilePath);
-            JADEStorageOptions storageOptions = new JADEStorageOptions()
+            JADEOptions storageOptions = JADEOptions.create()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
                     .setSecretKey(requestContext.getHeaderString("SecretKey"))
                     .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
@@ -251,7 +250,7 @@ public class VolumeStorageResource {
                                               @Context UriInfo requestURI) {
         try {
             LOG.debug("List data from volume {}:{} with a depthParameter {}", storageVolumeId, storageRelativeFilePath, depthParam);
-            JADEStorageOptions storageOptions = new JADEStorageOptions()
+            JADEOptions storageOptions = JADEOptions.create()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
                     .setSecretKey(requestContext.getHeaderString("SecretKey"))
                     .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
@@ -347,7 +346,7 @@ public class VolumeStorageResource {
                                                     InputStream contentStream) {
         try {
             LOG.debug("Store data to {}: {}", storageVolumeId, storageRelativeFilePath);
-            JADEStorageOptions storageOptions = new JADEStorageOptions()
+            JADEOptions storageOptions = JADEOptions.create()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
                     .setSecretKey(requestContext.getHeaderString("SecretKey"))
                     .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
@@ -417,7 +416,7 @@ public class VolumeStorageResource {
                                                        @Context ContainerRequestContext requestContext) {
         try {
             LOG.debug("Delete data {}:{}", storageVolumeId, storageRelativeFilePath);
-            JADEStorageOptions storageOptions = new JADEStorageOptions()
+            JADEOptions storageOptions = JADEOptions.create()
                     .setAccessKey(requestContext.getHeaderString("AccessKey"))
                     .setSecretKey(requestContext.getHeaderString("SecretKey"))
                     .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
@@ -485,7 +484,7 @@ public class VolumeStorageResource {
                                        @QueryParam("includeInaccessibleVolumes") boolean includeInaccessibleVolumes,
                                        @Context ContainerRequestContext requestContext,
                                        @Context SecurityContext securityContext) {
-        JADEStorageOptions storageOptions = new JADEStorageOptions()
+        JADEOptions storageOptions = JADEOptions.create()
                 .setAccessKey(requestContext.getHeaderString("AccessKey"))
                 .setSecretKey(requestContext.getHeaderString("SecretKey"))
                 .setAWSRegion(requestContext.getHeaderString("AWSRegion"));

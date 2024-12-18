@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.model.jacsstorage;
 
 import java.net.URI;
 import java.nio.file.Paths;
-import java.util.Map;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -32,7 +31,7 @@ public class JADEStorageURI {
      * @param storageURIDesc source URI descriptor
      * @return create a JADEStorageURI from the given URI descriptor
      */
-    public static JADEStorageURI createStoragePathURI(String storageURIDesc, JADEStorageOptions storageOptions) {
+    public static JADEStorageURI createStoragePathURI(String storageURIDesc, JADEOptions storageOptions) {
         return new JADEStorageURI(
                 URI.create(normalizeURIDesc(storageURIDesc).replace("%", "%25")),
                 storageOptions
@@ -63,7 +62,7 @@ public class JADEStorageURI {
     }
 
     private final URI storageURI;
-    private final JADEStorageOptions storageOptions;
+    private final JADEOptions storageOptions;
 
     /**
      * Create a storage URI. The access and secret key must be passed explicitly not through the URI using scheme://auth@/host/path.
@@ -71,7 +70,7 @@ public class JADEStorageURI {
      * @param storageURI
      * @param storageOptions
      */
-    private JADEStorageURI(URI storageURI, JADEStorageOptions storageOptions) {
+    private JADEStorageURI(URI storageURI, JADEOptions storageOptions) {
         this.storageURI = storageURI;
         this.storageOptions = storageOptions;
     }
@@ -220,7 +219,7 @@ public class JADEStorageURI {
         return Paths.get(storageURI.getPath()).getFileName().toString();
     }
 
-    public JADEStorageOptions getStorageOptions() {
+    public JADEOptions getStorageOptions() {
         return storageOptions;
     }
 

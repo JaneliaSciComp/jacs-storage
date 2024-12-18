@@ -38,7 +38,7 @@ public class JacsStorageVolume extends AbstractEntity {
     private JacsStorageType storageType = JacsStorageType.FILE_SYSTEM; // storage type - default to FileSystem
     private String storageVirtualPath; // storage path mapping - this will always be formatted as a UNIX path
     private String storageRootTemplate; // template for storage real root directory
-    private JADEStorageOptions storageOptions;
+    private JADEOptions storageOptions;
     private List<String> storageTags; // storage tags - identify certain features of the physical storage
     private String storageServiceURL;
     private Long availableSpaceInBytes;
@@ -105,11 +105,11 @@ public class JacsStorageVolume extends AbstractEntity {
     }
 
     @JsonIgnore
-    public JADEStorageOptions getStorageOptions() {
+    public JADEOptions getStorageOptions() {
         return storageOptions;
     }
 
-    public JacsStorageVolume setStorageOptions(JADEStorageOptions storageOptions) {
+    public JacsStorageVolume setStorageOptions(JADEOptions storageOptions) {
         this.storageOptions = storageOptions;
         return this;
     }

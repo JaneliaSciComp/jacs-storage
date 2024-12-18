@@ -23,13 +23,22 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 
 @State(Scope.Benchmark)
 public class RetrieveBenchmarkTrialParams {
-    @Param({""})
+    @Param("")
     String s3EntriesFile;
     private List<String> s3Entries = new ArrayList<>();
 
-    @Param({""})
+    @Param("")
     String fsEntriesFile;
     private List<String> fsEntries = new ArrayList<>();
+
+    @Param("")
+    String accessKey;
+
+    @Param("")
+    String secretKey;
+
+    @Param("false")
+    boolean useAsync;
 
     private final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_128_PP);
 

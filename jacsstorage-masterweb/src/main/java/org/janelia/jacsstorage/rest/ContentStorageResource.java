@@ -7,7 +7,6 @@ import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
-import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -28,7 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
@@ -99,7 +98,7 @@ public class ContentStorageResource {
         if (StringUtils.isNotBlank(contentPathParam)) {
             contentURI = JADEStorageURI.createStoragePathURI(
                     contentPathParam,
-                    new JADEStorageOptions()
+                    JADEOptions.create()
                             .setAccessKey(accessKey)
                             .setSecretKey(secretKey)
                             .setAWSRegion(awsRegion)
@@ -198,7 +197,7 @@ public class ContentStorageResource {
         if (StringUtils.isNotBlank(contentPathParam)) {
             contentURI = JADEStorageURI.createStoragePathURI(
                     contentPathParam,
-                    new JADEStorageOptions()
+                    JADEOptions.create()
                             .setAccessKey(accessKey)
                             .setSecretKey(secretKey)
                             .setAWSRegion(awsRegion)
@@ -294,7 +293,7 @@ public class ContentStorageResource {
         String awsRegion = requestContext.getHeaderString("AWSRegion");
         JADEStorageURI contentURI = JADEStorageURI.createStoragePathURI(
                 contentPathParam,
-                new JADEStorageOptions()
+                JADEOptions.create()
                         .setAccessKey(accessKey)
                         .setSecretKey(secretKey)
                         .setAWSRegion(awsRegion)

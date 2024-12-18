@@ -2,7 +2,7 @@ package org.janelia.jacsstorage.service;
 
 import java.util.concurrent.Executors;
 
-import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.impl.n5.N5ReaderProvider;
 import org.janelia.jacsstorage.service.s3.S3AdapterProvider;
@@ -30,7 +30,7 @@ public class N5ContentServiceTest {
         );
         N5TreeNode node = testService.getN5Container(JADEStorageURI.createStoragePathURI(
                 "s3://janelia-bigstitcher-spark/Stitching/dataset.n5/setup0/timepoint0",
-                new JADEStorageOptions()));
+                JADEOptions.create()));
         assertNotNull(node);
         assertFalse(node.childrenList().isEmpty());
     }

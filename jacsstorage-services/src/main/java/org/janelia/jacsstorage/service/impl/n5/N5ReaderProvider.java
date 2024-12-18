@@ -42,18 +42,21 @@ public class N5ReaderProvider {
                     s3AdapterProvider.getS3Adapter(
                             storageURI.getContentBucket(),
                             null,
-                            storageURI.getStorageOptions().getAWSRegion(defaultAWSRegion),
-                            storageURI.getStorageOptions().getAccessKey(null),
-                            storageURI.getStorageOptions().getSecretKey(null)),
+                            storageURI.getStorageOptions()
+                                    .setDefaultAWSRegion(defaultAWSRegion)
+                                    .setDefaultPathStyleBucket(false)
+                                    .setDefaultAsyncAccess(true)
+                    ),
                     storageURI.getContentKey());
         } else if (storageURI.getStorageScheme() == JADEStorageURI.JADEStorageScheme.HTTP) {
             return new S3N5Reader(
                     s3AdapterProvider.getS3Adapter(
                             storageURI.getContentBucket(),
                             storageURI.getStorageEndpoint(),
-                            storageURI.getStorageOptions().getAWSRegion(defaultAWSRegion),
-                            storageURI.getStorageOptions().getAccessKey(null),
-                            storageURI.getStorageOptions().getSecretKey(null)
+                            storageURI.getStorageOptions()
+                                    .setDefaultAWSRegion(defaultAWSRegion)
+                                    .setDefaultPathStyleBucket(true)
+                                    .setDefaultAsyncAccess(false)
                     ),
                     storageURI.getContentKey());
         } else {

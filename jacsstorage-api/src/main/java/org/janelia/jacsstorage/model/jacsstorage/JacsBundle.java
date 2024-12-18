@@ -8,7 +8,6 @@ import org.janelia.jacsstorage.model.AbstractEntity;
 import org.janelia.jacsstorage.model.annotations.PersistenceInfo;
 import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -74,7 +73,7 @@ public class JacsBundle extends AbstractEntity {
         if (StringUtils.isNotBlank(storageRoot)) {
             return JADEStorageURI.createStoragePathURI(storageRoot, storageVolume.getStorageOptions()).resolve(path);
         } else if (StringUtils.isNotBlank(path)) {
-            return JADEStorageURI.createStoragePathURI(path, new JADEStorageOptions());
+            return JADEStorageURI.createStoragePathURI(path, JADEOptions.create());
         } else {
             return null;
         }

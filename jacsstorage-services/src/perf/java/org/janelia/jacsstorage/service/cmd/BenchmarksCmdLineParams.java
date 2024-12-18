@@ -29,6 +29,12 @@ public class BenchmarksCmdLineParams {
     public String s3EntriesFile = "";
     @Parameter(names = "--fs-entries-file", description = "File containing list of file paths to retrieve")
     public String fsEntriesFile = "";
+    @Parameter(names = "--async", description = "Use async access", arity = 0)
+    public boolean useAsync = false;
+    @Parameter(names = "--access-key", description = "S3 access key")
+    public String accessKey;
+    @Parameter(names = "--secret-key", description = "S3 secret key")
+    public String secretKey;
 
     public TimeValue getMeasurementTime() {
         if (StringUtils.isBlank(measurementTime)) {

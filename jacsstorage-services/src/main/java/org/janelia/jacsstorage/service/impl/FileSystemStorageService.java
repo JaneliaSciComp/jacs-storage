@@ -16,10 +16,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.janelia.jacsstorage.coreutils.ComparatorUtils;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
-import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
@@ -118,7 +117,7 @@ public class FileSystemStorageService implements ContentStorageService {
         try {
             BasicFileAttributes fa = Files.readAttributes(p, BasicFileAttributes.class);
             Path parent = p.getParent();
-            return new ContentNode(JacsStorageType.FILE_SYSTEM, JADEStorageURI.createStoragePathURI("", new JADEStorageOptions()))
+            return new ContentNode(JacsStorageType.FILE_SYSTEM, JADEStorageURI.createStoragePathURI("", JADEOptions.create()))
                     .setName(p.getFileName().toString())
                     .setPrefix(parent != null ? parent.toString() : "")
                     .setSize(Files.isDirectory(p) ? 0 : fa.size())

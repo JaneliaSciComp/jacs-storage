@@ -23,7 +23,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
@@ -120,7 +120,7 @@ public class MasterWebdavResource {
         LOG.info("Find storage by prefix {} for {}", contentPathParam, securityContext.getUserPrincipal());
         JADEStorageURI jadeStorageURI = JADEStorageURI.createStoragePathURI(
                 contentPathParam,
-                new JADEStorageOptions()
+                JADEOptions.create()
                         .setAccessKey(requestContext.getHeaderString("AccessKey"))
                         .setSecretKey(requestContext.getHeaderString("SecretKey"))
                         .setAWSRegion(requestContext.getHeaderString("AWSRegion"))

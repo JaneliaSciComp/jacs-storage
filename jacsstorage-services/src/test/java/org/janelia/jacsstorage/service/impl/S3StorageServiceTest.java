@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.google.common.io.ByteStreams;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
@@ -43,9 +44,12 @@ public class S3StorageServiceTest {
         ContentStorageService storageService = getS3StorageService(
                 s3AdapterProvider.getS3Adapter("scicompsoft-public",
                         "https://s3.us-east-1.lyvecloud.seagate.com",
-                        "us-east-1",
-                        accessKey,
-                        secretKey), false);
+                        JADEOptions.create()
+                                .setAWSRegion("us-east-1")
+                                .setAccessKey(accessKey)
+                                .setSecretKey(secretKey)
+                                .setPathStyleBucket(true)),
+                false);
         assertTrue(storageService.canAccess("scicompsoft/flynp/pipeline_info/software_versions.yml"));
         InputStream contentStream = storageService.getContentInputStream("scicompsoft/flynp/pipeline_info/software_versions.yml");
         String content = new String(ByteStreams.toByteArray(contentStream));
@@ -60,26 +64,30 @@ public class S3StorageServiceTest {
     public void listFolderContentFromS3Endpoint() throws IOException {
         String accessKey = System.getenv("NRS_AWS_ACCESS_KEY_ID");
         String secretKey = System.getenv("NRS_AWS_SECRET_KEY_ID");
-        ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
-                "scicompsoft-data-public",
-                "https://s3nrsext.int.janelia.org",
-                "us-east-1",
-                accessKey,
-                secretKey
-        ), false);
+        ContentStorageService storageService = getS3StorageService(
+                s3AdapterProvider.getS3Adapter(
+                        "scicompsoft-data-public",
+                        "https://s3nrsext.int.janelia.org",
+                        JADEOptions.create()
+                                .setAWSRegion("us-east-1")
+                                .setAccessKey(accessKey)
+                                .setSecretKey(secretKey)
+                                .setPathStyleBucket(true)),
+                false);
         List<ContentNode> contentNodes = storageService.listContentNodes("", new ContentAccessParams());
         assertFalse(contentNodes.isEmpty());
     }
 
     @Test
     public void retrieveSingleFileFromS3() throws IOException {
-        ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
-                "janelia-neuronbridge-data-dev",
-                null,
-                "us-east-1",
-                null,
-                null
-        ), true);
+        ContentStorageService storageService = getS3StorageService(
+                s3AdapterProvider.getS3Adapter(
+                        "janelia-neuronbridge-data-dev",
+                        null,
+                        JADEOptions.create()
+                                .setDefaultAWSRegion("us-east-1")
+                                .setDefaultAsyncAccess(true)),
+                true);
         List<ContentNode> nodes = storageService.listContentNodes("v3_3_0",
                 new ContentAccessParams()
                         .setEntryNamePattern("config.json")
@@ -91,26 +99,28 @@ public class S3StorageServiceTest {
 
     @Test
     public void retrieveExistingObjectFromS3() {
-        ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
-                "janelia-neuronbridge-data-dev",
-                null,
-                "us-east-1",
-                null,
-                null
-        ), true);
+        ContentStorageService storageService = getS3StorageService(
+                s3AdapterProvider.getS3Adapter(
+                        "janelia-neuronbridge-data-dev",
+                        null,
+                        JADEOptions.create()
+                                .setDefaultAWSRegion("us-east-1")
+                                .setDefaultAsyncAccess(true)),
+                true);
         ContentNode n = storageService.getObjectNode("v3_3_0/config.json");
         assertNotNull(n);
     }
 
     @Test
     public void retrieveSelectedFilesFromS3() {
-        ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
-                "janelia-neuronbridge-data-dev",
-                null,
-                "us-east-1",
-                null,
-                null
-        ), true);
+        ContentStorageService storageService = getS3StorageService(
+                s3AdapterProvider.getS3Adapter(
+                        "janelia-neuronbridge-data-dev",
+                        null,
+                        JADEOptions.create()
+                                .setDefaultAWSRegion("us-east-1")
+                                .setDefaultAsyncAccess(true)),
+                true);
         List<ContentNode> nodes = storageService.listContentNodes("v3_3_0",
                 new ContentAccessParams()
                         .addSelectedEntry("config.json")
@@ -121,13 +131,14 @@ public class S3StorageServiceTest {
 
     @Test
     public void listContentOnPublicBucket() {
-        ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
-                "janelia-mouselight-imagery",
-                null,
-                "us-east-1",
-                null,
-                null
-        ), true);
+        ContentStorageService storageService = getS3StorageService(
+                s3AdapterProvider.getS3Adapter(
+                        "janelia-mouselight-imagery",
+                        null,
+                        JADEOptions.create()
+                                .setDefaultAWSRegion("us-east-1")
+                                .setDefaultAsyncAccess(true)),
+                true);
         class TestData {
             final String testName;
             final String contentLocation;
@@ -154,7 +165,7 @@ public class S3StorageServiceTest {
                 this.expectedNodes = expectedNodes;
             }
         }
-        TestData[] testData = new TestData[] {
+        TestData[] testData = new TestData[]{
                 new TestData("Test dirsOnly on root", "", null, null, 1, 0, true, 8),
                 new TestData("Test dirsOnly on root, using '/'", "/", null, null, 1, 0, true, 8),
 
@@ -251,13 +262,14 @@ public class S3StorageServiceTest {
                         1, 0, 7),
         };
         for (TestData td : testData) {
-            ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
-                    td.bucket,
-                    null,
-                    td.region,
-                    null,
-                    null
-            ), true);
+            ContentStorageService storageService = getS3StorageService(
+                    s3AdapterProvider.getS3Adapter(
+                            td.bucket,
+                            null,
+                            JADEOptions.create()
+                                    .setAWSRegion(td.region)
+                                    .setAsyncAccess(true)),
+                    true);
             List<ContentNode> nodes = storageService.listContentNodes(td.contentLocation,
                     new ContentAccessParams()
                             .setMaxDepth(td.depth)
@@ -296,13 +308,14 @@ public class S3StorageServiceTest {
 
         };
         for (TestData td : testData) {
-            ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
+            ContentStorageService storageService = getS3StorageService(
+                    s3AdapterProvider.getS3Adapter(
                     td.bucket,
                     null,
-                    td.region,
-                    null,
-                    null
-            ), true);
+                    JADEOptions.create()
+                            .setAWSRegion(td.region)
+                            .setAsyncAccess(true)),
+                    true);
             long startTime = System.currentTimeMillis();
             ByteArrayOutputStream retrievedStream = new ByteArrayOutputStream();
             long nbytes = storageService.streamContentToOutput(td.contentLocation, retrievedStream);
@@ -325,14 +338,15 @@ public class S3StorageServiceTest {
                 this.expectedResult = expectedResult;
             }
         }
-        ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
-                "janelia-neuronbridge-data-dev",
-                "https://s3.us-east-1.amazonaws.com",
-                "us-east-1",
-                null,
-                null
-        ), true);
-        TestData[] testData = new TestData[] {
+        ContentStorageService storageService = getS3StorageService(
+                s3AdapterProvider.getS3Adapter(
+                        "janelia-neuronbridge-data-dev",
+                        null,
+                        JADEOptions.create()
+                                .setDefaultAWSRegion("us-east-1")
+                                .setDefaultAsyncAccess(true)),
+                true);
+        TestData[] testData = new TestData[]{
                 new TestData("Access root", "", true),
                 new TestData("Access file on root", "current.txt", true),
                 new TestData("Access prefix", "v3_4_0", true),
@@ -348,13 +362,14 @@ public class S3StorageServiceTest {
 
     @Test
     public void writeAndDeleteContentOnS3() throws IOException {
-        ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
-                "janelia-neuronbridge-data-dev",
-                null,
-                "us-east-1",
-                null,
-                null
-        ), true);
+        ContentStorageService storageService = getS3StorageService(
+                s3AdapterProvider.getS3Adapter(
+                        "janelia-neuronbridge-data-dev",
+                        null,
+                        JADEOptions.create()
+                                .setDefaultAWSRegion("us-east-1")
+                                .setDefaultAsyncAccess(true)),
+                true);
         String testContent = "This is some test content";
         long l = storageService.writeContent("myTest.txt", new ByteArrayInputStream(testContent.getBytes()));
         assertTrue(l == testContent.length());
@@ -370,13 +385,14 @@ public class S3StorageServiceTest {
 
     @Test
     public void retrievePrefixFromS3() {
-        ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
-                "janelia-neuronbridge-data-dev",
-                null,
-                "us-east-1",
-                null,
-                null
-        ), true);
+        ContentStorageService storageService = getS3StorageService(
+                s3AdapterProvider.getS3Adapter(
+                        "janelia-neuronbridge-data-dev",
+                        null,
+                        JADEOptions.create()
+                                .setDefaultAWSRegion("us-east-1")
+                                .setDefaultAsyncAccess(true)),
+                true);
         ByteArrayOutputStream testDataStream = new ByteArrayOutputStream();
         List<ContentNode> contentNodes = storageService.listContentNodes("v3_3_0/schemas", new ContentAccessParams());
         for (ContentNode n : contentNodes) {

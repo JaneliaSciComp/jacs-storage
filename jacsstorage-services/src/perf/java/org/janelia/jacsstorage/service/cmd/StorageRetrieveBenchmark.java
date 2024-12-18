@@ -3,9 +3,10 @@ package org.janelia.jacsstorage.service.cmd;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -79,7 +80,13 @@ public class StorageRetrieveBenchmark {
     private void listContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, Supplier<String> entrySupplier) {
         String entry = entrySupplier.get();
         if (StringUtils.isNotBlank(entry)) {
-            JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(entry, new JADEStorageOptions());
+            JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
+                    entry,
+                    JADEOptions.create()
+                            .setAccessKey(trialParams.accessKey)
+                            .setSecretKey(trialParams.secretKey)
+            );
+
             try {
                 ContentGetter contentGetter = trialParams.storageContentReader.getDataContent(
                         dataURI,
@@ -95,11 +102,21 @@ public class StorageRetrieveBenchmark {
 
     private void streamContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
         if (StringUtils.isNotBlank(entry)) {
-            JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(entry, new JADEStorageOptions());
+            JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
+                    entry,
+                    JADEOptions.create()
+                            .setAccessKey(trialParams.accessKey)
+                            .setSecretKey(trialParams.secretKey)
+                            .setAsyncAccess(trialParams.useAsync)
+            );
             try (OutputStream targetStream = new NullOutputStream()) {
                 ContentGetter contentGetter = trialParams.storageContentReader.getDataContent(dataURI, new ContentAccessParams());
                 long nbytes = contentGetter.streamContent(targetStream);
-                blackhole.consume(nbytes);
+                if (nbytes == 0) {
+                    throw new ContentException("Empty content " + dataURI);
+                } else {
+                    blackhole.consume(nbytes);
+                }
             } catch (Exception e) {
                 LOG.error("Error reading {}", dataURI, e);
             }
@@ -108,11 +125,21 @@ public class StorageRetrieveBenchmark {
 
     private void streamObjectContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
         if (StringUtils.isNotBlank(entry)) {
-            JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(entry, new JADEStorageOptions());
+            JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
+                    entry,
+                    JADEOptions.create()
+                            .setAccessKey(trialParams.accessKey)
+                            .setSecretKey(trialParams.secretKey)
+                            .setAsyncAccess(trialParams.useAsync)
+            );
             try (OutputStream targetStream = new NullOutputStream()) {
                 ContentGetter contentGetter = trialParams.storageContentReader.getObjectContent(dataURI);
                 long nbytes = contentGetter.streamContent(targetStream);
-                blackhole.consume(nbytes);
+                if (nbytes == 0) {
+                    throw new ContentException("Empty content " + dataURI);
+                } else {
+                    blackhole.consume(nbytes);
+                }
             } catch (Exception e) {
                 LOG.error("Error reading {}", dataURI, e);
             }
@@ -149,7 +176,11 @@ public class StorageRetrieveBenchmark {
                 .shouldFailOnError(true)
                 .detectJvmArgs()
                 .param("s3EntriesFile", cmdLineParams.s3EntriesFile)
-                .param("fsEntriesFile", cmdLineParams.fsEntriesFile);
+                .param("fsEntriesFile", cmdLineParams.fsEntriesFile)
+                .param("accessKey", cmdLineParams.accessKey)
+                .param("secretKey", cmdLineParams.secretKey)
+                .param("useAsync", Boolean.toString(cmdLineParams.useAsync))
+                ;
         if (StringUtils.isNotBlank(cmdLineParams.profilerName)) {
             optBuilder.addProfiler(cmdLineParams.profilerName);
         }

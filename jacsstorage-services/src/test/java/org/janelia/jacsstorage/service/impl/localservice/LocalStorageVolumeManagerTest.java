@@ -9,7 +9,7 @@ import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
-import org.janelia.jacsstorage.model.jacsstorage.JADEStorageOptions;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageAgent;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -64,9 +64,9 @@ public class LocalStorageVolumeManagerTest {
 
     @Test
     public void mangedVolumes() {
-        Mockito.when(dataContentService.exists(JADEStorageURI.createStoragePathURI("/root/testDir", new JADEStorageOptions()))).thenReturn(true);
-        Mockito.when(dataContentService.exists(JADEStorageURI.createStoragePathURI("/root/testSharedDir", new JADEStorageOptions()))).thenReturn(true);
-        Mockito.when(dataContentService.exists(JADEStorageURI.createStoragePathURI("/root/notAccessible", new JADEStorageOptions()))).thenReturn(false);
+        Mockito.when(dataContentService.exists(JADEStorageURI.createStoragePathURI("/root/testDir", JADEOptions.create()))).thenReturn(true);
+        Mockito.when(dataContentService.exists(JADEStorageURI.createStoragePathURI("/root/testSharedDir", JADEOptions.create()))).thenReturn(true);
+        Mockito.when(dataContentService.exists(JADEStorageURI.createStoragePathURI("/root/notAccessible", JADEOptions.create()))).thenReturn(false);
 
         Mockito.when(storageVolumeDao.findMatchingVolumes(any(StorageQuery.class), any(PageRequest.class)))
                 .then(invocation -> {
@@ -163,7 +163,7 @@ public class LocalStorageVolumeManagerTest {
 
         Mockito.when(storageVolumeDao.findById(existingVolume.getId())).thenReturn(existingVolume);
         Mockito.when(storageVolumeDao.update(eq(existingVolume.getId()), anyMap())).thenReturn(existingVolume);
-        Mockito.when(dataContentService.exists(JADEStorageURI.createStoragePathURI("/root/testDir", new JADEStorageOptions()))).thenReturn(true);
+        Mockito.when(dataContentService.exists(JADEStorageURI.createStoragePathURI("/root/testDir", JADEOptions.create()))).thenReturn(true);
 
         TestDiskUsage diskUsage = prepareGetAvailableStorageBytes(199L, 300L);
 
@@ -207,7 +207,7 @@ public class LocalStorageVolumeManagerTest {
 
         Mockito.when(storageVolumeDao.findById(existingVolume.getId())).thenReturn(existingVolume);
         Mockito.when(storageVolumeDao.update(eq(existingVolume.getId()), anyMap())).thenReturn(existingVolume);
-        Mockito.when(dataContentService.exists(JADEStorageURI.createStoragePathURI("/root/testDir", new JADEStorageOptions()))).thenReturn(true);
+        Mockito.when(dataContentService.exists(JADEStorageURI.createStoragePathURI("/root/testDir", JADEOptions.create()))).thenReturn(true);
         TestDiskUsage diskUsage = prepareGetAvailableStorageBytes(199L, 300L);
 
         storageVolumeManager.updateVolumeInfo(existingVolume.getId(), updatedTestVolumeFields);
