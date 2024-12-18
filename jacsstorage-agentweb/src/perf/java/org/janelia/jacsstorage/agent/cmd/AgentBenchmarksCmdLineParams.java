@@ -5,6 +5,6 @@ import com.beust.jcommander.Parameter;
 import org.janelia.jacsstorage.service.cmd.BenchmarksCmdLineParams;
 
 public class AgentBenchmarksCmdLineParams extends BenchmarksCmdLineParams {
-    @Parameter(names = "-volId", description = "Storage volume ID")
+    @Parameter(names = "--vol-id", description = "Storage volume ID")
     String storageVolumeId;
 }

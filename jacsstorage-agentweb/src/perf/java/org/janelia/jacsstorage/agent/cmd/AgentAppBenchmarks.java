@@ -38,15 +38,15 @@ public class AgentAppBenchmarks {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamPathContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams) {
-        streamPathContentFuture(trialParams.getRandomEntry(), trialParams);
+    public void streamS3ContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams) {
+        streamPathContentFuture(trialParams.getRandomS3Entry(), trialParams);
     }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamPathContentFromFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
-        streamPathContentFromFuture(trialParams, blackhole);
+    public void streamS3ContentFromFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        streamPathContentFromFuture(trialParams, blackhole, trialParams.getRandomS3Entry());
     }
 
     private Future<ContainerResponse> streamPathContentFuture(String dataEntry, RetrieveBenchmarkResourceTrialParams trialParams) {
@@ -60,8 +60,7 @@ public class AgentAppBenchmarks {
         }
     }
 
-    private void streamPathContentFromFuture(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
-        String dataEntry = trialParams.getRandomEntry();
+    private void streamPathContentFromFuture(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole, String dataEntry) {
         try {
             Future<ContainerResponse> responseFuture = streamPathContentFuture(dataEntry, trialParams);
             ContainerResponse response = responseFuture.get();
@@ -78,12 +77,11 @@ public class AgentAppBenchmarks {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamPathContentAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
-        streamPathContentImpl(trialParams, blackhole);
+    public void streamS3ContentAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        streamContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
     }
 
-    private void streamPathContentImpl(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
-        String dataEntry = trialParams.getRandomEntry();
+    private void streamContentImpl(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole, String dataEntry) {
         try {
             InputStream response = trialParams.target()
                     .path("/agent_storage")
@@ -101,8 +99,8 @@ public class AgentAppBenchmarks {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamPathContentFromVolumePathAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
-        String dataEntry = trialParams.getRandomEntry();
+    public void streamS3ContentFromVolumePathAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        String dataEntry = trialParams.getRandomS3Entry();
         try {
             InputStream response = trialParams.target()
                     .path("/agent_storage")
@@ -149,7 +147,8 @@ public class AgentAppBenchmarks {
                 .threads(cmdLineParams.nThreads)
                 .shouldFailOnError(true)
                 .detectJvmArgs()
-                .param("entriesPathsFile", cmdLineParams.entriesPathsFile)
+                .param("s3EntriesFile", cmdLineParams.s3EntriesFile)
+                .param("fsEntriesFile", cmdLineParams.fsEntriesFile)
                 .param("storageVolumeId", cmdLineParams.storageVolumeId)
                 ;
         if (StringUtils.isNotBlank(cmdLineParams.profilerName)) {

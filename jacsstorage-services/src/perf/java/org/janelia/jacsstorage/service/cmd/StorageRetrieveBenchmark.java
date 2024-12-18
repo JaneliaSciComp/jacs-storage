@@ -38,28 +38,28 @@ public class StorageRetrieveBenchmark {
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamFSContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamContentImpl(trialParams, blackhole, () -> trialParams.getRandomFSEntry());
+        streamContentImpl(trialParams, blackhole, trialParams.getRandomFSEntry());
     }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamFSObjectContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamObjectContentImpl(trialParams, blackhole, () -> trialParams.getRandomFSEntry());
+        streamObjectContentImpl(trialParams, blackhole, trialParams.getRandomFSEntry());
     }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamS3Content(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamContentImpl(trialParams, blackhole, () -> trialParams.getRandomS3Entry());
+        streamContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
     }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamS3ObjectContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamObjectContentImpl(trialParams, blackhole, () -> trialParams.getRandomS3Entry());
+        streamObjectContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
     }
 
     @Benchmark
@@ -93,8 +93,7 @@ public class StorageRetrieveBenchmark {
         }
     }
 
-    private void streamContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, Supplier<String> entrySupplier) {
-        String entry = entrySupplier.get();
+    private void streamContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
         if (StringUtils.isNotBlank(entry)) {
             JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(entry, new JADEStorageOptions());
             try (OutputStream targetStream = new NullOutputStream()) {
@@ -107,8 +106,7 @@ public class StorageRetrieveBenchmark {
         }
     }
 
-    private void streamObjectContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, Supplier<String> entrySupplier) {
-        String entry = entrySupplier.get();
+    private void streamObjectContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
         if (StringUtils.isNotBlank(entry)) {
             JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(entry, new JADEStorageOptions());
             try (OutputStream targetStream = new NullOutputStream()) {
@@ -122,9 +120,9 @@ public class StorageRetrieveBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        BenchmarksCmdLineParams benchmarksCmdLineParams = new BenchmarksCmdLineParams();
+        BenchmarksCmdLineParams cmdLineParams = new BenchmarksCmdLineParams();
         JCommander jc = JCommander.newBuilder()
-                .addObject(benchmarksCmdLineParams)
+                .addObject(cmdLineParams)
                 .build();
         try {
             jc.parse(args);
@@ -133,27 +131,27 @@ public class StorageRetrieveBenchmark {
             System.exit(1);
         }
         String benchmarks;
-        if (StringUtils.isNotBlank(benchmarksCmdLineParams.benchmarksRegex)) {
-            benchmarks = StorageRetrieveBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
+        if (StringUtils.isNotBlank(cmdLineParams.benchmarksRegex)) {
+            benchmarks = StorageRetrieveBenchmark.class.getSimpleName() + "\\." + cmdLineParams.benchmarksRegex;
         } else {
             benchmarks = StorageRetrieveBenchmark.class.getSimpleName();
         }
 
         ChainedOptionsBuilder optBuilder = new OptionsBuilder()
                 .include(benchmarks)
-                .warmupIterations(benchmarksCmdLineParams.warmupIterations)
-                .warmupTime(benchmarksCmdLineParams.getWarmupTime())
-                .measurementIterations(benchmarksCmdLineParams.measurementIterations)
-                .measurementTime(benchmarksCmdLineParams.getMeasurementTime())
-                .measurementBatchSize(benchmarksCmdLineParams.measurementBatchSize)
-                .forks(benchmarksCmdLineParams.nForks)
-                .threads(benchmarksCmdLineParams.nThreads)
+                .warmupIterations(cmdLineParams.warmupIterations)
+                .warmupTime(cmdLineParams.getWarmupTime())
+                .measurementIterations(cmdLineParams.measurementIterations)
+                .measurementTime(cmdLineParams.getMeasurementTime())
+                .measurementBatchSize(cmdLineParams.measurementBatchSize)
+                .forks(cmdLineParams.nForks)
+                .threads(cmdLineParams.nThreads)
                 .shouldFailOnError(true)
                 .detectJvmArgs()
-                .param("s3EntriesFile", benchmarksCmdLineParams.s3EntriesFile)
-                .param("fsEntriesFile", benchmarksCmdLineParams.fsEntriesFile);
-        if (StringUtils.isNotBlank(benchmarksCmdLineParams.profilerName)) {
-            optBuilder.addProfiler(benchmarksCmdLineParams.profilerName);
+                .param("s3EntriesFile", cmdLineParams.s3EntriesFile)
+                .param("fsEntriesFile", cmdLineParams.fsEntriesFile);
+        if (StringUtils.isNotBlank(cmdLineParams.profilerName)) {
+            optBuilder.addProfiler(cmdLineParams.profilerName);
         }
 
         Options opt = optBuilder.build();

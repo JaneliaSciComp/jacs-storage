@@ -33,9 +33,9 @@ public class MasterAppBenchmarks {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public void redirectPathContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+    public void redirectForS3ContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
         try {
-            Future<ContainerResponse> responseFuture = redirectPathContentFuture(trialParams.getRandomEntry(), trialParams);
+            Future<ContainerResponse> responseFuture = redirectPathContentFuture(trialParams.getRandomS3Entry(), trialParams);
             ContainerResponse response = responseFuture.get();
             blackhole.consume(response.getStatus());
             blackhole.consume(response.getHeaderString("Location"));
@@ -85,7 +85,8 @@ public class MasterAppBenchmarks {
                 .threads(cmdLineParams.nThreads)
                 .shouldFailOnError(true)
                 .detectJvmArgs()
-                .param("entriesPathsFile", cmdLineParams.entriesPathsFile)
+                .param("s3EntriesFile", cmdLineParams.s3EntriesFile)
+                .param("fsEntriesFile", cmdLineParams.fsEntriesFile);
                 ;
         if (StringUtils.isNotBlank(cmdLineParams.profilerName)) {
             optBuilder.addProfiler(cmdLineParams.profilerName);

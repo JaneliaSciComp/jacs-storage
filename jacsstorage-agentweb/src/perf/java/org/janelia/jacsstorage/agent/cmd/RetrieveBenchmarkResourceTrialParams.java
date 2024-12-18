@@ -1,8 +1,11 @@
 package org.janelia.jacsstorage.agent.cmd;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.enterprise.inject.se.SeContainer;
@@ -28,10 +31,16 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 @State(Scope.Benchmark)
 public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
     @Param({""})
-    String entriesPathsFile;
+    String s3EntriesFile;
+    private List<String> s3Entries = new ArrayList<>();
+
+    @Param({""})
+    String fsEntriesFile;
+    private List<String> fsEntries = new ArrayList<>();
+
     @Param({""})
     String storageVolumeId;
-    private List<String> entryPathList;
+
     private Application application;
     private ApplicationHandler handler;
     private final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_128_PP);
@@ -41,8 +50,19 @@ public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
         try {
             setApplicationHandler();
             super.setUp();
-            if (StringUtils.isNotBlank(entriesPathsFile)) {
-                entryPathList = Files.readAllLines(Paths.get(entriesPathsFile));
+            if (StringUtils.isNotBlank(s3EntriesFile)) {
+                try {
+                    s3Entries = Files.readAllLines(Paths.get(s3EntriesFile));
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+            if (StringUtils.isNotBlank(fsEntriesFile)) {
+                try {
+                    fsEntries = Files.readAllLines(Paths.get(fsEntriesFile));
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -86,7 +106,11 @@ public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
 
     }
 
-    public String getRandomEntry() {
-        return entryPathList.get(rng.nextInt(entryPathList.size()));
+    public String getRandomS3Entry() {
+        return s3Entries.isEmpty() ? null : s3Entries.get(rng.nextInt(s3Entries.size()));
+    }
+
+    public String getRandomFSEntry() {
+        return fsEntries.isEmpty() ? null : fsEntries.get(rng.nextInt(fsEntries.size()));
     }
 }
