@@ -49,6 +49,16 @@ public class FileSystemStorageService implements ContentStorageService {
     }
 
     @Override
+    public ContentNode getObjectNode(String contentLocation) {
+        Path contentPath = Paths.get(contentLocation);
+        if (Files.exists(contentPath) && Files.isRegularFile(contentPath)) {
+            return createContentNode(contentPath);
+        } else {
+            throw new ContentException("Content not found for " + contentLocation);
+        }
+    }
+
+    @Override
     public List<ContentNode> listContentNodes(String contentLocation, ContentAccessParams filterParams) {
         return listContentFromPath(getContentPath(contentLocation), filterParams);
     }
@@ -67,33 +77,35 @@ public class FileSystemStorageService implements ContentStorageService {
         } else {
             return contentPath;
         }
-
     }
 
-    private List<ContentNode> listContentFromPath(Path contentPath, ContentAccessParams filterParams) {
+    private List<ContentNode> listContentFromPath(Path contentPath, ContentAccessParams contentAccessParams) {
         if (contentPath == null) {
             return Collections.emptyList();
         }
         if (Files.isDirectory(contentPath, LinkOption.NOFOLLOW_LINKS)) {
-            int traverseDepth = filterParams.getMaxDepth() >= 0 ? filterParams.getMaxDepth() : Integer.MAX_VALUE;
+            long startTime = System.currentTimeMillis();
+            int traverseDepth = contentAccessParams.getMaxDepth() >= 0 ? contentAccessParams.getMaxDepth() : Integer.MAX_VALUE;
             try (Stream<Path> files = Files.walk(contentPath, traverseDepth)) {
-                Stream<Path> matchingFiles = files.filter(p -> Files.isDirectory(p) || filterParams.matchEntry(p.toString()));
+                Stream<Path> matchingFiles = files.filter(p -> Files.isDirectory(p) || contentAccessParams.matchEntry(p.toString()));
                 Stream<Path> selectedFiles;
-                if (filterParams.getEntriesCount() > 0) {
-                    selectedFiles = matchingFiles.skip(Math.max(filterParams.getStartEntryIndex(), 0))
-                            .limit(filterParams.getEntriesCount());
+                if (contentAccessParams.getEntriesCount() > 0) {
+                    selectedFiles = matchingFiles.skip(Math.max(contentAccessParams.getStartEntryIndex(), 0))
+                            .limit(contentAccessParams.getEntriesCount());
                 } else {
-                    selectedFiles = matchingFiles.skip(Math.max(filterParams.getStartEntryIndex(), 0));
+                    selectedFiles = matchingFiles.skip(Math.max(contentAccessParams.getStartEntryIndex(), 0));
                 }
                 // if directories only returned nodes only have directories,
                 // otherwise they will have both files and directories
                 return selectedFiles
-                        .filter(p -> !filterParams.isDirectoriesOnly() || Files.isDirectory(p))
+                        .filter(p -> !contentAccessParams.isDirectoriesOnly() || Files.isDirectory(p))
                         .map(this::createContentNode)
                         .collect(Collectors.toList())
                         ;
             } catch (Exception e) {
                 throw new ContentException("Error reading directory content from: " + contentPath, e);
+            } finally {
+                LOG.info("List content {} with {} - {} secs", contentPath, contentAccessParams, (System.currentTimeMillis() - startTime) / 1000.);
             }
         } else if (Files.isRegularFile(contentPath, LinkOption.NOFOLLOW_LINKS)) {
             return Collections.singletonList(createContentNode(contentPath));

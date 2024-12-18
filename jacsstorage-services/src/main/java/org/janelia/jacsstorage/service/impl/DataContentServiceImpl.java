@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.service.impl;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -43,6 +44,21 @@ public class DataContentServiceImpl implements DataContentService {
             return new StorageCapacity(-1, -1);
         }
         return contentStorageService.getStorageCapacity(storageURI.getContentKey());
+    }
+
+    @Override
+    public ContentGetter getObjectContent(JADEStorageURI contentURI) {
+        ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(contentURI);
+        if (contentStorageService == null) {
+            throw new IllegalArgumentException("Invalid storage URI");
+        }
+        ContentNode contentNode = contentStorageService.getObjectNode(contentURI.getContentKey());
+        return new ContentGetterImpl(
+                contentStorageService,
+                contentAccessProvider,
+                Collections.singletonList(contentNode),
+                new ContentAccessParams()
+        );
     }
 
     @Override

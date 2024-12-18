@@ -25,7 +25,15 @@ public interface DataContentService {
     StorageCapacity storageCapacity(JADEStorageURI storageURI);
 
     /**
-     * Read data from the specified URI and apply filter based on filterParams.
+     * Read content from a single object.
+     *
+     * @param contentURI   contentURI
+     * @return
+     */
+    ContentGetter getObjectContent(JADEStorageURI contentURI);
+
+    /**
+     * Read data from the specified URI and apply filter based on filterParams. This can read the content from one or multiple objects.
      *
      * @param contentURI   contentURI
      * @param contentAccessParams

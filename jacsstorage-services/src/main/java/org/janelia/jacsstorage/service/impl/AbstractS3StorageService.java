@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service.impl;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -37,7 +38,7 @@ abstract class AbstractS3StorageService implements ContentStorageService {
                 return listObjectNodes(s3Location, contentAccessParams);
             }
         } finally {
-            LOG.info("!!!!! LIST CONTENT {} - {} secs", contentLocation, (System.currentTimeMillis() - startTime) / 1000.);
+            LOG.debug("List content {} with {} - {} secs", contentLocation, contentAccessParams, (System.currentTimeMillis() - startTime) / 1000.);
         }
     }
 
@@ -45,9 +46,8 @@ abstract class AbstractS3StorageService implements ContentStorageService {
 
     abstract List<ContentNode> listObjectNodes(String s3Location, ContentAccessParams contentAccessParams);
 
-    ContentNode createObjectNode(S3Object s3Object) {
+    ContentNode createObjectNode(String key, Long size, Instant lastModified) {
         try {
-            String key = s3Object.key();
             int pathSeparatorIndex = key.lastIndexOf('/');
             String prefix;
             String name;
@@ -61,13 +61,17 @@ abstract class AbstractS3StorageService implements ContentStorageService {
             return new ContentNode(JacsStorageType.S3, s3Adapter.getStorageURI())
                     .setName(name)
                     .setPrefix(prefix)
-                    .setSize(s3Object.size())
-                    .setLastModified(new Date(s3Object.lastModified().toEpochMilli()))
+                    .setSize(size != null ? size : 0L)
+                    .setLastModified(new Date(lastModified.toEpochMilli()))
                     .setCollection(false)
                     ;
         } catch (Exception e) {
             throw new ContentException(e);
         }
+    }
+
+    ContentNode createObjectNode(S3Object s3Object) {
+        return createObjectNode(s3Object.key(), s3Object.size(), s3Object.lastModified());
     }
 
     ContentNode createPrefixNode(String s3Prefix) {

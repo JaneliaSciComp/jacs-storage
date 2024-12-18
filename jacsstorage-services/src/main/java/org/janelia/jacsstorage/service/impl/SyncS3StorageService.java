@@ -1,6 +1,6 @@
 package org.janelia.jacsstorage.service.impl;
 
-import java.io.ByteArrayInputStream;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -13,18 +13,23 @@ import com.google.common.io.ByteStreams;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
+import org.janelia.jacsstorage.service.NoContentFoundException;
 import org.janelia.jacsstorage.service.s3.S3Adapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.model.CommonPrefix;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
+import software.amazon.awssdk.services.s3.model.NoSuchUploadException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
@@ -61,6 +66,25 @@ public class SyncS3StorageService extends AbstractS3StorageService {
         }
         return false;
     }
+
+    @Override
+    public ContentNode getObjectNode(String contentLocation) {
+        String s3Location = adjustLocation(contentLocation);
+
+        try {
+            HeadObjectRequest contentRequest = HeadObjectRequest.builder()
+                    .bucket(s3Adapter.getBucket())
+                    .key(s3Location)
+                    .build();
+
+            HeadObjectResponse contentResponse = s3Adapter.getS3Client().headObject(contentRequest);
+
+            return createObjectNode(contentLocation, contentResponse.contentLength(), contentResponse.lastModified());
+        } catch (NoSuchUploadException | NoSuchBucketException e) {
+            throw new NoContentFoundException(e);
+        }
+    }
+
 
     List<ContentNode> listPrefixNodes(String s3Location, ContentAccessParams contentAccessParams) {
         LOG.debug("List prefix nodes at {}", s3Location);
@@ -187,8 +211,8 @@ public class SyncS3StorageService extends AbstractS3StorageService {
                 .key(s3Location)
                 .build();
 
-        ResponseBytes<GetObjectResponse> getContentResponse = s3Adapter.getS3Client().getObject(getObjectRequest, ResponseTransformer.toBytes());
-        return new ByteArrayInputStream(getContentResponse.asByteArray());
+        ResponseInputStream<GetObjectResponse> getContentResponse = s3Adapter.getS3Client().getObject(getObjectRequest, ResponseTransformer.toInputStream());
+        return new BufferedInputStream(getContentResponse);
     }
 
     @Override

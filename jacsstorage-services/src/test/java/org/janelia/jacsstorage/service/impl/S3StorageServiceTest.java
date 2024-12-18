@@ -38,15 +38,16 @@ public class S3StorageServiceTest {
 
     @Test
     public void retrieveSingleFileContentFromS3Endpoint() throws IOException {
-        String accessKey = System.getenv("AWS_ACCESS_KEY_ID");
-        String secretKey = System.getenv("AWS_SECRET_KEY_ID");
+        String accessKey = System.getenv("SEAGATE_AWS_ACCESS_KEY_ID");
+        String secretKey = System.getenv("SEAGATE_AWS_SECRET_KEY_ID");
         ContentStorageService storageService = getS3StorageService(
                 s3AdapterProvider.getS3Adapter("scicompsoft-public",
                         "https://s3.us-east-1.lyvecloud.seagate.com",
                         "us-east-1",
                         accessKey,
-                        secretKey));
-        InputStream contentStream = storageService.getContentInputStream("/scicompsoft/flynp/pipeline_info/software_versions.yml");
+                        secretKey), false);
+        assertTrue(storageService.canAccess("scicompsoft/flynp/pipeline_info/software_versions.yml"));
+        InputStream contentStream = storageService.getContentInputStream("scicompsoft/flynp/pipeline_info/software_versions.yml");
         String content = new String(ByteStreams.toByteArray(contentStream));
         assertTrue(content.length() > 0);
         List<ContentNode> contentNodes = storageService.listContentNodes("/scicompsoft/flynp/pipeline_info/software_versions.yml", new ContentAccessParams());
@@ -57,16 +58,16 @@ public class S3StorageServiceTest {
 
     @Test
     public void listFolderContentFromS3Endpoint() throws IOException {
-        String accessKey = System.getenv("AWS_ACCESS_KEY_ID");
-        String secretKey = System.getenv("AWS_SECRET_KEY_ID");
+        String accessKey = System.getenv("NRS_AWS_ACCESS_KEY_ID");
+        String secretKey = System.getenv("NRS_AWS_SECRET_KEY_ID");
         ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
-                "scicompsoft-public",
-                "https://s3.us-east-1.lyvecloud.seagate.com",
+                "scicompsoft-data-public",
+                "https://s3nrsext.int.janelia.org",
                 "us-east-1",
                 accessKey,
                 secretKey
-        ));
-        List<ContentNode> contentNodes = storageService.listContentNodes("scicompsoft/flynp/pipeline_info", new ContentAccessParams());
+        ), false);
+        List<ContentNode> contentNodes = storageService.listContentNodes("", new ContentAccessParams());
         assertFalse(contentNodes.isEmpty());
     }
 
@@ -78,7 +79,7 @@ public class S3StorageServiceTest {
                 "us-east-1",
                 null,
                 null
-        ));
+        ), true);
         List<ContentNode> nodes = storageService.listContentNodes("v3_3_0",
                 new ContentAccessParams()
                         .setEntryNamePattern("config.json")
@@ -89,6 +90,19 @@ public class S3StorageServiceTest {
     }
 
     @Test
+    public void retrieveExistingObjectFromS3() {
+        ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
+                "janelia-neuronbridge-data-dev",
+                null,
+                "us-east-1",
+                null,
+                null
+        ), true);
+        ContentNode n = storageService.getObjectNode("v3_3_0/config.json");
+        assertNotNull(n);
+    }
+
+    @Test
     public void retrieveSelectedFilesFromS3() {
         ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
                 "janelia-neuronbridge-data-dev",
@@ -96,7 +110,7 @@ public class S3StorageServiceTest {
                 "us-east-1",
                 null,
                 null
-        ));
+        ), true);
         List<ContentNode> nodes = storageService.listContentNodes("v3_3_0",
                 new ContentAccessParams()
                         .addSelectedEntry("config.json")
@@ -113,7 +127,7 @@ public class S3StorageServiceTest {
                 "us-east-1",
                 null,
                 null
-        ));
+        ), true);
         class TestData {
             final String testName;
             final String contentLocation;
@@ -141,8 +155,8 @@ public class S3StorageServiceTest {
             }
         }
         TestData[] testData = new TestData[] {
-                new TestData("Test dirsOnly on root", "", null, null, 1, 0, true, 7),
-                new TestData("Test dirsOnly on root, using '/'", "/", null, null, 1, 0, true, 7),
+                new TestData("Test dirsOnly on root", "", null, null, 1, 0, true, 8),
+                new TestData("Test dirsOnly on root, using '/'", "/", null, null, 1, 0, true, 8),
 
                 new TestData("Test dirsOnly, depth 0", "images/2021-10-19", null, null, 0, 0, true, 1),
                 new TestData("Test dirsOnly, depth 0, ending /", "images/2021-10-19/", null, null, 0, 0, true, 1),
@@ -150,7 +164,7 @@ public class S3StorageServiceTest {
                 new TestData("Test dirsOnly, depth 1", "images/2021-10-19", null, null, 1, 0, true, 2),
                 new TestData("Test dirsOnly, depth 1, ending /", "images/2021-10-19/", null, null, 1, 0, true, 2),
 
-                new TestData("Test dirs and objects on root", "", null, null, 1, 0, false, 8),
+                new TestData("Test dirs and objects on root", "", null, null, 1, 0, false, 9),
                 new TestData("Test depth 1, offset 0", "images/2021-10-19", null, null, 1, 0, false, 6),
                 new TestData("Test depth 1, offset 0, / ending", "images/2021-10-19/", null, null, 1, 0, false, 6),
 
@@ -243,7 +257,7 @@ public class S3StorageServiceTest {
                     td.region,
                     null,
                     null
-            ));
+            ), true);
             List<ContentNode> nodes = storageService.listContentNodes(td.contentLocation,
                     new ContentAccessParams()
                             .setMaxDepth(td.depth)
@@ -288,7 +302,7 @@ public class S3StorageServiceTest {
                     td.region,
                     null,
                     null
-            ));
+            ), true);
             long startTime = System.currentTimeMillis();
             ByteArrayOutputStream retrievedStream = new ByteArrayOutputStream();
             long nbytes = storageService.streamContentToOutput(td.contentLocation, retrievedStream);
@@ -313,11 +327,11 @@ public class S3StorageServiceTest {
         }
         ContentStorageService storageService = getS3StorageService(s3AdapterProvider.getS3Adapter(
                 "janelia-neuronbridge-data-dev",
-                null,
+                "https://s3.us-east-1.amazonaws.com",
                 "us-east-1",
                 null,
                 null
-        ));
+        ), true);
         TestData[] testData = new TestData[] {
                 new TestData("Access root", "", true),
                 new TestData("Access file on root", "current.txt", true),
@@ -340,7 +354,7 @@ public class S3StorageServiceTest {
                 "us-east-1",
                 null,
                 null
-        ));
+        ), true);
         String testContent = "This is some test content";
         long l = storageService.writeContent("myTest.txt", new ByteArrayInputStream(testContent.getBytes()));
         assertTrue(l == testContent.length());
@@ -362,7 +376,7 @@ public class S3StorageServiceTest {
                 "us-east-1",
                 null,
                 null
-        ));
+        ), true);
         ByteArrayOutputStream testDataStream = new ByteArrayOutputStream();
         List<ContentNode> contentNodes = storageService.listContentNodes("v3_3_0/schemas", new ContentAccessParams());
         for (ContentNode n : contentNodes) {
@@ -374,7 +388,7 @@ public class S3StorageServiceTest {
         assertNotNull(testDataContent);
     }
 
-    private ContentStorageService getS3StorageService(S3Adapter s3Adapter) {
-        return new SyncS3StorageService(s3Adapter);
+    private ContentStorageService getS3StorageService(S3Adapter s3Adapter, boolean async) {
+        return async ? new AsyncS3StorageService(s3Adapter) : new SyncS3StorageService(s3Adapter);
     }
 }

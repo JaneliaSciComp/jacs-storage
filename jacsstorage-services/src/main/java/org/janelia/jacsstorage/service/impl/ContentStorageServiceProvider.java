@@ -35,14 +35,14 @@ class ContentStorageServiceProvider {
         }
     }
 
-    private FileSystemStorageService createFileStorageServiceInstance(JADEStorageURI storageURI) {
+    private ContentStorageService createFileStorageServiceInstance(JADEStorageURI storageURI) {
         return new FileSystemStorageService();
     }
 
-    private SyncS3StorageService createS3StorageServiceInstance(JADEStorageURI storageURI) {
+    private ContentStorageService createS3StorageServiceInstance(JADEStorageURI storageURI) {
         if (storageURI.getStorageScheme() == JADEStorageURI.JADEStorageScheme.S3) {
             // use only the bucket to instantiate the storage service
-            return new SyncS3StorageService(s3AdapterProvider.getS3Adapter(
+            return new AsyncS3StorageService(s3AdapterProvider.getS3Adapter(
                     storageURI.getContentBucket(),
                     null,
                     storageURI.getStorageOptions().getAWSRegion(defaultAWSRegion),

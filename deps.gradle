@@ -103,7 +103,8 @@ dependencies {
 
         // AWS SDK
         AWS_SDK_VERSION = "2.29.34"
-        AWS_S3_LIB = "software.amazon.awssdk:s3:${AWS_SDK_VERSION}"
+        AWS_SDK_PLATFORM = "software.amazon.awssdk:bom:${AWS_SDK_VERSION}"
+        AWS_S3_LIB = "software.amazon.awssdk:s3"
         AWS_CRT_LIB = "software.amazon.awssdk.crt:aws-crt:0.33.7"
 
         // testing
@@ -121,10 +122,9 @@ dependencies {
         POWERMOCK_API_MOCKITO_LIB = "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
 
         // benchmarks
-        BENCHMARK_VERSION = "1.21"
+        BENCHMARK_VERSION = "1.37"
         BENCHMARK_CORE_LIB = "org.openjdk.jmh:jmh-core:${BENCHMARK_VERSION}"
         BENCHMARK_ANN_PROCESSOR_LIB = "org.openjdk.jmh:jmh-generator-annprocess:${BENCHMARK_VERSION}"
-
     }
 
     // Included in the implementation of ALL projects

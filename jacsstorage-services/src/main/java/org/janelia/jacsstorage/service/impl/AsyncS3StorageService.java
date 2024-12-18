@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service.impl;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -11,22 +12,27 @@ import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
+import org.janelia.jacsstorage.service.NoContentFoundException;
 import org.janelia.jacsstorage.service.s3.S3Adapter;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
 import software.amazon.awssdk.core.async.BlockingInputStreamAsyncRequestBody;
+import software.amazon.awssdk.core.async.ResponsePublisher;
 import software.amazon.awssdk.services.s3.model.CommonPrefix;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Publisher;
@@ -54,6 +60,30 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
                 .map(r -> !r.contents().isEmpty())
                 .limit(1);
         return Mono.from(contentIsAccessible).block();
+    }
+
+    @Override
+    public ContentNode getObjectNode(String contentLocation) {
+        String s3Location = adjustLocation(contentLocation);
+
+        HeadObjectRequest contentRequest = HeadObjectRequest.builder()
+                .bucket(s3Adapter.getBucket())
+                .key(s3Location)
+                .build();
+
+        CompletableFuture<ContentNode> contentPromise = s3Adapter.getAsyncS3Client().headObject(contentRequest)
+                .thenApply(contentResponse -> createObjectNode(contentLocation, contentResponse.contentLength(), contentResponse.lastModified()))
+                .whenComplete((n, e) -> {
+                    if (e != null) {
+                        if (e instanceof NoSuchBucketException || e instanceof NoSuchKeyException) {
+                            throw new NoContentFoundException(e);
+                        } else {
+                            throw new ContentException(e);
+                        }
+                    }
+                });
+
+        return contentPromise.join();
     }
 
     @Override
@@ -163,12 +193,8 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
                 .key(s3Location)
                 .build();
 
-        CompletableFuture<byte[]> getContentPromise = s3Adapter.getAsyncS3Client().getObject(
-                getObjectRequest, AsyncResponseTransformer.toBytes())
-                .thenApply(rb -> rb.asByteArray())
-                ;
-
-        return new ByteArrayInputStream(getContentPromise.join());
+        CompletableFuture<ResponseInputStream<GetObjectResponse>> getContentPromise = s3Adapter.getAsyncS3Client().getObject(getObjectRequest, AsyncResponseTransformer.toBlockingInputStream());
+        return new BufferedInputStream(getContentPromise.join());
     }
 
     @Override

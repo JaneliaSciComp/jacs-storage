@@ -16,7 +16,7 @@ public class ContentAccessParams {
     private static final int DEFAULT_DEPTH = 1;
 
     private String filterType;
-    private Set<String> selectedEntries = new HashSet<>();
+    private final Set<String> selectedEntries = new HashSet<>();
     private String entryNamePattern;
     private Pattern regexEntryNamePattern;
     private int maxDepth = DEFAULT_DEPTH;
@@ -25,7 +25,7 @@ public class ContentAccessParams {
     private int entriesCount;
     private boolean directoriesOnly;
     private boolean estimateSizeDisabled;
-    private Map<String, String> filterTypeSpecificParams = new HashMap<>();
+    private final Map<String, String> filterTypeSpecificParams = new HashMap<>();
 
     public String getFilterType() {
         return filterType;

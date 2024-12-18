@@ -7,6 +7,8 @@ public interface ContentStorageService extends ContentStreamReader {
 
     boolean canAccess(String contentLocation);
 
+    ContentNode getObjectNode(String contentLocation);
+
     List<ContentNode> listContentNodes(String contentLocation, ContentAccessParams filterParams);
 
     long writeContent(String contentLocation, InputStream inputStream);
