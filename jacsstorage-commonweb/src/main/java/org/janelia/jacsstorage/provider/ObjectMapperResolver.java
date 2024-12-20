@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.janelia.jacsstorage.cdi.ObjectMapperFactory;
 import org.janelia.jacsstorage.datarequest.NumberSerializerModule;
 
-@Provider
 public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
 
     private final ObjectMapper mapper;

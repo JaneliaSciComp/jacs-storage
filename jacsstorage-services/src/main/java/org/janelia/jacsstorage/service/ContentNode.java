@@ -2,7 +2,7 @@ package org.janelia.jacsstorage.service;
 
 import java.util.Date;
 
-import javax.activation.MimetypesFileTypeMap;
+import jakarta.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;

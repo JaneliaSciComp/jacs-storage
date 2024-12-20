@@ -34,7 +34,7 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
                     return ApplicationProperties.class;
                 }
             }).get();
-
+            LOG.info("Start master app with {}", appConfig);
             app.start(appArgs, appConfig);
         } catch (Throwable e) {
             LOG.error("Error starting application", e);

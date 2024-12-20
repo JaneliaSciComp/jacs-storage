@@ -4,19 +4,16 @@ project(":jacsstorage-commonweb") {
             CDI_SERVLET_LIB,
             CMDLINE_ARG_LIB,
             JACKSON_DATAFORMAT_XML_LIB,
-            JACKSON_JAXRS_JSON_PROVIDER,
-            JACKSON_JAXRS_XML_PROVIDER,
+            JACKSON_JAXRS_PROVIDERS,
+            JAKARTA_JAXB_API,
+            JAKARTA_RS_API_LIB,
             JAKARTA_SERVLET_API_LIB,
-            JAX_RS_API_LIB,
-            JAXB_API,
             SWAGGER_JAXRS_LIB,
             SWAGGER_SERVLET_LIB
 
         implementation GRIZZLY_SERVLET_LIB,
-                       JAX_RS_JERSEY_CONTAINERS_LIB,
-                       JAX_RS_JERSEY_CORE_LIB,
-                       JAX_RS_JERSEY_HTTP_CONTAINERS_LIB,
-                       JAX_RS_JERSEY_SERVER_LIB,
+                       JERSEY_CONTAINERS_LIB,
+                       JERSEY_HTTP_CONTAINERS_LIB,
                        UNDERTOW_CORE_LIB,
                        UNDERTOW_SERVLET_LIB
     }

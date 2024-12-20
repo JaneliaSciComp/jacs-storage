@@ -28,6 +28,7 @@ import org.janelia.jacsstorage.dao.TimebasedIdGenerator;
 
 @ApplicationScoped
 public class ApplicationProducer {
+
     @Produces
     public ObjectMapper objectMapper(ObjectMapperFactory objectMapperFactory) {
         return objectMapperFactory.getDefaultObjectMapper();

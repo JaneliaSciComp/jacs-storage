@@ -11,6 +11,7 @@ import jakarta.enterprise.inject.Produces;
 
 @ApplicationScoped
 public class CoreCdiProducer {
+
     @Produces
     public ExecutorService createSingleExecutorService() {
         return Executors.newSingleThreadExecutor(r -> {
@@ -24,4 +25,5 @@ public class CoreCdiProducer {
         executorService.shutdown();
         executorService.awaitTermination(1, TimeUnit.SECONDS);
     }
+
 }

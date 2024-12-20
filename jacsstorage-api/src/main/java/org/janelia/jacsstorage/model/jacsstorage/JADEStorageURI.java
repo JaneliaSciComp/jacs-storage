@@ -3,8 +3,8 @@ package org.janelia.jacsstorage.model.jacsstorage;
 import java.net.URI;
 import java.nio.file.Paths;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;

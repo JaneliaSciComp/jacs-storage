@@ -1,5 +1,8 @@
 package org.janelia.jacsstorage.cdi;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,20 +10,13 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import org.janelia.jacsstorage.dao.mongo.utils.MongoModule;
 
-import jakarta.enterprise.context.ApplicationScoped;
-
 @ApplicationScoped
 public class ObjectMapperFactory {
-    private static final ObjectMapperFactory INSTANCE = new ObjectMapperFactory();
 
     private final ObjectMapper defaultObjectMapper;
 
-    ObjectMapperFactory() {
+    public ObjectMapperFactory() {
         defaultObjectMapper = newObjectMapper();
-    }
-
-    public static ObjectMapperFactory instance() {
-        return INSTANCE;
     }
 
     public ObjectMapper getDefaultObjectMapper() {

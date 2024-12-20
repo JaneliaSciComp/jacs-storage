@@ -21,22 +21,23 @@ project(":jacsstorage-agentweb") {
     dependencies {
         implementation project(":jacsstorage-commonweb"),
                        CDI_SE_CORE_LIB,
-                       JAX_RS_JERSEY_CLIENT_LIB,
-                       JAX_RS_JERSEY_CDI_SERVLET_LIB,
-                       JAX_RS_JERSEY_INJECT_LIB,
-                       JAX_RS_JERSEY_MEDIA_JSON_LIB,
+                       JERSEY_CLIENT_LIB,
+                       JERSEY_CDI_SERVLET_LIB,
+                       JERSEY_INJECT_HK2_LIB,
+                       JERSEY_INJECT_SE_LIB,
+                       JERSEY_MEDIA_JSON_LIB,
                        N5_UNIVERSE_LIB
 
-        testImplementation JAX_RS_JERSEY_TEST_LIB
+        testImplementation JERSEY_TEST_LIB
 
         perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
 
         perfImplementation project,
                            project(path: ":jacsstorage-services", configuration: "perfRuntimeElements"),
                            COMMONS_RNG_LIB,
-                           JAX_RS_JERSEY_TEST_LIB,
-                           JAX_RS_JERSEY_TEST_UTIL_LIB,
-                           JAX_RS_JERSEY_TEST_PROVIDER_LIB
+                           JERSEY_TEST_LIB,
+                           JERSEY_TEST_UTIL_LIB,
+                           JERSEY_TEST_PROVIDER_LIB
     }
 
     tasks.register('createAgentBenchmark', CreateStartScripts) {

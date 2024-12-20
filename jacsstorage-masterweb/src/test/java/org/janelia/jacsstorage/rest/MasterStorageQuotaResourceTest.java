@@ -3,8 +3,8 @@ package org.janelia.jacsstorage.rest;
 import java.io.IOException;
 import java.util.Set;
 
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

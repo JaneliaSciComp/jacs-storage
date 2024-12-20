@@ -6,7 +6,7 @@ import java.io.OutputStream;
 import java.util.EnumSet;
 import java.util.Set;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -15,11 +15,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
-import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
+import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;

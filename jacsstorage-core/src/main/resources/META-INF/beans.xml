@@ -1,11 +1,12 @@
-<beans xmlns="http://xmlns.jcp.org/xml/ns/javaee"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/beans_1_1.xsd"
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://jakarta.ee/xml/ns/jakartaee"
+       xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+                           https://jakarta.ee/xml/ns/jakartaee/beans_3_0.xsd"
        bean-discovery-mode="all">
-       <scan>
-              <exclude name="org.janelia.jacsstorage.model.**"/>
-       </scan>
-       <interceptors>
-              <class>org.janelia.jacsstorage.interceptors.TimedInterceptor</class>
-       </interceptors>
+    <scan>
+        <exclude name="org.janelia.jacsstorage.model.**"/>
+    </scan>
+    <interceptors>
+        <class>org.janelia.jacsstorage.interceptors.TimedInterceptor</class>
+    </interceptors>
 </beans>

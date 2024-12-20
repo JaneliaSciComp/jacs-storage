@@ -22,10 +22,11 @@ project(":jacsstorage-clients") {
                        COMMONS_LANG_LIB,
                        CMDLINE_ARG_LIB,
                        JACKSON_DATATYPE_JODA_LIB,
-                       JAX_RS_JERSEY_CLIENT_LIB,
-                       JAX_RS_JERSEY_MEDIA_LIB,
-                       JAX_RS_JERSEY_INJECT_LIB,
-                       JAX_RS_JERSEY_MEDIA_JSON_LIB,
+                       JERSEY_CLIENT_LIB,
+                       JERSEY_MEDIA_LIB,
+                       JERSEY_INJECT_HK2_LIB,
+                       JERSEY_INJECT_SE_LIB,
+                       JERSEY_MEDIA_JSON_LIB,
                        N5_UNIVERSE_LIB
     }
 

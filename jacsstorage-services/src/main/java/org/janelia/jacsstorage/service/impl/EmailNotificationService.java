@@ -2,13 +2,13 @@ package org.janelia.jacsstorage.service.impl;
 
 import java.util.Properties;
 
-import javax.mail.Message;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 import jakarta.inject.Inject;
+import jakarta.mail.Message;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
@@ -58,7 +58,7 @@ public class EmailNotificationService implements NotificationService {
         try {
             if (authRequired) {
                 session = Session.getInstance(emailProperties,
-                        new javax.mail.Authenticator() {
+                        new jakarta.mail.Authenticator() {
                             protected PasswordAuthentication getPasswordAuthentication() {
                                 return new PasswordAuthentication(senderEmail, senderPassword);
                             }
