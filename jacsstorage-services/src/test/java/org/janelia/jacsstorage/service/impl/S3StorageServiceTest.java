@@ -61,7 +61,7 @@ public class S3StorageServiceTest {
     }
 
     @Test
-    public void listFolderContentFromS3Endpoint() throws IOException {
+    public void listFolderContentFromS3Endpoint() {
         String accessKey = System.getenv("NRS_AWS_ACCESS_KEY_ID");
         String secretKey = System.getenv("NRS_AWS_SECRET_KEY_ID");
         ContentStorageService storageService = getS3StorageService(

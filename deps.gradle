@@ -13,9 +13,8 @@ dependencies {
         LOGBACK_CLASSIC_LIB = "ch.qos.logback:logback-classic:${LOGBACK_VERSION}"
 
         // dependency injection
-        JAVAX_ENTERPRISE_VERSION = "2.0.SP1"
-        WELD_VERSION = "3.1.1.Final"
-        CDI_API_LIB = "javax.enterprise:cdi-api:${JAVAX_ENTERPRISE_VERSION}"
+        WELD_VERSION = "5.1.1.Final"
+        CDI_API_LIB = "jakarta.enterprise:jakarta.enterprise.cdi-api:4.1.0"
         CDI_IMPL_LIB = "org.jboss.weld:weld-core:${WELD_VERSION}"
         CDI_SE_CORE_LIB = "org.jboss.weld.se:weld-se-core:${WELD_VERSION}"
         CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
@@ -41,8 +40,9 @@ dependencies {
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"
 
         // JAX-RS API
-        JAX_RS_API_LIB = "javax.ws.rs:javax.ws.rs-api:2.1"
-        JERSEY_VERSION = "2.29.1"
+        JAKARTA_SERVLET_API_LIB = "jakarta.servlet:jakarta.servlet-api:5.0.0"
+        JAX_RS_API_LIB = "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
+        JERSEY_VERSION = "3.1.9"
         JAX_RS_JERSEY_CORE_LIB = "org.glassfish.jersey.core:jersey-common:${JERSEY_VERSION}"
         JAX_RS_JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
         JAX_RS_JERSEY_SERVER_LIB = "org.glassfish.jersey.core:jersey-server:${JERSEY_VERSION}"
@@ -53,8 +53,9 @@ dependencies {
         JAX_RS_JERSEY_CDI_SERVLET_LIB = "org.glassfish.jersey.ext.cdi:jersey-cdi1x-servlet:${JERSEY_VERSION}"
         JAX_RS_JERSEY_HTTP_CONTAINERS_LIB = "org.glassfish.jersey.containers:jersey-container-grizzly2-http:${JERSEY_VERSION}"
         JAX_RS_JERSEY_INJECT_LIB = "org.glassfish.jersey.inject:jersey-hk2:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_TEST_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-util:${JERSEY_VERSION}"
-        JAX_RS_JERSEY_TEST_PROVIDER_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-bundle:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_TEST_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-core:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_TEST_UTIL_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-util:${JERSEY_VERSION}"
+        JAX_RS_JERSEY_TEST_PROVIDER_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-grizzly2:${JERSEY_VERSION}"
 
         // Mail
         JAVAMAIL_LIB = "com.sun.mail:javax.mail:1.6.2"
@@ -63,17 +64,16 @@ dependencies {
         CMDLINE_ARG_LIB = "com.beust:jcommander:1.78"
 
         // servlet engine
-        JAVAX_SERVLET_API_LIB = "javax.servlet:javax.servlet-api:4.0.1"
-        UNDERTOW_VERSION = "2.0.26.Final"
+        UNDERTOW_VERSION = "2.3.18.Final"
         UNDERTOW_CORE_LIB = "io.undertow:undertow-core:${UNDERTOW_VERSION}"
         UNDERTOW_SERVLET_LIB = "io.undertow:undertow-servlet:${UNDERTOW_VERSION}"
-        GRIZZLY_VERSION = "2.4.3"
-        GRIZZLY_SERVLET_LIB = "org.glassfish.grizzly:grizzly-http-servlet:${GRIZZLY_VERSION}"
+        GRIZZLY_SERVLET_LIB = "org.glassfish.grizzly:grizzly-http-servlet:4.0.2"
 
         // REST API documentation
-        SWAGGER_VERSION = "1.5.16"
-        SWAGGER_ANNOTATIONS_LIB = "io.swagger:swagger-annotations:${SWAGGER_VERSION}"
-        SWAGGER_JAXRS_LIB = "io.swagger:swagger-jersey2-jaxrs:${SWAGGER_VERSION}"
+        SWAGGER_VERSION = "2.2.27"
+        SWAGGER_ANNOTATIONS_LIB = "io.swagger.core.v3:swagger-annotations-jakarta:${SWAGGER_VERSION}"
+        SWAGGER_JAXRS_LIB = "io.swagger.core.v3:swagger-jaxrs2-jakarta:${SWAGGER_VERSION}"
+        SWAGGER_SERVLET_LIB = "io.swagger.core.v3:swagger-jaxrs2-servlet-initializer-jakarta:${SWAGGER_VERSION}"
 
         // JSON
         JACKSON_VERSION = "2.9.4"
@@ -108,16 +108,11 @@ dependencies {
         AWS_CRT_LIB = "software.amazon.awssdk.crt:aws-crt:0.33.7"
 
         // testing
-        JUNIT_VERSION = "4.13.1"
-        HAMCREST_VERSION = "2.0.0.0"
-        MOCKITO_VERSION = "2.8.9"
-        POWERMOCKITO_VERSION = "1.7.3"
-        ASSERTJ_VERSION = "3.6.1"
-
-        JUNIT_LIB = "junit:junit:${JUNIT_VERSION}"
-        HAMCREST_LIB = "org.hamcrest:java-hamcrest:${HAMCREST_VERSION}"
-        MOCKITO_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
-        ASSERTJ_LIB = "org.assertj:assertj-core:${ASSERTJ_VERSION}"
+        JUNIT_LIB = "junit:junit:4.13.1"
+        HAMCREST_LIB = "org.hamcrest:java-hamcrest:2.0.0.0"
+        MOCKITO_LIB = "org.mockito:mockito-core:5.14.2"
+        ASSERTJ_LIB = "org.assertj:assertj-core:3.27.0"
+        POWERMOCKITO_VERSION = "2.0.9"
         POWERMOCK_JUNIT4_LIB = "org.powermock:powermock-module-junit4:${POWERMOCKITO_VERSION}"
         POWERMOCK_API_MOCKITO_LIB = "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
 

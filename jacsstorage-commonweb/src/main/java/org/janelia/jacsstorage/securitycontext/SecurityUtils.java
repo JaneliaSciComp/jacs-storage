@@ -1,8 +1,8 @@
 package org.janelia.jacsstorage.securitycontext;
 
-import org.janelia.jacsstorage.security.JacsCredentials;
+import jakarta.ws.rs.core.SecurityContext;
 
-import javax.ws.rs.core.SecurityContext;
+import org.janelia.jacsstorage.security.JacsCredentials;
 
 public class SecurityUtils {
     public static JacsCredentials getUserPrincipal(SecurityContext securityContext) {

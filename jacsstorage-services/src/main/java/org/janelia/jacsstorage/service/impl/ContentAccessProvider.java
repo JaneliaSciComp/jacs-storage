@@ -1,7 +1,7 @@
 package org.janelia.jacsstorage.service.impl;
 
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
+import jakarta.enterprise.inject.Instance;
+import jakarta.inject.Inject;
 
 import com.google.common.collect.Streams;
 import org.janelia.jacsstorage.service.ContentAccessParams;

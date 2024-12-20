@@ -1,10 +1,21 @@
 package org.janelia.jacsstorage.rest;
 
+import java.util.List;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+
 import com.google.common.collect.ImmutableList;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
@@ -14,17 +25,7 @@ import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.List;
-
-@Api(value = "Agent storage volumes API.")
+@Tag(name = "VolumeQuota", description = "Agent storage volumes API.")
 @Timed
 @Path(Constants.AGENTSTORAGE_URI_PATH)
 public class VolumeQuotaResource {
@@ -34,11 +35,11 @@ public class VolumeQuotaResource {
     @Inject @LocalInstance
     private StorageUsageManager storageUsageManager;
 
-    @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
+    @Operation(description = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The stream was successfull"),
-            @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "The stream was successfull"),
+            @ApiResponse(responseCode = "404", description = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @GET
     @Produces({MediaType.APPLICATION_JSON})
@@ -49,11 +50,11 @@ public class VolumeQuotaResource {
         return retrieveQuotaForVolumeNameAndSubject(volumeName, subjectName);
     }
 
-    @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
+    @Operation(description = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The stream was successfull"),
-            @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "The stream was successfull"),
+            @ApiResponse(responseCode = "404", description = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @GET
     @Produces({MediaType.APPLICATION_JSON})
@@ -78,11 +79,11 @@ public class VolumeQuotaResource {
                 .build();
     }
 
-    @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
+    @Operation(description = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The stream was successfull"),
-            @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "The stream was successfull"),
+            @ApiResponse(responseCode = "404", description = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @GET
     @Produces({MediaType.APPLICATION_JSON})
@@ -103,11 +104,11 @@ public class VolumeQuotaResource {
         }
     }
 
-    @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
+    @Operation(description = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The stream was successfull"),
-            @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "The stream was successfull"),
+            @ApiResponse(responseCode = "404", description = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @GET
     @Produces({MediaType.APPLICATION_JSON})
@@ -128,11 +129,11 @@ public class VolumeQuotaResource {
                 .build();
     }
 
-    @ApiOperation(value = "Retrieve a user's quota on a the specified storage volume.")
+    @Operation(description = "Retrieve a user's quota on a the specified storage volume.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The stream was successfull"),
-            @ApiResponse(code = 404, message = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "The stream was successfull"),
+            @ApiResponse(responseCode = "404", description = "Invalid volume identifier or bad subject name for which no quota entry could be found"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @GET
     @Produces({MediaType.APPLICATION_JSON})

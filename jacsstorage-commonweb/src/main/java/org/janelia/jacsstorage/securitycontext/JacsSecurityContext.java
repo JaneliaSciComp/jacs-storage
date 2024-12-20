@@ -1,10 +1,10 @@
 package org.janelia.jacsstorage.securitycontext;
 
-import org.janelia.jacsstorage.security.JacsCredentials;
-
-import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;
-import java.util.List;
+
+import jakarta.ws.rs.core.SecurityContext;
+
+import org.janelia.jacsstorage.security.JacsCredentials;
 
 public class JacsSecurityContext implements SecurityContext {
 

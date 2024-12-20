@@ -27,8 +27,7 @@ project(":jacsstorage-agentweb") {
                        JAX_RS_JERSEY_MEDIA_JSON_LIB,
                        N5_UNIVERSE_LIB
 
-        testImplementation JAX_RS_JERSEY_TEST_LIB,
-                           JAX_RS_JERSEY_TEST_PROVIDER_LIB
+        testImplementation JAX_RS_JERSEY_TEST_LIB
 
         perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
 
@@ -36,6 +35,7 @@ project(":jacsstorage-agentweb") {
                            project(path: ":jacsstorage-services", configuration: "perfRuntimeElements"),
                            COMMONS_RNG_LIB,
                            JAX_RS_JERSEY_TEST_LIB,
+                           JAX_RS_JERSEY_TEST_UTIL_LIB,
                            JAX_RS_JERSEY_TEST_PROVIDER_LIB
     }
 

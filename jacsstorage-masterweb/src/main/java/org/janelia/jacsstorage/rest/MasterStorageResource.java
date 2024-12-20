@@ -1,14 +1,30 @@
 package org.janelia.jacsstorage.rest;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.UriInfo;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.DataStorageInfo;
@@ -27,38 +43,7 @@ import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.UriInfo;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "jwtBearerToken", name = "Authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Master storage API.",
-        authorizations = {
-                @Authorization("jwtBearerToken")
-        }
-)
+@Tag(name = "MasterStorage", description = "Master storage API.")
 @Timed
 @Path("storage")
 public class MasterStorageResource {
@@ -71,35 +56,32 @@ public class MasterStorageResource {
     @Context
     private UriInfo resourceURI;
 
-    @ApiOperation(
-            value = "Count storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}."
+    @Operation(
+            description = "Count storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}."
     )
     @ApiResponses(value = {
             @ApiResponse(
-                    code = 200,
-                    message = "The number of storage entries that match the given filters",
-                    response = Long.class
+                    responseCode = "200",
+                    description = "The number of storage entries that match the given filters"
             ),
             @ApiResponse(
-                    code = 401,
-                    message = "If user is not authenticated",
-                    response = ErrorResponse.class
+                    responseCode = "401",
+                    description = "If user is not authenticated"
             ),
             @ApiResponse(
-                    code = 500,
-                    message = "Data read error",
-                    response = ErrorResponse.class
+                    responseCode = "500",
+                    description = "Data read error"
             )
     })
     @RequireAuthentication
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML})
     @Path("size")
-    public Response countBundleInfo(@ApiParam(value = "search by storage id parameter") @QueryParam("id") Long dataBundleId,
-                                    @ApiParam(value = "search by storage storage owner parameter") @QueryParam("ownerKey") String ownerKey,
-                                    @ApiParam(value = "search by storage storage host parameter") @QueryParam("storageAgent") String storageHost,
-                                    @ApiParam(value = "search by storage storage tags parameter") @QueryParam("storageTags") String storageTags,
-                                    @ApiParam(value = "search by storage storage volume parameter") @QueryParam("volumeName") String volumeName,
+    public Response countBundleInfo(@Parameter(description = "search by storage id parameter") @QueryParam("id") Long dataBundleId,
+                                    @Parameter(description = "search by storage storage owner parameter") @QueryParam("ownerKey") String ownerKey,
+                                    @Parameter(description = "search by storage storage host parameter") @QueryParam("storageAgent") String storageHost,
+                                    @Parameter(description = "search by storage storage tags parameter") @QueryParam("storageTags") String storageTags,
+                                    @Parameter(description = "search by storage storage volume parameter") @QueryParam("volumeName") String volumeName,
                                     @Context SecurityContext securityContext) {
         String dataOwnerKey;
         if (securityContext.isUserInRole(JacsCredentials.ADMIN)) {
@@ -123,31 +105,27 @@ public class MasterStorageResource {
                 .build();
     }
 
-    @ApiOperation(
-            value = "Retrieve storage entry by ID."
+    @Operation(
+            description = "Retrieve storage entry by ID."
     )
     @ApiResponses(value = {
             @ApiResponse(
-                    code = 200,
-                    message = "The storage entry with the given ID",
-                    response = DataStorageInfo.class
+                    responseCode = "200",
+                    description = "The storage entry with the given ID"
             ),
             @ApiResponse(
-                    code = 401,
-                    message = "If user is not authenticated",
-                    response = ErrorResponse.class
+                    responseCode = "401",
+                    description = "If user is not authenticated"
             ),
             @ApiResponse(
-                    code = 403,
-                    message = "If user is authenticated but does not have the privileges",
-                    response = ErrorResponse.class
+                    responseCode = "403",
+                    description = "If user is authenticated but does not have the privileges"
             ),
             @ApiResponse(
-                    code = 404,
-                    message = "If entry ID is invalid",
-                    response = ErrorResponse.class
+                    responseCode = "404",
+                    description = "If entry ID is invalid"
             ),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @RequireAuthentication
     @GET
@@ -176,24 +154,21 @@ public class MasterStorageResource {
         }
     }
 
-    @ApiOperation(
-            value = "List storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}."
+    @Operation(
+            description = "List storage entries. The entries could be filtered by {id, ownerKey, storageHost, storageTags, volumeName}."
     )
     @ApiResponses(value = {
             @ApiResponse(
-                    code = 200,
-                    message = "The list of storage entries that match the given filters",
-                    response = DataStorageInfo.class
+                    responseCode = "200",
+                    description = "The list of storage entries that match the given filters"
             ),
             @ApiResponse(
-                    code = 401,
-                    message = "If user is not authenticated",
-                    response = ErrorResponse.class
+                    responseCode = "401",
+                    description = "If user is not authenticated"
             ),
             @ApiResponse(
-                    code = 500,
-                    message = "Data read error",
-                    response = ErrorResponse.class
+                    responseCode = "500",
+                    description = "Data read error"
             )
     })
     @RequireAuthentication
@@ -245,34 +220,29 @@ public class MasterStorageResource {
                 .build();
     }
 
-    @ApiOperation(
-            value = "Retrieve storage entry by owner and name."
+    @Operation(
+            description = "Retrieve storage entry by owner and name."
     )
     @ApiResponses(value = {
             @ApiResponse(
-                    code = 200,
-                    message = "The storage entry with the given name owned by the provided subject",
-                    response = DataStorageInfo.class
+                    responseCode = "200",
+                    description = "The storage entry with the given name owned by the provided subject"
             ),
             @ApiResponse(
-                    code = 401,
-                    message = "If user is not authenticated",
-                    response = ErrorResponse.class
+                    responseCode = "401",
+                    description = "If user is not authenticated"
             ),
             @ApiResponse(
-                    code = 403,
-                    message = "If user is authenticated, but does not have permissions to access the specified bundle",
-                    response = ErrorResponse.class
+                    responseCode = "403",
+                    description = "If user is authenticated, but does not have permissions to access the specified bundle"
             ),
             @ApiResponse(
-                    code = 404,
-                    message = "If entry ID is invalid",
-                    response = ErrorResponse.class
+                    responseCode = "404",
+                    description = "If entry ID is invalid"
             ),
             @ApiResponse(
-                    code = 500,
-                    message = "Data read error",
-                    response = ErrorResponse.class
+                    responseCode = "500",
+                    description = "Data read error"
             )
     })
     @RequireAuthentication
@@ -304,15 +274,15 @@ public class MasterStorageResource {
         }
     }
 
-    @ApiOperation(
-            value = "Create new storage entry."
+    @Operation(
+            description = "Create new storage entry."
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "The new storage entry.", response = DataStorageInfo.class),
-            @ApiResponse(code = 401, message = "If user is not authenticated", response = ErrorResponse.class),
-            @ApiResponse(code = 403, message = "If user is authenticated but does not have enough privileges to perform the operation", response = ErrorResponse.class),
-            @ApiResponse(code = 404, message = "Volume on which to store the data was not found or no agent is available.", response = ErrorResponse.class),
-            @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
+            @ApiResponse(responseCode = "201", description = "The new storage entry."),
+            @ApiResponse(responseCode = "401", description = "If user is not authenticated"),
+            @ApiResponse(responseCode = "403", description = "If user is authenticated but does not have enough privileges to perform the operation"),
+            @ApiResponse(responseCode = "404", description = "Volume on which to store the data was not found or no agent is available."),
+            @ApiResponse(responseCode = "500", description = "Data write error")
     })
     @LogStorageEvent(
             eventName = "ALLOCATE_STORAGE_METADATA",
@@ -322,7 +292,7 @@ public class MasterStorageResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createBundleInfo(@ApiParam(value = "information about the storage to be created") DataStorageInfo dataStorageInfo,
+    public Response createBundleInfo(@Parameter(description = "information about the storage to be created") DataStorageInfo dataStorageInfo,
                                      @Context SecurityContext securityContext) {
         LOG.info("Create storage: {} with credentials {}", dataStorageInfo, securityContext.getUserPrincipal());
         JacsBundle dataBundle = dataStorageInfo.asDataBundle();
@@ -339,15 +309,15 @@ public class MasterStorageResource {
                         .build());
     }
 
-    @ApiOperation(
-            value = "Update a storage entry."
+    @Operation(
+            description = "Update a storage entry."
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The updated storage entry.", response = DataStorageInfo.class),
-            @ApiResponse(code = 401, message = "If user is not authenticated", response = ErrorResponse.class),
-            @ApiResponse(code = 403, message = "If user is authenticated but does not have enough privileges to perform the operation", response = ErrorResponse.class),
-            @ApiResponse(code = 404, message = "Invalid storage entry id.", response = ErrorResponse.class),
-            @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
+            @ApiResponse(responseCode = "200", description = "The updated storage entry."),
+            @ApiResponse(responseCode = "401", description = "If user is not authenticated"),
+            @ApiResponse(responseCode = "403", description = "If user is authenticated but does not have enough privileges to perform the operation"),
+            @ApiResponse(responseCode = "404", description = "Invalid storage entry id."),
+            @ApiResponse(responseCode = "500", description = "Data write error")
     })
     @LogStorageEvent(
             eventName = "UPDATE_STORAGE_METADATA",
@@ -376,15 +346,15 @@ public class MasterStorageResource {
         }
     }
 
-    @ApiOperation(
-            value = "Update a storage entry."
+    @Operation(
+            description = "Update a storage entry."
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "The storage entry was removed."),
-            @ApiResponse(code = 401, message = "If user is not authenticated", response = ErrorResponse.class),
-            @ApiResponse(code = 403, message = "If user is authenticated but does not have enough privileges to perform the operation", response = ErrorResponse.class),
-            @ApiResponse(code = 404, message = "Invalid storage entry id.", response = ErrorResponse.class),
-            @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
+            @ApiResponse(responseCode = "204", description = "The storage entry was removed."),
+            @ApiResponse(responseCode = "401", description = "If user is not authenticated"),
+            @ApiResponse(responseCode = "403", description = "If user is authenticated but does not have enough privileges to perform the operation"),
+            @ApiResponse(responseCode = "404", description = "Invalid storage entry id."),
+            @ApiResponse(responseCode = "500", description = "Data write error")
     })
     @LogStorageEvent(
             eventName = "DELETE_STORAGE_METADATA"

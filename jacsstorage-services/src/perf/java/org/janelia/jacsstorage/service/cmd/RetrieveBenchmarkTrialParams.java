@@ -7,8 +7,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.enterprise.inject.se.SeContainer;
-import javax.enterprise.inject.se.SeContainerInitializer;
+import jakarta.enterprise.inject.se.SeContainer;
+import jakarta.enterprise.inject.se.SeContainerInitializer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.rng.UniformRandomProvider;
@@ -23,18 +23,18 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 
 @State(Scope.Benchmark)
 public class RetrieveBenchmarkTrialParams {
-    @Param("")
+    @Param({""})
     String s3EntriesFile;
     private List<String> s3Entries = new ArrayList<>();
 
-    @Param("")
+    @Param({""})
     String fsEntriesFile;
     private List<String> fsEntries = new ArrayList<>();
 
-    @Param("")
+    @Param({""})
     String accessKey;
 
-    @Param("")
+    @Param({""})
     String secretKey;
 
     @Param("false")

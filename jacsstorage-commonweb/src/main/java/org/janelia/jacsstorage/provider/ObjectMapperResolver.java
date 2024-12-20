@@ -1,12 +1,12 @@
 package org.janelia.jacsstorage.provider;
 
+import jakarta.inject.Inject;
+import jakarta.ws.rs.ext.ContextResolver;
+import jakarta.ws.rs.ext.Provider;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.janelia.jacsstorage.cdi.ObjectMapperFactory;
 import org.janelia.jacsstorage.datarequest.NumberSerializerModule;
-
-import javax.inject.Inject;
-import javax.ws.rs.ext.ContextResolver;
-import javax.ws.rs.ext.Provider;
 
 @Provider
 public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {

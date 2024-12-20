@@ -1,5 +1,9 @@
 package org.janelia.jacsstorage.service.impl;
 
+import java.net.InetAddress;
+
+import jakarta.inject.Inject;
+
 import org.janelia.jacsstorage.dao.JacsStorageEventDao;
 import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageEvent;
@@ -7,9 +11,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageEventBuilder;
 import org.janelia.jacsstorage.service.StorageEventLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.net.InetAddress;
 
 public class DaoStorageEventLoggerImpl implements StorageEventLogger {
 

@@ -1,13 +1,13 @@
 package org.janelia.jacsstorage.datarequest;
 
+import java.math.BigInteger;
+import java.util.Date;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-
-import java.math.BigInteger;
-import java.util.Date;
 
 public class DataNodeInfo {
     private String storageId;

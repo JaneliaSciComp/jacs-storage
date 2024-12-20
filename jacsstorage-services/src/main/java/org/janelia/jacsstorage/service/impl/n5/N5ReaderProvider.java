@@ -1,6 +1,6 @@
 package org.janelia.jacsstorage.service.impl.n5;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;

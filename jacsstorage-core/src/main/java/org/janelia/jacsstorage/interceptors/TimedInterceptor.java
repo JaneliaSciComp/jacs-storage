@@ -1,13 +1,5 @@
 package org.janelia.jacsstorage.interceptors;
 
-import org.janelia.jacsstorage.interceptors.annotations.Timed;
-import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.interceptor.AroundInvoke;
-import javax.interceptor.Interceptor;
-import javax.interceptor.InvocationContext;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
@@ -15,6 +7,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
+
+import jakarta.interceptor.AroundInvoke;
+import jakarta.interceptor.Interceptor;
+import jakarta.interceptor.InvocationContext;
+
+import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.interceptors.annotations.TimedMethod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Timed
 @Interceptor

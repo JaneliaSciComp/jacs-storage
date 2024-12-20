@@ -1,24 +1,25 @@
 package org.janelia.jacsstorage.rest;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Api(value = "Master storage status API.")
+
+@Tag(name = "MasterStatus", description = "Master storage status API.")
 @ApplicationScoped
 @Path("storage")
 public class MasterStatusResource {
 
-    @ApiOperation(value = "Retrieve master status.")
+    @Operation(description = "Retrieve master status.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "If the server is up and running")
+            @ApiResponse(responseCode = "200", description = "If the server is up and running")
     })
     @GET
     @Produces(MediaType.TEXT_PLAIN)

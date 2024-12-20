@@ -1,8 +1,12 @@
 package org.janelia.jacsstorage.app.grizzly;
 
-import io.swagger.jersey.config.JerseyJaxrsConfig;
-import org.glassfish.grizzly.http.server.HttpServer;
+import java.io.IOException;
+import java.net.URI;
 
+import jakarta.ws.rs.core.Application;
+
+import io.swagger.v3.jaxrs2.integration.OpenApiServlet;
+import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.http.server.ServerConfiguration;
 import org.glassfish.grizzly.http.server.StaticHttpHandler;
 import org.glassfish.grizzly.http.server.accesslog.AccessLogBuilder;
@@ -17,11 +21,6 @@ import org.janelia.jacsstorage.app.AppContainer;
 import org.janelia.jacsstorage.app.ContextPathBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletException;
-import javax.ws.rs.core.Application;
-import java.io.IOException;
-import java.net.URI;
 
 public class GrizzlyAppContainer implements AppContainer {
 
@@ -44,8 +43,9 @@ public class GrizzlyAppContainer implements AppContainer {
         this.excludedPathsFromAccessLog = excludedPathsFromAccessLog;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void initialize(Application application, AppArgs appArgs) throws ServletException {
+    public void initialize(Application application, AppArgs appArgs) {
         String contextPath = new ContextPathBuilder()
                 .path(appArgs.baseContextPath)
                 .path(restApiContext)
@@ -73,7 +73,7 @@ public class GrizzlyAppContainer implements AppContainer {
         serverConfiguration.addHttpHandler(staticHttpHandler);
 
         WebappContext swaggerDocsContext = new WebappContext("SwaggerDocsContext", docsContextPath);
-        ServletRegistration swaggerDocsRegistration = swaggerDocsContext.addServlet("SwaggerDocsServlet", JerseyJaxrsConfig.class);
+        ServletRegistration swaggerDocsRegistration = swaggerDocsContext.addServlet("SwaggerDocsServlet", OpenApiServlet.class);
         swaggerDocsRegistration.setLoadOnStartup(2);
         swaggerDocsRegistration.setInitParameter("api.version", restApiVersion);
         swaggerDocsRegistration.setInitParameter("swagger.api.basepath", swaggerBasePath);

@@ -8,9 +8,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.enterprise.inject.se.SeContainer;
-import javax.enterprise.inject.se.SeContainerInitializer;
-import javax.ws.rs.core.Application;
+import jakarta.enterprise.inject.se.SeContainer;
+import jakarta.enterprise.inject.se.SeContainerInitializer;
+import jakarta.ws.rs.core.Application;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.rng.UniformRandomProvider;
@@ -102,7 +102,8 @@ public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
     }
 
     public ContainerRequest request(URI requestURI, String method) {
-        return ContainerRequestBuilder.from(requestURI, method).build();
+        return ContainerRequestBuilder
+                .from(requestURI, method, null).build();
 
     }
 

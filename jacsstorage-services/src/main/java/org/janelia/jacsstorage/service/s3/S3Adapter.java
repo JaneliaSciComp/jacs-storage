@@ -11,6 +11,7 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
@@ -46,7 +47,7 @@ public class S3Adapter {
         }
         AwsCredentialsProvider credentialsProvider;
         if (StringUtils.isNotBlank(s3Options.getAccessKey()) && StringUtils.isNotBlank(s3Options.getSecretKey())) {
-            credentialsProvider = () -> AwsBasicCredentials.create(s3Options.getAccessKey(), s3Options.getSecretKey());
+            credentialsProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create(s3Options.getAccessKey(), s3Options.getSecretKey()));
         } else {
             credentialsProvider = AwsCredentialsProviderChain.of(
                     ProfileCredentialsProvider.create(),
@@ -69,7 +70,6 @@ public class S3Adapter {
                 .build();
 
         this.asyncS3Client = asyncS3ClientBuilder
-                .initialReadBufferSizeInBytes(16 * MB)
                 .forcePathStyle(s3Options.getPathStyleBucket())
                 .build();
     }

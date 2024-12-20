@@ -3,7 +3,7 @@ package org.janelia.jacsstorage.service.impl.contenthandling;
 import java.io.OutputStream;
 import java.util.List;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;

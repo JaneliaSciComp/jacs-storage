@@ -1,7 +1,7 @@
 package org.janelia.jacsstorage.app;
 
-import javax.servlet.ServletException;
-import javax.ws.rs.core.Application;
+import jakarta.servlet.ServletException;
+import jakarta.ws.rs.core.Application;
 
 public interface AppContainer {
     void initialize(Application application, AppArgs appArgs) throws ServletException;

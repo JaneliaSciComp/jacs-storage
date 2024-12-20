@@ -5,28 +5,28 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HEAD;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HEAD;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.StreamingOutput;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
@@ -47,7 +47,7 @@ import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Api(value = "Agent storage API based on file's path.")
+@Tag(name="AgentPathAccess", description = "Agent storage API based on file's path.")
 @Timed
 @Path(Constants.AGENTSTORAGE_URI_PATH)
 public class PathBasedAgentStorageResource {
@@ -62,12 +62,12 @@ public class PathBasedAgentStorageResource {
     @Context
     private UriInfo resourceURI;
 
-    @ApiOperation(value = "Check if the specified file path identifies a valid data bundle entry content.")
+    @Operation(description = "Check if the specified file path identifies a valid data bundle entry content.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The content was found"),
-            @ApiResponse(code = 404, message = "Invalid file path"),
-            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "The content was found"),
+            @ApiResponse(responseCode = "404", description = "Invalid file path"),
+            @ApiResponse(responseCode = "409", description = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @HEAD
     @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
@@ -125,12 +125,12 @@ public class PathBasedAgentStorageResource {
         }
     }
 
-    @ApiOperation(value = "Retrieve the content of the specified data path.")
+    @Operation(description = "Retrieve the content of the specified data path.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The stream was successfull"),
-            @ApiResponse(code = 404, message = "Invalid data bundle identifier"),
-            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "The stream was successfull"),
+            @ApiResponse(responseCode = "404", description = "Invalid data bundle identifier"),
+            @ApiResponse(responseCode = "409", description = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
@@ -194,12 +194,12 @@ public class PathBasedAgentStorageResource {
         }
     }
 
-    @ApiOperation(value = "Retrieve the content of the specified data path.")
+    @Operation(description = "Retrieve the content of the specified data path.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The data streaming was successfull"),
-            @ApiResponse(code = 404, message = "Invalid data bundle identifier"),
-            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "The data streaming was successfull"),
+            @ApiResponse(responseCode = "404", description = "Invalid data bundle identifier"),
+            @ApiResponse(responseCode = "409", description = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @LogStorageEvent(
             eventName = "DELETE_STORAGE_ENTRY",
@@ -258,12 +258,12 @@ public class PathBasedAgentStorageResource {
         }
     }
 
-    @ApiOperation(value = "Store the content at the specified data path.")
+    @Operation(description = "Store the content at the specified data path.")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "The data was saved successfully"),
-            @ApiResponse(code = 404, message = "Invalid data bundle identifier"),
-            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
-            @ApiResponse(code = 500, message = "Data write error")
+            @ApiResponse(responseCode = "201", description = "The data was saved successfully"),
+            @ApiResponse(responseCode = "404", description = "Invalid data bundle identifier"),
+            @ApiResponse(responseCode = "409", description = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(responseCode = "500", description = "Data write error")
     })
     @LogStorageEvent(
             eventName = "CREATE_STORAGE_FILE",
@@ -343,13 +343,13 @@ public class PathBasedAgentStorageResource {
                 .build();
     }
 
-    @ApiOperation(value = "Inspect and retrieve content info of the specified data path.")
+    @Operation(description = "Inspect and retrieve content info of the specified data path.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The operation was successfull. " +
+            @ApiResponse(responseCode = "200", description = "The operation was successfull. " +
                     "As a note the operation is considered successful even if there's currently no process to extract any information from the content"),
-            @ApiResponse(code = 404, message = "Invalid data bundle identifier"),
-            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "404", description = "Invalid data bundle identifier"),
+            @ApiResponse(responseCode = "409", description = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @RequireAuthentication
     @GET
@@ -405,14 +405,13 @@ public class PathBasedAgentStorageResource {
         }
     }
 
-    @ApiOperation(
-            value = "List the content.",
-            notes = "Lists tree hierarchy of the storage path"
+    @Operation(
+            description = "List the content."
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully read the data bundle content."),
-            @ApiResponse(code = 404, message = "Invalid data bundle ID"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "Successfully read the data bundle content."),
+            @ApiResponse(responseCode = "404", description = "Invalid data bundle ID"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @RequireAuthentication
     @GET

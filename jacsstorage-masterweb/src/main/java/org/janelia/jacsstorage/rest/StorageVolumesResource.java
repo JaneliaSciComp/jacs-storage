@@ -2,31 +2,27 @@ package org.janelia.jacsstorage.rest;
 
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.UriInfo;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.UriInfo;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiKeyAuthDefinition;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.SecurityDefinition;
-import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
@@ -40,19 +36,7 @@ import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SwaggerDefinition(
-        securityDefinition = @SecurityDefinition(
-                apiKeyAuthDefinitions = {
-                        @ApiKeyAuthDefinition(key = "jwtBearerToken", name = "Authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)
-                }
-        )
-)
-@Api(
-        value = "Storage Volumes API.",
-        authorizations = {
-                @Authorization("jwtBearerToken")
-        }
-)
+@Tag(name = "StorageVolumes", description = "Storage Volumes API.")
 @Timed
 @RequireAuthentication
 @Path("storage_volumes")
@@ -64,29 +48,23 @@ public class StorageVolumesResource {
     @Context
     private UriInfo resourceURI;
 
-    @ApiOperation(
-            value = "Retrieve storage volume by ID.",
-            authorizations = {
-                    @Authorization("jwtBearerToken")
-            }
+    @Operation(
+            description = "Retrieve storage volume by ID."
     )
     @ApiResponses(value = {
             @ApiResponse(
-                    code = 200,
-                    message = "The storage entry with the given ID",
-                    response = JacsStorageVolume.class
+                    responseCode = "200",
+                    description = "The storage entry with the given ID"
             ),
             @ApiResponse(
-                    code = 401,
-                    message = "If user is not authenticated",
-                    response = ErrorResponse.class
+                    responseCode = "401",
+                    description = "If user is not authenticated"
             ),
             @ApiResponse(
-                    code = 404,
-                    message = "If entry ID is invalid",
-                    response = ErrorResponse.class
+                    responseCode = "404",
+                    description = "If entry ID is invalid"
             ),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -107,27 +85,21 @@ public class StorageVolumesResource {
         }
     }
 
-    @ApiOperation(
-            value = "List storage volumes. The volumes could be filtered by {id, storageHost, storageTags, volumeName}.",
-            authorizations = {
-                    @Authorization("jwtBearerToken")
-            }
+    @Operation(
+            description = "List storage volumes. The volumes could be filtered by {id, storageHost, storageTags, volumeName}."
     )
     @ApiResponses(value = {
             @ApiResponse(
-                    code = 200,
-                    message = "The list of storage entries that match the given filters",
-                    response = JacsStorageVolume.class
+                    responseCode = "200",
+                    description = "The list of storage entries that match the given filters"
             ),
             @ApiResponse(
-                    code = 401,
-                    message = "If user is not authenticated",
-                    response = ErrorResponse.class
+                    responseCode = "401",
+                    description = "If user is not authenticated"
             ),
             @ApiResponse(
-                    code = 500,
-                    message = "Data read error",
-                    response = ErrorResponse.class
+                    responseCode = "500",
+                    description = "Data read error"
             )
     })
     @GET
@@ -169,17 +141,14 @@ public class StorageVolumesResource {
                 .build();
     }
 
-    @ApiOperation(
-            value = "Update an existing or create a new storage volume.",
-            authorizations = {
-                    @Authorization("jwtBearerToken")
-            }
+    @Operation(
+            description = "Update an existing or create a new storage volume."
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Updated storage entry.", response = JacsStorageVolume.class),
-            @ApiResponse(code = 201, message = "Created new storage entry.", response = JacsStorageVolume.class),
-            @ApiResponse(code = 401, message = "If user is not authenticated", response = ErrorResponse.class),
-            @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
+            @ApiResponse(responseCode = "200", description = "Updated storage entry."),
+            @ApiResponse(responseCode = "201", description = "Created new storage entry."),
+            @ApiResponse(responseCode = "401", description = "If user is not authenticated"),
+            @ApiResponse(responseCode = "500", description = "Data write error")
     })
     @LogStorageEvent(
             eventName = "UPDATE_OR_CREATE_STORAGE_VOLUME",
@@ -188,7 +157,7 @@ public class StorageVolumesResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response postUpdateStorageVolume(@ApiParam(value = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
+    public Response postUpdateStorageVolume(@Parameter(description = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
                                             @Context SecurityContext securityContext) {
         LOG.info("Create storage: {} with credentials {}", jacsStorageVolume, securityContext.getUserPrincipal());
         if (jacsStorageVolume.hasId()) {
@@ -202,17 +171,14 @@ public class StorageVolumesResource {
         }
     }
 
-    @ApiOperation(
-            value = "Update an existing or create a new storage volume.",
-            authorizations = {
-                    @Authorization("jwtBearerToken")
-            }
+    @Operation(
+            description = "Update an existing or create a new storage volume."
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Updated storage entry.", response = JacsStorageVolume.class),
-            @ApiResponse(code = 201, message = "Created new storage entry.", response = JacsStorageVolume.class),
-            @ApiResponse(code = 401, message = "If user is not authenticated", response = ErrorResponse.class),
-            @ApiResponse(code = 500, message = "Data write error", response = ErrorResponse.class)
+            @ApiResponse(responseCode = "200", description = "Updated storage entry."),
+            @ApiResponse(responseCode = "201", description = "Created new storage entry."),
+            @ApiResponse(responseCode = "401", description = "If user is not authenticated"),
+            @ApiResponse(responseCode = "500", description = "Data write error")
     })
     @LogStorageEvent(
             eventName = "UPDATE_OR_CREATE_STORAGE_VOLUME",
@@ -223,7 +189,7 @@ public class StorageVolumesResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{id}")
     public Response putUpdateStorageVolume(@PathParam("id") Long storageVolumeId,
-                                           @ApiParam(value = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
+                                           @Parameter(description = "information about the volume to be created") JacsStorageVolume jacsStorageVolume,
                                            @Context SecurityContext securityContext) {
         LOG.info("Update storage: {} with credentials {}", jacsStorageVolume, securityContext.getUserPrincipal());
         return updateStorageVolume(storageVolumeId, jacsStorageVolume);

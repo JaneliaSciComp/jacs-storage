@@ -4,10 +4,10 @@ import java.nio.file.Paths;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.servlet.ServletException;
-import javax.ws.rs.core.Application;
+import jakarta.servlet.ServletException;
+import jakarta.ws.rs.core.Application;
 
-import io.swagger.jersey.config.JerseyJaxrsConfig;
+import io.swagger.v3.jaxrs2.integration.OpenApiServlet;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
@@ -71,6 +71,7 @@ public class UndertowAppContainer implements AppContainer {
         this.applicationConfig = applicationConfig;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize(Application application, AppArgs appArgs) throws ServletException {
         String contextPath = new ContextPathBuilder()
@@ -91,7 +92,7 @@ public class UndertowAppContainer implements AppContainer {
 
         String basepath = "http://" + appArgs.host + ":" + appArgs.portNumber + contextPath;
         ServletInfo swaggerDocsServlet =
-                servlet("swaggerDocsServlet", JerseyJaxrsConfig.class)
+                servlet("swaggerDocsServlet", OpenApiServlet.class)
                         .setLoadOnStartup(2)
                         .addInitParam("api.version", restApiVersion)
                         .addInitParam("swagger.api.basepath", basepath);

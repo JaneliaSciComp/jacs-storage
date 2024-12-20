@@ -1,20 +1,20 @@
 package org.janelia.jacsstorage.rest;
 
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import com.google.common.collect.ImmutableMap;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
 import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
@@ -27,7 +27,7 @@ import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Api(value = "Agent storage API for N5 file structures")
+@Tag(name = "N5Storage", description = "Agent storage API for N5 file structures")
 @Timed
 @Path(Constants.AGENTSTORAGE_URI_PATH)
 public class N5StorageResource {
@@ -40,11 +40,11 @@ public class N5StorageResource {
     @Inject
     private N5ContentService n5ContentService;
 
-    @ApiOperation(value = "Discover N5 data sets in the given path and return a tree of N5TreeNodes")
+    @Operation(description = "Discover N5 data sets in the given path and return a tree of N5TreeNodes")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The operation was successful"),
-            @ApiResponse(code = 404, message = "Invalid volume identifier or invalid file path"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "The operation was successful"),
+            @ApiResponse(responseCode = "404", description = "Invalid volume identifier or invalid file path"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @GET
     @Produces({MediaType.APPLICATION_JSON})

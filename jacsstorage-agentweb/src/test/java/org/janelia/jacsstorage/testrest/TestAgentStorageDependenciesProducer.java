@@ -1,5 +1,7 @@
 package org.janelia.jacsstorage.testrest;
 
+import jakarta.enterprise.inject.Produces;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.cdi.ObjectMapperFactory;
@@ -12,8 +14,6 @@ import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-
-import javax.enterprise.inject.Produces;
 
 import static org.mockito.Mockito.mock;
 

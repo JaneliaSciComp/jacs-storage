@@ -2,7 +2,7 @@ package org.janelia.jacsstorage.service.impl.contenthandling;
 
 import java.util.Map;
 
-import javax.enterprise.inject.Vetoed;
+import jakarta.enterprise.inject.Vetoed;
 
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacsstorage.service.ContentNode;

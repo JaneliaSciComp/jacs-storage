@@ -6,10 +6,11 @@ project(":jacsstorage-commonweb") {
             JACKSON_DATAFORMAT_XML_LIB,
             JACKSON_JAXRS_JSON_PROVIDER,
             JACKSON_JAXRS_XML_PROVIDER,
-            JAVAX_SERVLET_API_LIB,
+            JAKARTA_SERVLET_API_LIB,
             JAX_RS_API_LIB,
             JAXB_API,
-            SWAGGER_JAXRS_LIB
+            SWAGGER_JAXRS_LIB,
+            SWAGGER_SERVLET_LIB
 
         implementation GRIZZLY_SERVLET_LIB,
                        JAX_RS_JERSEY_CONTAINERS_LIB,

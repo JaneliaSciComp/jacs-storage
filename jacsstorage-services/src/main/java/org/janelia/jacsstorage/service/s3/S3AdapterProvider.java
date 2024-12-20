@@ -3,7 +3,7 @@ package org.janelia.jacsstorage.service.s3;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 

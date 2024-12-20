@@ -1,14 +1,10 @@
 package org.janelia.jacsstorage.service;
 
-import java.util.Set;
-
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.coreutils.NetUtils;

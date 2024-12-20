@@ -1,12 +1,13 @@
 package org.janelia.jacsstorage.clients.api;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import jakarta.ws.rs.core.UriBuilder;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.ws.rs.core.UriBuilder;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
  * This is the client equivalent of the JacsStorageVolume type.

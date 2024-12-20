@@ -3,26 +3,26 @@ package org.janelia.jacsstorage.rest;
 import java.net.URI;
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HEAD;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HEAD;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.helper.StorageResourceHelper;
@@ -35,7 +35,7 @@ import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Api(value = "File path based API for retrieving storage content")
+@Tag(name = "MasterContent", description = "File path based API for retrieving storage content")
 @Timed
 @Produces(MediaType.APPLICATION_JSON)
 @Path("storage_content")
@@ -52,12 +52,12 @@ public class ContentStorageResource {
      * @param contentPath
      * @return
      */
-    @ApiOperation(value = "Get file content",
-            notes = "Return the redirect URL to for retrieving the content based on the file path")
+    @Operation(summary = "Get file content",
+            description = "Return the redirect URL to for retrieving the content based on the file path")
     @ApiResponses(value = {
-            @ApiResponse(code = 307, message = "Success", response = StreamingOutput.class),
-            @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
-            @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
+            @ApiResponse(responseCode = "307", description = "Success"),
+            @ApiResponse(responseCode = "502", description = "Bad "),
+            @ApiResponse(responseCode = "404", description = "Specified file path not found")
     })
     @HEAD
     @Path("storage_path_redirect")
@@ -73,12 +73,12 @@ public class ContentStorageResource {
      * @param contentPath
      * @return
      */
-    @ApiOperation(value = "Get file content",
-            notes = "Return the redirect URL to for retrieving the content based on the file path")
+    @Operation(summary = "Get file content",
+            description = "Return the redirect URL to for retrieving the content based on the file path")
     @ApiResponses(value = {
-            @ApiResponse(code = 307, message = "Success", response = StreamingOutput.class),
-            @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
-            @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
+            @ApiResponse(responseCode = "307", description = "Success"),
+            @ApiResponse(responseCode = "502", description = "Bad "),
+            @ApiResponse(responseCode = "404", description = "Specified file path not found")
     })
     @HEAD
     @Path("storage_path_redirect/{contentPath:.+}")
@@ -145,12 +145,12 @@ public class ContentStorageResource {
      * @param requestURI
      * @return
      */
-    @ApiOperation(value = "Get file content",
-            notes = "Return the redirect URL to for retrieving the content based on the file path")
+    @Operation(summary = "Get file content",
+            description = "Return the redirect URL to for retrieving the content based on the file path")
     @ApiResponses(value = {
-            @ApiResponse(code = 307, message = "Success", response = StreamingOutput.class),
-            @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
-            @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
+            @ApiResponse(responseCode = "307", description = "Success"),
+            @ApiResponse(responseCode = "502", description = "Bad "),
+            @ApiResponse(responseCode = "404", description = "Specified file path not found")
     })
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
@@ -169,12 +169,12 @@ public class ContentStorageResource {
      * @param requestURI
      * @return
      */
-    @ApiOperation(value = "Get file content",
-            notes = "Return the redirect URL to for retrieving the content based on the file path")
+    @Operation(summary = "Get file content",
+            description = "Return the redirect URL to for retrieving the content based on the file path")
     @ApiResponses(value = {
-            @ApiResponse(code = 307, message = "Success", response = StreamingOutput.class),
-            @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
-            @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
+            @ApiResponse(responseCode = "307", description = "Success"),
+            @ApiResponse(responseCode = "502", description = "Bad "),
+            @ApiResponse(responseCode = "404", description = "Specified file path not found")
     })
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
@@ -243,12 +243,12 @@ public class ContentStorageResource {
      * @param contentPath
      * @return an HTTP Redirect response if a storage volume is found for the given path or BAD_GATEWAY otherwise
      */
-    @ApiOperation(value = "Delete file content",
-            notes = "Return the redirect URL to for deleting the content based on the file path")
+    @Operation(summary = "Delete file content",
+            description = "Return the redirect URL to for deleting the content based on the file path")
     @ApiResponses(value = {
-            @ApiResponse(code = 307, message = "Success", response = StreamingOutput.class),
-            @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
-            @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
+            @ApiResponse(responseCode = "307", description = "Success"),
+            @ApiResponse(responseCode = "502", description = "Bad "),
+            @ApiResponse(responseCode = "404", description = "Specified file path not found")
     })
     @RequireAuthentication
     @DELETE
@@ -266,12 +266,12 @@ public class ContentStorageResource {
      * @param contentPath
      * @return an HTTP Redirect response if a storage volume is found for the given path or BAD_GATEWAY otherwise
      */
-    @ApiOperation(value = "Delete file content",
-            notes = "Return the redirect URL to for deleting the content based on the file path")
+    @Operation(summary = "Delete file content",
+            description = "Return the redirect URL to for deleting the content based on the file path")
     @ApiResponses(value = {
-            @ApiResponse(code = 307, message = "Success", response = StreamingOutput.class),
-            @ApiResponse(code = 502, message = "Bad ", response = ErrorResponse.class),
-            @ApiResponse(code = 404, message = "Specified file path not found", response = ErrorResponse.class)
+            @ApiResponse(responseCode = "307", description = "Success"),
+            @ApiResponse(responseCode = "502", description = "Bad "),
+            @ApiResponse(responseCode = "404", description = "Specified file path not found")
     })
     @RequireAuthentication
     @DELETE

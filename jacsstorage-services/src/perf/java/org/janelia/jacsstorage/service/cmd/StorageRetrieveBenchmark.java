@@ -83,8 +83,8 @@ public class StorageRetrieveBenchmark {
             JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
                     entry,
                     JADEOptions.create()
-                            .setAccessKey(trialParams.accessKey)
-                            .setSecretKey(trialParams.secretKey)
+                            .setAccessKey(StringUtils.isNotBlank(trialParams.accessKey) ? trialParams.accessKey : null)
+                            .setSecretKey(StringUtils.isNotBlank(trialParams.secretKey) ? trialParams.secretKey : null)
             );
 
             try {
@@ -105,8 +105,8 @@ public class StorageRetrieveBenchmark {
             JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
                     entry,
                     JADEOptions.create()
-                            .setAccessKey(trialParams.accessKey)
-                            .setSecretKey(trialParams.secretKey)
+                            .setAccessKey(StringUtils.isNotBlank(trialParams.accessKey) ? trialParams.accessKey : null)
+                            .setSecretKey(StringUtils.isNotBlank(trialParams.secretKey) ? trialParams.secretKey : null)
                             .setAsyncAccess(trialParams.useAsync)
             );
             try (OutputStream targetStream = new NullOutputStream()) {
@@ -128,8 +128,8 @@ public class StorageRetrieveBenchmark {
             JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
                     entry,
                     JADEOptions.create()
-                            .setAccessKey(trialParams.accessKey)
-                            .setSecretKey(trialParams.secretKey)
+                            .setAccessKey(StringUtils.isNotBlank(trialParams.accessKey) ? trialParams.accessKey : null)
+                            .setSecretKey(StringUtils.isNotBlank(trialParams.secretKey) ? trialParams.secretKey : null)
                             .setAsyncAccess(trialParams.useAsync)
             );
             try (OutputStream targetStream = new NullOutputStream()) {

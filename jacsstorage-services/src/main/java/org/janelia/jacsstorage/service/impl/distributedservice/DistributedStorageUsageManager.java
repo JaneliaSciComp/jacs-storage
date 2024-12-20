@@ -1,5 +1,9 @@
 package org.janelia.jacsstorage.service.impl.distributedservice;
 
+import java.util.List;
+
+import jakarta.inject.Inject;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
@@ -10,9 +14,6 @@ import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.util.List;
 
 @RemoteInstance
 public class DistributedStorageUsageManager implements StorageUsageManager {

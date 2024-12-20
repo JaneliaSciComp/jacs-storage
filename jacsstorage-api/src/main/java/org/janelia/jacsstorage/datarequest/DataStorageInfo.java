@@ -8,8 +8,8 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
@@ -17,9 +17,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 
-@ApiModel(
-        value = "Storage information"
-)
+@Schema(description = "Storage information")
 public class DataStorageInfo {
     private String id;
     private String name;
@@ -62,9 +60,7 @@ public class DataStorageInfo {
         return dsi;
     }
 
-    @ApiModelProperty(
-            value = "storage ID"
-    )
+    @Schema(description = "storage ID")
     public String getId() {
         return id;
     }
@@ -88,10 +84,7 @@ public class DataStorageInfo {
         return StringUtils.isNotBlank(id) && !"0".equals(id);
     }
 
-    @ApiModelProperty(
-            value = "storage name",
-            notes = "this value must be unique for a user"
-    )
+    @Schema(description = "storage name")
     public String getName() {
         return name;
     }
@@ -101,9 +94,7 @@ public class DataStorageInfo {
         return this;
     }
 
-    @ApiModelProperty(
-            value = "storage owner key compatible with JACS subject key format - 'user:username'"
-    )
+    @Schema(description = "storage owner key compatible with JACS subject key format - 'user:username'")
     public String getOwnerKey() {
         return ownerKey;
     }
@@ -113,9 +104,7 @@ public class DataStorageInfo {
         return this;
     }
 
-    @ApiModelProperty(
-            value = "path relative to the storage volume root directory"
-    )
+    @Schema(description = "path relative to the storage volume root directory")
     public String getPath() {
         return path;
     }
@@ -125,9 +114,7 @@ public class DataStorageInfo {
         return this;
     }
 
-    @ApiModelProperty(
-            value = "bundle absolute virtual path"
-    )
+    @Schema(description = "bundle absolute virtual path")
     public String getDataVirtualPath() {
         return dataVirtualPath;
     }
@@ -144,10 +131,7 @@ public class DataStorageInfo {
                 : (StringUtils.isBlank(path) ? "" : Paths.get(path).toString());
     }
 
-    @ApiModelProperty(
-            value = "list of subject keys that can read this storage",
-            notes = "If no readers are specified the only ones who can access the storage are the owner and the admin users"
-    )
+    @Schema(description = "list of subject keys that can read this storage")
     public Set<String> getReadersKeys() {
         return readersKeys;
     }
@@ -157,10 +141,7 @@ public class DataStorageInfo {
         return this;
     }
 
-    @ApiModelProperty(
-            value = "list of subject keys that can write to this storage",
-            notes = "If no writers are specified the only ones who can access the storage are the owner and the admin users"
-    )
+    @Schema(description = "list of subject keys that can write to this storage")
     public Set<String> getWritersKeys() {
         return writersKeys;
     }
@@ -193,9 +174,7 @@ public class DataStorageInfo {
     public void setDataStorageURI(String dataStorageURI) {
     }
 
-    @ApiModelProperty(
-            value = "real directory path for this storage on the storage server"
-    )
+    @Schema(description = "real directory path for this storage on the storage server")
     public String getStorageRootDir() {
         return storageRootDir;
     }
@@ -205,9 +184,7 @@ public class DataStorageInfo {
         return this;
     }
 
-    @ApiModelProperty(
-            value = "storage host"
-    )
+    @Schema(description = "storage host")
     public String getStorageAgentId() {
         return storageAgentId;
     }
@@ -226,9 +203,7 @@ public class DataStorageInfo {
         return this;
     }
 
-    @ApiModelProperty(
-            value = "storage agent URL"
-    )
+    @Schema(description = "storage agent URL")
     public String getConnectionURL() {
         return connectionURL;
     }
@@ -238,11 +213,7 @@ public class DataStorageInfo {
         return this;
     }
 
-    @ApiModelProperty(
-            value = "storage format value",
-            allowableValues = "DATA_DIRECTORY, ARCHIVE_DATA_FILE, SINGLE_DATA_FILE",
-            notes = "specifies how should the data be stored - directory, tar archive or single file (this only supports one file)"
-    )
+    @Schema(description = "storage format value")
     public JacsStorageFormat getStorageFormat() {
         return storageFormat;
     }

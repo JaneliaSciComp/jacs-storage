@@ -5,28 +5,28 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HEAD;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HEAD;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.StreamingOutput;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
@@ -48,7 +48,7 @@ import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Api(value = "Agent storage API on a particular volume")
+@Tag(name = "VolumeStorage", description = "Agent storage API on a particular volume")
 @Timed
 @Path(Constants.AGENTSTORAGE_URI_PATH)
 public class VolumeStorageResource {
@@ -65,12 +65,12 @@ public class VolumeStorageResource {
     @Context
     private UriInfo resourceURI;
 
-    @ApiOperation(value = "Check if the specified file path identifies a valid data bundle entry content.")
+    @Operation(description = "Check if the specified file path identifies a valid data bundle entry content.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The content was found"),
-            @ApiResponse(code = 404, message = "Invalid file path"),
-            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "The content was found"),
+            @ApiResponse(responseCode = "404", description = "Invalid file path"),
+            @ApiResponse(responseCode = "409", description = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @HEAD
     @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML, MediaType.APPLICATION_JSON})
@@ -119,11 +119,11 @@ public class VolumeStorageResource {
         }
     }
 
-    @ApiOperation(value = "Stream the specified data file identified by the relative path to the volume mount point.")
+    @Operation(description = "Stream the specified data file identified by the relative path to the volume mount point.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The stream was successfull"),
-            @ApiResponse(code = 404, message = "Invalid volume identifier or invalid file path"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "The stream was successfull"),
+            @ApiResponse(responseCode = "404", description = "Invalid volume identifier or invalid file path"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM})
@@ -181,11 +181,11 @@ public class VolumeStorageResource {
         }
     }
 
-    @ApiOperation(value = "Stream content info of specified data file identified by the relative path to the volume mount point.")
+    @Operation(description = "Stream content info of specified data file identified by the relative path to the volume mount point.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The operation  was successfull"),
-            @ApiResponse(code = 404, message = "Invalid volume identifier or invalid file path"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "The operation  was successfull"),
+            @ApiResponse(responseCode = "404", description = "Invalid volume identifier or invalid file path"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @GET
     @Produces({MediaType.APPLICATION_JSON})
@@ -230,12 +230,12 @@ public class VolumeStorageResource {
         }
     }
 
-    @ApiOperation(value = "List the content of the specified path.")
+    @Operation(description = "List the content of the specified path.")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "The listing was successful"),
-            @ApiResponse(code = 404, message = "Invalid file path"),
-            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
-            @ApiResponse(code = 500, message = "Data read error")
+            @ApiResponse(responseCode = "200", description = "The listing was successful"),
+            @ApiResponse(responseCode = "404", description = "Invalid file path"),
+            @ApiResponse(responseCode = "409", description = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(responseCode = "500", description = "Data read error")
     })
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -324,12 +324,12 @@ public class VolumeStorageResource {
         }
     }
 
-    @ApiOperation(value = "Store the content on the specified volume at the specified data path.")
+    @Operation(description = "Store the content on the specified volume at the specified data path.")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "The data was saved successfully"),
-            @ApiResponse(code = 404, message = "Invalid volume identifier"),
-            @ApiResponse(code = 409, message = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
-            @ApiResponse(code = 500, message = "Data write error")
+            @ApiResponse(responseCode = "201", description = "The data was saved successfully"),
+            @ApiResponse(responseCode = "404", description = "Invalid volume identifier"),
+            @ApiResponse(responseCode = "409", description = "This may be caused by a misconfiguration which results in the system not being able to identify the volumes that hold the data file"),
+            @ApiResponse(responseCode = "500", description = "Data write error")
     })
     @LogStorageEvent(
             eventName = "CREATE_STORAGE_FILE",
@@ -402,11 +402,11 @@ public class VolumeStorageResource {
         }
     }
 
-    @ApiOperation(value = "Delete specified data file identified by the relative path to the volume mount point.")
+    @Operation(description = "Delete specified data file identified by the relative path to the volume mount point.")
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "The delete was successfull"),
-            @ApiResponse(code = 404, message = "Invalid volume identifier or invalid file path"),
-            @ApiResponse(code = 500, message = "Data delete error")
+            @ApiResponse(responseCode = "204", description = "The delete was successfull"),
+            @ApiResponse(responseCode = "404", description = "Invalid volume identifier or invalid file path"),
+            @ApiResponse(responseCode = "500", description = "Data delete error")
     })
     @DELETE
     @Produces({MediaType.APPLICATION_JSON})
@@ -450,24 +450,21 @@ public class VolumeStorageResource {
         }
     }
 
-    @ApiOperation(
-            value = "List storage volumes. The volumes could be filtered by {id, storageHost, storageTags, volumeName}."
+    @Operation(
+            description = "List storage volumes. The volumes could be filtered by {id, storageHost, storageTags, volumeName}."
     )
     @ApiResponses(value = {
             @ApiResponse(
-                    code = 200,
-                    message = "The list of storage entries that match the given filters",
-                    response = JacsStorageVolume.class
+                    responseCode = "200",
+                    description = "The list of storage entries that match the given filters"
             ),
             @ApiResponse(
-                    code = 401,
-                    message = "If user is not authenticated",
-                    response = ErrorResponse.class
+                    responseCode = "401",
+                    description = "If user is not authenticated"
             ),
             @ApiResponse(
-                    code = 500,
-                    message = "Data read error",
-                    response = ErrorResponse.class
+                    responseCode = "500",
+                    description = "Data read error"
             )
     })
     @GET

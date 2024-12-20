@@ -1,19 +1,20 @@
 package org.janelia.jacsstorage.service.impl;
 
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
-import org.janelia.jacsstorage.service.NotificationService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Properties;
 
-import javax.inject.Inject;
 import javax.mail.Message;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import java.util.Properties;
+import jakarta.inject.Inject;
+
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
+import org.janelia.jacsstorage.service.NotificationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EmailNotificationService implements NotificationService {
 

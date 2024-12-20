@@ -24,8 +24,7 @@ project(":jacsstorage-masterweb") {
                        JAX_RS_JERSEY_CDI_SERVLET_LIB,
                        JAX_RS_JERSEY_INJECT_LIB
 
-        testImplementation JAX_RS_JERSEY_TEST_LIB,
-                           JAX_RS_JERSEY_TEST_PROVIDER_LIB
+        testImplementation JAX_RS_JERSEY_TEST_LIB
 
         perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
 
@@ -33,7 +32,9 @@ project(":jacsstorage-masterweb") {
                            project(path: ":jacsstorage-services", configuration: "perfRuntimeElements"),
                            COMMONS_RNG_LIB,
                            JAX_RS_JERSEY_TEST_LIB,
+                           JAX_RS_JERSEY_TEST_UTIL_LIB,
                            JAX_RS_JERSEY_TEST_PROVIDER_LIB
+
     }
 
     tasks.register('createMasterBenchmark', CreateStartScripts) {

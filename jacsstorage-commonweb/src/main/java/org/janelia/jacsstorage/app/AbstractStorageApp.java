@@ -1,12 +1,9 @@
 package org.janelia.jacsstorage.app;
 
-import javax.annotation.PreDestroy;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.BeforeShutdown;
-import javax.ws.rs.core.Application;
+import jakarta.annotation.PreDestroy;
+import jakarta.ws.rs.core.Application;
 
 import com.beust.jcommander.JCommander;
-
 import org.janelia.jacsstorage.app.undertow.UndertowAppContainer;
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 import org.janelia.jacsstorage.config.ApplicationConfig;

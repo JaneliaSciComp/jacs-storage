@@ -7,8 +7,9 @@ import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 
-import javax.enterprise.inject.se.SeContainer;
-import javax.enterprise.inject.se.SeContainerInitializer;
+import jakarta.enterprise.inject.se.SeContainer;
+import jakarta.enterprise.inject.se.SeContainerInitializer;
+import jakarta.enterprise.inject.spi.Extension;
 
 import static org.mockito.Mockito.spy;
 
@@ -26,7 +27,7 @@ public class AbstractCdiInjectedResourceTest extends JerseyTest {
         SeContainerInitializer containerInit = SeContainerInitializer
                 .newInstance()
                 .disableDiscovery()
-                .addExtensions(new CdiComponentProvider())
+                .addExtensions((Extension) new CdiComponentProvider())
                 .addBeanClasses(getTestBeanProviders())
                 ;
         container = spy(containerInit.initialize());
