@@ -47,7 +47,7 @@ public class StorageAgentConnection implements ConnectionState {
         this.connectionAttempts = connectionAttempts;
     }
 
-    void updateConnectionStatus(ConnectionState.Status connectStatus) {
+    public void updateConnectionStatus(ConnectionState.Status connectStatus) {
         setConnectStatus(connectStatus);
         if (connectStatus == Status.CLOSED) {
             agentInfo.setConnectionStatus(CONNECTED_STATUS_VALUE);

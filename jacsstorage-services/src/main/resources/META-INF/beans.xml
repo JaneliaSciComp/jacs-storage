@@ -1,8 +1,8 @@
 <beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns="http://xmlns.jcp.org/xml/ns/javaee"
        xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
-                           https://jakarta.ee/xml/ns/jakartaee/beans_3_0.xsd"
-       bean-discovery-mode="all">
+                           https://jakarta.ee/xml/ns/jakartaee/beans_4_0.xsd"
+       bean-discovery-mode="annotated">
        <scan>
               <exclude name="org.janelia.jacsstorage.model.**"/>
        </scan>

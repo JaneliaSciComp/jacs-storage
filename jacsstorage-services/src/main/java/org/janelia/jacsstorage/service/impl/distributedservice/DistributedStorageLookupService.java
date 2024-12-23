@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.service.impl.distributedservice;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
@@ -13,6 +14,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.StorageLookupService;
 
 @RemoteInstance
+@ApplicationScoped
 public class DistributedStorageLookupService implements StorageLookupService {
 
     private final ReadOnlyDao<JacsStorageVolume> storageVolumeDao;

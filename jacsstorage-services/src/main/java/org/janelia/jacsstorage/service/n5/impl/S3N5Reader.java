@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.impl.n5;
+package org.janelia.jacsstorage.service.n5.impl;
 
 import com.google.gson.GsonBuilder;
 import org.janelia.jacsstorage.service.s3.S3Adapter;

@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.service.impl.distributedservice;
 
 import java.util.List;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RemoteInstance
+@ApplicationScoped
 public class DistributedStorageUsageManager implements StorageUsageManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(DistributedStorageUsageManager.class);

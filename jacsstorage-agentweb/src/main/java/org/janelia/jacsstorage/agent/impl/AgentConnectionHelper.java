@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.agent;
+package org.janelia.jacsstorage.agent.impl;
 
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.Entity;
@@ -106,5 +106,4 @@ class AgentConnectionHelper {
             }
         }
     }
-
 }

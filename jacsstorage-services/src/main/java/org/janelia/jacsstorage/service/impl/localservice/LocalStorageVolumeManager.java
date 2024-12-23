@@ -6,6 +6,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ConversationScoped;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 
 import com.google.common.base.Preconditions;
@@ -31,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @LocalInstance
+@Dependent
 public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalStorageVolumeManager.class);

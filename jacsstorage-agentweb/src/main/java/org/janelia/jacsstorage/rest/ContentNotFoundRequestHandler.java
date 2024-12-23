@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.rest;
 
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
@@ -8,11 +9,13 @@ import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 
 import org.apache.commons.lang3.StringUtils;
+import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.service.NoContentFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Provider
+@RequestScoped
 public class ContentNotFoundRequestHandler implements ExceptionMapper<NoContentFoundException> {
     private static final Logger LOG = LoggerFactory.getLogger(ContentNotFoundRequestHandler.class);
 

@@ -19,14 +19,15 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
     private static final String DEFAULT_APP_ID = "JacsStorageMaster";
 
     public static void main(String[] args) {
+        final AppArgs appArgs = parseAppArgs(args, new AppArgs());
+        if (appArgs.displayUsage) {
+            displayAppUsage(appArgs);
+            return;
+        }
         try {
-            final AppArgs appArgs = parseAppArgs(args, new AppArgs());
-            if (appArgs.displayUsage) {
-                displayAppUsage(appArgs);
-                return;
-            }
             SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
             SeContainer container = containerInit.initialize();
+
             JacsMasterStorageApp app = container.select(JacsMasterStorageApp.class).get();
             ApplicationConfig appConfig = container.select(ApplicationConfig.class, new ApplicationProperties() {
                 @Override

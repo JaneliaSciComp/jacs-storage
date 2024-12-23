@@ -1,15 +1,18 @@
-package org.janelia.jacsstorage.service;
+package org.janelia.jacsstorage.service.n5.impl;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import org.janelia.jacsstorage.cdi.qualifier.PooledResource;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
-import org.janelia.jacsstorage.service.impl.n5.N5ReaderProvider;
-import org.janelia.jacsstorage.service.impl.n5.N5ViewerMultichannelMetadata;
+import org.janelia.jacsstorage.service.ContentException;
+import org.janelia.jacsstorage.service.n5.N5ContentService;
+import org.janelia.jacsstorage.service.n5.N5ReaderProvider;
+import org.janelia.jacsstorage.service.n5.N5ViewerMultichannelMetadata;
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.universe.N5DatasetDiscoverer;
 import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
@@ -26,7 +29,8 @@ import org.janelia.saalfeldlab.n5.universe.metadata.canonical.CanonicalMetadataP
 /**
  * Service for reading and writing content to a specified storage URI
  */
-public class N5ContentService {
+@ApplicationScoped
+public class N5ContentServiceImpl implements N5ContentService {
 
     private static final N5MetadataParser<? extends N5Metadata>[] N5_GROUP_PARSERS = new N5MetadataParser<?>[]{
             new N5CosemMultiScaleMetadata.CosemMultiScaleParser(),
@@ -47,7 +51,7 @@ public class N5ContentService {
     private final ExecutorService executorService;
 
     @Inject
-    N5ContentService(N5ReaderProvider n5ReaderProvider, @PooledResource ExecutorService executorService) {
+    N5ContentServiceImpl(N5ReaderProvider n5ReaderProvider, @PooledResource ExecutorService executorService) {
         this.n5ReaderProvider = n5ReaderProvider;
         this.executorService = executorService;
     }

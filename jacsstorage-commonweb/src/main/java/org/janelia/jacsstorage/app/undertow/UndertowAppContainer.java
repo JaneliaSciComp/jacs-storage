@@ -1,6 +1,7 @@
 package org.janelia.jacsstorage.app.undertow;
 
 import java.nio.file.Paths;
+import java.util.EventListener;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,7 @@ import io.undertow.server.handlers.resource.ResourceHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
+import io.undertow.servlet.api.ListenerInfo;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.util.HttpString;
 import org.apache.commons.lang3.StringUtils;
@@ -71,7 +73,6 @@ public class UndertowAppContainer implements AppContainer {
         this.applicationConfig = applicationConfig;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void initialize(Application application, AppArgs appArgs) throws ServletException {
         String contextPath = new ContextPathBuilder()
@@ -83,7 +84,7 @@ public class UndertowAppContainer implements AppContainer {
         ServletInfo restApiServlet =
                 Servlets.servlet("restApiServlet", ServletContainer.class)
                         .setLoadOnStartup(1)
-                        .setAsyncSupported(true)
+                        .setAsyncSupported(false)
                         .setEnabled(true)
                         .addInitParam(ServletProperties.JAXRS_APPLICATION_CLASS, application.getClass().getName())
                         .addInitParam("jersey.config.server.wadl.disableWadl", "true")

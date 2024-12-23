@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.google.common.base.Preconditions;
@@ -21,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RemoteInstance
+@Dependent
 public class DistributedStorageVolumeManager extends AbstractStorageVolumeManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(DistributedStorageVolumeManager.class);

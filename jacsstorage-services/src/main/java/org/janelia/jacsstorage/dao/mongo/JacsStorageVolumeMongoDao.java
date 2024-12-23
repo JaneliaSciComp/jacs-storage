@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.StreamSupport;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import com.google.common.base.Preconditions;
@@ -41,6 +42,7 @@ import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 /**
  * Mongo based implementation of JacsStorageVolumeDao.
  */
+@ApplicationScoped
 public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolume> implements JacsStorageVolumeDao {
     @Inject
     public JacsStorageVolumeMongoDao(MongoDatabase mongoDatabase, IdGenerator idGenerator) {

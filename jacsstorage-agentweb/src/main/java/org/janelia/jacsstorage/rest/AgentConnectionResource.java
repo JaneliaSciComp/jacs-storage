@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.rest;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -23,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Tag(name = "AgentConnection", description = "Agent connectivity API")
-@ApplicationScoped
 @Path("connection")
 public class AgentConnectionResource {
     private static final Logger LOG = LoggerFactory.getLogger(AgentConnectionResource.class);

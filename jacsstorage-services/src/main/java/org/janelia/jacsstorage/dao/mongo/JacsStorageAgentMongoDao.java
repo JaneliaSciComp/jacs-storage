@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import com.google.common.base.Preconditions;
@@ -22,6 +23,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageAgent;
 /**
  * Mongo based implementation of JacsStorageEventDao.
  */
+@ApplicationScoped
 public class JacsStorageAgentMongoDao extends AbstractMongoDao<JacsStorageAgent> implements JacsStorageAgentDao {
     @Inject
     public JacsStorageAgentMongoDao(MongoDatabase mongoDatabase, IdGenerator idGenerator) {

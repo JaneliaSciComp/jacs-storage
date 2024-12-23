@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.rest;
 
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Context;
@@ -13,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Provider
+@RequestScoped
 public class NotFoundRequestHandler implements ExceptionMapper<NotFoundException> {
     private static final Logger LOG = LoggerFactory.getLogger(NotFoundRequestHandler.class);
 

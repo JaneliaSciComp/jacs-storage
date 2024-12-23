@@ -2,6 +2,8 @@ package org.janelia.jacsstorage.service.impl.localservice;
 
 import java.util.Optional;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @LocalInstance
+@Dependent
 public class LocalStorageAllocatorService extends AbstractStorageAllocatorService {
     private static final Logger LOG = LoggerFactory.getLogger(LocalStorageAllocatorService.class);
 

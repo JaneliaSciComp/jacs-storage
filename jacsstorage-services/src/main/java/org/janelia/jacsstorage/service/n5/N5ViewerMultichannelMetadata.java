@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.impl.n5;
+package org.janelia.jacsstorage.service.n5;
 
 import org.janelia.saalfeldlab.n5.N5Reader;
 import org.janelia.saalfeldlab.n5.universe.N5TreeNode;

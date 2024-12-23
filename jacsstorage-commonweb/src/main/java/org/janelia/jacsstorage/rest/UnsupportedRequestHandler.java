@@ -1,5 +1,6 @@
 package org.janelia.jacsstorage.rest;
 
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Provider
+@RequestScoped
 public class UnsupportedRequestHandler implements ExceptionMapper<UnsupportedOperationException> {
     private static final Logger LOG = LoggerFactory.getLogger(UnsupportedRequestHandler.class);
 

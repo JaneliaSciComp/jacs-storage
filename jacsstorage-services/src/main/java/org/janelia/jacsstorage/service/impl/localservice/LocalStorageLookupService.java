@@ -1,5 +1,8 @@
 package org.janelia.jacsstorage.service.impl.localservice;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 
 import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
@@ -13,6 +16,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.StorageLookupService;
 
 @LocalInstance
+@Dependent
 public class LocalStorageLookupService implements StorageLookupService {
 
     private final JacsStorageVolumeDao storageVolumeDao;

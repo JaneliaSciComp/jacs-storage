@@ -25,7 +25,6 @@ project(":jacsstorage-clients") {
                        JERSEY_CLIENT_LIB,
                        JERSEY_MEDIA_LIB,
                        JERSEY_INJECT_HK2_LIB,
-                       JERSEY_INJECT_SE_LIB,
                        JERSEY_MEDIA_JSON_LIB,
                        N5_UNIVERSE_LIB
     }

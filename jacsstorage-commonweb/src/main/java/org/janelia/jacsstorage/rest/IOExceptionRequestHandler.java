@@ -1,16 +1,19 @@
 package org.janelia.jacsstorage.rest;
 
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.IOException;
 
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
-import java.io.IOException;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Provider
+@RequestScoped
 public class IOExceptionRequestHandler implements ExceptionMapper<IOException> {
     private static final Logger LOG = LoggerFactory.getLogger(IOExceptionRequestHandler.class);
 

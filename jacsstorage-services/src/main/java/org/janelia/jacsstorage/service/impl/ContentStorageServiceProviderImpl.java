@@ -1,31 +1,36 @@
 package org.janelia.jacsstorage.service.impl;
 
 import jakarta.annotation.Nullable;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.service.ContentStorageService;
+import org.janelia.jacsstorage.service.ContentStorageServiceProvider;
 import org.janelia.jacsstorage.service.s3.S3Adapter;
 import org.janelia.jacsstorage.service.s3.S3AdapterProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class ContentStorageServiceProvider {
-    private static final Logger LOG = LoggerFactory.getLogger(ContentStorageServiceProvider.class);
+@Dependent
+class ContentStorageServiceProviderImpl implements ContentStorageServiceProvider {
+    private static final Logger LOG = LoggerFactory.getLogger(ContentStorageServiceProviderImpl.class);
 
     private final S3AdapterProvider s3AdapterProvider;
     private final String defaultAWSRegion;
 
     @Inject
-    ContentStorageServiceProvider(S3AdapterProvider s3AdapterProvider,
-                                  @PropertyValue(name = "AWS.Region", defaultValue = "us-east-1") String defaultAWSRegion) {
+    ContentStorageServiceProviderImpl(S3AdapterProvider s3AdapterProvider,
+                                      @PropertyValue(name = "AWS.Region", defaultValue = "us-east-1") String defaultAWSRegion) {
         this.s3AdapterProvider = s3AdapterProvider;
         this.defaultAWSRegion = defaultAWSRegion;
     }
 
-    @Nullable ContentStorageService getStorageService(@Nullable JADEStorageURI storageURI) {
+    @Override
+    @Nullable public ContentStorageService getStorageService(@Nullable JADEStorageURI storageURI) {
         LOG.trace("Get storage service for {}", storageURI);
         if (storageURI == null) {
             return null;

@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import com.google.common.base.Preconditions;
@@ -31,6 +32,7 @@ import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 /**
  * Mongo based implementation of JacsBundleDao.
  */
+@ApplicationScoped
 public class JacsBundleMongoDao extends AbstractMongoDao<JacsBundle> implements JacsBundleDao {
 
     @Inject

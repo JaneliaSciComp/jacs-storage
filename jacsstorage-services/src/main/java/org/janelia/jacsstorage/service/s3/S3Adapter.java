@@ -29,7 +29,7 @@ public class S3Adapter {
     private final S3Client s3Client;
     private final S3AsyncClient asyncS3Client;
 
-    S3Adapter(String bucket, String endpoint, JADEOptions s3Options) {
+    public S3Adapter(String bucket, String endpoint, JADEOptions s3Options) {
         this.bucket = bucket;
         this.endpoint = endpoint;
         this.s3Options = s3Options;

@@ -12,6 +12,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Disposes;
 import jakarta.enterprise.inject.Produces;
 import jakarta.enterprise.inject.spi.InjectionPoint;
+import jakarta.inject.Singleton;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
@@ -101,7 +102,6 @@ public class ApplicationProducer {
         return ImmutableSet.copyOf(listPropertyValue(applicationConfig, injectionPoint));
     }
 
-    @ApplicationScoped
     @ApplicationProperties
     @Produces
     public ApplicationConfig applicationConfig() {

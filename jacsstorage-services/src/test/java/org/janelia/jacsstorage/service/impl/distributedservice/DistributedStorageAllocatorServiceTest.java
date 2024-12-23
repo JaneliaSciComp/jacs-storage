@@ -24,8 +24,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
 import org.janelia.jacsstorage.model.support.JacsSubjectHelper;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.janelia.jacsstorage.security.JacsCredentials;
-import org.janelia.jacsstorage.service.impl.distributedservice.DistributedStorageAllocatorService;
-import org.janelia.jacsstorage.service.impl.distributedservice.StorageAgentManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;

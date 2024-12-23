@@ -21,7 +21,7 @@ import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.service.N5ContentService;
+import org.janelia.jacsstorage.service.n5.N5ContentService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
 import org.slf4j.Logger;

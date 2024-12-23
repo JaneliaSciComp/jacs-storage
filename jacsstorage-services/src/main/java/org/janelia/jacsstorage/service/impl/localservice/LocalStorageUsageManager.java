@@ -10,6 +10,8 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import com.google.common.collect.ImmutableMap;
@@ -28,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @LocalInstance
+@Dependent
 public class LocalStorageUsageManager implements StorageUsageManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalStorageUsageManager.class);

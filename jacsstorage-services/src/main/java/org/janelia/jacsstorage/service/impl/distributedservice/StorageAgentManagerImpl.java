@@ -42,8 +42,6 @@ public class StorageAgentManagerImpl implements StorageAgentManager {
     private Integer initialDelayInSeconds;
     @Inject @PropertyValue(name= "StorageAgent.FailureCountTripThreshold")
     private Integer tripThreshold;
-    @Inject @PropertyValue(name = "Storage.Overflow.RootDir")
-    private String overflowRootDir;
     @Inject
     private JacsStorageAgentDao jacsStorageAgentDao;
     @Inject

@@ -53,15 +53,6 @@ public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTe
                         .build()
                 ;
             }
-
-            @Override
-            public Set<Object> getSingletons() {
-                return ImmutableSet.builder()
-                        .addAll(super.getSingletons())
-                        .add(new TestResourceBinder(dependenciesProducer))
-                        .build()
-                        ;
-            }
         };
     }
 

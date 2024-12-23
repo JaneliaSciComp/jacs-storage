@@ -4,7 +4,8 @@ import java.util.concurrent.Executors;
 
 import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
-import org.janelia.jacsstorage.service.impl.n5.N5ReaderProvider;
+import org.janelia.jacsstorage.service.n5.N5ContentService;
+import org.janelia.jacsstorage.service.n5.N5ReaderProvider;
 import org.janelia.jacsstorage.service.s3.S3AdapterProvider;
 import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
 import org.junit.BeforeClass;

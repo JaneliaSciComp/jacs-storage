@@ -5,6 +5,8 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
@@ -15,6 +17,7 @@ import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.StringUtils;
@@ -28,6 +31,7 @@ import org.janelia.jacsstorage.security.TokenCredentialsValidator;
 import org.janelia.jacsstorage.securitycontext.JacsSecurityContext;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 
+@Provider
 @Priority(Priorities.AUTHENTICATION)
 public class AuthFilter implements ContainerRequestFilter {
 

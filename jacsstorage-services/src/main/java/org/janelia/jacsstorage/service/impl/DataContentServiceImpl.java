@@ -4,17 +4,22 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
 import org.janelia.jacsstorage.coreutils.ComparatorUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.service.ContentAccessParams;
+import org.janelia.jacsstorage.service.ContentAccessProvider;
 import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
+import org.janelia.jacsstorage.service.ContentStorageServiceProvider;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageCapacity;
 
+@Dependent
 public class DataContentServiceImpl implements DataContentService {
 
     private final ContentStorageServiceProvider contentStorageServiceProvider;

@@ -9,7 +9,7 @@ import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.datarequest.NumberSerializerModule;
 import org.janelia.jacsstorage.filter.AuthFilter;
 import org.janelia.jacsstorage.service.DataContentService;
-import org.janelia.jacsstorage.service.N5ContentService;
+import org.janelia.jacsstorage.service.n5.N5ContentService;
 import org.janelia.jacsstorage.service.StorageAllocatorService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageUsageManager;
@@ -65,7 +65,7 @@ public class TestAgentStorageDependenciesProducer {
 
     @Produces
     public ObjectMapperFactory getObjectMapperFactory() {
-        return ObjectMapperFactory.instance();
+        return new ObjectMapperFactory();
     }
 
     @Produces

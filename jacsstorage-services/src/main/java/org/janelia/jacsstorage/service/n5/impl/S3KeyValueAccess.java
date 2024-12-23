@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.service.impl.n5;
+package org.janelia.jacsstorage.service.n5.impl;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -21,8 +21,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
-import org.janelia.jacsstorage.service.ContentAccessParams;
-import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.s3.S3Adapter;
 import org.janelia.saalfeldlab.n5.KeyValueAccess;
 import org.janelia.saalfeldlab.n5.LockedChannel;

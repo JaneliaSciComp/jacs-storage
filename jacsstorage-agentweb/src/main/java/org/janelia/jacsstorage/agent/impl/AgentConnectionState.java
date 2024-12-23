@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.agent;
+package org.janelia.jacsstorage.agent.impl;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;

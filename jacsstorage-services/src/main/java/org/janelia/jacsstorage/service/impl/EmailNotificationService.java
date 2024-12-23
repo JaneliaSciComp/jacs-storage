@@ -2,6 +2,8 @@ package org.janelia.jacsstorage.service.impl;
 
 import java.util.Properties;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.mail.Message;
 import jakarta.mail.PasswordAuthentication;
@@ -16,6 +18,7 @@ import org.janelia.jacsstorage.service.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Dependent
 public class EmailNotificationService implements NotificationService {
 
     private static final Logger LOG = LoggerFactory.getLogger(EmailNotificationService.class);

@@ -12,7 +12,7 @@ project(":jacsstorage-commonweb") {
             SWAGGER_SERVLET_LIB
 
         implementation GRIZZLY_SERVLET_LIB,
-                       JERSEY_CONTAINERS_LIB,
+                       JERSEY_CONTAINER_SERVLET_LIB,
                        JERSEY_HTTP_CONTAINERS_LIB,
                        UNDERTOW_CORE_LIB,
                        UNDERTOW_SERVLET_LIB

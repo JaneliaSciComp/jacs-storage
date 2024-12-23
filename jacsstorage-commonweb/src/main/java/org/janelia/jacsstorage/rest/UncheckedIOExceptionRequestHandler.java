@@ -2,6 +2,7 @@ package org.janelia.jacsstorage.rest;
 
 import java.io.UncheckedIOException;
 
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Provider
+@RequestScoped
 public class UncheckedIOExceptionRequestHandler implements ExceptionMapper<UncheckedIOException> {
     private static final Logger LOG = LoggerFactory.getLogger(UncheckedIOExceptionRequestHandler.class);
 

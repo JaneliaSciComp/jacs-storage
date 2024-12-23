@@ -1,22 +1,25 @@
-package org.janelia.jacsstorage.service.impl.n5;
+package org.janelia.jacsstorage.service.n5.impl;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
+import org.janelia.jacsstorage.service.n5.N5ReaderProvider;
 import org.janelia.jacsstorage.service.s3.S3AdapterProvider;
 import org.janelia.saalfeldlab.n5.N5FSReader;
 import org.janelia.saalfeldlab.n5.N5Reader;
 
-public class N5ReaderProvider {
+@ApplicationScoped
+public class N5ReaderProviderImpl implements N5ReaderProvider {
 
     private final S3AdapterProvider s3AdapterProvider;
     private final String defaultAWSRegion;
 
     @Inject
-    public N5ReaderProvider(S3AdapterProvider s3AdapterProvider,
-                            @PropertyValue(name = "AWS.Region", defaultValue = "us-east-1") String defaultAWSRegion) {
+    public N5ReaderProviderImpl(S3AdapterProvider s3AdapterProvider,
+                                @PropertyValue(name = "AWS.Region", defaultValue = "us-east-1") String defaultAWSRegion) {
         this.s3AdapterProvider = s3AdapterProvider;
         this.defaultAWSRegion = defaultAWSRegion;
     }

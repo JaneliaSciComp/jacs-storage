@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 import org.janelia.jacsstorage.service.ContentAccessParams;
+import org.janelia.jacsstorage.service.ContentAccessProvider;
 import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
