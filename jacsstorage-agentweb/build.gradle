@@ -23,8 +23,12 @@ project(":jacsstorage-agentweb") {
                        CDI_SE_CORE_LIB,
                        N5_UNIVERSE_LIB
 
-        runtimeOnly JERSEY_MEDIA_LIB,
-                    JERSEY_MEDIA_JSON_LIB
+        runtimeOnly JERSEY_COMMON_LIB,
+                    JERSEY_INJECT_HK2_LIB,
+                    JERSEY_MEDIA_LIB,
+                    JERSEY_MEDIA_JSON_LIB,
+                    JERSEY_SERVER_LIB,
+                    JERSEY_WELD_SE_LIB
 
         testImplementation JERSEY_TEST_LIB,
                            JERSEY_WELD_SE_LIB,

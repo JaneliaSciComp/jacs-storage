@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 
 @Tag(name = "MasterStatus", description = "Master storage status API.")
-@ApplicationScoped
 @Path("storage")
 public class MasterStatusResource {
 

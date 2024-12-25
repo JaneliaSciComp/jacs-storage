@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Tag(name = "StorageAgents", description = "Agent registration API")
-@ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Path("agents")
 public class StorageAgentsResource {
