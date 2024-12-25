@@ -20,6 +20,10 @@ import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.interceptors.TimedInterceptor;
 import org.janelia.jacsstorage.rest.DataBundleStorageResource;
+import org.janelia.jacsstorage.rest.PathBasedAgentStorageResource;
+import org.janelia.jacsstorage.rest.PathBasedAgentStorageResourceTest;
+import org.janelia.jacsstorage.rest.VolumeQuotaResource;
+import org.janelia.jacsstorage.rest.VolumeStorageResource;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.interceptors.LoggerInterceptor;
 import org.jboss.weld.environment.se.Weld;
@@ -52,6 +56,9 @@ public class AbstractCdiInjectedResourceTest extends JerseyTest {
                 .addExtensions(cdiComponentProvider)
                 .addBeanClass(TestAgentStorageDependenciesProducer.class)
                 .addBeanClass(DataBundleStorageResource.class)
+                .addBeanClass(PathBasedAgentStorageResource.class)
+                .addBeanClass(VolumeQuotaResource.class)
+                .addBeanClass(VolumeStorageResource.class)
                 ;
         container = containerInit.initialize();
         super.setUp();

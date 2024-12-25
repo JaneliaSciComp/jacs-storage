@@ -62,8 +62,6 @@ public class VolumeStorageResource {
     private StorageVolumeManager storageVolumeManager;
     @Inject
     private AgentState agentState;
-    @Context
-    private UriInfo resourceURI;
 
     @Operation(description = "Check if the specified file path identifies a valid data bundle entry content.")
     @ApiResponses(value = {
@@ -164,9 +162,12 @@ public class VolumeStorageResource {
                         long contentSize = contentGetter.estimateContentSize();
                         LOG.debug("Retrieved {} size ({}) in {} secs", resolvedContentURI, contentSize, (System.currentTimeMillis()-startTime)/1000.);
                         StreamingOutput outputStream = output -> {
-                            contentGetter.streamContent(output);
-                            output.flush();
-                            LOG.debug("Finished streaming {} in {} secs", resolvedContentURI, (System.currentTimeMillis()-startTime)/1000.);
+                            try {
+                                contentGetter.streamContent(output);
+                                LOG.debug("Finished streaming {} in {} secs", resolvedContentURI, (System.currentTimeMillis()-startTime)/1000.);
+                            } finally {
+                                output.flush();
+                            }
                         };
                         return Response
                                 .ok(outputStream, MediaType.APPLICATION_OCTET_STREAM)
@@ -272,7 +273,7 @@ public class VolumeStorageResource {
             int offset = offsetParam != null ? offsetParam : 0;
             int length = lengthParam != null ? lengthParam : -1;
             boolean directoriesOnly = directoriesOnlyParam != null ? directoriesOnlyParam : false;
-            URI endpointBaseURI = resourceURI.getBaseUri();
+            URI endpointBaseURI = requestURI.getBaseUri();
             ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters())
                     .setMaxDepth(depth)
                     .setEntriesCount(length)
@@ -343,6 +344,7 @@ public class VolumeStorageResource {
                                                     @PathParam("storageRelativePath") String storageRelativeFilePath,
                                                     @Context ContainerRequestContext requestContext,
                                                     @Context SecurityContext securityContext,
+                                                    @Context UriInfo requestURI,
                                                     InputStream contentStream) {
         try {
             LOG.debug("Store data to {}: {}", storageVolumeId, storageRelativeFilePath);
@@ -371,7 +373,7 @@ public class VolumeStorageResource {
                     .resolveRelativeLocation(storageRelativeFilePath)
                     .map(resolvedContentURI -> {
                         long size = dataContentService.writeDataStream(resolvedContentURI, contentStream);
-                        URI newContentURI = UriBuilder.fromUri(resourceURI.getBaseUri())
+                        URI newContentURI = UriBuilder.fromUri(requestURI.getBaseUri())
                                 .path(Constants.AGENTSTORAGE_URI_PATH)
                                 .path("storage_path/data_content")
                                 .path(resolvedContentURI.getJadeStorage())
@@ -382,7 +384,7 @@ public class VolumeStorageResource {
                         );
                         newContentNode.setStorageRootBinding(storageVolume.getStorageVirtualPath());
                         newContentNode.setStorageRootLocation(storageVolume.getStorageRootLocation());
-                        newContentNode.setNodeInfoURL(UriBuilder.fromUri(resourceURI.getBaseUri())
+                        newContentNode.setNodeInfoURL(UriBuilder.fromUri(requestURI.getBaseUri())
                                 .path(Constants.AGENTSTORAGE_URI_PATH)
                                 .path("storage_path/data_info")
                                 .path(resolvedContentURI.getJadeStorage())

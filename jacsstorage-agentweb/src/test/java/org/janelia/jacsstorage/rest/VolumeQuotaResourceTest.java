@@ -27,27 +27,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 
 public class VolumeQuotaResourceTest extends AbstractCdiInjectedResourceTest {
 
-    private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
-
-    @Override
-    protected Application configure() {
-        return new Application() {
-            @Override
-            public Set<Class<?>> getClasses() {
-                return ImmutableSet.<Class<?>>builder()
-                        .add(VolumeQuotaResource.class)
-                        .build();
-            }
-        };
-    }
-
-//    @Override
-//    protected Class<?>[] getTestBeanProviders() {
-//        return new Class<?>[] {
-//                TestAgentStorageDependenciesProducer.class
-//        };
-//    }
-
     @Test
     public void retrieveSubjectQuotaForVolumeName() throws IOException {
         StorageUsageManager storageUsageManager = dependenciesProducer.getStorageUsageManager();

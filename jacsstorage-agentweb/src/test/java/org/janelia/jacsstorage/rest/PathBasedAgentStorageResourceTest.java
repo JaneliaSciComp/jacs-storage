@@ -36,21 +36,6 @@ import static org.mockito.Mockito.when;
 
 public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
 
-    private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
-
-    @Override
-    protected Application configure() {
-        return new Application() {
-            @Override
-            public Set<Class<?>> getClasses() {
-                return ImmutableSet.<Class<?>>builder()
-                        .add(PathBasedAgentStorageResource.class)
-                        .build()
-                        ;
-            }
-        };
-    }
-
     @Test
     public void retrieveDataStreamUsingDataPathRelativeToVolumeRoot() throws IOException {
         JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath", JADEOptions.create());

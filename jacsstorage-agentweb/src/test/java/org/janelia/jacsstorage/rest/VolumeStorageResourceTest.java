@@ -36,28 +36,6 @@ import static org.mockito.Mockito.when;
 
 public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
 
-    private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
-
-    @Override
-    protected Application configure() {
-        return new Application() {
-            @Override
-            public Set<Class<?>> getClasses() {
-                return ImmutableSet.<Class<?>>builder()
-                        .add(VolumeStorageResource.class)
-                        .build()
-                        ;
-            }
-        };
-    }
-
-//    @Override
-//    protected Class<?>[] getTestBeanProviders() {
-//        return new Class<?>[]{
-//                TestAgentStorageDependenciesProducer.class
-//        };
-//    }
-
     @Test
     public void retrieveContent() throws IOException {
         Long testStorageVolumeId = 10L;

@@ -27,8 +27,7 @@ project(":jacsstorage-agentweb") {
                     JERSEY_MEDIA_JSON_LIB
 
         testImplementation JERSEY_TEST_LIB,
-//                           JERSEY_INJECT_CDI_LIB,
-                JERSEY_WELD_SE_LIB,
+                           JERSEY_WELD_SE_LIB,
                            JERSEY_INJECT_HK2_LIB,
                            JERSEY_TEST_UTIL_LIB,
                            JERSEY_TEST_PROVIDER_BUNDLE_LIB
