@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -20,10 +21,12 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Request;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.ext.Provider;
 
 import com.google.common.base.Preconditions;
 import io.swagger.v3.oas.annotations.Operation;
@@ -67,9 +70,6 @@ public class DataBundleStorageResource {
     private StorageAllocatorService storageAllocatorService;
     @Inject @LocalInstance
     private StorageLookupService storageLookupService;
-
-    @Context
-    private UriInfo resourceURI;
 
     @Operation(
             summary = "List the data bundle content.",
@@ -117,7 +117,7 @@ public class DataBundleStorageResource {
                     dn.setStorageRootLocation(dataBundle.getStorageURI().getJadeStorage());
                     dn.setStorageRootBinding(dataBundle.getStorageRootBinding());
                     dn.setCollectionFlag(contentNode.isCollection());
-                    dn.setNodeAccessURL(resourceURI.getBaseUriBuilder()
+                    dn.setNodeAccessURL(requestURI.getBaseUriBuilder()
                             .path(Constants.AGENTSTORAGE_URI_PATH)
                             .path(dataBundle.getId().toString())
                             .path("data_content")
@@ -125,7 +125,7 @@ public class DataBundleStorageResource {
                             .build()
                             .toString()
                     );
-                    dn.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+                    dn.setNodeInfoURL(requestURI.getBaseUriBuilder()
                             .path(Constants.AGENTSTORAGE_URI_PATH)
                             .path(dataBundle.getId().toString())
                             .path("data_info")
@@ -248,8 +248,9 @@ public class DataBundleStorageResource {
     public Response postDataContent(@PathParam("dataBundleId") Long dataBundleId,
                                     @PathParam("dataEntryPath") String dataEntryPath,
                                     @Context SecurityContext securityContext,
+                                    @Context UriInfo requestURI,
                                     InputStream contentStream) {
-        return createDataContent(dataBundleId, dataEntryPath, securityContext, contentStream);
+        return createDataContent(dataBundleId, dataEntryPath, securityContext, requestURI, contentStream);
     }
 
     @Operation(description = "Create a new content entry in the specified data bundle.")
@@ -271,19 +272,21 @@ public class DataBundleStorageResource {
     public Response putDataContent(@PathParam("dataBundleId") Long dataBundleId,
                                    @PathParam("dataEntryPath") String dataEntryPath,
                                    @Context SecurityContext securityContext,
+                                   @Context UriInfo requestURI,
                                    InputStream contentStream) {
-        return createDataContent(dataBundleId, dataEntryPath, securityContext, contentStream);
+        return createDataContent(dataBundleId, dataEntryPath, securityContext, requestURI, contentStream);
     }
 
     private Response createDataContent(Long dataBundleId,
                                        String dataEntryPathParam,
                                        SecurityContext securityContext,
+                                       UriInfo requestURI,
                                        InputStream contentStream) {
         LOG.info("Create new file {} under {} ", dataEntryPathParam, dataBundleId);
         JacsBundle dataBundle = storageLookupService.getDataBundleById(dataBundleId);
         Preconditions.checkArgument(dataBundle != null, "No data bundle found for " + dataBundleId);
         String dataEntryPath = StringUtils.removeStart(dataEntryPathParam, "/");
-        URI dataNodeAccessURI = resourceURI.getBaseUriBuilder()
+        URI dataNodeAccessURI = requestURI.getBaseUriBuilder()
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path(dataBundleId.toString())
                 .path("data_content")
@@ -306,7 +309,7 @@ public class DataBundleStorageResource {
         newDataNode.setStorageRootLocation(dataBundle.getStorageURI().getJadeStorage());
         newDataNode.setStorageRootBinding(dataBundle.getStorageRootBinding());
         newDataNode.setNodeAccessURL(dataNodeAccessURI.toString());
-        newDataNode.setNodeInfoURL(resourceURI.getBaseUriBuilder()
+        newDataNode.setNodeInfoURL(requestURI.getBaseUriBuilder()
                 .path(Constants.AGENTSTORAGE_URI_PATH)
                 .path(dataBundleId.toString())
                 .path("data_info")

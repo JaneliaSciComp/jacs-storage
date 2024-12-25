@@ -1,5 +1,7 @@
 package org.janelia.jacsstorage.agent.impl;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;

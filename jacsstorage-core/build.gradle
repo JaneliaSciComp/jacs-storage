@@ -1,7 +1,7 @@
 project(":jacsstorage-core") {
     dependencies {
         api project(":jacsstorage-api"),
-            CDI_API_LIB
+            JAKARTA_CDI_API_LIB
 
         implementation JWT_API_LIB
 

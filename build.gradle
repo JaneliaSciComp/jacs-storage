@@ -97,6 +97,10 @@ subprojects {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    test {
+        useJUnitPlatform()
+    }
+
     tasks.register('perfJar', Jar) {
         dependsOn(configurations.perfRuntimeElements)
 

@@ -2,11 +2,8 @@ package org.janelia.jacsstorage.app;
 
 import java.lang.annotation.Annotation;
 
-import jakarta.enterprise.inject.literal.SingletonLiteral;
 import jakarta.enterprise.inject.se.SeContainer;
 import jakarta.enterprise.inject.se.SeContainerInitializer;
-import jakarta.enterprise.inject.spi.Extension;
-import jakarta.inject.Singleton;
 import jakarta.ws.rs.core.Application;
 import jakarta.ws.rs.core.UriBuilder;
 
@@ -16,7 +13,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.agent.AgentState;
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
-import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.coreutils.NetUtils;
 import org.janelia.jacsstorage.service.impl.localservice.StorageVolumeBootstrapper;

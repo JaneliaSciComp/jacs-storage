@@ -51,7 +51,7 @@ public class TestMasterStorageDependenciesProducer {
 
     @Produces
     public ObjectMapperFactory getObjectMapperFactory() {
-        return ObjectMapperFactory.instance();
+        return new ObjectMapperFactory();
     }
 
     @Produces

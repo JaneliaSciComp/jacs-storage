@@ -14,14 +14,14 @@ dependencies {
 
         // dependency injection
         WELD_VERSION = "6.0.0.Final"
-        CDI_API_LIB = "jakarta.enterprise:jakarta.enterprise.cdi-api:4.1.0"
         CDI_SE_CORE_LIB = "org.jboss.weld.se:weld-se-core:${WELD_VERSION}"
         CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
 
         // JAX-RS API
+        JAKARTA_CDI_API_LIB = "jakarta.enterprise:jakarta.enterprise.cdi-api:4.1.0"
         JAKARTA_INJECT_API_LIB = "jakarta.inject:jakarta.inject-api:2.0.1.MR"
         JAKARTA_SERVLET_API_LIB = "jakarta.servlet:jakarta.servlet-api:6.0.0"
-        JAKARTA_ACTIVATION_LIB = "jakarta.activation:jakarta.activation-api:2.1.1"
+        JAKARTA_ACTIVATION_LIB = "jakarta.activation:jakarta.activation-api:2.1.3"
         JAKARTA_ANOTATIONS_API_LIB = "jakarta.annotation:jakarta.annotation-api:3.0.0"
         JAKARTA_RS_API_LIB = "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
         JERSEY_VERSION = "4.0.0-M1"
@@ -42,7 +42,7 @@ dependencies {
 
         JERSEY_TEST_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-core:${JERSEY_VERSION}"
         JERSEY_TEST_UTIL_LIB = "org.glassfish.jersey.test-framework:jersey-test-framework-util:${JERSEY_VERSION}"
-        JERSEY_TEST_PROVIDER_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-bundle:${JERSEY_VERSION}"
+        JERSEY_TEST_PROVIDER_BUNDLE_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-bundle:${JERSEY_VERSION}"
 
         // database drivers
         MONGODB_VERSION = "5.1.2"
@@ -114,9 +114,14 @@ dependencies {
         AWS_CRT_LIB = "software.amazon.awssdk.crt:aws-crt:0.33.7"
 
         // testing
-        JUNIT_LIB = "junit:junit:4.13.1"
+        JUNIT4_LIB = "junit:junit:4.13.1"
+        JUNIT5_LIB = "org.junit.jupiter:junit-jupiter:5.11.4"
+        JUNIT_ENGINE_LIB = "org.junit.vintage:junit-vintage-engine:5.11.4"
         HAMCREST_LIB = "org.hamcrest:java-hamcrest:2.0.0.0"
-        MOCKITO_LIB = "org.mockito:mockito-core:5.14.2"
+        MOCKITO_VERSION = "5.14.2"
+        MOCKITO_CORE_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
+        MOCKITO_JUNIT5_LIB = "org.mockito:mockito-junit-jupiter:${MOCKITO_VERSION}"
+        MOCKITO_INLINE_LIB = "org.mockito:mockito-inline:${MOCKITO_VERSION}"
         ASSERTJ_LIB = "org.assertj:assertj-core:3.27.0"
         POWERMOCKITO_VERSION = "2.0.9"
         POWERMOCK_JUNIT4_LIB = "org.powermock:powermock-module-junit4:${POWERMOCKITO_VERSION}"
@@ -136,19 +141,17 @@ dependencies {
                    LOGBACK_CORE_LIB,
                    SLF4J_LIB
 
-    testImplementation ASSERTJ_LIB,
+    testImplementation JUNIT4_LIB,
+                       JUNIT5_LIB,
+                       ASSERTJ_LIB,
                        HAMCREST_LIB,
-                       JUNIT_LIB,
-                       MOCKITO_LIB,
+                       MOCKITO_CORE_LIB,
+                       MOCKITO_JUNIT5_LIB,
+                       POWERMOCK_JUNIT4_LIB,
                        POWERMOCK_API_MOCKITO_LIB,
                        POWERMOCK_JUNIT4_LIB
 
-    testRuntimeOnly ASSERTJ_LIB,
-                    HAMCREST_LIB,
-                    JUNIT_LIB,
-                    MOCKITO_LIB,
-                    POWERMOCK_API_MOCKITO_LIB,
-                    POWERMOCK_JUNIT4_LIB
+    testRuntimeOnly JUNIT_ENGINE_LIB
 
     perfApi BENCHMARK_CORE_LIB,
             BENCHMARK_ANN_PROCESSOR_LIB

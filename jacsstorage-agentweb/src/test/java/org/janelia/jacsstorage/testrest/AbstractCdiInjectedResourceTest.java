@@ -1,46 +1,72 @@
 package org.janelia.jacsstorage.testrest;
 
+import java.util.Map;
+import java.util.Set;
+
+import jakarta.enterprise.inject.spi.CDIProvider;
+import jakarta.ws.rs.core.Application;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.glassfish.jersey.ext.cdi1x.internal.CdiComponentProvider;
+import org.glassfish.jersey.ext.cdi1x.internal.CdiServerComponentProvider;
 import org.glassfish.jersey.inject.hk2.Hk2InjectionManagerFactory;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-
-import jakarta.enterprise.inject.se.SeContainer;
-import jakarta.enterprise.inject.se.SeContainerInitializer;
-import jakarta.enterprise.inject.spi.Extension;
-
-import static org.mockito.Mockito.spy;
+import org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory;
+import org.glassfish.jersey.test.grizzly.GrizzlyWebTestContainerFactory;
+import org.glassfish.jersey.test.spi.TestContainerException;
+import org.glassfish.jersey.test.spi.TestContainerFactory;
+import org.janelia.jacsstorage.app.JAXAgentStorageApp;
+import org.janelia.jacsstorage.interceptors.TimedInterceptor;
+import org.janelia.jacsstorage.rest.DataBundleStorageResource;
+import org.janelia.jacsstorage.service.DataContentService;
+import org.janelia.jacsstorage.service.interceptors.LoggerInterceptor;
+import org.jboss.weld.environment.se.Weld;
+import org.jboss.weld.environment.se.WeldContainer;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeEach;
 
 public class AbstractCdiInjectedResourceTest extends JerseyTest {
 
-    protected SeContainer container;
+    protected WeldContainer container;
+    protected TestAgentStorageDependenciesProducer dependenciesProducer;
 
-    @Before
-    public void setupPreconditionCheck() {
-        Assume.assumeTrue(Hk2InjectionManagerFactory.isImmediateStrategy());
+    @Override
+    protected Application configure() {
+        return new JAXAgentStorageApp();
     }
 
-    @Before
+    @BeforeEach
+    public void setup() {
+        Assumptions.assumeTrue(Hk2InjectionManagerFactory.isImmediateStrategy());
+    }
+
+    @BeforeEach
     public void setUp() throws Exception {
-        SeContainerInitializer containerInit = SeContainerInitializer
-                .newInstance()
+        dependenciesProducer = new TestAgentStorageDependenciesProducer();
+        CdiComponentProvider cdiComponentProvider = new CdiComponentProvider();
+        Weld containerInit = new Weld()
                 .disableDiscovery()
-                .addExtensions((Extension) new CdiComponentProvider())
-                .addBeanClasses(getTestBeanProviders())
+                .addExtensions(cdiComponentProvider)
+                .addBeanClass(TestAgentStorageDependenciesProducer.class)
+                .addBeanClass(DataBundleStorageResource.class)
                 ;
-        container = spy(containerInit.initialize());
+        container = containerInit.initialize();
         super.setUp();
     }
 
-    protected Class<?>[] getTestBeanProviders() {
-        return new Class<?>[0];
+    @Override
+    protected TestContainerFactory getTestContainerFactory() throws TestContainerException {
+        return new GrizzlyTestContainerFactory();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
-        container.close();
+        if (container != null) {
+            container.close();
+        }
         super.tearDown();
     }
 

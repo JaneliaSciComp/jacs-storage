@@ -15,6 +15,8 @@ import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
 import org.janelia.jacsstorage.service.AgentStatePersistence;
 import org.janelia.jacsstorage.service.NotificationService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Annotating the agent state implementation with ApplicationScoped does not seem to create
@@ -24,8 +26,11 @@ import org.janelia.jacsstorage.service.StorageVolumeManager;
 @ApplicationScoped
 public class AgentStateProvider {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AgentStateProvider.class);
+
     private static AgentState agentStateInstance;
 
+    @ApplicationScoped
     @Produces
     public AgentState agentState(
             @LocalInstance StorageVolumeManager storageVolumeManager,
@@ -52,6 +57,7 @@ public class AgentStateProvider {
 
     public void disconnect(@Disposes AgentState agentState) {
         if (agentState != null) {
+            LOG.info("Disconnect {}", agentState);
             agentState.disconnect();
         }
     }

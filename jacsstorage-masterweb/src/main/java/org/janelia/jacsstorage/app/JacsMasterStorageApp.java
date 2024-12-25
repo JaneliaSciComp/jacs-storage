@@ -28,13 +28,14 @@ public class JacsMasterStorageApp extends AbstractStorageApp {
             SeContainerInitializer containerInit = SeContainerInitializer.newInstance();
             SeContainer container = containerInit.initialize();
 
-            JacsMasterStorageApp app = container.select(JacsMasterStorageApp.class).get();
             ApplicationConfig appConfig = container.select(ApplicationConfig.class, new ApplicationProperties() {
                 @Override
                 public Class<ApplicationProperties> annotationType() {
                     return ApplicationProperties.class;
                 }
             }).get();
+
+            JacsMasterStorageApp app = new JacsMasterStorageApp();
             LOG.info("Start master app with {}", appConfig);
             app.start(appArgs, appConfig);
         } catch (Throwable e) {

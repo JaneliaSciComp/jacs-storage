@@ -22,7 +22,6 @@ project(":jacsstorage-masterweb") {
         implementation project(":jacsstorage-commonweb"),
                        CDI_SE_CORE_LIB,
                        JERSEY_COMMON_LIB,
-                       JERSEY_INJECT_CDI_LIB,
                        JERSEY_MEDIA_LIB,
                        JERSEY_MEDIA_JSON_LIB,
                        JERSEY_SERVER_LIB
@@ -36,7 +35,7 @@ project(":jacsstorage-masterweb") {
                            COMMONS_RNG_LIB,
                            JERSEY_TEST_LIB,
                            JERSEY_TEST_UTIL_LIB,
-                           JERSEY_TEST_PROVIDER_LIB
+                           JERSEY_TEST_PROVIDER_BUNDLE_LIB
 
     }
 

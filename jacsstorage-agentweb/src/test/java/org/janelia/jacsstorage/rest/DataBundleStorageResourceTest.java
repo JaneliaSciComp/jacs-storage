@@ -4,32 +4,29 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Set;
 
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
-import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
-import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
+import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageLookupService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
-import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
-import org.janelia.jacsstorage.testrest.TestResourceBinder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -41,30 +38,11 @@ import static org.mockito.Mockito.when;
 
 public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTest {
 
-    private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
-
-    @Override
-    protected JAXAgentStorageApp configure() {
-        return new JAXAgentStorageApp() {
-            @Override
-            protected Set<Class<?>> getAppClasses() {
-                return ImmutableSet.<Class<?>>builder()
-                        .addAll(super.getAppClasses())
-                        .build()
-                ;
-            }
-        };
-    }
-
-    @Override
-    protected Class<?>[] getTestBeanProviders() {
-        return new Class<?>[] {
-                TestAgentStorageDependenciesProducer.class
-        };
-    }
+    private static final Logger LOG = LoggerFactory.getLogger(DataBundleStorageResourceTest.class);
 
     @Test
     public void putEntryContent() {
+        LOG.debug("PutEntryContent");
         Long testBundleId = 1L;
 
         StorageLookupService storageLookupService = dependenciesProducer.getStorageLookupService();
@@ -89,7 +67,9 @@ public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTe
                 .path("data_content")
                 .path(testDataEntryName)
                 .request(MediaType.APPLICATION_JSON)
-                .put(Entity.entity(new ByteArrayInputStream(testDataContent.getBytes()), MediaType.APPLICATION_OCTET_STREAM));
+                .put(Entity.entity(
+                        new ByteArrayInputStream(testDataContent.getBytes()),
+                        MediaType.APPLICATION_OCTET_STREAM));
         assertEquals(201, response.getStatus());
 
     }
@@ -122,10 +102,10 @@ public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTe
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
                 .thenReturn(ImmutableList.of(
-                        new JacsStorageVolumeBuilder()
-                                .storageVirtualPath("/volPrefix")
-                                .storageRootTemplate("/volRoot/${owner}")
-                                .build()
+                                new JacsStorageVolumeBuilder()
+                                        .storageVirtualPath("/volPrefix")
+                                        .storageRootTemplate("/volRoot/${owner}")
+                                        .build()
                         )
                 );
         InputStream response = target()
@@ -165,10 +145,10 @@ public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTe
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
                 .thenReturn(ImmutableList.of(
-                        new JacsStorageVolumeBuilder()
-                                .storageVirtualPath("/volPrefix")
-                                .storageRootTemplate("/volRoot/${owner}")
-                                .build()
+                                new JacsStorageVolumeBuilder()
+                                        .storageVirtualPath("/volPrefix")
+                                        .storageRootTemplate("/volRoot/${owner}")
+                                        .build()
                         )
                 );
         InputStream response = target()
@@ -207,10 +187,10 @@ public class DataBundleStorageResourceTest extends AbstractCdiInjectedResourceTe
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/" + testPath))))
                 .thenReturn(ImmutableList.of(
-                        new JacsStorageVolumeBuilder()
-                                .storageVirtualPath("/volPrefix")
-                                .storageRootTemplate("/volRoot/${username}")
-                                .build()
+                                new JacsStorageVolumeBuilder()
+                                        .storageVirtualPath("/volPrefix")
+                                        .storageRootTemplate("/volRoot/${username}")
+                                        .build()
                         )
                 );
         Response response = target()

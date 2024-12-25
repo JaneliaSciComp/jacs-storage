@@ -6,13 +6,13 @@ import java.io.OutputStream;
 import java.util.EnumSet;
 import java.util.Set;
 
+import jakarta.ws.rs.core.Application;
 import jakarta.ws.rs.core.Response;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.app.JAXAgentStorageApp;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
@@ -25,7 +25,6 @@ import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
 import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
-import org.janelia.jacsstorage.testrest.TestResourceBinder;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -40,31 +39,15 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
     private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
 
     @Override
-    protected JAXAgentStorageApp configure() {
-        return new JAXAgentStorageApp() {
+    protected Application configure() {
+        return new Application() {
             @Override
-            protected Set<Class<?>> getAppClasses() {
+            public Set<Class<?>> getClasses() {
                 return ImmutableSet.<Class<?>>builder()
-                        .addAll(super.getAppClasses())
-                        .build()
-                ;
-            }
-
-            @Override
-            public Set<Object> getSingletons() {
-                return ImmutableSet.builder()
-                        .addAll(super.getSingletons())
-                        .add(new TestResourceBinder(dependenciesProducer))
+                        .add(PathBasedAgentStorageResource.class)
                         .build()
                         ;
             }
-        };
-    }
-
-    @Override
-    protected Class<?>[] getTestBeanProviders() {
-        return new Class<?>[] {
-                TestAgentStorageDependenciesProducer.class
         };
     }
 

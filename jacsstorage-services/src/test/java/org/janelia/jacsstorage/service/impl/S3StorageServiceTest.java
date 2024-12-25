@@ -15,6 +15,7 @@ import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
 import org.janelia.jacsstorage.service.s3.S3Adapter;
 import org.janelia.jacsstorage.service.s3.S3AdapterProvider;
+import org.janelia.jacsstorage.service.s3.impl.S3AdapterProviderImpl;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -34,7 +35,7 @@ public class S3StorageServiceTest {
 
     @BeforeClass
     public static void setUp() {
-        s3AdapterProvider = new S3AdapterProvider();
+        s3AdapterProvider = new S3AdapterProviderImpl();
     }
 
     @Test

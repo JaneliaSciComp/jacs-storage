@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.util.EnumSet;
 import java.util.Set;
 
+import jakarta.ws.rs.core.Application;
 import jakarta.ws.rs.core.Response;
 
 import com.google.common.collect.ImmutableSet;
@@ -24,7 +25,6 @@ import org.janelia.jacsstorage.service.NoContentFoundException;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
 import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
-import org.janelia.jacsstorage.testrest.TestResourceBinder;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -39,33 +39,24 @@ public class VolumeStorageResourceTest extends AbstractCdiInjectedResourceTest {
     private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
 
     @Override
-    protected JAXAgentStorageApp configure() {
-        return new JAXAgentStorageApp() {
+    protected Application configure() {
+        return new Application() {
             @Override
-            protected Set<Class<?>> getAppClasses() {
+            public Set<Class<?>> getClasses() {
                 return ImmutableSet.<Class<?>>builder()
-                        .addAll(super.getAppClasses())
-                        .build()
-                        ;
-            }
-
-            @Override
-            public Set<Object> getSingletons() {
-                return ImmutableSet.builder()
-                        .addAll(super.getSingletons())
-                        .add(new TestResourceBinder(dependenciesProducer))
+                        .add(VolumeStorageResource.class)
                         .build()
                         ;
             }
         };
     }
 
-    @Override
-    protected Class<?>[] getTestBeanProviders() {
-        return new Class<?>[]{
-                TestAgentStorageDependenciesProducer.class
-        };
-    }
+//    @Override
+//    protected Class<?>[] getTestBeanProviders() {
+//        return new Class<?>[]{
+//                TestAgentStorageDependenciesProducer.class
+//        };
+//    }
 
     @Test
     public void retrieveContent() throws IOException {
