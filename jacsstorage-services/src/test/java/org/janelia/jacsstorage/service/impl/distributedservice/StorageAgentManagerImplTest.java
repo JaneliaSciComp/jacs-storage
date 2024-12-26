@@ -10,20 +10,20 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.janelia.jacsstorage.datarequest.StorageAgentInfo;
 import org.janelia.jacsstorage.resilience.ConnectionState;
 import org.janelia.jacsstorage.service.NotificationService;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -33,12 +33,10 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(StorageAgentManagerImpl.class)
+@ExtendWith({MockitoExtension.class})
 public class StorageAgentManagerImplTest {
 
     @Mock
@@ -50,52 +48,35 @@ public class StorageAgentManagerImplTest {
     private Integer tripThreshold = 1;
     @InjectMocks
     private StorageAgentManagerImpl testStorageAgentManager;
-    private AgentConnectionTester mockConnectionTester;
 
-    @Before
+    @BeforeEach
     public void setUp() throws IllegalAccessException {
-        MockitoAnnotations.initMocks(this);
-        PowerMockito.field(StorageAgentManagerImpl.class, "periodInSeconds").set(testStorageAgentManager, periodInSeconds);
-        PowerMockito.field(StorageAgentManagerImpl.class, "initialDelayInSeconds").set(testStorageAgentManager, initialDelayInSeconds);
-        PowerMockito.field(StorageAgentManagerImpl.class, "tripThreshold").set(testStorageAgentManager, tripThreshold);
-        Mockito.when(scheduler.scheduleAtFixedRate(
-                any(Runnable.class),
-                eq(initialDelayInSeconds.longValue()),
-                eq(periodInSeconds.longValue()),
-                eq(TimeUnit.SECONDS)))
-                .then((Answer<ScheduledFuture<?>>) invocation -> {
-                    Runnable r = invocation.getArgument(0);
-                    r.run();
-                    return null;
-                });
-        mockConnectionTester = Mockito.mock(AgentConnectionTester.class);
-        try {
-            PowerMockito.whenNew(AgentConnectionTester.class).withNoArguments().thenReturn(mockConnectionTester);
-        } catch (Exception e) {
-            fail("Failed to mock a connection tester " + e);
-        }
-    }
-
-    private void prepareConnectionTester(boolean result) {
-        Mockito.when(mockConnectionTester.testConnection(any(StorageAgentConnection.class)))
-                .then((Answer<StorageAgentConnection>) invocation -> {
-                    StorageAgentConnection agentConnection = invocation.getArgument(0);
-                    agentConnection.updateConnectionStatus(result
-                            ? ConnectionState.Status.CLOSED
-                            : ConnectionState.Status.OPEN);
-                    return agentConnection;
-                });
+        MockitoAnnotations.openMocks(this);
+        FieldUtils.writeDeclaredField(testStorageAgentManager, "periodInSeconds", periodInSeconds, true);
+        FieldUtils.writeDeclaredField(testStorageAgentManager, "initialDelayInSeconds", initialDelayInSeconds, true);
+        FieldUtils.writeDeclaredField(testStorageAgentManager, "tripThreshold", tripThreshold, true);
     }
 
     @Test
     public void registerAgentForTheFirstTime() {
         String testAgentHost = "testHost";
         String testAgentURL = "http://agentURL";
+        try (MockedConstruction<AgentConnectionTester> mockConnectionTesterConstruction = Mockito.mockConstruction(AgentConnectionTester.class,
+                (mockConnectionTester, context) -> {
 
-        prepareConnectionTester(true);
-        registerAgent(testAgentHost, testAgentURL, ImmutableSet.of("v1", "v2"), ImmutableSet.of("1"));
+                    Mockito.when(mockConnectionTester.testConnection(any(StorageAgentConnection.class)))
+                            .then((Answer<StorageAgentConnection>) invocation -> {
+                                StorageAgentConnection agentConnection = invocation.getArgument(0);
+                                agentConnection.updateConnectionStatus(ConnectionState.Status.CLOSED);
+                                return agentConnection;
+                            });
+                })) {
 
-        Mockito.verify(scheduler).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
+            registerAgent(testAgentHost, testAgentURL, ImmutableSet.of("v1", "v2"), ImmutableSet.of("1"));
+
+            Mockito.verify(scheduler).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
+
+        }
     }
 
     private StorageAgentInfo registerAgent(String agentHost, String agentURL, Set<String> servedVolumes, Set<String> unavailableVolumes) {
@@ -110,15 +91,25 @@ public class StorageAgentManagerImplTest {
         Set<String> testServedVolumes = ImmutableSet.of("v1", "v2");
         Set<String> testUnavailableVolumes = ImmutableSet.of("1");
 
-        prepareConnectionTester(true);
-        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes, testUnavailableVolumes);
-        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes, testUnavailableVolumes);
+        try (MockedConstruction<AgentConnectionTester> mockConnectionTesterConstruction = Mockito.mockConstruction(AgentConnectionTester.class,
+                (mockConnectionTester, context) -> {
 
-        assertNotNull(firstRegistration);
-        assertNotNull(secondRegistration);
+                    Mockito.when(mockConnectionTester.testConnection(any(StorageAgentConnection.class)))
+                            .then((Answer<StorageAgentConnection>) invocation -> {
+                                StorageAgentConnection agentConnection = invocation.getArgument(0);
+                                agentConnection.updateConnectionStatus(ConnectionState.Status.CLOSED);
+                                return agentConnection;
+                            });
+                })) {
+            StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes, testUnavailableVolumes);
+            StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes, testUnavailableVolumes);
 
-        Mockito.verify(scheduler, Mockito.times(1)).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
-        Mockito.verifyNoMoreInteractions(scheduler);
+            assertNotNull(firstRegistration);
+            assertNotNull(secondRegistration);
+
+            Mockito.verify(scheduler, Mockito.times(1)).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
+            Mockito.verifyNoMoreInteractions(scheduler);
+        }
     }
 
     @Test
@@ -128,18 +119,29 @@ public class StorageAgentManagerImplTest {
         Set<String> testServedVolumes = ImmutableSet.of("v1", "v2");
         Set<String> testUnavailableVolumes = ImmutableSet.of("1");
 
-        prepareConnectionTester(true);
-        StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes, testUnavailableVolumes);
-        assertNotNull(firstRegistration);
-        assertNotNull(testStorageAgentManager.deregisterAgent(testAgentURL, firstRegistration.getAgentToken()));
+        try (MockedConstruction<AgentConnectionTester> mockConnectionTesterConstruction = Mockito.mockConstruction(AgentConnectionTester.class,
+                (mockConnectionTester, context) -> {
 
-        StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes, testUnavailableVolumes);
-        assertNotNull(secondRegistration);
+                    Mockito.when(mockConnectionTester.testConnection(any(StorageAgentConnection.class)))
+                            .then((Answer<StorageAgentConnection>) invocation -> {
+                                StorageAgentConnection agentConnection = invocation.getArgument(0);
+                                agentConnection.updateConnectionStatus(ConnectionState.Status.CLOSED);
+                                return agentConnection;
+                            });
+                })) {
 
-        Mockito.verify(scheduler, Mockito.times(2)).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
+            StorageAgentInfo firstRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes, testUnavailableVolumes);
+            assertNotNull(firstRegistration);
+            assertNotNull(testStorageAgentManager.deregisterAgent(testAgentURL, firstRegistration.getAgentToken()));
 
-        assertNotEquals(firstRegistration.getAgentToken(), secondRegistration.getAgentToken());
-        Mockito.verifyNoMoreInteractions(scheduler);
+            StorageAgentInfo secondRegistration = registerAgent(testAgentHost, testAgentURL, testServedVolumes, testUnavailableVolumes);
+            assertNotNull(secondRegistration);
+
+            Mockito.verify(scheduler, Mockito.times(2)).scheduleAtFixedRate(any(Runnable.class), eq(initialDelayInSeconds.longValue()), eq(periodInSeconds.longValue()), eq(TimeUnit.SECONDS));
+
+            assertNotEquals(firstRegistration.getAgentToken(), secondRegistration.getAgentToken());
+            Mockito.verifyNoMoreInteractions(scheduler);
+        }
     }
 
     @Test
@@ -149,72 +151,137 @@ public class StorageAgentManagerImplTest {
 
     @Test
     public void checkAgentRandomizedSelection() {
-        prepareConnectionTester(true);
-        Map<StorageAgentInfo, Integer> registeredAgents = registerMultipleAgents().stream().collect(Collectors.toMap(ai -> ai, ai -> 0));
-        int nInvocations = registeredAgents.size() * 3;
-        for (int i = 0; i < nInvocations; i++) {
-            StorageAgentInfo agentInfo = testStorageAgentManager.findRandomRegisteredAgent(ac -> true)
-                .orElse(null);
-            assertNotNull(agentInfo);
-            registeredAgents.put(agentInfo, registeredAgents.get(agentInfo) + 1);
+        try (MockedConstruction<AgentConnectionTester> mockConnectionTesterConstruction = Mockito.mockConstruction(AgentConnectionTester.class,
+                (mockConnectionTester, context) -> {
+
+                    Mockito.when(mockConnectionTester.testConnection(any(StorageAgentConnection.class)))
+                            .then((Answer<StorageAgentConnection>) invocation -> {
+                                StorageAgentConnection agentConnection = invocation.getArgument(0);
+                                agentConnection.updateConnectionStatus(ConnectionState.Status.CLOSED);
+                                return agentConnection;
+                            });
+                })) {
+
+            Map<StorageAgentInfo, Integer> registeredAgents = registerMultipleAgents().stream().collect(Collectors.toMap(ai -> ai, ai -> 0));
+            int nInvocations = registeredAgents.size() * 3;
+            for (int i = 0; i < nInvocations; i++) {
+                StorageAgentInfo agentInfo = testStorageAgentManager.findRandomRegisteredAgent(ac -> true)
+                        .orElse(null);
+                assertNotNull(agentInfo);
+                registeredAgents.put(agentInfo, registeredAgents.get(agentInfo) + 1);
+            }
+            // check that the manager didn't always returned the same agent
+            registeredAgents.forEach((ai, count) -> {
+                assertThat(count, greaterThanOrEqualTo(0));
+                assertThat(count, lessThan(nInvocations));
+            });
         }
-        // check that the manager didn't always returned the same agent
-        registeredAgents.forEach((ai, count) -> {
-            assertThat(count, greaterThanOrEqualTo(0));
-            assertThat(count, lessThan(nInvocations));
-        });
     }
 
     @Test
     public void checkAgentRandomizedFilteredSelection() {
-        prepareConnectionTester(true);
-        Map<StorageAgentInfo, Integer> registeredAgents = registerMultipleAgents().stream().collect(Collectors.toMap(ai -> ai, ai -> 0));
-        int nInvocations = registeredAgents.size() * 3;
-        for (int i = 0; i < nInvocations; i++) {
-            StorageAgentInfo agentInfo = testStorageAgentManager.findRandomRegisteredAgent(ac -> ac.isConnected())
-                    .orElse(null);
-            assertNotNull(agentInfo);
-            registeredAgents.put(agentInfo, registeredAgents.get(agentInfo) + 1);
+        try (MockedConstruction<AgentConnectionTester> mockConnectionTesterConstruction = Mockito.mockConstruction(AgentConnectionTester.class,
+                (mockConnectionTester, context) -> {
+
+                    Mockito.when(mockConnectionTester.testConnection(any(StorageAgentConnection.class)))
+                            .then((Answer<StorageAgentConnection>) invocation -> {
+                                StorageAgentConnection agentConnection = invocation.getArgument(0);
+                                agentConnection.updateConnectionStatus(ConnectionState.Status.CLOSED);
+                                return agentConnection;
+                            });
+                })) {
+
+            Map<StorageAgentInfo, Integer> registeredAgents = registerMultipleAgents().stream().collect(Collectors.toMap(ai -> ai, ai -> 0));
+            int nInvocations = registeredAgents.size() * 3;
+            for (int i = 0; i < nInvocations; i++) {
+                StorageAgentInfo agentInfo = testStorageAgentManager.findRandomRegisteredAgent(ac -> ac.isConnected())
+                        .orElse(null);
+                assertNotNull(agentInfo);
+                registeredAgents.put(agentInfo, registeredAgents.get(agentInfo) + 1);
+            }
+            // check that the manager didn't always returned the same agent
+            registeredAgents.forEach((ai, count) -> {
+                assertThat(count, greaterThanOrEqualTo(0));
+                assertThat(count, lessThan(nInvocations));
+            });
         }
-        // check that the manager didn't always returned the same agent
-        registeredAgents.forEach((ai, count) -> {
-            assertThat(count, greaterThanOrEqualTo(0));
-            assertThat(count, lessThan(nInvocations));
-        });
     }
 
     @Test
     public void findAgentByLocationOrConnectionInfo() {
-        prepareConnectionTester(true);
-        List<StorageAgentInfo> registeredAgents = registerMultipleAgents();
-        registeredAgents.forEach(ai -> {
-            assertThat(testStorageAgentManager.findRegisteredAgent(ai.getAgentAccessURL()).orElse(null), equalTo(ai));
-        });
-        assertNull(testStorageAgentManager.findRegisteredAgent("badLocation").orElse(null));
+        try (MockedConstruction<AgentConnectionTester> mockConnectionTesterConstruction = Mockito.mockConstruction(AgentConnectionTester.class,
+                (mockConnectionTester, context) -> {
+
+                    Mockito.when(mockConnectionTester.testConnection(any(StorageAgentConnection.class)))
+                            .then((Answer<StorageAgentConnection>) invocation -> {
+                                StorageAgentConnection agentConnection = invocation.getArgument(0);
+                                agentConnection.updateConnectionStatus(ConnectionState.Status.CLOSED);
+                                return agentConnection;
+                            });
+                })) {
+
+            List<StorageAgentInfo> registeredAgents = registerMultipleAgents();
+            registeredAgents.forEach(ai -> {
+                assertThat(testStorageAgentManager.findRegisteredAgent(ai.getAgentAccessURL()).orElse(null), equalTo(ai));
+            });
+            assertNull(testStorageAgentManager.findRegisteredAgent("badLocation").orElse(null));
+        }
     }
 
     @Test
     public void getCurrentRegisteredAgents() {
-        prepareConnectionTester(true);
-        List<StorageAgentInfo> registeredAgents = registerMultipleAgents();
-        assertThat(testStorageAgentManager.getCurrentRegisteredAgents(ac -> ac.isConnected()), hasSize(equalTo(registeredAgents.size())));
-        registeredAgents.forEach(ai -> {
-            assertThat(ai.getConnectionStatus(), equalTo("CONNECTED"));
-        });
+        try (MockedConstruction<AgentConnectionTester> mockConnectionTesterConstruction = Mockito.mockConstruction(AgentConnectionTester.class,
+                (mockConnectionTester, context) -> {
+
+                    Mockito.when(mockConnectionTester.testConnection(any(StorageAgentConnection.class)))
+                            .then((Answer<StorageAgentConnection>) invocation -> {
+                                StorageAgentConnection agentConnection = invocation.getArgument(0);
+                                agentConnection.updateConnectionStatus(ConnectionState.Status.CLOSED);
+                                return agentConnection;
+                            });
+                })) {
+
+            List<StorageAgentInfo> registeredAgents = registerMultipleAgents();
+            assertThat(testStorageAgentManager.getCurrentRegisteredAgents(ac -> ac.isConnected()), hasSize(equalTo(registeredAgents.size())));
+            registeredAgents.forEach(ai -> {
+                assertThat(ai.getConnectionStatus(), equalTo("CONNECTED"));
+            });
+        }
     }
 
     @Test
     public void findAgentsWhenThereAreBadConnections() {
-        prepareConnectionTester(false);
-        List<StorageAgentInfo> registeredAgents = registerMultipleAgents();
-        StorageAgentInfo agentInfo = testStorageAgentManager.findRandomRegisteredAgent(ac -> ac.isConnected())
-                .orElse(null);
-        assertNull(agentInfo);
-        registeredAgents.forEach(ai -> {
-            StorageAgentInfo agentInfoByLocation = testStorageAgentManager.findRegisteredAgent(ai.getAgentAccessURL()).orElse(null);
-            assertNotNull(agentInfoByLocation);
-            assertThat(agentInfoByLocation.getConnectionStatus(), equalTo("DISCONNECTED"));
-        });
+        try (MockedConstruction<AgentConnectionTester> mockConnectionTesterConstruction = Mockito.mockConstruction(AgentConnectionTester.class,
+                (mockConnectionTester, context) -> {
+
+                    Mockito.when(mockConnectionTester.testConnection(any(StorageAgentConnection.class)))
+                            .then((Answer<StorageAgentConnection>) invocation -> {
+                                StorageAgentConnection agentConnection = invocation.getArgument(0);
+                                agentConnection.updateConnectionStatus(ConnectionState.Status.OPEN);
+                                return agentConnection;
+                            });
+                })) {
+        Mockito.when(scheduler.scheduleAtFixedRate(
+                any(Runnable.class),
+                eq(initialDelayInSeconds.longValue()),
+                eq(periodInSeconds.longValue()),
+                eq(TimeUnit.SECONDS)))
+                .then((Answer<ScheduledFuture<?>>) invocation -> {
+                    Runnable r = invocation.getArgument(0);
+                    r.run();
+                    return null;
+                });
+
+            List<StorageAgentInfo> registeredAgents = registerMultipleAgents();
+            StorageAgentInfo agentInfo = testStorageAgentManager.findRandomRegisteredAgent(ac -> ac.isConnected())
+                    .orElse(null);
+            assertNull(agentInfo);
+            registeredAgents.forEach(ai -> {
+                StorageAgentInfo agentInfoByLocation = testStorageAgentManager.findRegisteredAgent(ai.getAgentAccessURL()).orElse(null);
+                assertNotNull(agentInfoByLocation);
+                assertThat(agentInfoByLocation.getConnectionStatus(), equalTo("DISCONNECTED"));
+            });
+        }
     }
 
     private List<StorageAgentInfo> registerMultipleAgents() {

@@ -16,16 +16,16 @@ import org.janelia.jacsstorage.service.ContentStorageService;
 import org.janelia.jacsstorage.service.s3.S3Adapter;
 import org.janelia.jacsstorage.service.s3.S3AdapterProvider;
 import org.janelia.jacsstorage.service.s3.impl.S3AdapterProviderImpl;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 public class S3StorageServiceTest {
 
@@ -33,7 +33,7 @@ public class S3StorageServiceTest {
 
     private static S3AdapterProvider s3AdapterProvider;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         s3AdapterProvider = new S3AdapterProviderImpl();
     }
@@ -207,7 +207,7 @@ public class S3StorageServiceTest {
                             .setStartEntryIndex(td.offset)
                             .setDirectoriesOnly(td.directoriesOnly)
             );
-            assertEquals(td.testName, td.expectedNodes, nodes.size());
+            assertEquals(td.expectedNodes, nodes.size(), td.testName);
         }
     }
 
@@ -280,7 +280,6 @@ public class S3StorageServiceTest {
         }
     }
 
-    @Ignore
     public void readContentFromPublicBucketInDifferentRegion() {
         class TestData {
             final String bucket;
@@ -357,7 +356,7 @@ public class S3StorageServiceTest {
                 new TestData("Access bad prefix", "v3/", false),
         };
         for (TestData td : testData) {
-            assertEquals(td.testName, td.expectedResult, storageService.canAccess(td.location));
+            assertEquals(td.expectedResult, storageService.canAccess(td.location), td.testName);
         }
     }
 

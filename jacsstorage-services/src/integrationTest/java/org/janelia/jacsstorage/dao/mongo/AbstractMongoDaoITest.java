@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractMongoDaoITest extends AbstractITest {
     private static MongoClient testMongoClient;
-    static ObjectMapperFactory testObjectMapperFactory = ObjectMapperFactory.instance();
+    static ObjectMapperFactory testObjectMapperFactory = new ObjectMapperFactory();
 
     MongoDatabase testMongoDatabase;
     IdGenerator idGenerator;
