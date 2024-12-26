@@ -17,12 +17,12 @@ import static org.mockito.Mockito.mock;
 
 public class TestMasterStorageDependenciesProducer {
 
-    private StorageAgentManager storageAgentManager = mock(StorageAgentManager.class);
-    private StorageAllocatorService storageAllocatorService = mock(StorageAllocatorService.class);
-    private StorageLookupService storageLookupService = mock(StorageLookupService.class);
-    private StorageUsageManager storageUsageManager = mock(StorageUsageManager.class);
-    private StorageVolumeManager storageVolumeManager = mock(StorageVolumeManager.class);
-    private AuthFilter authFilter = mock(AuthFilter.class);
+    private static StorageAgentManager storageAgentManager = mock(StorageAgentManager.class);
+    private static StorageAllocatorService storageAllocatorService = mock(StorageAllocatorService.class);
+    private static StorageLookupService storageLookupService = mock(StorageLookupService.class);
+    private static StorageUsageManager storageUsageManager = mock(StorageUsageManager.class);
+    private static StorageVolumeManager storageVolumeManager = mock(StorageVolumeManager.class);
+    private static AuthFilter authFilter = mock(AuthFilter.class);
 
     @Produces
     public StorageAgentManager getStorageAgentManager() {

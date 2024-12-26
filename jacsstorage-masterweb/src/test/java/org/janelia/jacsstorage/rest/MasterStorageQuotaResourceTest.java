@@ -15,7 +15,6 @@ import org.janelia.jacsstorage.model.jacsstorage.UsageData;
 import org.janelia.jacsstorage.service.StorageUsageManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
 import org.janelia.jacsstorage.testrest.TestMasterStorageDependenciesProducer;
-import org.janelia.jacsstorage.testrest.TestResourceBinder;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -26,37 +25,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 
 public class MasterStorageQuotaResourceTest extends AbstractCdiInjectedResourceTest {
-
-    private TestMasterStorageDependenciesProducer dependenciesProducer = new TestMasterStorageDependenciesProducer();
-
-    @Override
-    protected JAXMasterStorageApp configure() {
-        return new JAXMasterStorageApp() {
-            @Override
-            protected Set<Class<?>> getAppClasses() {
-                return ImmutableSet.<Class<?>>builder()
-                        .addAll(super.getAppClasses())
-                        .build()
-                ;
-            }
-
-            @Override
-            public Set<Object> getSingletons() {
-                return ImmutableSet.builder()
-                        .addAll(super.getSingletons())
-                        .add(new TestResourceBinder(dependenciesProducer))
-                        .build()
-                        ;
-            }
-        };
-    }
-
-    @Override
-    protected Class<?>[] getTestBeanProviders() {
-        return new Class<?>[] {
-                TestMasterStorageDependenciesProducer.class
-        };
-    }
 
     @Test
     public void retrieveSubjectQuotaForVolumeName() throws IOException {

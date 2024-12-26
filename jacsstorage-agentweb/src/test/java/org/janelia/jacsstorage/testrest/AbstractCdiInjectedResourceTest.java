@@ -1,40 +1,27 @@
 package org.janelia.jacsstorage.testrest;
 
-import java.util.Map;
-import java.util.Set;
-
-import jakarta.enterprise.inject.spi.CDIProvider;
+import jakarta.enterprise.inject.se.SeContainer;
+import jakarta.enterprise.inject.se.SeContainerInitializer;
 import jakarta.ws.rs.core.Application;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import org.glassfish.jersey.ext.cdi1x.internal.CdiComponentProvider;
-import org.glassfish.jersey.ext.cdi1x.internal.CdiServerComponentProvider;
 import org.glassfish.jersey.inject.hk2.Hk2InjectionManagerFactory;
-import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory;
-import org.glassfish.jersey.test.grizzly.GrizzlyWebTestContainerFactory;
 import org.glassfish.jersey.test.spi.TestContainerException;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
-import org.janelia.jacsstorage.interceptors.TimedInterceptor;
 import org.janelia.jacsstorage.rest.DataBundleStorageResource;
 import org.janelia.jacsstorage.rest.PathBasedAgentStorageResource;
-import org.janelia.jacsstorage.rest.PathBasedAgentStorageResourceTest;
 import org.janelia.jacsstorage.rest.VolumeQuotaResource;
 import org.janelia.jacsstorage.rest.VolumeStorageResource;
-import org.janelia.jacsstorage.service.DataContentService;
-import org.janelia.jacsstorage.service.interceptors.LoggerInterceptor;
-import org.jboss.weld.environment.se.Weld;
-import org.jboss.weld.environment.se.WeldContainer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 
 public class AbstractCdiInjectedResourceTest extends JerseyTest {
 
-    protected WeldContainer container;
+    private SeContainer container;
     protected TestAgentStorageDependenciesProducer dependenciesProducer;
 
     @Override
@@ -51,22 +38,19 @@ public class AbstractCdiInjectedResourceTest extends JerseyTest {
     public void setUp() throws Exception {
         dependenciesProducer = new TestAgentStorageDependenciesProducer();
         CdiComponentProvider cdiComponentProvider = new CdiComponentProvider();
-        Weld containerInit = new Weld()
+        SeContainerInitializer containerInit = SeContainerInitializer
+                .newInstance()
                 .disableDiscovery()
                 .addExtensions(cdiComponentProvider)
-                .addBeanClass(TestAgentStorageDependenciesProducer.class)
-                .addBeanClass(DataBundleStorageResource.class)
-                .addBeanClass(PathBasedAgentStorageResource.class)
-                .addBeanClass(VolumeQuotaResource.class)
-                .addBeanClass(VolumeStorageResource.class)
-                ;
+                .addBeanClasses(
+                        TestAgentStorageDependenciesProducer.class,
+                        DataBundleStorageResource.class,
+                        PathBasedAgentStorageResource.class,
+                        VolumeQuotaResource.class,
+                        VolumeStorageResource.class
+                );
         container = containerInit.initialize();
         super.setUp();
-    }
-
-    @Override
-    protected TestContainerFactory getTestContainerFactory() throws TestContainerException {
-        return new GrizzlyTestContainerFactory();
     }
 
     @AfterEach
