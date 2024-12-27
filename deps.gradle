@@ -117,14 +117,12 @@ dependencies {
         JUNIT4_LIB = "junit:junit:4.13.1"
         JUNIT5_LIB = "org.junit.jupiter:junit-jupiter:5.11.4"
         JUNIT_ENGINE_LIB = "org.junit.vintage:junit-vintage-engine:5.11.4"
+        JUNIT_PLATFORM_LAUNCHER = "org.junit.platform:junit-platform-launcher:1.11.4"
         HAMCREST_LIB = "org.hamcrest:java-hamcrest:2.0.0.0"
         MOCKITO_VERSION = "5.14.2"
         MOCKITO_CORE_LIB = "org.mockito:mockito-core:${MOCKITO_VERSION}"
         MOCKITO_JUNIT5_LIB = "org.mockito:mockito-junit-jupiter:${MOCKITO_VERSION}"
         ASSERTJ_LIB = "org.assertj:assertj-core:3.27.0"
-        POWERMOCKITO_VERSION = "2.0.9"
-        POWERMOCK_JUNIT4_LIB = "org.powermock:powermock-module-junit4:${POWERMOCKITO_VERSION}"
-        POWERMOCK_API_MOCKITO_LIB = "org.powermock:powermock-api-mockito2:${POWERMOCKITO_VERSION}"
 
         // benchmarks
         BENCHMARK_VERSION = "1.37"
@@ -147,7 +145,8 @@ dependencies {
                        MOCKITO_CORE_LIB,
                        MOCKITO_JUNIT5_LIB
 
-    testRuntimeOnly JUNIT_ENGINE_LIB
+    testRuntimeOnly JUNIT_ENGINE_LIB,
+                    JUNIT_PLATFORM_LAUNCHER
 
     perfApi BENCHMARK_CORE_LIB,
             BENCHMARK_ANN_PROCESSOR_LIB
