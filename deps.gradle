@@ -151,4 +151,6 @@ dependencies {
     perfApi BENCHMARK_CORE_LIB,
             BENCHMARK_ANN_PROCESSOR_LIB
 
+    mockitoAgent MOCKITO_CORE_LIB
+
 }

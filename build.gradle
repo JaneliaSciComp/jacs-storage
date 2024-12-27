@@ -4,9 +4,24 @@ allprojects {
     apply plugin: 'idea'
     group = 'org.janelia.jacs-storage'
     version = '1.22.0.RC3'
+
 }
 
 subprojects {
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            url "https://nexus.janelia.org/repository/maven-releases"
+        }
+        maven {
+            url "https://nexus.janelia.org/repository/maven-snapshots"
+        }
+        maven {
+            url "https://maven.scijava.org/content/groups/public"
+        }
+    }
 
     sourceSets {
         integrationTest {
@@ -24,25 +39,15 @@ subprojects {
         perfImplementation.extendsFrom(perfApi, implementation)
         perfRuntimeOnly.extendsFrom(runtimeOnly)
         perfRuntimeElements.extendsFrom(perfImplementation, perfRuntimeOnly)
+
+        mockitoAgent { transitive = false }
     }
+
+    def mockitoAgentRef = configurations.getByName("mockitoAgent")
 
     apply from: "${rootDir}/deps.gradle"
 
     afterEvaluate {
-        repositories {
-            mavenLocal()
-            mavenCentral()
-            maven {
-                url "https://nexus.janelia.org/repository/maven-releases"
-            }
-            maven {
-                url "https://nexus.janelia.org/repository/maven-snapshots"
-            }
-            maven {
-                url "https://maven.scijava.org/content/groups/public"
-            }
-        }
-
         compileJava {
             doFirst {
                 options.compilerArgs = [
@@ -93,12 +98,14 @@ subprojects {
     }
 
     java {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     test {
         useJUnitPlatform()
+
+        jvmArgs("-javaagent:${mockitoAgentRef.asPath}")
     }
 
     tasks.register('perfJar', Jar) {
