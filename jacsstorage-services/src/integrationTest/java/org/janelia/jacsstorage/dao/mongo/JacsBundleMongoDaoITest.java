@@ -4,12 +4,11 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
-
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.simple.RandomSource;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequestBuilder;
@@ -29,8 +28,9 @@ import static org.junit.Assert.assertNull;
 
 public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
 
-    private List<JacsStorageVolume> testVolumes = new ArrayList<>();
-    private List<JacsBundle> testData = new ArrayList<>();
+    private final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_128_PP);
+    private final List<JacsStorageVolume> testVolumes = new ArrayList<>();
+    private final List<JacsBundle> testData = new ArrayList<>();
     private JacsStorageVolumeDao testVolumeDao;
     private JacsBundleDao testDao;
 
@@ -213,9 +213,11 @@ public class JacsBundleMongoDaoITest extends AbstractMongoDaoITest {
     }
 
     private String createChecksum(int length) {
-        if (length > 0)
-            return Base64.getEncoder().encodeToString(RandomUtils.nextBytes(length));
-        else
+        if (length > 0) {
+            byte[] bytes = new byte[length];
+            rng.nextBytes(bytes);
+            return Base64.getEncoder().encodeToString(bytes);
+        } else
             return null;
     }
 }

@@ -116,7 +116,16 @@ subprojects {
         archiveClassifier.set('perf')
     }
 
-    tasks.register('integrationTest', Test)
+    tasks.register('integrationTest', Test) {
+        description = 'Runs integration tests.'
+        group = 'verification'
+
+        testClassesDirs = sourceSets.integrationTest.output.classesDirs
+        classpath = sourceSets.integrationTest.runtimeClasspath
+        shouldRunAfter test
+
+        useJUnitPlatform()
+    }
 
     artifacts {
         perfRuntimeElements perfJar
