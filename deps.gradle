@@ -108,7 +108,7 @@ dependencies {
         N5_UNIVERSE_LIB = "org.janelia.saalfeldlab:n5-universe:1.6.0"
 
         // AWS SDK
-        AWS_SDK_VERSION = "2.29.34"
+        AWS_SDK_VERSION = "2.29.41"
         AWS_SDK_PLATFORM = "software.amazon.awssdk:bom:${AWS_SDK_VERSION}"
         AWS_S3_LIB = "software.amazon.awssdk:s3"
         AWS_CRT_LIB = "software.amazon.awssdk.crt:aws-crt:0.33.7"
