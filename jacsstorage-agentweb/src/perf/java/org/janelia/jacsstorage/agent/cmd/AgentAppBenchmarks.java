@@ -1,19 +1,17 @@
 package org.janelia.jacsstorage.agent.cmd;
 
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.core.UriBuilder;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
-import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.ContainerResponse;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -33,89 +31,44 @@ import org.slf4j.LoggerFactory;
 
 public class AgentAppBenchmarks {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AgentAppBenchmarks.class);
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    public void streamFSContentFromAbsolutePath(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        streamContentFromAbsolutePath(trialParams, trialParams.getRandomFSEntry(), blackhole);
+    }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamS3ContentFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams) {
-        streamPathContentFuture(trialParams.getRandomS3Entry(), trialParams);
+    public void streamS3ContentFromAbsolutePath(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
+        streamContentFromAbsolutePath(trialParams, trialParams.getRandomS3Entry(), blackhole);
     }
 
-    @Benchmark
-    @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamS3ContentFromFutureAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
-        streamPathContentFromFuture(trialParams, blackhole, trialParams.getRandomS3Entry());
-    }
-
-    private Future<ContainerResponse> streamPathContentFuture(String dataEntry, RetrieveBenchmarkResourceTrialParams trialParams) {
+    private void streamContentFromAbsolutePath(RetrieveBenchmarkResourceTrialParams trialParams, String dataEntry, Blackhole blackhole) {
         try {
-            URI requestURI = UriBuilder.fromPath("/agent_storage").path("storage_path").path(dataEntry)
-                    .build(dataEntry);
-            return trialParams.appHandler().apply(trialParams.request(requestURI, "GET"));
-        } catch (Exception e) {
-            LOG.error("Error reading {}", dataEntry, e);
-	        throw new IllegalStateException(e);
-        }
-    }
-
-    private void streamPathContentFromFuture(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole, String dataEntry) {
-        try {
-            Future<ContainerResponse> responseFuture = streamPathContentFuture(dataEntry, trialParams);
+            Future<ContainerResponse> responseFuture = streamPathContentFuture(trialParams, dataEntry);
             ContainerResponse response = responseFuture.get();
             blackhole.consume(response.getStatus());
-            StreamingOutput responseStream = (StreamingOutput) response.getEntity();
             OutputStream targetStream = new NullOutputStream();
-            responseStream.write(targetStream);
+            response.setEntityStream(targetStream);
         } catch (Exception e) {
-            LOG.error("Error reading {}", dataEntry, e);
             throw new IllegalStateException(e);
         }
     }
 
-    @Benchmark
-    @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamS3ContentAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
-        streamContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
-    }
-
-    private void streamContentImpl(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole, String dataEntry) {
+    private Future<ContainerResponse> streamPathContentFuture(RetrieveBenchmarkResourceTrialParams trialParams, String dataEntry) {
         try {
-            InputStream response = trialParams.target()
-                    .path("/agent_storage")
-                    .path("storage_path")
+            URI requestURI = UriBuilder
+                    .fromUri(trialParams.createBaseURI())
+                    .path("agent_storage/storage_path/data_content")
                     .path(dataEntry)
-                    .request().get(InputStream.class);
-            OutputStream targetStream = new NullOutputStream();
-            long n = ByteStreams.copy(response, targetStream);
-            blackhole.consume(n);
+                    .build();
+            ContainerRequest request = trialParams.request(requestURI, "GET");
+            return trialParams.appHandler().apply(request);
         } catch (Exception e) {
-            LOG.error("Error reading {}", dataEntry, e);
+	        throw new IllegalStateException(e);
         }
-    }
-
-    @Benchmark
-    @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamS3ContentFromVolumePathAvg(RetrieveBenchmarkResourceTrialParams trialParams, Blackhole blackhole) {
-        String dataEntry = trialParams.getRandomS3Entry();
-        try {
-            InputStream response = trialParams.target()
-                    .path("/agent_storage")
-                    .path("storage_volume")
-                    .path(trialParams.storageVolumeId)
-                    .path("data_content")
-                    .path(dataEntry)
-                    .request().get(InputStream.class);
-            OutputStream targetStream = new NullOutputStream();
-            long n = ByteStreams.copy(response, targetStream);
-            blackhole.consume(n);
-        } catch (Exception e) {
-            LOG.error("Error reading {}", dataEntry, e);
-        }
-
     }
 
     public static void main(String[] args) throws RunnerException {
@@ -149,6 +102,7 @@ public class AgentAppBenchmarks {
                 .detectJvmArgs()
                 .param("s3EntriesFile", cmdLineParams.s3EntriesFile)
                 .param("fsEntriesFile", cmdLineParams.fsEntriesFile)
+                .param("storageAgentURL", cmdLineParams.storageAgentURL)
                 .param("storageVolumeId", cmdLineParams.storageVolumeId)
                 ;
         if (StringUtils.isNotBlank(cmdLineParams.profilerName)) {

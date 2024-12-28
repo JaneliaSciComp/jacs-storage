@@ -89,7 +89,6 @@ public class JacsAgentStorageApp extends AbstractStorageApp {
 
             AgentState agentState = container.select(AgentState.class).get();
 
-            System.out.println("@!!!!!!!!!!!! 1 " + agentState);
             // update agent state
             agentState.initializeAgentState(storageAgentId, storageAgentURL, "RUNNING");
             // register agent

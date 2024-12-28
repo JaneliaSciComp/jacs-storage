@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/jacsstorage.log</file>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>%d{yyyy-MM-dd_HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
+        </encoder>
+    </appender>
+
+    <logger name="ch.qos.logback.classic" level="error" />
+    <logger name="ch.qos.logback.core" level="error" />
+    <logger name="org.janelia.jacsstorage" level="error" />
+
+    <root level="error">
+        <appender-ref ref="FILE" />
+    </root>
+
+</configuration>
