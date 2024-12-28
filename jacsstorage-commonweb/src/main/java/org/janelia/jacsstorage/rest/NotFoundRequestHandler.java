@@ -26,7 +26,7 @@ public class NotFoundRequestHandler implements ExceptionMapper<NotFoundException
         LOG.error("No handler found for path: {}", request.getRequestURI());
         Response.ResponseBuilder responseBuilder = Response
                 .status(Response.Status.NOT_FOUND);
-        if (!StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
+        if (request == null || !StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
             String errorMessage = StringUtils.defaultIfBlank(exception.getMessage(), "Invalid request");
             responseBuilder
                     .entity(new ErrorResponse(errorMessage))

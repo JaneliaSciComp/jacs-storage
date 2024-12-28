@@ -48,7 +48,7 @@ project(":jacsstorage-agentweb") {
         dependsOn(perfJar, startScripts)
 
         mainClass = "org.janelia.jacsstorage.agent.cmd.AgentAppBenchmarks"
-        classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
+        classpath = project.perfJar.outputs.files + configurations.perfRuntimeElements + startScripts.classpath
         outputDir = startScripts.outputDir
         applicationName = "agentAppBenchmarks"
     }
