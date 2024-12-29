@@ -26,8 +26,6 @@ import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import org.openjdk.jmh.util.NullOutputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class AgentAppBenchmarks {
 
@@ -65,7 +63,8 @@ public class AgentAppBenchmarks {
                     .path(dataEntry)
                     .build();
             ContainerRequest request = trialParams.request(requestURI, "GET");
-            return trialParams.appHandler().apply(request);
+            return trialParams.appHandler()
+                    .apply(request);
         } catch (Exception e) {
 	        throw new IllegalStateException(e);
         }

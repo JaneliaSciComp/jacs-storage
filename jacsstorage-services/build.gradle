@@ -35,7 +35,7 @@ project(":jacsstorage-services") {
 
         perfApi project,
                 JAKARTA_CDI_API_LIB,
-                CDI_SE_CORE_LIB,
+                WELD_CDI_SE_CORE_LIB,
                 CMDLINE_ARG_LIB
     }
 
