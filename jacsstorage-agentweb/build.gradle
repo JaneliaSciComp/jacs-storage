@@ -3,23 +3,23 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.netflix.nebula:gradle-ospackage-plugin:9.1.1'
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:11.10.1'
     }
 }
 
 plugins {
     id 'application'
     id 'distribution'
-    id 'nebula.rpm' version '9.1.1'
+    id 'com.netflix.nebula.ospackage' version '11.10.1'
 }
 
 application {
     mainClass = 'org.janelia.jacsstorage.app.JacsAgentStorageApp'
 }
 
-project(":jacsstorage-agentweb") {
+project(':jacsstorage-agentweb') {
     dependencies {
-        implementation project(":jacsstorage-commonweb"),
+        implementation project(':jacsstorage-commonweb'),
                        WELD_CDI_SE_CORE_LIB,
                        N5_UNIVERSE_LIB
 
@@ -37,7 +37,7 @@ project(":jacsstorage-agentweb") {
         perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
 
         perfImplementation project,
-                           project(path: ":jacsstorage-services", configuration: "perfRuntimeElements"),
+                           project(path: ':jacsstorage-services', configuration: 'perfRuntimeElements'),
                            COMMONS_RNG_LIB,
                            JERSEY_TEST_LIB,
                            JERSEY_TEST_UTIL_LIB,
@@ -47,19 +47,19 @@ project(":jacsstorage-agentweb") {
     tasks.register('createAgentBenchmark', CreateStartScripts) {
         dependsOn(perfJar, startScripts)
 
-        mainClass = "org.janelia.jacsstorage.agent.cmd.AgentAppBenchmarks"
+        mainClass = 'org.janelia.jacsstorage.agent.cmd.AgentAppBenchmarks'
         classpath = project.perfJar.outputs.files + configurations.perfRuntimeElements + startScripts.classpath
         outputDir = startScripts.outputDir
-        applicationName = "agentAppBenchmarks"
+        applicationName = 'agentAppBenchmarks'
     }
 
     distributions {
         benchmarks {
             contents {
-                into("bin") {
+                into('bin') {
                     from(project.createAgentBenchmark)
                 }
-                into("lib") {
+                into('lib') {
                     from(project.perfJar.outputs.files)
                     from(project.configurations.perfRuntimeClasspath)
                 }
@@ -72,8 +72,8 @@ project(":jacsstorage-agentweb") {
                         include '*.sh'
                         filter(org.apache.tools.ant.filters.ExpandProperties,
                                 project: filteringProperties([
-                                        'jacs.runtime.env.serviceName': "${project.name}",
-                                        'jacs.runtime.env.serviceVersion': "${project.version}"
+                                        "jacs.runtime.env.serviceName": "${project.name}",
+                                        "jacs.runtime.env.serviceVersion": "${project.version}",
                                 ]))
                         filePermissions {
                             user {
@@ -108,16 +108,16 @@ project(":jacsstorage-agentweb") {
         it.dependsOn(createAgentBenchmark)
     }
 
-    tasks.register("ospackage", Rpm) {
+    tasks.register('ospackage', Rpm) {
         dependsOn(installDist)
 
-        release 1
-        arch I386
-        os LINUX
+        release = 1
+        arch = I386
+        os = LINUX
 
         def rpmInstallDir = "/opt/servers/jacsstorage/${project.name}-${project.version}"
-        def systemServiceDir = "/etc/systemd/system"
-        def installEnv = ["jacs.runtime.env.installDir": rpmInstallDir]
+        def systemServiceDir = '/etc/systemd/system'
+        def installEnv = ['jacs.runtime.env.installDir': rpmInstallDir]
 
         postInstall "cp ${rpmInstallDir}/etc/${project.name}.service ${systemServiceDir}/${project.name}.service"
 
@@ -132,33 +132,33 @@ project(":jacsstorage-agentweb") {
         }
 
         from ("${layout.buildDirectory}/install/${project.name}/bin") {
-            into "bin"
+            into 'bin'
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
         from ("${layout.buildDirectory}/install/${project.name}/lib") {
-            into "lib"
+            into 'lib'
         }
 
         from ("${layout.buildDirectory}/install/${project.name}/swagger-webapp") {
-            into "swagger-webapp"
+            into 'swagger-webapp'
         }
 
         from ("src/main/install/scripts") {
-            into "bin"
+            into 'bin'
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
             fileMode = 0755
         }
 
-        from ("src/main/install/etc") {
-            into "etc"
+        from ('src/main/install/etc') {
+            into 'etc'
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
         if (project.hasProperty('externalConfig')) {
             def externalConfigFile = new File("${externalConfig}")
             from (externalConfigFile) {
-                into "etc"
+                into 'etc'
                 filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
                 rename { fileName ->
                     'config.properties'
@@ -168,6 +168,7 @@ project(":jacsstorage-agentweb") {
 
         link("${systemServiceDir}/multi-user.target.wants/${project.name}.service", "${systemServiceDir}/${project.name}.service")
     }
+
 }
 
 ext.moduleName = 'org.janelia.jacsstorage.agentweb'

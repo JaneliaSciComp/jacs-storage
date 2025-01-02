@@ -1,4 +1,4 @@
-project(":jacsstorage-api") {
+project(':jacsstorage-api') {
     dependencies {
         api COMMONS_LANG_LIB,
             JACKSON_ANNOTATIONS_LIB,

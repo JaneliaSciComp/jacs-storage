@@ -8,9 +8,9 @@ application {
     mainClass = 'BenchmarkApp'
 }
 
-project(":jacsstorage-services") {
+project(':jacsstorage-services') {
     dependencies {
-        api project(":jacsstorage-core")
+        api project(':jacsstorage-core')
 
         implementation COMMONS_COMPRESS_LIB,
                        COMMONS_RNG_LIB,
@@ -62,10 +62,10 @@ project(":jacsstorage-services") {
     tasks.register('createStorageRetrieveBenchmark', CreateStartScripts) {
         dependsOn(perfJar, startScripts)
 
-        mainClass = "org.janelia.jacsstorage.service.cmd.StorageRetrieveBenchmark"
+        mainClass = 'org.janelia.jacsstorage.service.cmd.StorageRetrieveBenchmark'
         classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
         outputDir = startScripts.outputDir
-        applicationName = "storageRetrieveBenchmarks"
+        applicationName = 'storageRetrieveBenchmarks'
     }
 
     distributions {

@@ -1,6 +1,6 @@
-project(":jacsstorage-commonweb") {
+project(':jacsstorage-commonweb') {
     dependencies {
-        api project(":jacsstorage-services"),
+        api project(':jacsstorage-services'),
             WELD_CDI_SERVLET_LIB,
             CMDLINE_ARG_LIB,
             JACKSON_DATAFORMAT_XML_LIB,

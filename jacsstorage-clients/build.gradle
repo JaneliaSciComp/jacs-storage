@@ -3,21 +3,21 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.netflix.nebula:gradle-ospackage-plugin:9.1.1'
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:11.10.1'
     }
 }
 
 plugins {
     id 'application'
     id 'distribution'
-    id 'nebula.rpm' version '9.1.1'
+    id 'com.netflix.nebula.ospackage' version '11.10.1'
 }
 
-project(":jacsstorage-clients") {
+project(':jacsstorage-clients') {
     dependencies {
         api JACS_MODEL_RENDERING_LIB
 
-        implementation project(":jacsstorage-core"),
+        implementation project(':jacsstorage-core'),
                        COMMONS_IO_LIB,
                        COMMONS_LANG_LIB,
                        CMDLINE_ARG_LIB,
@@ -32,17 +32,17 @@ project(":jacsstorage-clients") {
     tasks.register('createStorageClientApp', CreateStartScripts) {
         dependsOn(startScripts)
 
-        mainClass = "org.janelia.jacsstorage.clients.cli.StorageClientApp"
+        mainClass = 'org.janelia.jacsstorage.clients.cli.StorageClientApp'
         classpath = startScripts.classpath
         outputDir = startScripts.outputDir
-        applicationName = "storageClientApp"
+        applicationName = 'storageClientApp'
     }
 
     distributions {
         main {
             contents {
                 duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-                into("bin") {
+                into('bin') {
                     from(createStorageClientApp)
                     filePermissions {
                         user {
@@ -71,10 +71,10 @@ project(":jacsstorage-clients") {
     tasks.register('ospackage', Rpm) {
         dependsOn(installDist)
 
-        release 1
-        arch I386
-        os LINUX
-        duplicatesStrategy DuplicatesStrategy.EXCLUDE
+        release = 1
+        arch = I386
+        os = LINUX
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
         def rpmInstallDir;
 
@@ -84,27 +84,27 @@ project(":jacsstorage-clients") {
             rpmInstallDir= "/misc/sc/jadeTools-${project.version}"
         }
         def parentRpmInstallDir = new File(rpmInstallDir).parent
-        def installEnv = ["jacs.runtime.env.installDir": rpmInstallDir]
+        def installEnv = ['jacs.runtime.env.installDir': rpmInstallDir]
 
         into "${rpmInstallDir}"
 
         from ("${layout.buildDirectory}/install/${project.name}/bin") {
-            into "bin"
+            into 'bin'
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
         from ("${layout.buildDirectory}/install/${project.name}/lib") {
-            into "lib"
+            into 'lib'
         }
 
-        from ("src/main/install/scripts") {
-            into "bin"
+        from ('src/main/install/scripts') {
+            into 'bin'
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
             fileMode = 0755
         }
 
-        from ("src/main/install/etc") {
-            into "etc"
+        from ('src/main/install/etc') {
+            into 'etc'
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 

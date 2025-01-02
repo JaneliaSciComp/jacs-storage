@@ -3,23 +3,23 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.netflix.nebula:gradle-ospackage-plugin:9.1.1'
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:11.10.1'
     }
 }
 
 plugins {
     id 'application'
     id 'distribution'
-    id 'nebula.rpm' version '9.1.1'
+    id 'com.netflix.nebula.ospackage' version '11.10.1'
 }
 
 application {
     mainClass = 'org.janelia.jacsstorage.app.JacsMasterStorageApp'
 }
 
-project(":jacsstorage-masterweb") {
+project(':jacsstorage-masterweb') {
     dependencies {
-        implementation project(":jacsstorage-commonweb"),
+        implementation project(':jacsstorage-commonweb'),
                        WELD_CDI_SE_CORE_LIB
 
         runtimeOnly JERSEY_INJECT_HK2_LIB,
@@ -47,10 +47,10 @@ project(":jacsstorage-masterweb") {
     tasks.register('createMasterBenchmark', CreateStartScripts) {
         dependsOn(perfJar, startScripts)
 
-        mainClass = "org.janelia.jacsstorage.master.cmd.MasterAppBenchmarks"
+        mainClass = 'org.janelia.jacsstorage.master.cmd.MasterAppBenchmarks'
         classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
         outputDir = startScripts.outputDir
-        applicationName = "masterAppBenchmarks"
+        applicationName = 'masterAppBenchmarks'
     }
 
     distributions {
@@ -72,8 +72,8 @@ project(":jacsstorage-masterweb") {
                         include '*.sh'
                         filter(org.apache.tools.ant.filters.ExpandProperties,
                                 project: filteringProperties([
-                                        "jacs.runtime.env.serviceName": "${project.name}",
-                                        "jacs.runtime.env.serviceVersion": "${project.version}"
+                                        'jacs.runtime.env.serviceName': "${project.name}",
+                                        'jacs.runtime.env.serviceVersion': "${project.version}",
                                 ]))
                         filePermissions {
                             user {
@@ -111,20 +111,20 @@ project(":jacsstorage-masterweb") {
     tasks.register('ospackage', Rpm) {
         dependsOn(installDist)
 
-        release = "1"
+        release = 1
         arch = I386
         os = LINUX
 
         def rpmInstallDir = "/opt/servers/jacsstorage/${project.name}-${project.version}"
-        def systemServiceDir = "/etc/systemd/system"
-        def installEnv = ["jacs.runtime.env.installDir": rpmInstallDir]
+        def systemServiceDir = '/etc/systemd/system'
+        def installEnv = ['jacs.runtime.env.installDir': rpmInstallDir]
 
         postInstall "cp ${rpmInstallDir}/etc/${project.name}.service ${systemServiceDir}/${project.name}.service"
 
         into "${rpmInstallDir}"
 
         from(new File(project(':jacsstorage-commonweb').projectDir, 'src/main/install/etc')) {
-            into "etc"
+            into 'etc'
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
             if (project.hasProperty('externalConfig')) {
                 rename '(.*)config.properties', '$1default-config.bak'
@@ -132,26 +132,26 @@ project(":jacsstorage-masterweb") {
         }
 
         from ("${layout.buildDirectory}/install/${project.name}/bin") {
-            into "bin"
+            into 'bin'
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
         from ("${layout.buildDirectory}/install/${project.name}/lib") {
-            into "lib"
+            into 'lib'
         }
 
         from ("${layout.buildDirectory}/install/${project.name}/swagger-webapp") {
-            into "swagger-webapp"
+            into 'swagger-webapp'
         }
 
-        from ("src/main/install/scripts") {
-            into "bin"
+        from ('src/main/install/scripts') {
+            into 'bin'
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
             fileMode = 0755
         }
 
-        from ("src/main/install/etc") {
-            into "etc"
+        from ('src/main/install/etc') {
+            into 'etc'
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
         }
 
