@@ -1,15 +1,16 @@
 package org.janelia.jacsstorage;
 
 import com.google.common.collect.ImmutableMap;
-
 import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 
 public abstract class AbstractITest {
     protected static ApplicationConfig integrationTestsConfig;
 
     @BeforeClass
+    @BeforeAll
     public static void setUpTestsConfig() {
         integrationTestsConfig = new ApplicationConfigProvider()
                 .fromResource("/jacsstorage.properties")

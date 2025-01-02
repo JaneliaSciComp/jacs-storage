@@ -8,26 +8,26 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageEvent;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageEventBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class JacsStorageEventMongoDaoITest extends AbstractMongoDaoITest {
 
     private List<JacsStorageEvent> testData = new ArrayList<>();
     private JacsStorageEventDao testDao;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testDao = new JacsStorageEventMongoDao(testMongoDatabase, idGenerator);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         // delete the data that was created for testing
         deleteAll(testDao, testData);

@@ -18,30 +18,30 @@ import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
 
     private List<JacsStorageVolume> testData = new ArrayList<>();
     private JacsStorageVolumeDao testDao;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testDao = new JacsStorageVolumeMongoDao(testMongoDatabase, idGenerator);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         // delete the data that was created for testing
         deleteAll(testDao, testData);

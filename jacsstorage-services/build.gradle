@@ -43,6 +43,22 @@ project(":jacsstorage-services") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 
+    integrationTest {
+        // do not run tests that require S3 access
+        useJUnitPlatform {
+            excludeTags('s3Access')
+        }
+    }
+
+    tasks.register('allIntegrationTests', Test) {
+        testClassesDirs = sourceSets.integrationTest.output.classesDirs
+        classpath = sourceSets.integrationTest.runtimeClasspath
+
+        shouldRunAfter test
+
+        useJUnitPlatform() // include all tests
+    }
+
     tasks.register('createStorageRetrieveBenchmark', CreateStartScripts) {
         dependsOn(perfJar, startScripts)
 

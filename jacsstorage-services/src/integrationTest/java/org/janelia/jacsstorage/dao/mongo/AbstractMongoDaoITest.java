@@ -1,5 +1,9 @@
 package org.janelia.jacsstorage.dao.mongo;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
@@ -16,10 +20,8 @@ import org.janelia.jacsstorage.dao.mongo.utils.RegistryHelper;
 import org.janelia.jacsstorage.model.BaseEntity;
 import org.junit.Before;
 import org.junit.BeforeClass;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
 public abstract class AbstractMongoDaoITest extends AbstractITest {
     private static MongoClient testMongoClient;
@@ -29,6 +31,7 @@ public abstract class AbstractMongoDaoITest extends AbstractITest {
     IdGenerator idGenerator;
 
     @BeforeClass
+    @BeforeAll
     public static void setUpMongoClient() throws IOException {
         CodecRegistry codecRegistry = RegistryHelper.createCodecRegistry(testObjectMapperFactory);
         MongoClientSettings.Builder mongoClientSettingsBuilder = MongoClientSettings.builder()
@@ -42,6 +45,7 @@ public abstract class AbstractMongoDaoITest extends AbstractITest {
     }
 
     @Before
+    @BeforeEach
     public final void setUpDaoResources() {
         idGenerator = new TimebasedIdGenerator(0);
         testMongoDatabase = testMongoClient.getDatabase(integrationTestsConfig.getStringPropertyValue("MongoDB.Database"));

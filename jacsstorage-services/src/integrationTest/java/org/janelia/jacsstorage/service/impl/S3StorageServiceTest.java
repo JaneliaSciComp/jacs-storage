@@ -17,6 +17,7 @@ import org.janelia.jacsstorage.service.s3.S3Adapter;
 import org.janelia.jacsstorage.service.s3.S3AdapterProvider;
 import org.janelia.jacsstorage.service.s3.impl.S3AdapterProviderImpl;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
+@Tag("s3Access")
 public class S3StorageServiceTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(S3StorageServiceTest.class);
