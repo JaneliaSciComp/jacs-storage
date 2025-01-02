@@ -16,7 +16,7 @@ dependencies {
         JAKARTA_SERVLET_API_LIB = "jakarta.servlet:jakarta.servlet-api:6.0.0"
         JAKARTA_RS_API_LIB = "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
 
-        // dependency injection
+        // CDI impl
         WELD_VERSION = "6.0.0.Final"
         WELD_CDI_SE_CORE_LIB = "org.jboss.weld.se:weld-se-core:${WELD_VERSION}"
         WELD_CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
@@ -36,9 +36,12 @@ dependencies {
         JERSEY_TEST_PROVIDER_BUNDLE_LIB = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-bundle:${JERSEY_VERSION}"
 
         // database drivers
-        MONGODB_VERSION = "5.1.2"
-        MONGODB_DRIVER_LIB = "org.mongodb:mongodb-driver-sync:${MONGODB_VERSION}"
+        MONGODB_VERSION = "5.2.1"
+        MONGODB_SYNC_DRIVER_LIB = "org.mongodb:mongodb-driver-sync:${MONGODB_VERSION}"
         MONGODB_BSON_LIB = "org.mongodb:bson:${MONGODB_VERSION}"
+
+        REACTOR_BOM = 'io.projectreactor:reactor-bom:2023.0.8'
+        REACTOR_CORE_LIB = 'io.projectreactor:reactor-core'
 
         // apache commons
         COMMONS_LANG_VERSION = "3.14.0"
@@ -52,7 +55,7 @@ dependencies {
         COMMONS_RNG_LIB = "org.apache.commons:commons-rng-simple:1.3"
 
         // Janelia libraries
-        JACS_MODEL_VERSION = "3.3.0"
+        JACS_MODEL_VERSION = "4.0.0"
         JACS_MODEL_RENDERING_LIB = "org.janelia.jacs-model:jacs-model-rendering:${JACS_MODEL_VERSION}"
 
         // Mail

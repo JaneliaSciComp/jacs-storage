@@ -8,18 +8,17 @@ allprojects {
 }
 
 subprojects {
-
     repositories {
         mavenLocal()
         mavenCentral()
         maven {
-            url "https://nexus.janelia.org/repository/maven-releases"
+            url = "https://nexus.janelia.org/repository/maven-releases"
         }
         maven {
-            url "https://nexus.janelia.org/repository/maven-snapshots"
+            url = "https://nexus.janelia.org/repository/maven-snapshots"
         }
         maven {
-            url "https://maven.scijava.org/content/groups/public"
+            url = "https://maven.scijava.org/content/groups/public"
         }
     }
 
@@ -117,9 +116,6 @@ subprojects {
     }
 
     tasks.register('integrationTest', Test) {
-        description = 'Runs integration tests.'
-        group = 'verification'
-
         testClassesDirs = sourceSets.integrationTest.output.classesDirs
         classpath = sourceSets.integrationTest.runtimeClasspath
         shouldRunAfter test
@@ -158,8 +154,8 @@ subprojects {
                 def snapshotsRepoUrl = 'https://nexus.janelia.org/repository/maven-snapshots'
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
                 credentials {
-                    username "${mavenRepoUser}"
-                    password "${mavenRepoPassword}"
+                    username = mavenRepoUser
+                    password = mavenRepoPassword
                 }
             }
         }
@@ -167,7 +163,7 @@ subprojects {
 }
 
 tasks.register('updateWrapper', Wrapper) {
-    gradleVersion = "8.10"
+    gradleVersion = "8.12"
 }
 
 tasks.register('printVersion') {
