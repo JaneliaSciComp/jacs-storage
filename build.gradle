@@ -43,9 +43,11 @@ subprojects {
         mockitoAgent { transitive = false }
     }
 
-    def mockitoAgentRef = configurations.getByName("mockitoAgent")
+    def mockitoAgentRef = configurations.getByName('mockitoAgent')
 
-    apply from: "${rootDir}/deps.gradle"
+    apply {
+        from("${rootDir}/deps.gradle")
+    }
 
     afterEvaluate {
         compileJava {
@@ -105,7 +107,7 @@ subprojects {
     test {
         useJUnitPlatform()
 
-        jvmArgs("-javaagent:${mockitoAgentRef.asPath}")
+        jvmArgs("-javaagent:${mockitoAgentRef.asPath}", "-Xshare:off")
     }
 
     tasks.register('perfJar', Jar) {
