@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.interceptor.AroundInvoke;
 import jakarta.interceptor.Interceptor;
 import jakarta.interceptor.InvocationContext;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 @Timed
 @Interceptor
+@Dependent
 public class TimedInterceptor {
 
     private static final Logger LOG = LoggerFactory.getLogger(TimedInterceptor.class);
