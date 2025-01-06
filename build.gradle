@@ -33,13 +33,13 @@ subprojects {
             mavenLocal()
             mavenCentral()
             maven {
-                url "https://nexus.janelia.org/repository/maven-releases"
+                url = "https://nexus.janelia.org/repository/maven-releases"
             }
             maven {
-                url "https://nexus.janelia.org/repository/maven-snapshots"
+                url = "https://nexus.janelia.org/repository/maven-snapshots"
             }
             maven {
-                url "https://maven.scijava.org/content/groups/public"
+                url = "https://maven.scijava.org/content/groups/public"
             }
         }
 
@@ -137,8 +137,8 @@ subprojects {
                 def snapshotsRepoUrl = 'https://nexus.janelia.org/repository/maven-snapshots'
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
                 credentials {
-                    username "${mavenRepoUser}"
-                    password "${mavenRepoPassword}"
+                    username = mavenRepoUser
+                    password = mavenRepoPassword
                 }
             }
         }
@@ -151,7 +151,7 @@ tasks.register('updateWrapper', Wrapper) {
 
 tasks.register('printVersion') {
     doLast {
-        println project.version
+        println(project.version)
     }
 }
 
