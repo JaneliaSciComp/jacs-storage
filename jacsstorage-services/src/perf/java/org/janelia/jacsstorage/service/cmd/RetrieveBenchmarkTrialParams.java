@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import jakarta.enterprise.inject.se.SeContainer;
 import jakarta.enterprise.inject.se.SeContainerInitializer;
@@ -37,6 +38,9 @@ public class RetrieveBenchmarkTrialParams {
     @Param({""})
     String secretKey;
 
+    @Param({""})
+    String s3Region;
+
     @Param("false")
     boolean useAsync;
 
@@ -52,7 +56,9 @@ public class RetrieveBenchmarkTrialParams {
 
         if (StringUtils.isNotBlank(s3EntriesFile)) {
             try {
-                s3Entries = Files.readAllLines(Paths.get(s3EntriesFile));
+                s3Entries = Files.readAllLines(Paths.get(s3EntriesFile)).stream()
+                        .filter(StringUtils::isNotBlank)
+                        .collect(Collectors.toList());
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -60,7 +66,9 @@ public class RetrieveBenchmarkTrialParams {
 
         if (StringUtils.isNotBlank(fsEntriesFile)) {
             try {
-                fsEntries = Files.readAllLines(Paths.get(fsEntriesFile));
+                fsEntries = Files.readAllLines(Paths.get(fsEntriesFile)).stream()
+                        .filter(StringUtils::isNotBlank)
+                        .collect(Collectors.toList());
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }

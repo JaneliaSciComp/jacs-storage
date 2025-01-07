@@ -23,11 +23,11 @@ public class BenchmarksCmdLineParams {
     public int nForks = 1;
     @Parameter(names = "--threads", description = "Number of threads")
     public int nThreads = 1;
-    @Parameter(names = "--benchmarks-regex", description = "benchmarks to be run regex")
+    @Parameter(names = "--benchmarks-regex", description = "benchmarks to be run regex (e.g. streamS3 or streamFS)")
     public String benchmarksRegex;
-    @Parameter(names = "--s3-entries-file", description = "File containing list of S3 URIs to retrieve")
+    @Parameter(names = "--s3-entries-file", description = "File containing list of S3 URIs to retrieve (required for streamS3 tests)")
     public String s3EntriesFile = "";
-    @Parameter(names = "--fs-entries-file", description = "File containing list of file paths to retrieve")
+    @Parameter(names = "--fs-entries-file", description = "File containing list of file paths to retrieve (required for streamFS tests)")
     public String fsEntriesFile = "";
     @Parameter(names = "--async", description = "Use async access", arity = 0)
     public boolean useAsync = false;
@@ -35,6 +35,8 @@ public class BenchmarksCmdLineParams {
     public String accessKey = "";
     @Parameter(names = "--secret-key", description = "S3 secret key")
     public String secretKey = "";
+    @Parameter(names = "--s3-region", description = "S3 region")
+    public String s3Region = "us-east-1";
 
     public TimeValue getMeasurementTime() {
         if (StringUtils.isBlank(measurementTime)) {

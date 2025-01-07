@@ -120,6 +120,9 @@ dependencies {
         BENCHMARK_VERSION = "1.37"
         BENCHMARK_CORE_LIB = "org.openjdk.jmh:jmh-core:${BENCHMARK_VERSION}"
         BENCHMARK_ANN_PROCESSOR_LIB = "org.openjdk.jmh:jmh-generator-annprocess:${BENCHMARK_VERSION}"
+
+        JBLOSC_LIB = 'org.lasersonlab:jblosc:1.0.1'
+        JNA_LIB = 'net.java.dev.jna:jna:5.9.0'
     }
 
     // Included in the implementation of ALL projects

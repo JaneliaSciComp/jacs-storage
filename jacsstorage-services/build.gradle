@@ -10,9 +10,9 @@ application {
 
 project(':jacsstorage-services') {
     dependencies {
-        api project(':jacsstorage-core')
+        api(project(':jacsstorage-core'))
 
-        implementation COMMONS_COMPRESS_LIB,
+        implementation(COMMONS_COMPRESS_LIB,
                        COMMONS_RNG_LIB,
                        JACS_MODEL_RENDERING_LIB,
                        JERSEY_CLIENT_LIB,
@@ -23,20 +23,26 @@ project(':jacsstorage-services') {
                        MONGODB_BSON_LIB,
                        N5_LIB,
                        N5_UNIVERSE_LIB,
-                       REFLECTIONS_LIB
+                       REFLECTIONS_LIB)
 
-        implementation platform(REACTOR_BOM),
+        implementation(platform(REACTOR_BOM),
                        REACTOR_CORE_LIB,
                        platform(AWS_SDK_PLATFORM),
                        AWS_S3_LIB,
-                       AWS_CRT_LIB
+                       AWS_CRT_LIB)
 
-        perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
+        perfAnnotationProcessor(BENCHMARK_ANN_PROCESSOR_LIB)
 
-        perfApi project,
+        perfApi(project,
                 JAKARTA_CDI_API_LIB,
                 WELD_CDI_SE_CORE_LIB,
-                CMDLINE_ARG_LIB
+                CMDLINE_ARG_LIB)
+
+        perfImplementation(JBLOSC_LIB) {
+            exclude(group: 'net.java.dev.jna')
+        }
+
+        perfImplementation(JNA_LIB)
     }
 
     processIntegrationTestResources {
