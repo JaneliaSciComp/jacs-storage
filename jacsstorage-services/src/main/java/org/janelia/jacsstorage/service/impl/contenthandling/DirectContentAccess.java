@@ -1,9 +1,6 @@
 package org.janelia.jacsstorage.service.impl.contenthandling;
 
 import java.io.OutputStream;
-import java.security.MessageDigest;
-import java.text.Format;
-import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -13,7 +10,6 @@ import com.google.common.base.Splitter;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
