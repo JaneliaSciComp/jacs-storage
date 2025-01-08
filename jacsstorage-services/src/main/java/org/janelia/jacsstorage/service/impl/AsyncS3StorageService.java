@@ -1,13 +1,14 @@
 package org.janelia.jacsstorage.service.impl;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.janelia.jacsstorage.coreutils.ComparatorUtils;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
@@ -23,18 +24,17 @@ import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
 import software.amazon.awssdk.core.async.BlockingInputStreamAsyncRequestBody;
-import software.amazon.awssdk.core.async.ResponsePublisher;
 import software.amazon.awssdk.services.s3.model.CommonPrefix;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Publisher;
 
 public class AsyncS3StorageService extends AbstractS3StorageService {
@@ -158,10 +158,18 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
 
         return Flux.from(listObjectsV2Publisher)
                 .index()
-                .flatMap(indexedResponse -> Flux.concat(
+                .flatMap(indexedResponse -> {
+                    List<S3Object> s3Objects1 = indexedResponse.getT2().contents();
+                    if (level == 0 && !s3Objects1.isEmpty() && s3Objects1.get(0).key().equals(prefix)) {
+                        // if there is an exact key match only return that object
+                        return Flux.just(createObjectNode(s3Objects1.get(0)));
+                    } else {
+                        List<S3Object> sortedS3Objects = new ArrayList<>(s3Objects1);
+                        sortedS3Objects.sort((s1, s2) -> ComparatorUtils.naturalCompare(s1.key(), s2.key(), true));
+                        return Flux.concat(
                         // add requested prefix if this is the first time it is seen
                         indexedResponse.getT1() == 0 && level == 0 &&
-                                (!indexedResponse.getT2().commonPrefixes().isEmpty() || !indexedResponse.getT2().contents().isEmpty()) &&
+                                        (!indexedResponse.getT2().commonPrefixes().isEmpty() || !sortedS3Objects.isEmpty()) &&
                                 prefix.endsWith("/") &&
                                 contentAccessParams.checkDepth(getPathDepth(basePrefix, prefix)) &&
                                 contentAccessParams.matchEntry(prefix)
@@ -173,7 +181,7 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
                                 .filter(contentAccessParams::matchEntry)
                                 .map(this::createPrefixNode),
                         // add objects
-                        Flux.fromIterable(indexedResponse.getT2().contents())
+                                Flux.fromIterable(sortedS3Objects)
                                 .filter(o -> contentAccessParams.matchEntry(o.key()))
                                 .map(this::createObjectNode),
                         // recurse into subfolders
@@ -181,7 +189,10 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
                                 .map(CommonPrefix::prefix)
                                 .filter(p -> contentAccessParams.checkDepth(getPathDepth(basePrefix, p)))
                                 .flatMap(p -> processAllNodes(basePrefix, p, contentAccessParams, level + 1))
-                ));
+                        );
+                    }
+
+                });
     }
 
     @Override
@@ -208,7 +219,7 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
 
         CompletableFuture<Long> getContentPromise = s3Adapter.getAsyncS3Client().getObject(getObjectRequest,
                         AsyncResponseTransformer.toBytes())
-                .thenApply(responseBytes -> IOStreamUtils.copyFrom(responseBytes.asByteArray(), outputStream));
+                .thenApply(responseBytesStream -> IOStreamUtils.copyFrom(responseBytesStream.asByteArray(), outputStream));
         return getContentPromise.join();
     }
 
