@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Queue;
 
 import com.google.common.io.ByteStreams;
+import org.janelia.jacsstorage.coreutils.ComparatorUtils;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
@@ -175,7 +176,9 @@ public class SyncS3StorageService extends AbstractS3StorageService {
                     continue;
                 }
 
-                for (S3Object s3Object : r.contents()) {
+                List<S3Object> s3Objects = new ArrayList<>(r.contents());
+                s3Objects.sort((s1, s2) -> ComparatorUtils.naturalCompare(s1.key(), s2.key(), true));
+                for (S3Object s3Object : s3Objects) {
                     if (currentOffset++ < requestOffset) {
                         continue;
                     }

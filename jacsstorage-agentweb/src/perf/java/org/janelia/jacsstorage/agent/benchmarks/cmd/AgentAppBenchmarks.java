@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.agent.cmd;
+package org.janelia.jacsstorage.agent.benchmarks.cmd;
 
 import java.io.OutputStream;
 import java.net.URI;
@@ -100,7 +100,7 @@ public class AgentAppBenchmarks {
                 .shouldFailOnError(true)
                 .detectJvmArgs()
                 .param("s3EntriesFile", cmdLineParams.s3EntriesFile)
-                .param("fsEntriesFile", cmdLineParams.fsEntriesFile)
+                .param("s3fsMountPoint", cmdLineParams.getS3FuseMountPoint())
                 .param("storageAgentURL", cmdLineParams.storageAgentURL)
                 .param("storageVolumeId", cmdLineParams.storageVolumeId)
                 ;

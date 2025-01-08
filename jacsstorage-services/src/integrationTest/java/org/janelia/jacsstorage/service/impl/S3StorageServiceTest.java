@@ -9,10 +9,15 @@ import java.util.Collections;
 import java.util.List;
 
 import com.google.common.io.ByteStreams;
+import org.janelia.jacsstorage.coreutils.ComparatorUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.service.ContentAccessParams;
+import org.janelia.jacsstorage.service.ContentAccessProvider;
+import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
+import org.janelia.jacsstorage.service.impl.contenthandling.DirectContentAccess;
+import org.janelia.jacsstorage.service.impl.contenthandling.SimpleMetadataReader;
 import org.janelia.jacsstorage.service.s3.S3Adapter;
 import org.janelia.jacsstorage.service.s3.S3AdapterProvider;
 import org.janelia.jacsstorage.service.s3.impl.S3AdapterProviderImpl;
@@ -282,7 +287,8 @@ public class S3StorageServiceTest {
         }
     }
 
-    public void readContentFromPublicBucketInDifferentRegion() {
+    @Test
+    public void readSingleObjectContentFromPublicBucketInDifferentRegion() {
         class TestData {
             final String bucket;
             final String region;
@@ -307,7 +313,11 @@ public class S3StorageServiceTest {
                         "us-west-2", // region must match if credentials are available
                         "segmentation/exaSPIM_653159_zarr/swcs_0.zip",
                         176985681),
-
+                new TestData(
+                        "aind-open-data",
+                        "us-west-2", // region must match if credentials are available
+                        "exaSPIM_731886_2024-08-30_13-43-58_flatfield-correction_2024-09-09_10-42-55_fusion_2024-09-09_15-03-51/fused.zarr/0/0/0/0/0/1",
+                        7823617)
         };
         for (TestData td : testData) {
             ContentStorageService storageService = getS3StorageService(
@@ -321,6 +331,97 @@ public class S3StorageServiceTest {
             long startTime = System.currentTimeMillis();
             ByteArrayOutputStream retrievedStream = new ByteArrayOutputStream();
             long nbytes = storageService.streamContentToOutput(td.contentLocation, retrievedStream);
+            assertEquals(td.expectedSize, nbytes);
+            double accessTime = (System.currentTimeMillis() - startTime) / 1000.;
+            LOG.info("Finished sync processing stream after {} secs", accessTime);
+            retrievedStream.reset();
+        }
+    }
+
+    /**
+     * Reads a single object or an entire prefix from a public bucket in a different region.
+     */
+    @Test
+    public void readSingleOrMultipleObjectsContentFromPublicBucketInDifferentRegion() {
+        class TestData {
+            final String bucket;
+            final String region;
+            final String contentLocation;
+            final boolean asyncAccess;
+            final int expectedNodes;
+            final long expectedSize;
+
+            TestData(String bucket, String region, String contentLocation, boolean asyncAccess, int expectedNodes, long expectedSize) {
+                this.bucket = bucket;
+                this.region = region;
+                this.contentLocation = contentLocation;
+                this.asyncAccess = asyncAccess;
+                this.expectedNodes = expectedNodes;
+                this.expectedSize = expectedSize;
+            }
+        }
+        TestData[] testData = new TestData[]{
+                new TestData(
+                        "aind-open-data",
+                        "us-west-2", // region must match if credentials are available
+                        "exaSPIM_653158_2023-06-01_20-41-38_fusion_2023-06-12_11-58-05/fused.zarr/4/0/0/1/3/6",
+                        true,
+                        1,
+                        7505274),
+                new TestData(
+                        "aind-msma-morphology-data",
+                        "us-west-2", // region must match if credentials are available
+                        "segmentation/exaSPIM_653159_zarr/swcs_0.zip",
+                        true,
+                        1,
+                        176985681L),
+                new TestData(
+                        "aind-open-data",
+                        "us-west-2", // region must match if credentials are available
+                        "exaSPIM_731886_2024-08-30_13-43-58_flatfield-correction_2024-09-09_10-42-55_fusion_2024-09-09_15-03-51/fused.zarr/0/0/0/0/0/1",
+                        true,
+                        1,
+                        7823617),
+                new TestData(
+                        "aind-open-data",
+                        "us-west-2", // region must match if credentials are available
+                        "exaSPIM_731886_2024-08-30_13-43-58_flatfield-correction_2024-09-09_10-42-55_fusion_2024-09-09_15-03-51/fused.zarr/0/0/0/0/0",
+                        true,
+                        5,
+                        30748672L)
+        };
+        for (TestData td : testData) {
+            S3Adapter s3Adapter = s3AdapterProvider.getS3Adapter(
+                    td.bucket,
+                    null,
+                    JADEOptions.create()
+                            .setAWSRegion(td.region)
+                            .setAsyncAccess(td.asyncAccess));
+            ContentStorageService storageService = getS3StorageService(s3Adapter, td.asyncAccess);
+            long startTime = System.currentTimeMillis();
+            ContentAccessParams contentAccessParams = new ContentAccessParams().setEntriesCount(td.expectedNodes);
+            List<ContentNode> contentNodes = storageService.listContentNodes(td.contentLocation, contentAccessParams);
+            assertEquals(td.expectedNodes, contentNodes.size());
+            contentNodes.sort((n1, n2) -> ComparatorUtils.naturalCompare(n1.getObjectKey(), n2.getObjectKey(), true)); // sort by key
+            ContentGetter contentGetter = new ContentGetterImpl(
+                    storageService,
+                    new ContentAccessProvider() {
+                        @Override
+                        public ContentAccess getContentFilter(ContentAccessParams contentAccessParams) {
+                            return new DirectContentAccess(false);
+                        }
+
+                        @Override
+                        public ContentMetadataReader getContentMetadataReader(String mimeType) {
+                            return new SimpleMetadataReader();
+                        }
+                    },
+                    contentNodes,
+                    contentAccessParams
+            );
+
+            ByteArrayOutputStream retrievedStream = new ByteArrayOutputStream();
+            long nbytes = contentGetter.streamContent(retrievedStream);
             assertEquals(td.expectedSize, nbytes);
             double accessTime = (System.currentTimeMillis() - startTime) / 1000.;
             LOG.info("Finished sync processing stream after {} secs", accessTime);

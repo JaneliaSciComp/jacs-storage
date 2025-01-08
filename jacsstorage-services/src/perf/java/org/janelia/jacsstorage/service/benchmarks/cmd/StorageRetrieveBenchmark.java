@@ -1,9 +1,7 @@
-package org.janelia.jacsstorage.service.cmd;
+package org.janelia.jacsstorage.service.benchmarks.cmd;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
-import com.google.common.io.ByteSource;
-import com.google.common.io.ByteStreams;
 import com.sun.jna.ptr.NativeLongByReference;
 import org.apache.commons.lang3.StringUtils;
 import org.blosc.IBloscDll;
@@ -33,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -117,6 +114,7 @@ public class StorageRetrieveBenchmark {
 
     private void streamContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
         if (StringUtils.isNotBlank(entry)) {
+            LOG.info("Reading {}", entry);
             JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
                     entry,
                     JADEOptions.create()
@@ -232,7 +230,7 @@ public class StorageRetrieveBenchmark {
                 .shouldFailOnError(true)
                 .detectJvmArgs()
                 .param("s3EntriesFile", cmdLineParams.s3EntriesFile)
-                .param("fsEntriesFile", cmdLineParams.fsEntriesFile)
+                .param("s3fsMountPoint", cmdLineParams.getS3FuseMountPoint())
                 .param("accessKey", cmdLineParams.accessKey)
                 .param("secretKey", cmdLineParams.secretKey)
                 .param("useAsync", Boolean.toString(cmdLineParams.useAsync))

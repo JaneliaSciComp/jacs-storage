@@ -1,7 +1,8 @@
-package org.janelia.jacsstorage.service.cmd;
+package org.janelia.jacsstorage.service.benchmarks.cmd;
 
 import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
+import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 public class BenchmarksCmdLineParams {
@@ -27,8 +28,8 @@ public class BenchmarksCmdLineParams {
     public String benchmarksRegex;
     @Parameter(names = "--s3-entries-file", description = "File containing list of S3 URIs to retrieve (required for streamS3 tests)")
     public String s3EntriesFile = "";
-    @Parameter(names = "--fs-entries-file", description = "File containing list of file paths to retrieve (required for streamFS tests)")
-    public String fsEntriesFile = "";
+    @Parameter(names = "--s3fs-mountpoint", description = "s3fs mount point")
+    String s3fsMountPoint = "";
     @Parameter(names = "--async", description = "Use async access", arity = 0)
     public boolean useAsync = false;
     @Parameter(names = "--access-key", description = "S3 access key")
@@ -52,5 +53,9 @@ public class BenchmarksCmdLineParams {
         } else {
             return TimeValue.fromString(warmupTime);
         }
+    }
+
+    public String getS3FuseMountPoint() {
+        return StringUtils.appendIfMissing(s3fsMountPoint, "/");
     }
 }

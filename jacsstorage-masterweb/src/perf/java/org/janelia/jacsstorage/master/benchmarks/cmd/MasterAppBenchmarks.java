@@ -1,10 +1,10 @@
-package org.janelia.jacsstorage.master.cmd;
+package org.janelia.jacsstorage.master.benchmarks.cmd;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.server.ContainerResponse;
-import org.janelia.jacsstorage.service.cmd.BenchmarksCmdLineParams;
+import org.janelia.jacsstorage.service.benchmarks.cmd.BenchmarksCmdLineParams;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -86,7 +86,7 @@ public class MasterAppBenchmarks {
                 .shouldFailOnError(true)
                 .detectJvmArgs()
                 .param("s3EntriesFile", cmdLineParams.s3EntriesFile)
-                .param("fsEntriesFile", cmdLineParams.fsEntriesFile);
+                .param("s3fsMountPoint", cmdLineParams.getS3FuseMountPoint())
                 ;
         if (StringUtils.isNotBlank(cmdLineParams.profilerName)) {
             optBuilder.addProfiler(cmdLineParams.profilerName);

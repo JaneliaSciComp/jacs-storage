@@ -61,6 +61,9 @@ project(':jacsstorage-services') {
         classpath = sourceSets.integrationTest.runtimeClasspath
 
         shouldRunAfter test
+        // s3 tests require a lot of memory because it's trying to read large zarr chunks
+        minHeapSize = '1g'
+        maxHeapSize = '2g'
 
         useJUnitPlatform() // include all tests
     }
@@ -68,7 +71,7 @@ project(':jacsstorage-services') {
     tasks.register('createStorageRetrieveBenchmark', CreateStartScripts) {
         dependsOn(perfJar, startScripts)
 
-        mainClass = 'org.janelia.jacsstorage.service.cmd.StorageRetrieveBenchmark'
+        mainClass = 'org.janelia.jacsstorage.service.benchmarks.cmd.StorageRetrieveBenchmark'
         classpath = startScripts.classpath + configurations.perfRuntimeClasspath + project.perfJar.outputs.files
         outputDir = startScripts.outputDir
         applicationName = 'storageRetrieveBenchmarks'

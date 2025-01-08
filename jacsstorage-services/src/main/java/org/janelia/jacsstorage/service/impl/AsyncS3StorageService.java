@@ -3,10 +3,12 @@ package org.janelia.jacsstorage.service.impl;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import org.janelia.jacsstorage.coreutils.ComparatorUtils;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
@@ -32,6 +34,7 @@ import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Publisher;
 
 public class AsyncS3StorageService extends AbstractS3StorageService {
@@ -155,30 +158,41 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
 
         return Flux.from(listObjectsV2Publisher)
                 .index()
-                .flatMap(indexedResponse -> Flux.concat(
-                        // add requested prefix if this is the first time it is seen
-                        indexedResponse.getT1() == 0 && level == 0 &&
-                                (!indexedResponse.getT2().commonPrefixes().isEmpty() || !indexedResponse.getT2().contents().isEmpty()) &&
-                                prefix.endsWith("/") &&
-                                contentAccessParams.checkDepth(getPathDepth(basePrefix, prefix)) &&
-                                contentAccessParams.matchEntry(prefix)
-                                ? Flux.just(createPrefixNode(prefix)) // check if the current prefix ends with '/' and if doesn't create a node for it
-                                : Flux.empty(),
-                        // add sub-folders
-                        Flux.fromIterable(indexedResponse.getT2().commonPrefixes())
-                                .map(CommonPrefix::prefix)
-                                .filter(contentAccessParams::matchEntry)
-                                .map(this::createPrefixNode),
-                        // add objects
-                        Flux.fromIterable(indexedResponse.getT2().contents())
-                                .filter(o -> contentAccessParams.matchEntry(o.key()))
-                                .map(this::createObjectNode),
-                        // recurse into subfolders
-                        Flux.fromIterable(indexedResponse.getT2().commonPrefixes())
-                                .map(CommonPrefix::prefix)
-                                .filter(p -> contentAccessParams.checkDepth(getPathDepth(basePrefix, p)))
-                                .flatMap(p -> processAllNodes(basePrefix, p, contentAccessParams, level + 1))
-                ));
+                .flatMap(indexedResponse -> {
+                    List<S3Object> s3Objects1 = indexedResponse.getT2().contents();
+                    if (level == 0 && !s3Objects1.isEmpty() && s3Objects1.getFirst().key().equals(prefix)) {
+                        // if there is an exact key match only return that object
+                        return Flux.just(createObjectNode(s3Objects1.getFirst()));
+                    } else {
+                        List<S3Object> sortedS3Objects = new ArrayList<>(s3Objects1);
+                        sortedS3Objects.sort((s1, s2) -> ComparatorUtils.naturalCompare(s1.key(), s2.key(), true));
+                        return Flux.concat(
+                                // add requested prefix if this is the first time it is seen
+                                indexedResponse.getT1() == 0 && level == 0 &&
+                                        (!indexedResponse.getT2().commonPrefixes().isEmpty() || !sortedS3Objects.isEmpty()) &&
+                                        prefix.endsWith("/") &&
+                                        contentAccessParams.checkDepth(getPathDepth(basePrefix, prefix)) &&
+                                        contentAccessParams.matchEntry(prefix)
+                                        ? Flux.just(createPrefixNode(prefix)) // check if the current prefix ends with '/' and if doesn't create a node for it
+                                        : Flux.empty(),
+                                // add sub-folders
+                                Flux.fromIterable(indexedResponse.getT2().commonPrefixes())
+                                        .map(CommonPrefix::prefix)
+                                        .filter(contentAccessParams::matchEntry)
+                                        .map(this::createPrefixNode),
+                                // add objects
+                                Flux.fromIterable(sortedS3Objects)
+                                        .filter(o -> contentAccessParams.matchEntry(o.key()))
+                                        .map(this::createObjectNode),
+                                // recurse into subfolders
+                                Flux.fromIterable(indexedResponse.getT2().commonPrefixes())
+                                        .map(CommonPrefix::prefix)
+                                        .filter(p -> contentAccessParams.checkDepth(getPathDepth(basePrefix, p)))
+                                        .flatMap(p -> processAllNodes(basePrefix, p, contentAccessParams, level + 1))
+                        );
+                    }
+
+                });
     }
 
     @Override
@@ -205,7 +219,7 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
 
         CompletableFuture<Long> getContentPromise = s3Adapter.getAsyncS3Client().getObject(getObjectRequest,
                         AsyncResponseTransformer.toBytes())
-                .thenApply(responseBytes -> IOStreamUtils.copyFrom(responseBytes.asByteArray(), outputStream));
+                .thenApply(responseBytesStream -> IOStreamUtils.copyFrom(responseBytesStream.asByteArray(), outputStream));
         return getContentPromise.join();
     }
 

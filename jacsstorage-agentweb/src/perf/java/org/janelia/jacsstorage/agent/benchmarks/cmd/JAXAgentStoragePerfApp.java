@@ -1,4 +1,4 @@
-package org.janelia.jacsstorage.agent.cmd;
+package org.janelia.jacsstorage.agent.benchmarks.cmd;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
