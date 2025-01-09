@@ -78,6 +78,13 @@ public class StorageRetrieveBenchmark {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
+    public void streamAndDecompressS3Content(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        streamAndDecompressContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.SECONDS)
     public void listFSContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
         listContentImpl(trialParams, blackhole, () -> trialParams.getRandomFSEntry());
     }
@@ -100,6 +107,7 @@ public class StorageRetrieveBenchmark {
             );
 
             try {
+                LOG.info("List content from {}", dataURI);
                 ContentGetter contentGetter = trialParams.storageContentReader.getDataContent(
                         dataURI,
                         new ContentAccessParams().setMaxDepth(1)
@@ -114,7 +122,6 @@ public class StorageRetrieveBenchmark {
 
     private void streamContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
         if (StringUtils.isNotBlank(entry)) {
-            LOG.info("Reading {}", entry);
             JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
                     entry,
                     JADEOptions.create()
@@ -124,6 +131,7 @@ public class StorageRetrieveBenchmark {
                             .setAsyncAccess(trialParams.useAsync)
             );
             try (OutputStream targetStream = new NullOutputStream()) {
+                LOG.info("Get data content from {}", dataURI);
                 ContentGetter contentGetter = trialParams.storageContentReader.getDataContent(dataURI, new ContentAccessParams());
                 long nbytes = contentGetter.streamContent(targetStream);
                 if (nbytes == 0) {
@@ -147,7 +155,8 @@ public class StorageRetrieveBenchmark {
                             .setAWSRegion(trialParams.s3Region)
                             .setAsyncAccess(trialParams.useAsync)
             );
-            try (OutputStream targetStream = new NullOutputStream()) {
+            try (OutputStream targetStream = new ByteArrayOutputStream()) {
+                LOG.info("Get object content from {}", dataURI);
                 ContentGetter contentGetter = trialParams.storageContentReader.getObjectContent(dataURI);
                 long nbytes = contentGetter.streamContent(targetStream);
                 if (nbytes == 0) {
@@ -172,32 +181,61 @@ public class StorageRetrieveBenchmark {
                             .setAsyncAccess(trialParams.useAsync)
             );
             try (ByteArrayOutputStream targetStream = new ByteArrayOutputStream()) {
+                LOG.info("Get and decompress object content from {}", dataURI);
                 ContentGetter contentGetter = trialParams.storageContentReader.getObjectContent(dataURI);
                 long nbytes = contentGetter.streamContent(targetStream);
                 if (nbytes == 0) {
                     throw new ContentException("Empty content " + dataURI);
                 } else {
-                    JBlosc jb = new JBlosc();
-                    byte[] compressedData = targetStream.toByteArray();
-                    ByteBuffer header = ByteBuffer.wrap(compressedData, 0, JBlosc.OVERHEAD);
-                    NativeLongByReference nbytesValue = new NativeLongByReference();
-                    NativeLongByReference cbytesValue = new NativeLongByReference();
-                    NativeLongByReference blocksizeValue = new NativeLongByReference();
-
-                    IBloscDll.blosc_cbuffer_sizes(header, nbytesValue, cbytesValue, blocksizeValue);
-                    int compressedSize = cbytesValue.getValue().intValue();
-                    int uncompressedSize = nbytesValue.getValue().intValue();
-                    ByteBuffer compressedBuffer = ByteBuffer.wrap(compressedData);
-                    ByteBuffer uncompressedBuffer = ByteBuffer.allocateDirect(uncompressedSize);
-                    int s = jb.decompress(compressedBuffer, uncompressedBuffer, uncompressedSize);
-                    assert s == uncompressedSize;
-                    LOG.info("Blosc uncompress buffer {} -> {}", compressedSize, uncompressedSize);
-                    blackhole.consume(s);
+                    consumeUncompressedContent(targetStream.toByteArray(), blackhole);
                 }
             } catch (Exception e) {
                 LOG.error("Error reading {}", dataURI, e);
             }
         }
+    }
+
+    private void streamAndDecompressContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
+        if (StringUtils.isNotBlank(entry)) {
+            JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
+                    entry,
+                    JADEOptions.create()
+                            .setAccessKey(StringUtils.isNotBlank(trialParams.accessKey) ? trialParams.accessKey : null)
+                            .setSecretKey(StringUtils.isNotBlank(trialParams.secretKey) ? trialParams.secretKey : null)
+                            .setAWSRegion(trialParams.s3Region)
+                            .setAsyncAccess(trialParams.useAsync)
+            );
+            try (ByteArrayOutputStream targetStream = new ByteArrayOutputStream()) {
+                LOG.info("Get and decompress data content from {}", dataURI);
+                ContentGetter contentGetter = trialParams.storageContentReader.getDataContent(dataURI, new ContentAccessParams());
+                long nbytes = contentGetter.streamContent(targetStream);
+                if (nbytes == 0) {
+                    throw new ContentException("Empty content " + dataURI);
+                } else {
+                    consumeUncompressedContent(targetStream.toByteArray(), blackhole);
+                }
+            } catch (Exception e) {
+                LOG.error("Error reading {}", dataURI, e);
+            }
+        }
+    }
+
+    private void consumeUncompressedContent(byte[] compressedData, Blackhole blackhole) {
+        JBlosc jb = new JBlosc();
+        ByteBuffer header = ByteBuffer.wrap(compressedData, 0, JBlosc.OVERHEAD);
+        NativeLongByReference nbytesValue = new NativeLongByReference();
+        NativeLongByReference cbytesValue = new NativeLongByReference();
+        NativeLongByReference blocksizeValue = new NativeLongByReference();
+
+        IBloscDll.blosc_cbuffer_sizes(header, nbytesValue, cbytesValue, blocksizeValue);
+        int compressedSize = cbytesValue.getValue().intValue();
+        int uncompressedSize = nbytesValue.getValue().intValue();
+        ByteBuffer compressedBuffer = ByteBuffer.wrap(compressedData);
+        ByteBuffer uncompressedBuffer = ByteBuffer.allocateDirect(uncompressedSize);
+        int s = jb.decompress(compressedBuffer, uncompressedBuffer, uncompressedSize);
+        assert s == uncompressedSize;
+        LOG.info("Blosc uncompress buffer {} -> {}", compressedSize, uncompressedSize);
+        blackhole.consume(s);
     }
 
     public static void main(String[] args) throws RunnerException {
