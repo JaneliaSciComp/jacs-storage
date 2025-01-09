@@ -51,7 +51,7 @@ class ContentStorageServiceProvider {
                     storageURI.getStorageOptions()
                             .setDefaultAWSRegion(defaultAWSRegion)
                             .setDefaultPathStyleBucket(false)
-                            .setDefaultAsyncAccess(true)
+                            .setDefaultAsyncAccess(false)
             );
             return createS3StorageServiceInstance(s3Adapter, storageURI.getStorageOptions().getAsyncAccess());
         } else if (storageURI.getStorageScheme() == JADEStorageURI.JADEStorageScheme.HTTP) {
