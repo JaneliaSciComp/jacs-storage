@@ -6,10 +6,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.context.ConversationScoped;
 import jakarta.enterprise.context.Dependent;
-import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 
 import com.google.common.base.Preconditions;
@@ -57,9 +54,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         this.capacityNotifier = capacityNotifier;
     }
 
-    @TimedMethod(
-            logLevel = "info"
-    )
+    @TimedMethod
     @Override
     public JacsStorageVolume createNewStorageVolume(JacsStorageVolume storageVolume) {
         JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
@@ -71,9 +66,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         }
     }
 
-    @TimedMethod(
-            logLevel = "info"
-    )
+    @TimedMethod
     @Override
     public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, JacsStorageType storageType, String storageAgentId) {
         JacsStorageAgent localStorageAgent = storageAgentPersistence.getLocalStorageAgentInfo();
@@ -117,9 +110,7 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
         }
     }
 
-    @TimedMethod(
-            logLevel = "info"
-    )
+    @TimedMethod
     @Override
     public List<JacsStorageVolume> findVolumes(StorageQuery storageQuery) {
         LOG.trace("Query managed volumes using {}", storageQuery);
@@ -143,7 +134,6 @@ public class LocalStorageVolumeManager extends AbstractStorageVolumeManager {
     }
 
     @TimedMethod(
-            logLevel = "trace",
             logResult = true
     )
     @Override

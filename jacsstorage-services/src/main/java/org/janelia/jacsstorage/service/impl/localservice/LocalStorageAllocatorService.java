@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.service.impl.localservice;
 
 import java.util.Optional;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 

@@ -1,8 +1,6 @@
 package org.janelia.jacsstorage.service.impl.localservice;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
-import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 
 import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
