@@ -1,11 +1,13 @@
 package org.janelia.jacsstorage.service.impl.localservice;
 
-import org.apache.commons.collections4.CollectionUtils;
+import java.util.Optional;
+
+import javax.inject.Inject;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
 import org.janelia.jacsstorage.coreutils.NetUtils;
-import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
@@ -15,13 +17,6 @@ import org.janelia.jacsstorage.service.StorageVolumeSelector;
 import org.janelia.jacsstorage.service.impl.AbstractStorageAllocatorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Optional;
 
 @LocalInstance
 public class LocalStorageAllocatorService extends AbstractStorageAllocatorService {

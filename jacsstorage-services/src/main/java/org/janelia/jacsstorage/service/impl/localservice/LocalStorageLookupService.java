@@ -1,5 +1,7 @@
 package org.janelia.jacsstorage.service.impl.localservice;
 
+import javax.inject.Inject;
+
 import org.janelia.jacsstorage.cdi.qualifier.Cacheable;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.dao.JacsBundleDao;
@@ -9,8 +11,6 @@ import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.service.StorageLookupService;
-
-import javax.inject.Inject;
 
 @LocalInstance
 public class LocalStorageLookupService implements StorageLookupService {

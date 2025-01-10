@@ -9,7 +9,6 @@ import java.util.stream.Stream;
 import javax.inject.Inject;
 
 import com.google.common.collect.ImmutableMap;
-
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;

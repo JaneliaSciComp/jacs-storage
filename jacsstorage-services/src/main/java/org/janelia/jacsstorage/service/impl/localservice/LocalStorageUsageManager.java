@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 import javax.inject.Inject;
 
 import com.google.common.collect.ImmutableMap;
-
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
