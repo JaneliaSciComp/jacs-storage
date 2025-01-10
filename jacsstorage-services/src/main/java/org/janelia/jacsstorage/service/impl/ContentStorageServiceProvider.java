@@ -19,12 +19,15 @@ class ContentStorageServiceProvider {
 
     private final S3AdapterProvider s3AdapterProvider;
     private final String defaultAWSRegion;
+    private final boolean defaultAsyncAccess;
 
     @Inject
     ContentStorageServiceProvider(S3AdapterProvider s3AdapterProvider,
-                                  @PropertyValue(name = "AWS.Region", defaultValue = "us-east-1") String defaultAWSRegion) {
+                                  @PropertyValue(name = "AWS.Region.Default", defaultValue = "us-east-1") String defaultAWSRegion,
+                                  @PropertyValue(name = "AWS.AsyncAccess.Default", defaultValue = "false") boolean defaultAsyncAccess) {
         this.s3AdapterProvider = s3AdapterProvider;
         this.defaultAWSRegion = defaultAWSRegion;
+        this.defaultAsyncAccess = defaultAsyncAccess;
     }
 
     @Nullable ContentStorageService getStorageService(@Nullable JADEStorageURI storageURI) {
@@ -51,7 +54,7 @@ class ContentStorageServiceProvider {
                     storageURI.getStorageOptions()
                             .setDefaultAWSRegion(defaultAWSRegion)
                             .setDefaultPathStyleBucket(false)
-                            .setDefaultAsyncAccess(false)
+                            .setDefaultAsyncAccess(defaultAsyncAccess)
             );
             return createS3StorageServiceInstance(s3Adapter, storageURI.getStorageOptions().getAsyncAccess());
         } else if (storageURI.getStorageScheme() == JADEStorageURI.JADEStorageScheme.HTTP) {
@@ -63,7 +66,8 @@ class ContentStorageServiceProvider {
                     storageURI.getStorageOptions()
                             .setDefaultAWSRegion(defaultAWSRegion)
                             .setDefaultPathStyleBucket(true)
-                            .setDefaultAsyncAccess(false)
+                            .setDefaultAsyncAccess(false) // for HTTP URIs we still use sync access because
+                                                          // for non-aws S3 storage async access is not supported
             );
             return createS3StorageServiceInstance(s3Adapter, storageURI.getStorageOptions().getAsyncAccess());
         } else {
