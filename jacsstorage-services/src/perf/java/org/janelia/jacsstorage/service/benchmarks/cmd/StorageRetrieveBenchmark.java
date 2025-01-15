@@ -123,6 +123,7 @@ public class StorageRetrieveBenchmark {
                     if (trialParams.applyBloscDecompression) {
                         consumeUncompressedContent(targetStream.toByteArray(), blackhole);
                     } else {
+                        LOG.info("Consume {} bytes from {}", nbytes, dataURI);
                         blackhole.consume(nbytes);
                     }
                 }
@@ -153,6 +154,7 @@ public class StorageRetrieveBenchmark {
                     if (trialParams.applyBloscDecompression) {
                         consumeUncompressedContent(targetStream.toByteArray(), blackhole);
                     } else {
+                        LOG.info("Consume {} bytes from {}", nbytes, dataURI);
                         blackhole.consume(nbytes);
                     }
                 }
