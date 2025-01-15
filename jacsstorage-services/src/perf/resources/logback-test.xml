@@ -24,6 +24,7 @@
     <logger name="org.xnio.nio" level="error" />
     <logger name="software.amazon.awssdk" level="info" />
     <logger name="org.janelia.jacsstorage" level="info" />
+    <logger name="org.janelia.jacsstorage.service" level="info" />
     <logger name="org.janelia.jacsstorage.service.benchmarks" level="info" />
 
     <root level="info">

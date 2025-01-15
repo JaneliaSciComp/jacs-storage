@@ -32,7 +32,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-
 @Tag("s3Access")
 public class S3StorageServiceTest {
 
@@ -58,7 +57,8 @@ public class S3StorageServiceTest {
                                 .setSecretKey(secretKey)
                                 .setPathStyleBucket(true)),
                 false);
-        assertTrue(storageService.canAccess("scicompsoft/flynp/pipeline_info/software_versions.yml"));
+        boolean contentAccess = storageService.canAccess("scicompsoft/flynp/pipeline_info/software_versions.yml");
+        assertTrue(contentAccess);
         InputStream contentStream = storageService.getContentInputStream("scicompsoft/flynp/pipeline_info/software_versions.yml");
         String content = new String(ByteStreams.toByteArray(contentStream));
         assertTrue(content.length() > 0);

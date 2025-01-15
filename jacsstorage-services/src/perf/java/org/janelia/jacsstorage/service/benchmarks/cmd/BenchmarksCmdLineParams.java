@@ -2,7 +2,6 @@ package org.janelia.jacsstorage.service.benchmarks.cmd;
 
 import com.beust.jcommander.Parameter;
 import org.apache.commons.lang3.StringUtils;
-import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.runner.options.TimeValue;
 
 public class BenchmarksCmdLineParams {
@@ -28,6 +27,8 @@ public class BenchmarksCmdLineParams {
     public String benchmarksRegex;
     @Parameter(names = "--s3-entries-file", description = "File containing list of S3 URIs to retrieve (required for streamS3 tests)")
     public String s3EntriesFile = "";
+    @Parameter(names = "--s3uri-prefix", description = "s3 uri prefix that will get replaced with s3fs mount point")
+    String s3URIPrefix = "s3://";
     @Parameter(names = "--s3fs-mountpoint", description = "s3fs mount point")
     String s3fsMountPoint = "";
     @Parameter(names = "--async", description = "Use async access", arity = 0)
@@ -38,6 +39,9 @@ public class BenchmarksCmdLineParams {
     public String secretKey = "";
     @Parameter(names = "--s3-region", description = "S3 region")
     public String s3Region = "us-east-1";
+    @Parameter(names = "--with-blosc-decompression", arity = 0,
+            description = "If set apply blosc decompression")
+    public boolean applyBloscDecompression = false;
 
     public TimeValue getMeasurementTime() {
         if (StringUtils.isBlank(measurementTime)) {

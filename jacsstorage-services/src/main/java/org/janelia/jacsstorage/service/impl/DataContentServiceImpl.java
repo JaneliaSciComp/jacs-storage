@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 
@@ -18,9 +17,13 @@ import org.janelia.jacsstorage.service.ContentStorageService;
 import org.janelia.jacsstorage.service.ContentStorageServiceProvider;
 import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageCapacity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Dependent
 public class DataContentServiceImpl implements DataContentService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DataContentServiceImpl.class);
 
     private final ContentStorageServiceProvider contentStorageServiceProvider;
     private final ContentAccessProvider contentAccessProvider;
@@ -54,8 +57,9 @@ public class DataContentServiceImpl implements DataContentService {
     public ContentGetter getObjectContent(JADEStorageURI contentURI) {
         ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(contentURI);
         if (contentStorageService == null) {
-            throw new IllegalArgumentException("Invalid storage URI");
+            throw new IllegalArgumentException("Invalid storage URI: " + contentURI);
         }
+        LOG.debug("Use {} for {}", contentStorageService, contentURI);
         ContentNode contentNode = contentStorageService.getObjectNode(contentURI.getContentKey());
         return new ContentGetterImpl(
                 contentStorageService,
@@ -69,8 +73,9 @@ public class DataContentServiceImpl implements DataContentService {
     public ContentGetter getDataContent(JADEStorageURI storageURI, ContentAccessParams contentAccessParams) {
         ContentStorageService contentStorageService = contentStorageServiceProvider.getStorageService(storageURI);
         if (contentStorageService == null) {
-            throw new IllegalArgumentException("Invalid storage URI");
+            throw new IllegalArgumentException("Invalid storage URI: " + storageURI);
         }
+        LOG.debug("Use {} for {}", contentStorageService, storageURI);
         List<ContentNode> contentNodes = contentStorageService.listContentNodes(storageURI.getContentKey(), contentAccessParams);
         contentNodes.sort((n1, n2) -> ComparatorUtils.naturalCompare(n1.getObjectKey(), n2.getObjectKey(), true)); // sort by key
         return new ContentGetterImpl(

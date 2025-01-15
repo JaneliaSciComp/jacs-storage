@@ -1,5 +1,11 @@
 package org.janelia.jacsstorage.service.benchmarks.cmd;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import com.sun.jna.ptr.NativeLongByReference;
@@ -7,8 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.blosc.IBloscDll;
 import org.blosc.JBlosc;
 import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
-import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentGetter;
 import org.janelia.jacsstorage.service.ContentNode;
@@ -24,17 +30,8 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
-import org.openjdk.jmh.util.NullOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 public class StorageRetrieveBenchmark {
 
@@ -43,61 +40,46 @@ public class StorageRetrieveBenchmark {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamFSContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamContentImpl(trialParams, blackhole, trialParams.getRandomFSEntry());
+    public void streamFSDataContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        streamWithGetDataContentImpl(trialParams, blackhole, trialParams.getRandomFSEntry());
     }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamFSObjectContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamObjectContentImpl(trialParams, blackhole, trialParams.getRandomFSEntry());
+        streamWithGetObjectContentImpl(trialParams, blackhole, trialParams.getRandomFSEntry());
     }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamS3Content(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
+    public void streamS3DataContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        streamWithGetDataContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
     }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
     public void streamS3ObjectContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamObjectContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
-    }
-
-    @Benchmark
-    @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamAndDecompressS3ObjectContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamAndDecompressObjectContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
-    }
-
-    @Benchmark
-    @BenchmarkMode({Mode.AverageTime})
-    @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamAndDecompressS3Content(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamAndDecompressContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
+        streamWithGetObjectContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
     }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
     public void listFSContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        listContentImpl(trialParams, blackhole, () -> trialParams.getRandomFSEntry());
+        listContentImpl(trialParams, blackhole, trialParams.getRandomFSEntry());
     }
 
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
     public void listS3Content(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        listContentImpl(trialParams, blackhole, () -> trialParams.getRandomS3Entry());
+        listContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
     }
 
-    private void listContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, Supplier<String> entrySupplier) {
-        String entry = entrySupplier.get();
+    private void listContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
         if (StringUtils.isNotBlank(entry)) {
             JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
                     entry,
@@ -120,7 +102,7 @@ public class StorageRetrieveBenchmark {
         }
     }
 
-    private void streamContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
+    private void streamWithGetObjectContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
         if (StringUtils.isNotBlank(entry)) {
             JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
                     entry,
@@ -130,39 +112,19 @@ public class StorageRetrieveBenchmark {
                             .setAWSRegion(trialParams.s3Region)
                             .setAsyncAccess(trialParams.useAsync)
             );
-            try (OutputStream targetStream = new NullOutputStream()) {
-                LOG.info("Get data content from {}", dataURI);
-                ContentGetter contentGetter = trialParams.storageContentReader.getDataContent(dataURI, new ContentAccessParams());
-                long nbytes = contentGetter.streamContent(targetStream);
-                if (nbytes == 0) {
-                    throw new ContentException("Empty content " + dataURI);
-                } else {
-                    blackhole.consume(nbytes);
-                }
-            } catch (Exception e) {
-                LOG.error("Error reading {}", dataURI, e);
-            }
-        }
-    }
-
-    private void streamObjectContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
-        if (StringUtils.isNotBlank(entry)) {
-            JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
-                    entry,
-                    JADEOptions.create()
-                            .setAccessKey(StringUtils.isNotBlank(trialParams.accessKey) ? trialParams.accessKey : null)
-                            .setSecretKey(StringUtils.isNotBlank(trialParams.secretKey) ? trialParams.secretKey : null)
-                            .setAWSRegion(trialParams.s3Region)
-                            .setAsyncAccess(trialParams.useAsync)
-            );
-            try (OutputStream targetStream = new ByteArrayOutputStream()) {
+            try (ByteArrayOutputStream targetStream = new ByteArrayOutputStream()) {
                 LOG.info("Get object content from {}", dataURI);
                 ContentGetter contentGetter = trialParams.storageContentReader.getObjectContent(dataURI);
+                LOG.info("Found {} objects", contentGetter.getObjectsList().size());
                 long nbytes = contentGetter.streamContent(targetStream);
                 if (nbytes == 0) {
                     throw new ContentException("Empty content " + dataURI);
                 } else {
-                    blackhole.consume(nbytes);
+                    if (trialParams.applyBloscDecompression) {
+                        consumeUncompressedContent(targetStream.toByteArray(), blackhole);
+                    } else {
+                        blackhole.consume(nbytes);
+                    }
                 }
             } catch (Exception e) {
                 LOG.error("Error reading {}", dataURI, e);
@@ -170,7 +132,7 @@ public class StorageRetrieveBenchmark {
         }
     }
 
-    private void streamAndDecompressObjectContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
+    private void streamWithGetDataContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
         if (StringUtils.isNotBlank(entry)) {
             JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
                     entry,
@@ -181,38 +143,18 @@ public class StorageRetrieveBenchmark {
                             .setAsyncAccess(trialParams.useAsync)
             );
             try (ByteArrayOutputStream targetStream = new ByteArrayOutputStream()) {
-                LOG.info("Get and decompress object content from {}", dataURI);
-                ContentGetter contentGetter = trialParams.storageContentReader.getObjectContent(dataURI);
-                long nbytes = contentGetter.streamContent(targetStream);
-                if (nbytes == 0) {
-                    throw new ContentException("Empty content " + dataURI);
-                } else {
-                    consumeUncompressedContent(targetStream.toByteArray(), blackhole);
-                }
-            } catch (Exception e) {
-                LOG.error("Error reading {}", dataURI, e);
-            }
-        }
-    }
-
-    private void streamAndDecompressContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
-        if (StringUtils.isNotBlank(entry)) {
-            JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
-                    entry,
-                    JADEOptions.create()
-                            .setAccessKey(StringUtils.isNotBlank(trialParams.accessKey) ? trialParams.accessKey : null)
-                            .setSecretKey(StringUtils.isNotBlank(trialParams.secretKey) ? trialParams.secretKey : null)
-                            .setAWSRegion(trialParams.s3Region)
-                            .setAsyncAccess(trialParams.useAsync)
-            );
-            try (ByteArrayOutputStream targetStream = new ByteArrayOutputStream()) {
-                LOG.info("Get and decompress data content from {}", dataURI);
+                LOG.info("Get data content from {}", dataURI);
                 ContentGetter contentGetter = trialParams.storageContentReader.getDataContent(dataURI, new ContentAccessParams());
+                LOG.info("Found {} objects at {}", contentGetter.getObjectsList().size(), dataURI);
                 long nbytes = contentGetter.streamContent(targetStream);
                 if (nbytes == 0) {
                     throw new ContentException("Empty content " + dataURI);
                 } else {
-                    consumeUncompressedContent(targetStream.toByteArray(), blackhole);
+                    if (trialParams.applyBloscDecompression) {
+                        consumeUncompressedContent(targetStream.toByteArray(), blackhole);
+                    } else {
+                        blackhole.consume(nbytes);
+                    }
                 }
             } catch (Exception e) {
                 LOG.error("Error reading {}", dataURI, e);
@@ -269,10 +211,12 @@ public class StorageRetrieveBenchmark {
                 .detectJvmArgs()
                 .param("s3EntriesFile", cmdLineParams.s3EntriesFile)
                 .param("s3fsMountPoint", cmdLineParams.getS3FuseMountPoint())
+                .param("s3URIPrefix", cmdLineParams.s3URIPrefix)
                 .param("accessKey", cmdLineParams.accessKey)
                 .param("secretKey", cmdLineParams.secretKey)
                 .param("useAsync", Boolean.toString(cmdLineParams.useAsync))
                 .param("s3Region", cmdLineParams.s3Region)
+                .param("applyBloscDecompression", Boolean.toString(cmdLineParams.applyBloscDecompression))
                 ;
         if (StringUtils.isNotBlank(cmdLineParams.profilerName)) {
             optBuilder.addProfiler(cmdLineParams.profilerName);
@@ -282,7 +226,7 @@ public class StorageRetrieveBenchmark {
 
         Collection<RunResult> runResults = new Runner(opt).run();
         for (RunResult runResult : runResults) {
-            Result result = runResult.getAggregatedResult().getPrimaryResult();
+            Result<?> result = runResult.getAggregatedResult().getPrimaryResult();
             System.out.println("Score: " + result.getScore() + " " +
                     result.getScoreUnit() + " over " +
                     result.getStatistics());

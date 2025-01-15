@@ -33,6 +33,9 @@ abstract public class AbstractBenchmarkTrialParams {
     @Param({""})
     String s3Region;
 
+    @Param("s3://")
+    String s3URIPrefix;
+
     @Param("/")
     String s3fsMountPoint;
 
@@ -58,7 +61,7 @@ abstract public class AbstractBenchmarkTrialParams {
     public String getRandomFSEntry() {
         String s3Entry = getRandomS3Entry();
         if (s3Entry != null) {
-            return s3Entry.replace("s3://", s3fsMountPoint);
+            return s3Entry.replace(s3URIPrefix, s3fsMountPoint);
         } else {
             return null;
         }

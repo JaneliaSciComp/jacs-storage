@@ -19,9 +19,9 @@ import java.util.stream.Stream;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
-import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
+import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
@@ -83,6 +83,7 @@ public class FileSystemStorageService implements ContentStorageService {
             return Collections.emptyList();
         }
         if (Files.isDirectory(contentPath, LinkOption.NOFOLLOW_LINKS)) {
+            LOG.debug("List directory {} with {}", contentPath, contentAccessParams);
             long startTime = System.currentTimeMillis();
             int traverseDepth = contentAccessParams.getMaxDepth() >= 0 ? contentAccessParams.getMaxDepth() : Integer.MAX_VALUE;
             try (Stream<Path> files = Files.walk(contentPath, traverseDepth)) {
@@ -107,6 +108,7 @@ public class FileSystemStorageService implements ContentStorageService {
                 LOG.info("List content {} with {} - {} secs", contentPath, contentAccessParams, (System.currentTimeMillis() - startTime) / 1000.);
             }
         } else if (Files.isRegularFile(contentPath, LinkOption.NOFOLLOW_LINKS)) {
+            LOG.debug("Get single file {}", contentPath);
             return Collections.singletonList(createContentNode(contentPath));
         } else {
             throw new ContentException("Cannot handle reading content from " + contentPath);
@@ -151,6 +153,7 @@ public class FileSystemStorageService implements ContentStorageService {
     @Override
     public long streamContentToOutput(String contentLocation, OutputStream outputStream) {
         try {
+            LOG.debug("Stream content from {}", contentLocation);
             return IOStreamUtils.copyFrom(getContentInputStream(contentLocation), outputStream);
         } catch (Exception e) {
             throw new ContentException(e);
