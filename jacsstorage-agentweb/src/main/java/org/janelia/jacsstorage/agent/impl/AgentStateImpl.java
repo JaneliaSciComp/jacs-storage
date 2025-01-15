@@ -70,7 +70,7 @@ public class AgentStateImpl implements AgentState {
      */
     @Override
     public void initializeAgentState(String storageAgentId, String storageAgentURL, String status) {
-        LOG.info("!!!!!!!!!!!!!!!Agent status set for {}:{} to {}", storageAgentId, storageAgentURL, status);
+        LOG.info("Agent status set for {}:{} to {}", storageAgentId, storageAgentURL, status);
         this.storageAgentId = storageAgentId;
         this.storageAgentURL = storageAgentURL;
         // create persistent agent state if needed

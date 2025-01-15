@@ -113,9 +113,9 @@ public class StorageRetrieveBenchmark {
                             .setAsyncAccess(trialParams.useAsync)
             );
             try (ByteArrayOutputStream targetStream = new ByteArrayOutputStream()) {
-                LOG.info("Get object content from {}", dataURI);
+                LOG.debug("Get object content from {}", dataURI);
                 ContentGetter contentGetter = trialParams.storageContentReader.getObjectContent(dataURI);
-                LOG.info("Found {} objects", contentGetter.getObjectsList().size());
+                LOG.debug("Found {} object(s) at {}", contentGetter.getObjectsList().size(), dataURI);
                 long nbytes = contentGetter.streamContent(targetStream);
                 if (nbytes == 0) {
                     throw new ContentException("Empty content " + dataURI);
@@ -143,9 +143,9 @@ public class StorageRetrieveBenchmark {
                             .setAsyncAccess(trialParams.useAsync)
             );
             try (ByteArrayOutputStream targetStream = new ByteArrayOutputStream()) {
-                LOG.info("Get data content from {}", dataURI);
+                LOG.debug("Get data content from {}", dataURI);
                 ContentGetter contentGetter = trialParams.storageContentReader.getDataContent(dataURI, new ContentAccessParams());
-                LOG.info("Found {} objects at {}", contentGetter.getObjectsList().size(), dataURI);
+                LOG.debug("Found {} object(s) at {}", contentGetter.getObjectsList().size(), dataURI);
                 long nbytes = contentGetter.streamContent(targetStream);
                 if (nbytes == 0) {
                     throw new ContentException("Empty content " + dataURI);
