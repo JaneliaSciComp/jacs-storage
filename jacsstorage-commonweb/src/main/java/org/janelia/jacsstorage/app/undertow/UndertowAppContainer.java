@@ -4,10 +4,12 @@ import java.nio.file.Paths;
 import java.util.EventListener;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.servlet.ServletException;
 import jakarta.ws.rs.core.Application;
 
+import com.google.common.collect.Streams;
 import io.swagger.v3.jaxrs2.integration.OpenApiServlet;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -137,6 +139,7 @@ public class UndertowAppContainer implements AppContainer {
                         new NameValueAttribute("rt", new ResponseTimeAttribute()), // rt=<ResponseTimeInSeconds>
                         new NameValueAttribute("tp", new ThroughputAttribute()), // tp=<Throughput>
                         new QuotingExchangeAttribute(new RequestHeaderAttribute(new HttpString("User-Agent"))), // <Application-Id>
+                        new RequestHeadersAttribute(getOmittedHeaders()),
                         new RequestBodyAttribute(applicationConfig.getIntegerPropertyValue("AccessLog.MaxRequestBody")) // Request Body
                 }, " "),
                 getAccessLogFilter()
@@ -177,10 +180,12 @@ public class UndertowAppContainer implements AppContainer {
 
     private java.util.function.Predicate<HttpString> getOmittedHeaders() {
         Set<HttpString> ignoredHeaders =
-                applicationConfig.getStringListPropertyValue("AccessLog.OmittedHeaders").stream()
-                        .filter(h -> StringUtils.isNotBlank(h))
-                        .map(h -> new HttpString(h.trim()))
-                        .collect(Collectors.toSet());
+                Streams.concat(
+                    Stream.of("Authorization", "SecretKey"), // these should never be logged
+                    applicationConfig.getStringListPropertyValue("AccessLog.OmittedHeaders").stream()
+                ).filter(StringUtils::isNotBlank)
+                 .map(h -> new HttpString(h.trim()))
+                 .collect(Collectors.toSet());
         return h -> ignoredHeaders.contains("*") || ignoredHeaders.contains(h);
     }
 }
