@@ -3,6 +3,7 @@ package org.janelia.jacsstorage.app.undertow;
 import java.nio.file.Paths;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.ServletException;
 import javax.ws.rs.core.Application;
@@ -48,6 +49,7 @@ import static io.undertow.servlet.Servlets.servlet;
 
 public class UndertowAppContainer implements AppContainer {
 
+    private static final HttpString HTTP_WILDCARD_STRING = new HttpString("*");
     private static final Logger LOG = LoggerFactory.getLogger(UndertowAppContainer.class);
 
     private final String applicationId;
@@ -86,8 +88,7 @@ public class UndertowAppContainer implements AppContainer {
                         .setEnabled(true)
                         .addInitParam(ServletProperties.JAXRS_APPLICATION_CLASS, application.getClass().getName())
                         .addInitParam("jersey.config.server.wadl.disableWadl", "true")
-                        .addMappings("/*", "/authenticated/*", "/unauthenticated/*")
-                ;
+                        .addMappings("/*", "/authenticated/*", "/unauthenticated/*");
 
         String basepath = "http://" + appArgs.host + ":" + appArgs.portNumber + contextPath;
         ServletInfo swaggerDocsServlet =
@@ -105,8 +106,7 @@ public class UndertowAppContainer implements AppContainer {
                         .addListener(Servlets.listener(WeldInitialListener.class))
                         .addListener(Servlets.listener(Listener.class))
                         .addListener(Servlets.listener(WeldTerminalListener.class))
-                        .addServlets(restApiServlet, swaggerDocsServlet)
-                ;
+                        .addServlets(restApiServlet, swaggerDocsServlet);
 
         LOG.info("Deploying REST API at {}", basepath);
         DeploymentManager deploymentManager = Servlets.defaultContainer().addDeployment(servletBuilder);
@@ -123,7 +123,7 @@ public class UndertowAppContainer implements AppContainer {
                         .addPrefixPath(contextPath, new SavedRequestBodyHandler(restApiHttpHandler, applicationConfig.getBooleanPropertyValue("AccessLog.WithRequestBody", false))),
                 new Slf4jAccessLogReceiver(LoggerFactory.getLogger(application.getClass())),
                 "ignored",
-                new JoinedExchangeAttribute(new ExchangeAttribute[] {
+                new JoinedExchangeAttribute(new ExchangeAttribute[]{
                         RemoteHostAttribute.INSTANCE, // <RemoteIP>
                         new AuthenticatedUserAttribute(), // <RemoteUser>
                         new QuotingExchangeAttribute(new RequestHeaderAttribute(new HttpString("Application-Id"))), // <Application-Id>
@@ -176,10 +176,12 @@ public class UndertowAppContainer implements AppContainer {
 
     private java.util.function.Predicate<HttpString> getOmittedHeaders() {
         Set<HttpString> ignoredHeaders =
-                applicationConfig.getStringListPropertyValue("AccessLog.OmittedHeaders").stream()
-                        .filter(h -> StringUtils.isNotBlank(h))
-                        .map(h -> new HttpString(h.trim()))
-                        .collect(Collectors.toSet());
-        return h -> ignoredHeaders.contains("*") || ignoredHeaders.contains(h);
+                Stream.concat(
+                        Stream.of("Authorization", "SecretKey"), // these should never be logged
+                        applicationConfig.getStringListPropertyValue("AccessLog.OmittedHeaders").stream()
+                ).filter(StringUtils::isNotBlank)
+                 .map(h -> new HttpString(h.trim()))
+                 .collect(Collectors.toSet());
+        return h -> ignoredHeaders.contains(HTTP_WILDCARD_STRING) || ignoredHeaders.contains(h);
     }
 }
