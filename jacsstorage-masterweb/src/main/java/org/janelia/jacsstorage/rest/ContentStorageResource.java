@@ -127,7 +127,8 @@ public class ContentStorageResource {
                             .path(contentURI.getJadeStorage())
                             .replaceQuery(requestURI.getRequestUri().getRawQuery())
                             .build();
-                    LOG.info("Redirect to {} for checking {}", redirectURI, contentPathParam);
+                    LOG.info("Redirect to {} for checking {} {}", redirectURI, contentPathParam,
+                            StringUtils.isNotBlank(awsRegion) ? "in " + awsRegion : "in default region");
                     return Response.temporaryRedirect(redirectURI)
                             .header("AccessKey", accessKey)
                             .header("SecretKey", secretKey)
@@ -228,7 +229,8 @@ public class ContentStorageResource {
                             .path(contentURI.getJadeStorage())
                             .replaceQuery(requestURI.getRequestUri().getRawQuery())
                             .build();
-                    LOG.info("Redirect to {} for getting content from {}", redirectURI, contentPathParam);
+                    LOG.info("Redirect to {} for getting content from {} {}", redirectURI, contentPathParam,
+                            StringUtils.isNotBlank(awsRegion) ? "in " + awsRegion : "in default region");
                     return Response.temporaryRedirect(redirectURI)
                             .header("AccessKey", accessKey)
                             .header("SecretKey", secretKey)
@@ -320,7 +322,8 @@ public class ContentStorageResource {
                             .path(contentURI.getJadeStorage())
                             .replaceQuery(requestURI.getRequestUri().getRawQuery())
                             .build();
-                    LOG.info("Redirect to {} for getting content from {}", redirectURI, contentPathParam);
+                    LOG.info("Redirect to {} for getting content from {} {}", redirectURI,
+                            contentPathParam, StringUtils.isNotBlank(awsRegion) ? "in " + awsRegion : "in default region");
                     return Response.temporaryRedirect(redirectURI)
                             .header("AccessKey", accessKey)
                             .header("SecretKey", secretKey)
