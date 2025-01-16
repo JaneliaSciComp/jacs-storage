@@ -129,7 +129,9 @@ public class ContentStorageResource {
                     LOG.info("Redirect to {} for checking {}", redirectURI, contentPathParam);
                     return Response.temporaryRedirect(redirectURI)
                             .header("AccessKey", accessKey)
-                            .header("SecretKey", secretKey);
+                            .header("SecretKey", secretKey)
+                            .header("AWSRegion", awsRegion)
+                            ;
                 })
                 .orElse(Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("No managed volume found for " + contentURI))
@@ -228,7 +230,9 @@ public class ContentStorageResource {
                     LOG.info("Redirect to {} for getting content from {}", redirectURI, contentPathParam);
                     return Response.temporaryRedirect(redirectURI)
                             .header("AccessKey", accessKey)
-                            .header("SecretKey", secretKey);
+                            .header("SecretKey", secretKey)
+                            .header("AWSRegion", awsRegion)
+                            ;
                 })
                 .orElse(Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("No managed volume found for " + contentURI))
@@ -318,7 +322,9 @@ public class ContentStorageResource {
                     LOG.info("Redirect to {} for getting content from {}", redirectURI, contentPathParam);
                     return Response.temporaryRedirect(redirectURI)
                             .header("AccessKey", accessKey)
-                            .header("SecretKey", secretKey);
+                            .header("SecretKey", secretKey)
+                            .header("AWSRegion", awsRegion)
+                            ;
                 })
                 .orElse(Response.status(Response.Status.NOT_FOUND)
                         .entity(new ErrorResponse("No managed volume found for " + contentURI))
