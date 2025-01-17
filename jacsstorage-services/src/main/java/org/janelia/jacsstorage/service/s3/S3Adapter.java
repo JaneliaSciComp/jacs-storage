@@ -10,7 +10,9 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
@@ -45,23 +47,31 @@ public class S3Adapter {
             asyncS3ClientBuilder.endpointOverride(endpointURI);
         }
         AwsCredentialsProvider credentialsProvider;
+        // when credentials (AWS accessKey and secretKey) are provided we only use the static credentials provider
+        // otherwise we chain multiple providers
         if (StringUtils.isNotBlank(s3Options.getAccessKey()) && StringUtils.isNotBlank(s3Options.getSecretKey())) {
-            credentialsProvider = () -> AwsBasicCredentials.create(s3Options.getAccessKey(), s3Options.getSecretKey());
+            credentialsProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create(s3Options.getAccessKey(), s3Options.getSecretKey()));
         } else {
-            credentialsProvider = AwsCredentialsProviderChain.of(
-                    ProfileCredentialsProvider.create(),
-                    SystemPropertyCredentialsProvider.create(),
-                    EnvironmentVariableCredentialsProvider.create(),
-                    AnonymousCredentialsProvider.create()
-            );
+            AwsCredentialsProviderChain.Builder credentialsProviderBuilder = AwsCredentialsProviderChain.builder()
+                    .reuseLastProviderEnabled(false);
+            boolean tryAnonymousAccessFirst = isTryAnonymousFirst(s3Options);
+            if (tryAnonymousAccessFirst) {
+                credentialsProviderBuilder.addCredentialsProvider(AnonymousCredentialsProvider.create());
+            }
+            credentialsProviderBuilder
+                    .addCredentialsProvider(ProfileCredentialsProvider.create())
+                    .addCredentialsProvider(SystemPropertyCredentialsProvider.create())
+                    .addCredentialsProvider(EnvironmentVariableCredentialsProvider.create())
+                    .addCredentialsProvider(InstanceProfileCredentialsProvider.create());
+            if (!tryAnonymousAccessFirst) {
+                credentialsProviderBuilder.addCredentialsProvider(AnonymousCredentialsProvider.create());
+            }
+            credentialsProvider = credentialsProviderBuilder.build();
         }
         s3ClientBuilder.credentialsProvider(credentialsProvider);
 
         S3Configuration s3Configuration = S3Configuration.builder()
-                .checksumValidationEnabled(true)
                 .pathStyleAccessEnabled(s3Options.getPathStyleBucket())
-                .chunkedEncodingEnabled(true)
-                .multiRegionEnabled(true)
                 .build();
 
         this.s3Client = s3ClientBuilder
@@ -72,6 +82,11 @@ public class S3Adapter {
                 .initialReadBufferSizeInBytes(16 * MB)
                 .forcePathStyle(s3Options.getPathStyleBucket())
                 .build();
+    }
+
+    private boolean isTryAnonymousFirst(JADEOptions s3Options) {
+        Boolean tryAnonymousAccessFirst = s3Options.getTryAnonymousAccessFirst();
+        return tryAnonymousAccessFirst != null && tryAnonymousAccessFirst;
     }
 
     public JADEStorageURI getStorageURI() {

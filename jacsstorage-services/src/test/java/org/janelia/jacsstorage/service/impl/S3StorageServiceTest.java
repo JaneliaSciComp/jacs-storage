@@ -48,7 +48,9 @@ public class S3StorageServiceTest {
                                 .setAWSRegion("us-east-1")
                                 .setAccessKey(accessKey)
                                 .setSecretKey(secretKey)
-                                .setPathStyleBucket(true)),
+                                .setPathStyleBucket(true)
+                                .setTryAnonymousAccessFirst(true)
+                ),
                 false);
         assertTrue(storageService.canAccess("scicompsoft/flynp/pipeline_info/software_versions.yml"));
         InputStream contentStream = storageService.getContentInputStream("scicompsoft/flynp/pipeline_info/software_versions.yml");
@@ -72,7 +74,9 @@ public class S3StorageServiceTest {
                                 .setAWSRegion("us-east-1")
                                 .setAccessKey(accessKey)
                                 .setSecretKey(secretKey)
-                                .setPathStyleBucket(true)),
+                                .setPathStyleBucket(true)
+                                .setTryAnonymousAccessFirst(true)
+                ),
                 false);
         List<ContentNode> contentNodes = storageService.listContentNodes("", new ContentAccessParams());
         assertFalse(contentNodes.isEmpty());
@@ -268,7 +272,9 @@ public class S3StorageServiceTest {
                             null,
                             JADEOptions.create()
                                     .setAWSRegion(td.region)
-                                    .setAsyncAccess(true)),
+                                    .setAsyncAccess(true)
+                                    .setTryAnonymousAccessFirst(true)
+                    ),
                     true);
             List<ContentNode> nodes = storageService.listContentNodes(td.contentLocation,
                     new ContentAccessParams()
@@ -314,7 +320,9 @@ public class S3StorageServiceTest {
                     null,
                     JADEOptions.create()
                             .setAWSRegion(td.region)
-                            .setAsyncAccess(true)),
+                            .setAsyncAccess(true)
+                            .setTryAnonymousAccessFirst(true)
+                    ),
                     true);
             long startTime = System.currentTimeMillis();
             ByteArrayOutputStream retrievedStream = new ByteArrayOutputStream();
@@ -344,7 +352,8 @@ public class S3StorageServiceTest {
                         null,
                         JADEOptions.create()
                                 .setDefaultAWSRegion("us-east-1")
-                                .setDefaultAsyncAccess(true)),
+                                .setDefaultAsyncAccess(true)
+                                .setTryAnonymousAccessFirst(true)),
                 true);
         TestData[] testData = new TestData[]{
                 new TestData("Access root", "", true),
@@ -368,7 +377,8 @@ public class S3StorageServiceTest {
                         null,
                         JADEOptions.create()
                                 .setDefaultAWSRegion("us-east-1")
-                                .setDefaultAsyncAccess(true)),
+                                .setDefaultAsyncAccess(true)
+                                .setTryAnonymousAccessFirst(true)),
                 true);
         String testContent = "This is some test content";
         long l = storageService.writeContent("myTest.txt", new ByteArrayInputStream(testContent.getBytes()));

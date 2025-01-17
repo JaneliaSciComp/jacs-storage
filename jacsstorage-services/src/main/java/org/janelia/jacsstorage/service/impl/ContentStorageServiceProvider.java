@@ -3,9 +3,7 @@ package org.janelia.jacsstorage.service.impl;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
-import org.checkerframework.checker.units.qual.A;
 import org.janelia.jacsstorage.cdi.qualifier.PropertyValue;
-import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.service.ContentStorageService;
@@ -20,14 +18,17 @@ class ContentStorageServiceProvider {
     private final S3AdapterProvider s3AdapterProvider;
     private final String defaultAWSRegion;
     private final boolean defaultAsyncAccess;
+    private final boolean tryAnonymousAccessFirst;
 
     @Inject
     ContentStorageServiceProvider(S3AdapterProvider s3AdapterProvider,
                                   @PropertyValue(name = "AWS.Region.Default", defaultValue = "us-east-1") String defaultAWSRegion,
-                                  @PropertyValue(name = "AWS.AsyncAccess.Default", defaultValue = "false") boolean defaultAsyncAccess) {
+                                  @PropertyValue(name = "AWS.AsyncAccess.Default", defaultValue = "false") boolean defaultAsyncAccess,
+                                  @PropertyValue(name = "AWS.TryAnonymousAccessFirstIfNoCredentialsProvided.Default", defaultValue = "true") boolean tryAnonymousAccessFirst) {
         this.s3AdapterProvider = s3AdapterProvider;
         this.defaultAWSRegion = defaultAWSRegion;
         this.defaultAsyncAccess = defaultAsyncAccess;
+        this.tryAnonymousAccessFirst = tryAnonymousAccessFirst;
     }
 
     @Nullable ContentStorageService getStorageService(@Nullable JADEStorageURI storageURI) {
@@ -55,6 +56,7 @@ class ContentStorageServiceProvider {
                             .setDefaultAWSRegion(defaultAWSRegion)
                             .setDefaultPathStyleBucket(false)
                             .setDefaultAsyncAccess(defaultAsyncAccess)
+                            .setDefaultTryAnonymousAccessFirst(tryAnonymousAccessFirst)
             );
             return createS3StorageServiceInstance(s3Adapter, storageURI.getStorageOptions().getAsyncAccess());
         } else if (storageURI.getStorageScheme() == JADEStorageURI.JADEStorageScheme.HTTP) {
@@ -68,6 +70,7 @@ class ContentStorageServiceProvider {
                             .setDefaultPathStyleBucket(true)
                             .setDefaultAsyncAccess(false) // for HTTP URIs we still use sync access because
                                                           // for non-aws S3 storage async access is not supported
+                            .setDefaultTryAnonymousAccessFirst(tryAnonymousAccessFirst)
             );
             return createS3StorageServiceInstance(s3Adapter, storageURI.getStorageOptions().getAsyncAccess());
         } else {
