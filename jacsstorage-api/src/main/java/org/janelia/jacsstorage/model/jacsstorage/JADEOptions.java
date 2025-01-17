@@ -98,4 +98,17 @@ public class JADEOptions {
     public JADEOptions setDefaultAsyncAccess(Boolean asyncAccess) {
         return setIfMissing("AsyncAccess", asyncAccess);
     }
+
+    public Boolean getTryAnonymousAccessFirst() {
+        return getAsBoolean("TryAnonymousAccessFirst");
+    }
+
+    public JADEOptions setTryAnonymousAccessFirst(Boolean tryAnonymousAccessFirst) {
+        return set("TryAnonymousAccessFirst", tryAnonymousAccessFirst);
+    }
+
+    public JADEOptions setDefaultTryAnonymousAccessFirst(Boolean tryAnonymousAccessFirst) {
+        return setIfMissing("TryAnonymousAccessFirst", tryAnonymousAccessFirst);
+    }
+
 }
