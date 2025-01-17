@@ -24,7 +24,7 @@ class ContentStorageServiceProvider {
     ContentStorageServiceProvider(S3AdapterProvider s3AdapterProvider,
                                   @PropertyValue(name = "AWS.Region.Default", defaultValue = "us-east-1") String defaultAWSRegion,
                                   @PropertyValue(name = "AWS.AsyncAccess.Default", defaultValue = "false") boolean defaultAsyncAccess,
-                                  @PropertyValue(name = "AWS.TryAnonymousAccessFirstIfNoCredentialsProvided.Default", defaultValue = "true") boolean tryAnonymousAccessFirst) {
+                                  @PropertyValue(name = "AWS.TryAnonymousAccessFirstIfNoCredentialsProvided.Default", defaultValue = "false") boolean tryAnonymousAccessFirst) {
         this.s3AdapterProvider = s3AdapterProvider;
         this.defaultAWSRegion = defaultAWSRegion;
         this.defaultAsyncAccess = defaultAsyncAccess;
@@ -68,8 +68,7 @@ class ContentStorageServiceProvider {
                     storageURI.getStorageOptions()
                             .setDefaultAWSRegion(defaultAWSRegion)
                             .setDefaultPathStyleBucket(true)
-                            .setDefaultAsyncAccess(false) // for HTTP URIs we still use sync access because
-                                                          // for non-aws S3 storage async access is not supported
+                            .setDefaultAsyncAccess(defaultAsyncAccess)
                             .setDefaultTryAnonymousAccessFirst(tryAnonymousAccessFirst)
             );
             return createS3StorageServiceInstance(s3Adapter, storageURI.getStorageOptions().getAsyncAccess());

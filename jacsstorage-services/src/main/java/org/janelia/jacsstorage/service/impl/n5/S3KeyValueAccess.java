@@ -21,8 +21,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
-import org.janelia.jacsstorage.service.ContentAccessParams;
-import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.s3.S3Adapter;
 import org.janelia.saalfeldlab.n5.KeyValueAccess;
 import org.janelia.saalfeldlab.n5.LockedChannel;
@@ -233,7 +231,7 @@ public class S3KeyValueAccess implements KeyValueAccess {
                 .prefix(s3Prefix)
                 .delimiter("/")
                 .build();
-        ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
+        ListObjectsV2Iterable listObjectsResponses = s3Adapter.getSyncS3Client().listObjectsV2Paginator(initialRequest);
         for (ListObjectsV2Response r : listObjectsResponses) {
             for (CommonPrefix commonPrefix : r.commonPrefixes()) {
                 String relativePath = relativize(commonPrefix.prefix(), s3Prefix);
@@ -258,7 +256,7 @@ public class S3KeyValueAccess implements KeyValueAccess {
                     .prefix(currentPrefix)
                     .delimiter("/")
                     .build();
-            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
+            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getSyncS3Client().listObjectsV2Paginator(initialRequest);
             for (ListObjectsV2Response r : listObjectsResponses) {
 
                 for (S3Object s3Object : r.contents()) {
@@ -288,7 +286,7 @@ public class S3KeyValueAccess implements KeyValueAccess {
                 .maxKeys(1)
                 .build();
 
-        return s3Adapter.getS3Client().listObjectsV2Paginator(listObjectsRequest);
+        return s3Adapter.getSyncS3Client().listObjectsV2Paginator(listObjectsRequest);
     }
 
     private class S3ObjectChannel implements LockedChannel {
@@ -324,7 +322,7 @@ public class S3KeyValueAccess implements KeyValueAccess {
                         .bucket(s3Adapter.getBucket())
                         .key(objectKey)
                         .build();
-                return s3Adapter.getS3Client().getObject(getObjectRequest, ResponseTransformer.toInputStream());
+                return s3Adapter.getSyncS3Client().getObject(getObjectRequest, ResponseTransformer.toInputStream());
             } catch (NoSuchKeyException e) {
                 throw new N5Exception.N5NoSuchKeyException(objectKey, e);
             }

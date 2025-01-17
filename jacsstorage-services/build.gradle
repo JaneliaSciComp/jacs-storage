@@ -25,11 +25,13 @@ project(":jacsstorage-services") {
                        N5_UNIVERSE_LIB,
                        REFLECTIONS_LIB
 
-        implementation platform('io.projectreactor:reactor-bom:2023.0.8'),
+        implementation(platform('io.projectreactor:reactor-bom:2023.0.8'),
                        'io.projectreactor:reactor-core',
-                       platform(AWS_SDK_PLATFORM),
+                       platform(AWS_SDK_PLATFORM) {
+                           exclude(group: 'software.amazon.awssdk.crt')
+                       },
                        AWS_S3_LIB,
-                       AWS_CRT_LIB
+                       AWS_CRT_LIB)
 
         perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
 

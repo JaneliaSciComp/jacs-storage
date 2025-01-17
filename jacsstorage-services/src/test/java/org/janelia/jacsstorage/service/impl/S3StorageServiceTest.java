@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.google.common.io.ByteStreams;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentNode;
@@ -51,7 +52,7 @@ public class S3StorageServiceTest {
                                 .setPathStyleBucket(true)
                                 .setTryAnonymousAccessFirst(true)
                 ),
-                false);
+                true);
         assertTrue(storageService.canAccess("scicompsoft/flynp/pipeline_info/software_versions.yml"));
         InputStream contentStream = storageService.getContentInputStream("scicompsoft/flynp/pipeline_info/software_versions.yml");
         String content = new String(ByteStreams.toByteArray(contentStream));
@@ -77,7 +78,7 @@ public class S3StorageServiceTest {
                                 .setPathStyleBucket(true)
                                 .setTryAnonymousAccessFirst(true)
                 ),
-                false);
+                true);
         List<ContentNode> contentNodes = storageService.listContentNodes("", new ContentAccessParams());
         assertFalse(contentNodes.isEmpty());
     }
@@ -232,6 +233,17 @@ public class S3StorageServiceTest {
                 this.offset = offset;
                 this.expectedNodes = expectedNodes;
             }
+
+            @Override
+            public String toString() {
+                return new ToStringBuilder(this)
+                        .append("bucket", bucket)
+                        .append("region", region)
+                        .append("contentLocation", contentLocation)
+                        .append("depth", depth)
+                        .append("offset", offset)
+                        .toString();
+            }
         }
         TestData[] testData = new TestData[]{
                 new TestData(
@@ -266,14 +278,15 @@ public class S3StorageServiceTest {
                         1, 0, 7),
         };
         for (TestData td : testData) {
+            LOG.info("Run: {}", td);
             ContentStorageService storageService = getS3StorageService(
                     s3AdapterProvider.getS3Adapter(
                             td.bucket,
                             null,
                             JADEOptions.create()
                                     .setAWSRegion(td.region)
-                                    .setAsyncAccess(true)
-                                    .setTryAnonymousAccessFirst(true)
+                                    .setPathStyleBucket(false)
+                                    .setTryAnonymousAccessFirst(false)
                     ),
                     true);
             List<ContentNode> nodes = storageService.listContentNodes(td.contentLocation,
