@@ -492,6 +492,7 @@ public class S3StorageServiceTest {
                                 .setDefaultAWSRegion("us-east-1")
                                 .setDefaultAsyncAccess(asyncAccess)
                                 .setDefaultPathStyleBucket(false)
+                                .setDefaultTryAnonymousAccessFirst(false)
                 ),
                 asyncAccess);
         String testContent = "This is some test content that has more than 10 chars";
