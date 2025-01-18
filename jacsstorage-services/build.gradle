@@ -67,7 +67,14 @@ project(':jacsstorage-services') {
         minHeapSize = '1g'
         maxHeapSize = '2g'
 
-        useJUnitPlatform() // include all tests
+        // include all tests
+        useJUnitPlatform() {
+            if (System.getProperty("includeSlow")) {
+                includeTags("slow")
+            } else {
+                excludeTags("slow")
+            }
+        }
     }
 
     tasks.register('createStorageRetrieveBenchmark', CreateStartScripts) {

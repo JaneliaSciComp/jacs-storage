@@ -298,6 +298,7 @@ public class S3StorageServiceTest {
         }
     }
 
+    @Tag("slow")
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     public void readSingleObjectContentFromPublicBucketInDifferentRegion(boolean asyncAccess) {
@@ -355,6 +356,7 @@ public class S3StorageServiceTest {
     /**
      * Reads a single object or an entire prefix from a public bucket in a different region.
      */
+    @Tag("slow")
     @Test
     public void readSingleOrMultipleObjectsContentFromPublicBucketInDifferentRegion() {
         class TestData {
