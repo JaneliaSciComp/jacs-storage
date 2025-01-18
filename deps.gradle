@@ -20,7 +20,7 @@ dependencies {
         WELD_CDI_SERVLET_LIB = "org.jboss.weld.servlet:weld-servlet-core:${WELD_VERSION}"
 
         // JAKARTA-RS IMPL
-        JERSEY_VERSION = "4.0.0-M1"
+        JERSEY_VERSION = "4.0.0-M2"
         JERSEY_CLIENT_LIB = "org.glassfish.jersey.core:jersey-client:${JERSEY_VERSION}"
         JERSEY_MEDIA_LIB = "org.glassfish.jersey.media:jersey-media-multipart:${JERSEY_VERSION}"
         JERSEY_MEDIA_JSON_LIB = "org.glassfish.jersey.media:jersey-media-json-jackson:${JERSEY_VERSION}"
@@ -56,7 +56,7 @@ dependencies {
         JAVAMAIL_LIB = "com.sun.mail:jakarta.mail:2.0.1"
 
         // command line args
-        CMDLINE_ARG_LIB = "com.beust:jcommander:1.78"
+        CMDLINE_ARG_LIB = "com.beust:jcommander:1.82"
 
         // servlet engine
         UNDERTOW_VERSION = "2.3.18.Final"
@@ -88,15 +88,12 @@ dependencies {
         JWT_IMPL_LIB = "io.jsonwebtoken:jjwt-impl:${JWT_API_VERSION}"
         JWT_JACKSON_LIB = "io.jsonwebtoken:jjwt-jackson:${JWT_API_VERSION}"
 
-        // data
-        MESSAGEPACK_LIB = "org.msgpack:msgpack-core:0.8.14"
-
         // N5
         N5_LIB = "org.janelia.saalfeldlab:n5:3.3.0"
         N5_UNIVERSE_LIB = "org.janelia.saalfeldlab:n5-universe:1.6.0"
 
         // AWS SDK
-        AWS_SDK_PLATFORM = "software.amazon.awssdk:bom:2.30.1"
+        AWS_SDK_PLATFORM = "software.amazon.awssdk:bom:2.30.2"
         AWS_CRT_LIB = "software.amazon.awssdk.crt:aws-crt:0.33.9"
         AWS_S3_LIB = "software.amazon.awssdk:s3"
 
