@@ -96,10 +96,9 @@ dependencies {
         N5_UNIVERSE_LIB = "org.janelia.saalfeldlab:n5-universe:1.6.0"
 
         // AWS SDK
-        AWS_SDK_VERSION = "2.29.41"
-        AWS_SDK_PLATFORM = "software.amazon.awssdk:bom:${AWS_SDK_VERSION}"
+        AWS_SDK_PLATFORM = "software.amazon.awssdk:bom:2.30.1"
+        AWS_CRT_LIB = "software.amazon.awssdk.crt:aws-crt:0.33.9"
         AWS_S3_LIB = "software.amazon.awssdk:s3"
-        AWS_CRT_LIB = "software.amazon.awssdk.crt:aws-crt:0.33.7"
 
         // testing
         JUNIT4_LIB = "junit:junit:4.13.1"

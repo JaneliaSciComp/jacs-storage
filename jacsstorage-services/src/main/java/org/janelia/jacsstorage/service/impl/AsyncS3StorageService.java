@@ -112,10 +112,10 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
                 .flatMap(indexedResponse -> Flux.concat(
                         // add requested prefix if this is the first time it is seen
                         indexedResponse.getT1() == 0 && level == 0 &&
-                        (!indexedResponse.getT2().commonPrefixes().isEmpty() || !indexedResponse.getT2().contents().isEmpty()) &&
-                        prefix.endsWith("/") &&
-                        contentAccessParams.checkDepth(getPathDepth(basePrefix, prefix)) &&
-                        contentAccessParams.matchEntry(prefix)
+                                (!indexedResponse.getT2().commonPrefixes().isEmpty() || !indexedResponse.getT2().contents().isEmpty()) &&
+                                prefix.endsWith("/") &&
+                                contentAccessParams.checkDepth(getPathDepth(basePrefix, prefix)) &&
+                                contentAccessParams.matchEntry(prefix)
                                 ? Flux.just(createPrefixNode(prefix)) // check if the current prefix ends with '/' and if doesn't create a node for it
                                 : Flux.empty(),
                         // add sub-folders
@@ -217,8 +217,7 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
                 .key(s3Location)
                 .build();
 
-        CompletableFuture<Long> getContentPromise = s3Adapter.getAsyncS3Client().getObject(getObjectRequest,
-                        AsyncResponseTransformer.toBytes())
+        CompletableFuture<Long> getContentPromise = s3Adapter.getAsyncS3Client().getObject(getObjectRequest, AsyncResponseTransformer.toBytes())
                 .thenApply(responseBytesStream -> IOStreamUtils.copyFrom(responseBytesStream.asByteArray(), outputStream));
         return getContentPromise.join();
     }
@@ -236,6 +235,7 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
         BlockingInputStreamAsyncRequestBody body = AsyncRequestBody.forBlockingInputStream(null);
 
         CompletableFuture<PutObjectResponse> putContentPromise = s3Adapter.getAsyncS3Client().putObject(putObjectRequest, body);
+
         // write the content
         long nbytes = body.writeInputStream(inputStream);
         putContentPromise.join();

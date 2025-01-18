@@ -27,7 +27,9 @@ project(':jacsstorage-services') {
 
         implementation(platform(REACTOR_BOM),
                        REACTOR_CORE_LIB,
-                       platform(AWS_SDK_PLATFORM),
+                       platform(AWS_SDK_PLATFORM) {
+                           exclude(group: 'software.amazon.awssdk.crt')
+                       },
                        AWS_S3_LIB,
                        AWS_CRT_LIB)
 

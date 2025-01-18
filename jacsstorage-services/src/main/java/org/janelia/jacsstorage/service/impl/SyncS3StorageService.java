@@ -56,7 +56,7 @@ public class SyncS3StorageService extends AbstractS3StorageService {
                 .maxKeys(1)
                 .build();
         try {
-            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(initialRequest);
+            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getSyncS3Client().listObjectsV2Paginator(initialRequest);
             for (ListObjectsV2Response r : listObjectsResponses) {
                 if (!r.contents().isEmpty()) {
                     return true;
@@ -78,7 +78,7 @@ public class SyncS3StorageService extends AbstractS3StorageService {
                     .key(s3Location)
                     .build();
 
-            HeadObjectResponse contentResponse = s3Adapter.getS3Client().headObject(contentRequest);
+            HeadObjectResponse contentResponse = s3Adapter.getSyncS3Client().headObject(contentRequest);
 
             return createObjectNode(contentLocation, contentResponse.contentLength(), contentResponse.lastModified());
         } catch (NoSuchUploadException | NoSuchBucketException e) {
@@ -104,7 +104,7 @@ public class SyncS3StorageService extends AbstractS3StorageService {
                     .delimiter("/")
                     .build();
 
-            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(listRequest);
+            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getSyncS3Client().listObjectsV2Paginator(listRequest);
             int responseIndex = 0;
             for (ListObjectsV2Response r : listObjectsResponses) {
                 if (responseIndex++ == 0 && level == 0 &&
@@ -148,7 +148,7 @@ public class SyncS3StorageService extends AbstractS3StorageService {
                     .prefix(currentPrefix)
                     .delimiter("/")
                     .build();
-            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getS3Client().listObjectsV2Paginator(listRequest);
+            ListObjectsV2Iterable listObjectsResponses = s3Adapter.getSyncS3Client().listObjectsV2Paginator(listRequest);
             int responseIndex = 0;
             for (ListObjectsV2Response r : listObjectsResponses) {
                 if (responseIndex++ == 0 && level == 0 &&
@@ -214,7 +214,7 @@ public class SyncS3StorageService extends AbstractS3StorageService {
                 .key(s3Location)
                 .build();
 
-        ResponseInputStream<GetObjectResponse> getContentResponse = s3Adapter.getS3Client().getObject(getObjectRequest, ResponseTransformer.toInputStream());
+        ResponseInputStream<GetObjectResponse> getContentResponse = s3Adapter.getSyncS3Client().getObject(getObjectRequest, ResponseTransformer.toInputStream());
         return new BufferedInputStream(getContentResponse);
     }
 
@@ -227,7 +227,7 @@ public class SyncS3StorageService extends AbstractS3StorageService {
                 .key(s3Location)
                 .build();
 
-        GetObjectResponse getContentResponse = s3Adapter.getS3Client().getObject(getObjectRequest,
+        GetObjectResponse getContentResponse = s3Adapter.getSyncS3Client().getObject(getObjectRequest,
                 ResponseTransformer.toOutputStream(outputStream));
 
         return getContentResponse.contentLength();
@@ -244,7 +244,7 @@ public class SyncS3StorageService extends AbstractS3StorageService {
 
         try {
             byte[] dataBytes = ByteStreams.toByteArray(dataStream);
-            s3Adapter.getS3Client().putObject(putObjectRequest,
+            s3Adapter.getSyncS3Client().putObject(putObjectRequest,
                     RequestBody.fromBytes(dataBytes)
             );
             return dataBytes.length;
@@ -263,7 +263,7 @@ public class SyncS3StorageService extends AbstractS3StorageService {
                 .build();
 
         try {
-            s3Adapter.getS3Client().deleteObject(deleteObjectRequest);
+            s3Adapter.getSyncS3Client().deleteObject(deleteObjectRequest);
         } catch (Exception e) {
             throw new ContentException("Error deleting content at " + contentLocation, e);
         }

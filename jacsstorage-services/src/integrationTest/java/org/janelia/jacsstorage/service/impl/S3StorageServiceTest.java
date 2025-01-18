@@ -24,6 +24,8 @@ import org.janelia.jacsstorage.service.s3.impl.S3AdapterProviderImpl;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +46,9 @@ public class S3StorageServiceTest {
         s3AdapterProvider = new S3AdapterProviderImpl();
     }
 
-    @Test
-    public void retrieveSingleFileContentFromS3Endpoint() throws IOException {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    public void retrieveSingleFileContentFromS3Endpoint(boolean asyncAccess) throws IOException {
         String accessKey = System.getenv("SEAGATE_AWS_ACCESS_KEY_ID");
         String secretKey = System.getenv("SEAGATE_AWS_SECRET_KEY_ID");
         ContentStorageService storageService = getS3StorageService(
@@ -55,8 +58,10 @@ public class S3StorageServiceTest {
                                 .setAWSRegion("us-east-1")
                                 .setAccessKey(accessKey)
                                 .setSecretKey(secretKey)
-                                .setPathStyleBucket(true)),
-                false);
+                                .setPathStyleBucket(true)
+                                .setAsyncAccess(asyncAccess)
+                ),
+                asyncAccess);
         boolean contentAccess = storageService.canAccess("scicompsoft/flynp/pipeline_info/software_versions.yml");
         assertTrue(contentAccess);
         InputStream contentStream = storageService.getContentInputStream("scicompsoft/flynp/pipeline_info/software_versions.yml");
@@ -68,8 +73,9 @@ public class S3StorageServiceTest {
         assertTrue(nodeContent.length() > 0);
     }
 
-    @Test
-    public void listFolderContentFromS3Endpoint() {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    public void listFolderContentFromS3Endpoint(boolean asyncAccess) {
         String accessKey = System.getenv("NRS_AWS_ACCESS_KEY_ID");
         String secretKey = System.getenv("NRS_AWS_SECRET_KEY_ID");
         ContentStorageService storageService = getS3StorageService(
@@ -80,8 +86,10 @@ public class S3StorageServiceTest {
                                 .setAWSRegion("us-east-1")
                                 .setAccessKey(accessKey)
                                 .setSecretKey(secretKey)
-                                .setPathStyleBucket(true)),
-                false);
+                                .setAsyncAccess(asyncAccess)
+                                .setPathStyleBucket(true)
+                ),
+                asyncAccess);
         List<ContentNode> contentNodes = storageService.listContentNodes("", new ContentAccessParams());
         assertFalse(contentNodes.isEmpty());
     }
@@ -218,8 +226,9 @@ public class S3StorageServiceTest {
         }
     }
 
-    @Test
-    public void listContentFromPublicBucketInDifferentRegion() {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    public void listContentFromPublicBucketInDifferentRegion(boolean asyncAccess) {
         class TestData {
             final String bucket;
             final String region;
@@ -276,8 +285,10 @@ public class S3StorageServiceTest {
                             null,
                             JADEOptions.create()
                                     .setAWSRegion(td.region)
-                                    .setAsyncAccess(true)),
-                    true);
+                                    .setAsyncAccess(asyncAccess)
+                                    .setDefaultTryAnonymousAccessFirst(true)
+                    ),
+                    asyncAccess);
             List<ContentNode> nodes = storageService.listContentNodes(td.contentLocation,
                     new ContentAccessParams()
                             .setMaxDepth(td.depth)
@@ -287,8 +298,9 @@ public class S3StorageServiceTest {
         }
     }
 
-    @Test
-    public void readSingleObjectContentFromPublicBucketInDifferentRegion() {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    public void readSingleObjectContentFromPublicBucketInDifferentRegion(boolean asyncAccess) {
         class TestData {
             final String bucket;
             final String region;
@@ -326,8 +338,10 @@ public class S3StorageServiceTest {
                     null,
                     JADEOptions.create()
                             .setAWSRegion(td.region)
-                            .setAsyncAccess(true)),
-                    true);
+                            .setAsyncAccess(asyncAccess)
+                            .setDefaultTryAnonymousAccessFirst(true)
+                    ),
+                    asyncAccess);
             long startTime = System.currentTimeMillis();
             ByteArrayOutputStream retrievedStream = new ByteArrayOutputStream();
             long nbytes = storageService.streamContentToOutput(td.contentLocation, retrievedStream);
@@ -396,7 +410,9 @@ public class S3StorageServiceTest {
                     null,
                     JADEOptions.create()
                             .setAWSRegion(td.region)
-                            .setAsyncAccess(td.asyncAccess));
+                            .setAsyncAccess(td.asyncAccess)
+                            .setDefaultTryAnonymousAccessFirst(true)
+            );
             ContentStorageService storageService = getS3StorageService(s3Adapter, td.asyncAccess);
             long startTime = System.currentTimeMillis();
             ContentAccessParams contentAccessParams = new ContentAccessParams().setEntriesCount(td.expectedNodes);
@@ -463,17 +479,20 @@ public class S3StorageServiceTest {
         }
     }
 
-    @Test
-    public void writeAndDeleteContentOnS3() throws IOException {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    public void writeAndDeleteContentOnS3(boolean asyncAccess) throws IOException {
         ContentStorageService storageService = getS3StorageService(
                 s3AdapterProvider.getS3Adapter(
                         "janelia-neuronbridge-data-dev",
                         null,
                         JADEOptions.create()
                                 .setDefaultAWSRegion("us-east-1")
-                                .setDefaultAsyncAccess(true)),
-                true);
-        String testContent = "This is some test content";
+                                .setDefaultAsyncAccess(asyncAccess)
+                                .setDefaultPathStyleBucket(false)
+                ),
+                asyncAccess);
+        String testContent = "This is some test content that has more than 10 chars";
         long l = storageService.writeContent("myTest.txt", new ByteArrayInputStream(testContent.getBytes()));
         assertTrue(l == testContent.length());
         List<ContentNode> nodesAfterWrite = storageService.listContentNodes("myTest.txt", new ContentAccessParams());
