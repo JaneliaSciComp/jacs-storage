@@ -111,6 +111,7 @@ public class StorageRetrieveBenchmark {
                             .setSecretKey(StringUtils.isNotBlank(trialParams.secretKey) ? trialParams.secretKey : null)
                             .setAWSRegion(trialParams.s3Region)
                             .setAsyncAccess(trialParams.useAsync)
+                            .setDefaultTryAnonymousAccessFirst(false)
             );
             try (ByteArrayOutputStream targetStream = new ByteArrayOutputStream()) {
                 LOG.debug("Get object content from {}", dataURI);
@@ -121,9 +122,9 @@ public class StorageRetrieveBenchmark {
                     throw new ContentException("Empty content " + dataURI);
                 } else {
                     if (trialParams.applyBloscDecompression) {
-                        consumeUncompressedContent(targetStream.toByteArray(), blackhole);
+                        consumeUncompressedContent(dataURI.toString(), targetStream.toByteArray(), blackhole);
                     } else {
-                        LOG.info("Consume {} bytes from {}", nbytes, dataURI);
+                        LOG.info("Consume {} buffer -> {} bytes", dataURI, nbytes);
                         blackhole.consume(nbytes);
                     }
                 }
@@ -142,6 +143,7 @@ public class StorageRetrieveBenchmark {
                             .setSecretKey(StringUtils.isNotBlank(trialParams.secretKey) ? trialParams.secretKey : null)
                             .setAWSRegion(trialParams.s3Region)
                             .setAsyncAccess(trialParams.useAsync)
+                            .setDefaultTryAnonymousAccessFirst(false)
             );
             try (ByteArrayOutputStream targetStream = new ByteArrayOutputStream()) {
                 LOG.debug("Get data content from {}", dataURI);
@@ -152,9 +154,9 @@ public class StorageRetrieveBenchmark {
                     throw new ContentException("Empty content " + dataURI);
                 } else {
                     if (trialParams.applyBloscDecompression) {
-                        consumeUncompressedContent(targetStream.toByteArray(), blackhole);
+                        consumeUncompressedContent(dataURI.toString(), targetStream.toByteArray(), blackhole);
                     } else {
-                        LOG.info("Consume {} bytes from {}", nbytes, dataURI);
+                        LOG.info("Consume {} buffer -> {} bytes", dataURI, nbytes);
                         blackhole.consume(nbytes);
                     }
                 }
@@ -164,7 +166,7 @@ public class StorageRetrieveBenchmark {
         }
     }
 
-    private void consumeUncompressedContent(byte[] compressedData, Blackhole blackhole) {
+    private void consumeUncompressedContent(String dataURI, byte[] compressedData, Blackhole blackhole) {
         JBlosc jb = new JBlosc();
         ByteBuffer header = ByteBuffer.wrap(compressedData, 0, JBlosc.OVERHEAD);
         NativeLongByReference nbytesValue = new NativeLongByReference();
@@ -178,7 +180,7 @@ public class StorageRetrieveBenchmark {
         ByteBuffer uncompressedBuffer = ByteBuffer.allocateDirect(uncompressedSize);
         int s = jb.decompress(compressedBuffer, uncompressedBuffer, uncompressedSize);
         assert s == uncompressedSize;
-        LOG.info("Blosc uncompress buffer {} -> {}", compressedSize, uncompressedSize);
+        LOG.info("Blosc uncompress {} buffer {} -> {} bytes", dataURI, compressedSize, s);
         blackhole.consume(s);
     }
 
@@ -224,14 +226,32 @@ public class StorageRetrieveBenchmark {
             optBuilder.addProfiler(cmdLineParams.profilerName);
         }
 
-        Options opt = optBuilder.build();
+        Options opts = optBuilder.build();
+        // Run benchmarks
+        Collection<RunResult> runResults = new Runner(opts).run();
+        // Print results
+        printResultsAsCSV(cmdLineParams.s3EntriesFile, opts, runResults);
+    }
 
-        Collection<RunResult> runResults = new Runner(opt).run();
+    private static void printResultsAsCSV(String benchmarksDataFile, Options opts, Collection<RunResult> runResults) {
+        System.out.println("Benchmarks data file: " + benchmarksDataFile);
+        System.out.println("Iterations: " + opts.getMeasurementIterations());
+        System.out.println("Measurement time per iteration: " + opts.getMeasurementTime());
+
+        System.out.println("Method,Score,ScoreUnit,Mean,StandardDeviation,Min,Max,Variance");
         for (RunResult runResult : runResults) {
             Result<?> result = runResult.getAggregatedResult().getPrimaryResult();
-            System.out.println("Score: " + result.getScore() + " " +
-                    result.getScoreUnit() + " over " +
-                    result.getStatistics());
+            LOG.info("Method: {} Score [{}]: {} {}", result.getLabel(), result.getScoreUnit(), result.getScore(), result.getStatistics());
+            System.out.printf("%s,%f,%s,%f,%f,%f,%f,%f\n",
+                    result.getLabel(),
+                    result.getScore(),
+                    result.getScoreUnit(),
+                    result.getStatistics().getMean(),
+                    result.getStatistics().getStandardDeviation(),
+                    result.getStatistics().getMin(),
+                    result.getStatistics().getMax(),
+                    result.getStatistics().getVariance()
+            );
         }
     }
 }

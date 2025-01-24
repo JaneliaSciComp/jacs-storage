@@ -24,7 +24,7 @@ class ContentStorageServiceProviderImpl implements ContentStorageServiceProvider
 
     @Inject
     ContentStorageServiceProviderImpl(S3AdapterProvider s3AdapterProvider,
-                                      @PropertyValue(name = "AWS.Region", defaultValue = "us-east-1") String defaultAWSRegion) {
+                                      @PropertyValue(name = "AWS.Region.Default", defaultValue = "us-east-1") String defaultAWSRegion) {
         this.s3AdapterProvider = s3AdapterProvider;
         this.defaultAWSRegion = defaultAWSRegion;
     }

@@ -19,9 +19,10 @@ import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3AsyncClientBuilder;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.s3.S3CrtAsyncClientBuilder;
 
 public class S3Adapter {
-    private static final long MB = 1024L * 1024L * 1024L;
+    private static final long MB = 1024L * 1024L;
 
     private final String bucket;
     private final String endpoint;
@@ -34,11 +35,29 @@ public class S3Adapter {
         this.endpoint = endpoint;
         this.s3Options = s3Options;
         AwsCredentialsProvider credentialsProvider = createCredentialsProvider(s3Options);
-        this.asyncS3Client = createAsyncClient(endpoint, credentialsProvider, s3Options);
+        this.asyncS3Client = createCrtAsyncClient(endpoint, credentialsProvider, s3Options);
         this.syncS3Client = createSyncClient(endpoint, credentialsProvider, s3Options);
     }
 
-    private S3AsyncClient createAsyncClient(String endpoint, AwsCredentialsProvider credentialsProvider, JADEOptions s3Options) {
+    private S3AsyncClient createCrtAsyncClient(String endpoint, AwsCredentialsProvider credentialsProvider, JADEOptions s3Options) {
+        S3CrtAsyncClientBuilder asyncS3ClientBuilder = S3AsyncClient.crtBuilder();
+        if (StringUtils.isNotBlank(s3Options.getAWSRegion())) {
+            Region s3Region = Region.of(s3Options.getAWSRegion());
+            asyncS3ClientBuilder.region(s3Region);
+        }
+        if (StringUtils.isNotBlank(endpoint)) {
+            URI endpointURI = URI.create(endpoint);
+            asyncS3ClientBuilder.endpointOverride(endpointURI);
+        }
+        asyncS3ClientBuilder.credentialsProvider(credentialsProvider);
+        return asyncS3ClientBuilder
+                .crossRegionAccessEnabled(true)
+                .forcePathStyle(s3Options.getPathStyleBucket())
+                .initialReadBufferSizeInBytes(16 * MB)
+                .build();
+    }
+
+    private S3AsyncClient createDefaultAsyncClient(String endpoint, AwsCredentialsProvider credentialsProvider, JADEOptions s3Options) {
         S3AsyncClientBuilder asyncS3ClientBuilder = S3AsyncClient.builder();
         if (StringUtils.isNotBlank(s3Options.getAWSRegion())) {
             Region s3Region = Region.of(s3Options.getAWSRegion());
