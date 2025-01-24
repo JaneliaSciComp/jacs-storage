@@ -65,7 +65,7 @@ public class FileSystemStorageService implements ContentStorageService {
     private Path getContentPath(String contentLocation) {
         Path contentPath = Paths.get(contentLocation);
         if (Files.notExists(contentPath)) {
-            return null;
+            throw new NoContentFoundException("No content found at " + contentLocation);
         }
         if (Files.isSymbolicLink(contentPath)) {
             try {
@@ -79,9 +79,6 @@ public class FileSystemStorageService implements ContentStorageService {
     }
 
     private List<ContentNode> listContentFromPath(Path contentPath, ContentAccessParams contentAccessParams) {
-        if (contentPath == null) {
-            return Collections.emptyList();
-        }
         if (Files.isDirectory(contentPath, LinkOption.NOFOLLOW_LINKS)) {
             long startTime = System.currentTimeMillis();
             int traverseDepth = contentAccessParams.getMaxDepth() >= 0 ? contentAccessParams.getMaxDepth() : Integer.MAX_VALUE;
@@ -179,21 +176,16 @@ public class FileSystemStorageService implements ContentStorageService {
     @Override
     public void deleteContent(String contentLocation) {
         Path contentPath = getContentPath(contentLocation);
-        if (contentPath != null) {
-            try {
-                PathUtils.deletePath(contentPath);
-            } catch (IOException e) {
-                throw new ContentException("Error deleting " + contentLocation, e);
-            }
+        try {
+            PathUtils.deletePath(contentPath);
+        } catch (IOException e) {
+            throw new ContentException("Error deleting " + contentLocation, e);
         }
     }
 
     @Override
     public StorageCapacity getStorageCapacity(String contentLocation) {
         Path contentPath = getContentPath(contentLocation);
-        if (contentPath == null) {
-            return new StorageCapacity(0, 0);
-        }
         try {
             FileStore fs = Files.getFileStore(contentPath);
             return new StorageCapacity(
