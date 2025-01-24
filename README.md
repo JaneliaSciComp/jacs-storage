@@ -5,9 +5,9 @@
 
 ## General Notes
 
-JADE (JAnelia Data Environment) is a distributed storage system that can manage a set of configured volumes local to the machine or shared 
-- NFS-mounted from a remote host. Typically the shared volumes are read only with the exception of 
-the special OVERFLOW_VOLUME which is selected when a node runs out of available space on the local volumes.
+JADE (JAnelia Data Environment) is a distributed storage system that can manage a set of configured volumes local to
+the machine, shared - NFS-mounted from a remote host or S3 buckets. Typically the shared volumes are read only.
+
 The system consists of a master node (service) that manages the resource allocation and one or more workers or 
 agents that are responsible with reading and writing the data onto/from the managed volumes.
 

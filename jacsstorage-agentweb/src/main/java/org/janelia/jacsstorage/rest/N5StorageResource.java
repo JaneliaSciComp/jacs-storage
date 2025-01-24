@@ -1,5 +1,15 @@
 package org.janelia.jacsstorage.rest;
 
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -7,30 +17,15 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.janelia.jacsstorage.cdi.qualifier.LocalInstance;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.jacsstorage.StorageRelativePath;
-import org.janelia.jacsstorage.n5.N5ViewerMultichannelMetadata;
+import org.janelia.jacsstorage.service.N5ContentService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
-import org.janelia.saalfeldlab.n5.N5DatasetDiscoverer;
-import org.janelia.saalfeldlab.n5.N5FSReader;
-import org.janelia.saalfeldlab.n5.N5Reader;
-import org.janelia.saalfeldlab.n5.N5TreeNode;
-import org.janelia.saalfeldlab.n5.metadata.*;
-import org.janelia.saalfeldlab.n5.metadata.canonical.CanonicalMetadataParser;
+import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.Executors;
 
 @Api(value = "Agent storage API for N5 file structures")
 @Timed
@@ -39,23 +34,11 @@ public class N5StorageResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(N5StorageResource.class);
 
-    public static final N5MetadataParser<?>[] n5vGroupParsers = new N5MetadataParser[]{
-            new N5CosemMultiScaleMetadata.CosemMultiScaleParser(),
-            new N5ViewerMultiscaleMetadataParser(),
-            new CanonicalMetadataParser(),
-            new N5ViewerMultichannelMetadata.N5ViewerMultichannelMetadataParser()
-    };
-
-    public static final N5MetadataParser<?>[] n5vParsers = new N5MetadataParser[] {
-            new N5CosemMetadataParser(),
-            new N5SingleScaleMetadataParser(),
-            new CanonicalMetadataParser(),
-            new N5GenericSingleScaleMetadataParser()
-    };
-
-    @Inject @LocalInstance
+    @Inject
+    @LocalInstance
     private StorageVolumeManager storageVolumeManager;
-
+    @Inject
+    private N5ContentService n5ContentService;
 
     @ApiOperation(value = "Discover N5 data sets in the given path and return a tree of N5TreeNodes")
     @ApiResponses(value = {
@@ -67,9 +50,9 @@ public class N5StorageResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("storage_volume/{storageVolumeId}/n5tree/{storageRelativePath:.+}")
     public Response retrieveDataInfoFromStorageVolume(@PathParam("storageVolumeId") Long storageVolumeId,
-                                                      @PathParam("storageRelativePath") String storageRelativeFilePath) {
+                                                      @PathParam("storageRelativePath") String storageRelativeFilePath,
+                                                      @Context ContainerRequestContext requestContext) {
         LOG.debug("Retrieve N5 data sets from volume {}:{}", storageVolumeId, storageRelativeFilePath);
-
         JacsStorageVolume storageVolume = storageVolumeManager.getVolumeById(storageVolumeId);
         if (storageVolume == null) {
             LOG.warn("No accessible volume found for {}", storageVolumeId);
@@ -79,34 +62,24 @@ public class N5StorageResource {
                     .build();
         }
         if (storageVolume.hasPermission(JacsStoragePermission.READ)) {
-            java.nio.file.Path absolutePath = storageVolume.getDataStorageAbsolutePath(StorageRelativePath.pathRelativeToBaseRoot(storageRelativeFilePath)).orElse(null);
-            if (absolutePath == null) {
+            JADEOptions storageOptions = JADEOptions.create()
+                    .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                    .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                    .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
+            JADEStorageURI n5ContainerURI = storageVolume
+                    .setStorageOptions(storageOptions)
+                    .resolveRelativeLocation(storageRelativeFilePath)
+                    .orElse(null);
+            if (n5ContainerURI == null) {
                 return Response
                         .serverError()
-                        .entity(ImmutableMap.of("errormessage", "Could not resolve relative path: "+storageRelativeFilePath))
+                        .entity(ImmutableMap.of("errormessage", "Could not resolve relative path: " + storageRelativeFilePath))
                         .build();
             }
-            try {
-                N5Reader n5Reader = new N5FSReader(absolutePath.toString());
-                N5DatasetDiscoverer datasetDiscoverer = new N5DatasetDiscoverer(
-                        n5Reader,
-                        Executors.newCachedThreadPool(),
-                        Arrays.asList(n5vParsers),
-                        Arrays.asList(n5vGroupParsers));
-                N5TreeNode n5RootNode = datasetDiscoverer.discoverAndParseRecursive("/");
-                return Response
-                        .ok(n5RootNode, MediaType.APPLICATION_JSON)
-                        .build();
-            }
-            catch (IOException e) {
-                String errorMessage = "Error discovering N5 content at "+absolutePath;
-                LOG.error(errorMessage, e);
-                return Response
-                        .serverError()
-                        .entity(ImmutableMap.of("errormessage", errorMessage))
-                        .build();
-            }
-
+            N5TreeNode n5RootNode = n5ContentService.getN5Container(n5ContainerURI);
+            return Response
+                    .ok(n5RootNode, MediaType.APPLICATION_JSON)
+                    .build();
         } else {
             LOG.warn("Attempt to get info about {} from volume {} but the volume does not allow READ", storageRelativeFilePath, storageVolumeId);
             return Response

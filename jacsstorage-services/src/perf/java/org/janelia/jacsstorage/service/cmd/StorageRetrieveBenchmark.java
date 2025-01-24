@@ -3,8 +3,12 @@ package org.janelia.jacsstorage.service.cmd;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import org.apache.commons.lang3.StringUtils;
-import org.janelia.jacsstorage.io.ContentFilterParams;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
+import org.janelia.jacsstorage.service.ContentAccessParams;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
+import org.janelia.jacsstorage.service.ContentException;
+import org.janelia.jacsstorage.service.ContentGetter;
+import org.janelia.jacsstorage.service.ContentNode;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -21,12 +25,11 @@ import org.openjdk.jmh.util.NullOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 public class StorageRetrieveBenchmark {
 
@@ -35,32 +38,118 @@ public class StorageRetrieveBenchmark {
     @Benchmark
     @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamPathContentAvg(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamPathContentImpl(trialParams, blackhole);
+    public void streamFSContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        streamContentImpl(trialParams, blackhole, trialParams.getRandomFSEntry());
     }
 
     @Benchmark
-    @BenchmarkMode({Mode.Throughput})
+    @BenchmarkMode({Mode.AverageTime})
     @OutputTimeUnit(TimeUnit.SECONDS)
-    public void streamPathContentThrpt(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        streamPathContentImpl(trialParams, blackhole);
+    public void streamFSObjectContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        streamObjectContentImpl(trialParams, blackhole, trialParams.getRandomFSEntry());
     }
 
-    private void streamPathContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
-        OutputStream targetStream = new NullOutputStream();
-        Path dataEntry = Paths.get(trialParams.getRandomEntry());
-        try {
-            long nbytes = trialParams.storageContentReader.retrieveDataStream(dataEntry, JacsStorageFormat.SINGLE_DATA_FILE, new ContentFilterParams(), targetStream);
-            blackhole.consume(nbytes);
-        } catch (IOException e) {
-            LOG.error("Error reading {}", dataEntry, e);
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    public void streamS3Content(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        streamContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    public void streamS3ObjectContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        streamObjectContentImpl(trialParams, blackhole, trialParams.getRandomS3Entry());
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    public void listFSContent(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        listContentImpl(trialParams, blackhole, () -> trialParams.getRandomFSEntry());
+    }
+
+    @Benchmark
+    @BenchmarkMode({Mode.AverageTime})
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    public void listS3Content(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole) {
+        listContentImpl(trialParams, blackhole, () -> trialParams.getRandomS3Entry());
+    }
+
+    private void listContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, Supplier<String> entrySupplier) {
+        String entry = entrySupplier.get();
+        if (StringUtils.isNotBlank(entry)) {
+            JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
+                    entry,
+                    JADEOptions.create()
+                            .setAccessKey(trialParams.accessKey)
+                            .setSecretKey(trialParams.secretKey)
+            );
+
+            try {
+                ContentGetter contentGetter = trialParams.storageContentReader.getDataContent(
+                        dataURI,
+                        new ContentAccessParams().setMaxDepth(1)
+                );
+                List<ContentNode> contentNodes = contentGetter.getObjectsList();
+                blackhole.consume(contentNodes);
+            } catch (Exception e) {
+                LOG.error("Error reading {}", dataURI, e);
+            }
+        }
+    }
+
+    private void streamContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
+        if (StringUtils.isNotBlank(entry)) {
+            JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
+                    entry,
+                    JADEOptions.create()
+                            .setAccessKey(trialParams.accessKey)
+                            .setSecretKey(trialParams.secretKey)
+                            .setAsyncAccess(trialParams.useAsync)
+            );
+            try (OutputStream targetStream = new NullOutputStream()) {
+                ContentGetter contentGetter = trialParams.storageContentReader.getDataContent(dataURI, new ContentAccessParams());
+                long nbytes = contentGetter.streamContent(targetStream);
+                if (nbytes == 0) {
+                    throw new ContentException("Empty content " + dataURI);
+                } else {
+                    blackhole.consume(nbytes);
+                }
+            } catch (Exception e) {
+                LOG.error("Error reading {}", dataURI, e);
+            }
+        }
+    }
+
+    private void streamObjectContentImpl(RetrieveBenchmarkTrialParams trialParams, Blackhole blackhole, String entry) {
+        if (StringUtils.isNotBlank(entry)) {
+            JADEStorageURI dataURI = JADEStorageURI.createStoragePathURI(
+                    entry,
+                    JADEOptions.create()
+                            .setAccessKey(trialParams.accessKey)
+                            .setSecretKey(trialParams.secretKey)
+                            .setAsyncAccess(trialParams.useAsync)
+            );
+            try (OutputStream targetStream = new NullOutputStream()) {
+                ContentGetter contentGetter = trialParams.storageContentReader.getObjectContent(dataURI);
+                long nbytes = contentGetter.streamContent(targetStream);
+                if (nbytes == 0) {
+                    throw new ContentException("Empty content " + dataURI);
+                } else {
+                    blackhole.consume(nbytes);
+                }
+            } catch (Exception e) {
+                LOG.error("Error reading {}", dataURI, e);
+            }
         }
     }
 
     public static void main(String[] args) throws RunnerException {
-        BenchmarksCmdLineParams benchmarksCmdLineParams = new BenchmarksCmdLineParams();
+        BenchmarksCmdLineParams cmdLineParams = new BenchmarksCmdLineParams();
         JCommander jc = JCommander.newBuilder()
-                .addObject(benchmarksCmdLineParams)
+                .addObject(cmdLineParams)
                 .build();
         try {
             jc.parse(args);
@@ -69,27 +158,31 @@ public class StorageRetrieveBenchmark {
             System.exit(1);
         }
         String benchmarks;
-        if (StringUtils.isNotBlank(benchmarksCmdLineParams.benchmarksRegex)) {
-            benchmarks = StorageRetrieveBenchmark.class.getSimpleName() + "\\." + benchmarksCmdLineParams.benchmarksRegex;
+        if (StringUtils.isNotBlank(cmdLineParams.benchmarksRegex)) {
+            benchmarks = StorageRetrieveBenchmark.class.getSimpleName() + "\\." + cmdLineParams.benchmarksRegex;
         } else {
             benchmarks = StorageRetrieveBenchmark.class.getSimpleName();
         }
 
         ChainedOptionsBuilder optBuilder = new OptionsBuilder()
                 .include(benchmarks)
-                .warmupIterations(benchmarksCmdLineParams.warmupIterations)
-                .warmupTime(benchmarksCmdLineParams.getWarmupTime())
-                .measurementIterations(benchmarksCmdLineParams.measurementIterations)
-                .measurementTime(benchmarksCmdLineParams.getMeasurementTime())
-                .measurementBatchSize(benchmarksCmdLineParams.measurementBatchSize)
-                .forks(benchmarksCmdLineParams.nForks)
-                .threads(benchmarksCmdLineParams.nThreads)
+                .warmupIterations(cmdLineParams.warmupIterations)
+                .warmupTime(cmdLineParams.getWarmupTime())
+                .measurementIterations(cmdLineParams.measurementIterations)
+                .measurementTime(cmdLineParams.getMeasurementTime())
+                .measurementBatchSize(cmdLineParams.measurementBatchSize)
+                .forks(cmdLineParams.nForks)
+                .threads(cmdLineParams.nThreads)
                 .shouldFailOnError(true)
                 .detectJvmArgs()
-                .param("entriesPathsFile", benchmarksCmdLineParams.entriesPathsFile)
+                .param("s3EntriesFile", cmdLineParams.s3EntriesFile)
+                .param("fsEntriesFile", cmdLineParams.fsEntriesFile)
+                .param("accessKey", cmdLineParams.accessKey)
+                .param("secretKey", cmdLineParams.secretKey)
+                .param("useAsync", Boolean.toString(cmdLineParams.useAsync))
                 ;
-        if (StringUtils.isNotBlank(benchmarksCmdLineParams.profilerName)) {
-            optBuilder.addProfiler(benchmarksCmdLineParams.profilerName);
+        if (StringUtils.isNotBlank(cmdLineParams.profilerName)) {
+            optBuilder.addProfiler(cmdLineParams.profilerName);
         }
 
         Options opt = optBuilder.build();

@@ -1,5 +1,23 @@
 package org.janelia.jacsstorage.rest;
 
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiKeyAuthDefinition;
 import io.swagger.annotations.ApiOperation;
@@ -13,29 +31,14 @@ import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.service.interceptors.annotations.LogStorageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.UriInfo;
-import java.util.List;
 
 @SwaggerDefinition(
         securityDefinition = @SecurityDefinition(
@@ -138,15 +141,22 @@ public class StorageVolumesResource {
                                        @QueryParam("dataStoragePath") String dataStoragePathParam,
                                        @QueryParam("includeInactive") boolean includeInactive,
                                        @QueryParam("includeInaccessibleVolumes") boolean includeInaccessibleVolumes,
+                                       @Context ContainerRequestContext requestContext,
                                        @Context SecurityContext securityContext) {
+        JADEOptions storageOptions = JADEOptions.create()
+                .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                .setAWSRegion(requestContext.getHeaderString("AWSRegion"));
+        JADEStorageURI dataStorageURI = JADEStorageURI.createStoragePathURI(dataStoragePathParam, storageOptions);
         StorageQuery storageQuery = new StorageQuery()
                 .setId(storageVolumeId)
                 .setStorageName(volumeName)
+                .setStorageType(dataStorageURI.getStorageType())
                 .setShared(shared)
                 .setAccessibleOnAgent(storageAgent)
                 .setStorageTags(storageTags)
                 .setStorageVirtualPath(storageVirtualPath)
-                .setDataStoragePath(StoragePathURI.createAbsolutePathURI(dataStoragePathParam).getStoragePath())
+                .setDataStoragePath(dataStorageURI.getJadeStorage())
                 .setIncludeInactiveVolumes(includeInactive)
                 .setIncludeInaccessibleVolumes(includeInaccessibleVolumes);
         LOG.info("List storage volumes filtered with: {}", storageQuery);

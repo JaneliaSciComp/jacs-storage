@@ -6,6 +6,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.janelia.jacsstorage.cdi.ObjectMapperFactory;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 
 public class RegistryHelper {
 
@@ -14,7 +15,8 @@ public class RegistryHelper {
                 CodecRegistries.fromCodecs(
                         new BigIntegerCodec(),
                         new EnumCodec<>(JacsStorageFormat.class),
-                        new EnumCodec<>(JacsStoragePermission.class)
+                        new EnumCodec<>(JacsStoragePermission.class),
+                        new EnumCodec<>(JacsStorageType.class)
                 ),
                 CodecRegistries.fromProviders(new JacksonCodecProvider(objectMapperFactory))
         );

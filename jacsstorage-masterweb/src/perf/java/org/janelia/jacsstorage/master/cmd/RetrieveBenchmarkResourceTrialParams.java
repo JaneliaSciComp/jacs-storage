@@ -1,7 +1,18 @@
 package org.janelia.jacsstorage.master.cmd;
 
-import org.apache.commons.lang3.RandomUtils;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.enterprise.inject.se.SeContainer;
+import javax.enterprise.inject.se.SeContainerInitializer;
+import javax.ws.rs.core.Application;
+
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.rng.UniformRandomProvider;
+import org.apache.commons.rng.simple.RandomSource;
 import org.glassfish.jersey.server.ApplicationHandler;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.test.JerseyTest;
@@ -15,29 +26,27 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.BenchmarkParams;
 
-import javax.enterprise.inject.se.SeContainer;
-import javax.enterprise.inject.se.SeContainerInitializer;
-import javax.ws.rs.core.Application;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
-
 @State(Scope.Benchmark)
 public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
     @Param({""})
-    String entriesPathsFile;
-    private List<String> entryPathList;
+    String s3EntriesFile;
+    private List<String> s3Entries = new ArrayList<>();
+
+    @Param({""})
+    String fsEntriesFile;
+    private List<String> fsEntries = new ArrayList<>();
+
     private Application application;
     private ApplicationHandler handler;
+    private final UniformRandomProvider rng = RandomSource.create(RandomSource.XO_RO_SHI_RO_128_PP);
 
     @Setup(Level.Trial)
     public void setUpTrial(BenchmarkParams params) {
         try {
             setApplicationHandler();
             super.setUp();
-            if (StringUtils.isNotBlank(entriesPathsFile)) {
-                entryPathList = Files.readAllLines(Paths.get(entriesPathsFile));
+            if (StringUtils.isNotBlank(s3EntriesFile)) {
+                s3Entries = Files.readAllLines(Paths.get(s3EntriesFile));
             }
         } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -81,7 +90,11 @@ public class RetrieveBenchmarkResourceTrialParams extends JerseyTest {
 
     }
 
-    public String getRandomEntry() {
-        return entryPathList.get(RandomUtils.nextInt(0, entryPathList.size()));
+    public String getRandomS3Entry() {
+        return s3Entries.isEmpty() ? null : s3Entries.get(rng.nextInt(s3Entries.size()));
+    }
+
+    public String getRandomFSEntry() {
+        return fsEntries.isEmpty() ? null : fsEntries.get(rng.nextInt(fsEntries.size()));
     }
 }

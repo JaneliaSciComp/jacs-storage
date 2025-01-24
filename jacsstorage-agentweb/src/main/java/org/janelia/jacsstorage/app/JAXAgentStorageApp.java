@@ -11,12 +11,13 @@ public class JAXAgentStorageApp extends AbstractJAXApp {
     protected Set<Class<?>> getAppClasses() {
         return ImmutableSet.of(
                 AgentConnectionResource.class,
-                AgentStorageResource.class,
+                DataBundleStorageResource.class,
                 PathBasedAgentStorageResource.class,
                 VolumeStorageResource.class,
                 VolumeQuotaResource.class,
                 AgentWebdavResource.class,
-                N5StorageResource.class
+                N5StorageResource.class,
+                ContentNotFoundRequestHandler.class
         );
     }
 }

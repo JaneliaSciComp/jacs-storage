@@ -20,9 +20,10 @@ build
 eclipseBuild
 node_modules
 npm-debug.log
-local
+mylocal
 target
 ear
 dist
 logs
 venv
+generated

@@ -1,5 +1,12 @@
 package org.janelia.jacsstorage.webdav.utils;
 
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.ws.rs.container.ContainerRequestContext;
+
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.datarequest.DataNodeInfo;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
@@ -8,15 +15,12 @@ import org.janelia.jacsstorage.webdav.propfind.Multistatus;
 import org.janelia.jacsstorage.webdav.propfind.PropContainer;
 import org.janelia.jacsstorage.webdav.propfind.PropfindResponse;
 import org.janelia.jacsstorage.webdav.propfind.Propstat;
-
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WebdavUtils {
-    private static int MAX_ALLOWED_DEPTH = 20;
+    private static final Logger LOG = LoggerFactory.getLogger(WebdavUtils.class);
+    private static final int MAX_ALLOWED_DEPTH = 20;
 
     public static int getDepth(String depth) {
         if (StringUtils.isBlank(depth) || "infinity".equalsIgnoreCase(depth)) {
@@ -34,21 +38,27 @@ public class WebdavUtils {
         }
     }
 
-    public static Multistatus convertStorageVolumes(List<JacsStorageVolume> storageVolumes, String defaultPropResourceURL) {
+    public static Multistatus convertStorageVolumes(List<JacsStorageVolume> storageVolumes,
+                                                    ContainerRequestContext requestContext,
+                                                    String defaultPropResourceURL) {
+        LOG.debug("Create multistatus response for {} with {}", storageVolumes, defaultPropResourceURL);
         Multistatus ms = new Multistatus();
         ms.getResponse().addAll(storageVolumes.stream()
                 .map(storageVolume -> {
                     String storageServiceURL = StringUtils.appendIfMissing(storageVolume.getStorageServiceURL(), "/");
-
+                    LOG.debug("Storage service URL for {}: {}, root: {}, binding: {}, ",
+                            storageVolume, storageVolume.getStorageRootLocation(), storageVolume.getStorageVirtualPath(), storageServiceURL);
                     PropContainer propContainer = new PropContainer();
                     propContainer.setDisplayname(storageVolume.getName());
-                    propContainer.setEtag(storageVolume.getStorageURI().toString());
+                    propContainer.setEtag(storageVolume.getStorageVirtualPath());
                     propContainer.setCreationDate(storageVolume.getCreated());
                     propContainer.setLastmodified(storageVolume.getModified());
                     propContainer.setResourceType("collection");
                     // set custom properties
                     propContainer.setStorageBindName(storageVolume.getStorageVirtualPath());
-                    propContainer.setStorageRootDir(storageVolume.getBaseStorageRootDir());
+                    propContainer.setStorageRootDir(storageVolume.getStorageRootLocation());
+                    propContainer.setStorageAccessKey(requestContext.getHeaderString("AccessKey"));
+                    propContainer.setStorageSecretKey(requestContext.getHeaderString("SecretKey"));
 
                     Propstat propstat = new Propstat();
                     propstat.setPropContainer(propContainer);
@@ -85,7 +95,7 @@ public class WebdavUtils {
                     }
                     // set custom properties
                     propContainer.setStorageEntryName(nodeInfo.getNodeRelativePath());
-                    propContainer.setStorageBindName(nodeInfo.getStorageRootPathURI().getStoragePath());
+                    propContainer.setStorageBindName(nodeInfo.getStorageRootBinding());
                     propContainer.setStorageRootDir(nodeInfo.getStorageRootLocation());
 
                     Propstat propstat = new Propstat();

@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacsstorage.cdi.qualifier.PooledResource;
@@ -26,9 +25,6 @@ import org.janelia.jacsstorage.cdi.qualifier.ScheduledResource;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.dao.IdGenerator;
 import org.janelia.jacsstorage.dao.TimebasedIdGenerator;
-import org.janelia.jacsstorage.datatransfer.DataTransferService;
-import org.janelia.jacsstorage.datatransfer.impl.DataTransferServiceImpl;
-import org.janelia.jacsstorage.io.DataBundleIOProvider;
 
 @ApplicationScoped
 public class ApplicationProducer {
@@ -143,11 +139,5 @@ public class ApplicationProducer {
     public void shutdownExecutor(@Disposes @ScheduledResource ScheduledExecutorService executorService) throws InterruptedException {
         executorService.shutdown();
         executorService.awaitTermination(1, TimeUnit.SECONDS);
-    }
-
-    @PooledResource
-    @Produces
-    public DataTransferService createPooledStorageProtocol(@PooledResource ExecutorService pooledExecutorService, DataBundleIOProvider dataIOProvider) {
-        return new DataTransferServiceImpl(pooledExecutorService, dataIOProvider);
     }
 }

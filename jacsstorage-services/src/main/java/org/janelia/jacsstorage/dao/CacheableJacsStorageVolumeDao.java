@@ -8,6 +8,7 @@ import com.google.common.cache.CacheBuilder;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 
 /**
@@ -37,8 +38,8 @@ public class CacheableJacsStorageVolumeDao extends AbstractCacheableEntityByIdDa
     }
 
     @Override
-    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String agentId) {
-        return getDelegator().createStorageVolumeIfNotFound(volumeName, agentId);
+    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, JacsStorageType storageType, String agentId) {
+        return getDelegator().createStorageVolumeIfNotFound(volumeName, storageType, agentId);
     }
 
     @Override

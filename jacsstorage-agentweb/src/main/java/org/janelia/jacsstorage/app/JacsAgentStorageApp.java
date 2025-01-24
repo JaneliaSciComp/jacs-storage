@@ -14,7 +14,7 @@ import org.janelia.jacsstorage.cdi.ApplicationConfigProvider;
 import org.janelia.jacsstorage.cdi.qualifier.ApplicationProperties;
 import org.janelia.jacsstorage.config.ApplicationConfig;
 import org.janelia.jacsstorage.coreutils.NetUtils;
-import org.janelia.jacsstorage.service.localservice.StorageVolumeBootstrapper;
+import org.janelia.jacsstorage.service.impl.localservice.StorageVolumeBootstrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

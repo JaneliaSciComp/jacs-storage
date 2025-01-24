@@ -9,6 +9,8 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -17,17 +19,16 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import com.google.common.collect.ImmutableMap;
-
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.cdi.qualifier.RemoteInstance;
-import org.janelia.jacsstorage.datarequest.StorageQuery;
+import org.janelia.jacsstorage.helper.StorageResourceHelper;
 import org.janelia.jacsstorage.interceptors.annotations.Timed;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 import org.janelia.jacsstorage.rest.Constants;
 import org.janelia.jacsstorage.rest.ContentStorageResource;
 import org.janelia.jacsstorage.securitycontext.RequireAuthentication;
@@ -51,9 +52,11 @@ import org.slf4j.LoggerFactory;
 public class MasterWebdavResource {
     private static final Logger LOG = LoggerFactory.getLogger(MasterWebdavResource.class);
 
-    @Inject @RemoteInstance
+    @Inject
+    @RemoteInstance
     private StorageAllocatorService storageAllocatorService;
-    @Inject @RemoteInstance
+    @Inject
+    @RemoteInstance
     private StorageVolumeManager storageVolumeManager;
 
     @Context
@@ -64,41 +67,12 @@ public class MasterWebdavResource {
     @Produces({
             MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
     })
-    @Path("storage_prefix/{storagePrefix:.+}")
-    public Response dataStoragePropFindByStoragePrefix(@PathParam("storagePrefix") String storagePrefixParam,
-                                                       Propfind propfindRequest,
-                                                       @Context SecurityContext securityContext) {
-        LOG.info("Find storage by prefix {} for {}", storagePrefixParam, securityContext.getUserPrincipal());
-        StoragePathURI storagePrefixURI = StoragePathURI.createAbsolutePathURI(storagePrefixParam);
-        StorageQuery storageQuery = new StorageQuery().setStorageVirtualPath(storagePrefixURI.getStoragePath());
-        List<JacsStorageVolume> managedVolumes = storageVolumeManager.findVolumes(storageQuery);
-        if (CollectionUtils.isEmpty(managedVolumes)) {
-            LOG.warn("No storage found for prefix {}", storagePrefixParam);
-            Multistatus statusResponse = new Multistatus();
-            Propstat propstat = new Propstat();
-            propstat.setStatus("HTTP/1.1 404 Not Found");
-
-            PropfindResponse propfindResponse = new PropfindResponse();
-            propfindResponse.setResponseDescription("No managed volume found for prefix " + storagePrefixParam);
-            propfindResponse.setPropstat(propstat);
-            statusResponse.getResponse().add(propfindResponse);
-
-            return Response
-                    .status(Response.Status.NOT_FOUND)
-                    .entity(statusResponse)
-                    .build();
-        }
-        Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(
-                managedVolumes,
-                resourceURI.getBaseUriBuilder()
-                        .path(ContentStorageResource.class)
-                        .path(ContentStorageResource.class, "redirectForContentCheck")
-                        .build(storagePrefixURI.toString())
-                        .toString()
-        );
-        return Response.status(207)
-                .entity(propfindResponse)
-                .build();
+    @Path("storage_prefix")
+    public Response dataStoragePropFindByQueryParamStoragePrefix(@QueryParam("contentPath") String contentPathParam,
+                                                                 Propfind propfindRequest,
+                                                                 @Context ContainerRequestContext requestContext,
+                                                                 @Context SecurityContext securityContext) {
+        return processPropFindDataStorageWithContentPath(contentPathParam, requestContext, securityContext);
     }
 
     @PROPFIND
@@ -106,22 +80,61 @@ public class MasterWebdavResource {
     @Produces({
             MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
     })
-    @Path("data_storage_path/{dataStoragePath:.+}")
-    public Response dataStoragePropFindByStoragePath(@PathParam("dataStoragePath") String dataStoragePathParam,
-                                                     Propfind propfindRequest,
-                                                     @Context SecurityContext securityContext) {
-        LOG.info("Find storage for path {} for {}", dataStoragePathParam, securityContext.getUserPrincipal());
-        StoragePathURI dataStoragePathURI = StoragePathURI.createAbsolutePathURI(dataStoragePathParam);
-        StorageQuery storageQuery = new StorageQuery().setDataStoragePath(dataStoragePathURI.getStoragePath());
-        List<JacsStorageVolume> managedVolumes = storageVolumeManager.findVolumes(storageQuery);
+    @Path("storage_prefix/{contentPath:.+}")
+    public Response dataStoragePropFindByPathParamStoragePrefix(@PathParam("contentPath") String contentPathParam,
+                                                                @Context ContainerRequestContext requestContext,
+                                                                Propfind propfindRequest,
+                                                                @Context SecurityContext securityContext) {
+        return processPropFindDataStorageWithContentPath(contentPathParam, requestContext, securityContext);
+    }
+
+    @PROPFIND
+    @Consumes(MediaType.APPLICATION_XML)
+    @Produces({
+            MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
+    })
+    @Path("data_storage_path")
+    public Response dataStoragePropFindByQueryParamStoragePath(@QueryParam("contentPath") String contentPathParam,
+                                                               Propfind propfindRequest,
+                                                               @Context ContainerRequestContext requestContext,
+                                                               @Context SecurityContext securityContext) {
+        return processPropFindDataStorageWithContentPath(contentPathParam, requestContext, securityContext);
+    }
+
+    @PROPFIND
+    @Consumes(MediaType.APPLICATION_XML)
+    @Produces({
+            MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON
+    })
+    @Path("data_storage_path/{contentPath:.+}")
+    public Response dataStoragePropFindByPathParamStoragePath(@PathParam("contentPath") String contentPathParam,
+                                                              Propfind propfindRequest,
+                                                              @Context ContainerRequestContext requestContext,
+                                                              @Context SecurityContext securityContext) {
+        return processPropFindDataStorageWithContentPath(contentPathParam, requestContext, securityContext);
+    }
+
+    private Response processPropFindDataStorageWithContentPath(String contentPathParam,
+                                                               ContainerRequestContext requestContext,
+                                                               SecurityContext securityContext) {
+        LOG.info("Find storage by prefix {} for {}", contentPathParam, securityContext.getUserPrincipal());
+        JADEStorageURI jadeStorageURI = JADEStorageURI.createStoragePathURI(
+                contentPathParam,
+                JADEOptions.create()
+                        .setAccessKey(requestContext.getHeaderString("AccessKey"))
+                        .setSecretKey(requestContext.getHeaderString("SecretKey"))
+                        .setAWSRegion(requestContext.getHeaderString("AWSRegion"))
+        );
+        StorageResourceHelper resourceHelper = new StorageResourceHelper(storageVolumeManager);
+        List<JacsStorageVolume> managedVolumes = resourceHelper.listStorageVolumesForURI(jadeStorageURI);
         if (CollectionUtils.isEmpty(managedVolumes)) {
-            LOG.warn("No storage found for path {} - {}", dataStoragePathParam, dataStoragePathURI);
+            LOG.warn("No storage found for prefix {}", contentPathParam);
             Multistatus statusResponse = new Multistatus();
             Propstat propstat = new Propstat();
             propstat.setStatus("HTTP/1.1 404 Not Found");
 
             PropfindResponse propfindResponse = new PropfindResponse();
-            propfindResponse.setResponseDescription("No managed volume found for " + dataStoragePathParam);
+            propfindResponse.setResponseDescription("No managed volume found for prefix " + contentPathParam);
             propfindResponse.setPropstat(propstat);
             statusResponse.getResponse().add(propfindResponse);
 
@@ -132,10 +145,11 @@ public class MasterWebdavResource {
         }
         Multistatus propfindResponse = WebdavUtils.convertStorageVolumes(
                 managedVolumes,
+                requestContext,
                 resourceURI.getBaseUriBuilder()
                         .path(ContentStorageResource.class)
-                        .path(ContentStorageResource.class, "redirectForContentCheck")
-                        .build(dataStoragePathURI.toString())
+                        .path(ContentStorageResource.class, "redirectForGetContentWithQueryParam")
+                        .queryParam("contentPath", jadeStorageURI.getJadeStorage())
                         .toString()
         );
         return Response.status(207)
@@ -145,9 +159,8 @@ public class MasterWebdavResource {
 
     /**
      * @param storageName
-     * @param format
-     * @param pathPrefix - bundle's root relative path to the storage volume, e.g. if the storage volume is /vol/storage and
-     *                   pathPrefix is /my/prefix than the bundle's root will be at /vol/storage/my/prefix
+     * @param pathPrefix      - bundle's root relative path to the storage volume, e.g. if the storage volume is /vol/storage and
+     *                        pathPrefix is /my/prefix than the bundle's root will be at /vol/storage/my/prefix
      * @param storageTags
      * @param securityContext
      * @return
@@ -158,22 +171,15 @@ public class MasterWebdavResource {
     )
     @MKCOL
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("storage/{storageName}{format:(/format/[^/]+?)?}")
+    @Path("storage/{storageName}/format/DATA_DIRECTORY")
     public Response createDataStorage(@PathParam("storageName") String storageName,
-                                      @PathParam("format") String format,
                                       @HeaderParam("pathPrefix") String pathPrefix,
                                       @HeaderParam("storageTags") String storageTags,
                                       @Context SecurityContext securityContext) {
-        LOG.info("Create storage {} format {} prefix {} for {}", storageName, format, pathPrefix, securityContext.getUserPrincipal());
-        JacsStorageFormat storageFormat;
-        if (StringUtils.isBlank(format)) {
-            storageFormat = JacsStorageFormat.DATA_DIRECTORY;
-        } else {
-            storageFormat = JacsStorageFormat.valueOf(format.substring(8)); // 8 is "/format/".length()
-        }
+        LOG.info("Create storage {} prefix {} for {}", storageName, pathPrefix, securityContext.getUserPrincipal());
         JacsBundle dataBundle = new JacsBundleBuilder()
                 .name(storageName)
-                .storageFormat(storageFormat)
+                .storageFormat(JacsStorageFormat.DATA_DIRECTORY)
                 .storageTags(storageTags)
                 .build();
         Optional<JacsBundle> dataBundleInfo = storageAllocatorService.allocateStorage(pathPrefix, dataBundle, SecurityUtils.getUserPrincipal(securityContext));

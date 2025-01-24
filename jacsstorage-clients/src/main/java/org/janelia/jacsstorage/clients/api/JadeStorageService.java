@@ -1,16 +1,16 @@
 package org.janelia.jacsstorage.clients.api;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.janelia.saalfeldlab.n5.N5TreeNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.janelia.saalfeldlab.n5.universe.N5TreeNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A client for JADE which exposes the service as a file-like API.
@@ -42,20 +42,21 @@ public class JadeStorageService {
      * @param path full JADE path to locate
      * @return
      */
-    public StorageLocation getStorageLocationByPath(String path) {
-        return jadeHttpClient.lookupStorage(path, subjectKey, authToken).orElse(null);
+    public StorageLocation getStorageLocationByPath(String path, JadeStorageAttributes storageOptions) {
+        return jadeHttpClient.lookupStorage(path, subjectKey, authToken, storageOptions).orElse(null);
     }
 
     /**
      * Retrieve metadata for the given object.
      * @param storageLocation location of the object
      * @param path path to the object, either absolute or relative to the storageLocation
+     * @param dirsOnly if true only get subdirectories
      * @return
      */
-    public StorageObject getMetadata(StorageLocation storageLocation, String path) throws StorageObjectNotFoundException {
+    public StorageObject getMetadata(StorageLocation storageLocation, String path, boolean dirsOnly) throws StorageObjectNotFoundException {
         String relativePath = relativizePath(storageLocation, path);
         LOG.info("Getting {} from location for {}", relativePath, storageLocation.getPathPrefix());
-        return jadeHttpClient.listStorageContent(storageLocation, relativePath, 1, subjectKey, authToken)
+        return jadeHttpClient.listStorageContent(storageLocation, relativePath, 1, dirsOnly, subjectKey, authToken)
                 .stream()
                 .peek(storageObject -> LOG.trace("getMetadata found {}",storageObject))
                 .findFirst()
@@ -70,9 +71,9 @@ public class JadeStorageService {
      * @param path path to the object, either absolute or relative to the storageLocation
      * @return list of child objects
      */
-    public List<StorageObject> getChildren(StorageLocation storageLocation, String path) throws StorageObjectNotFoundException {
+    public List<StorageObject> getChildren(StorageLocation storageLocation, String path, boolean dirsOnly) throws StorageObjectNotFoundException {
         String relativePath = relativizePath(storageLocation, path);
-        return getDescendants(storageLocation, relativePath, 1);
+        return getDescendants(storageLocation, relativePath, 1, dirsOnly);
     }
 
     /**
@@ -81,11 +82,12 @@ public class JadeStorageService {
      * returned.
      * @param storageLocation location of the object
      * @param path path to the object, either absolute or relative to the storageLocation
+     * @param dirsOnly if set get only subdirs
      * @return list of descendant objects
      */
-    public List<StorageObject> getDescendants(StorageLocation storageLocation, String path, int depth) throws StorageObjectNotFoundException {
+    public List<StorageObject> getDescendants(StorageLocation storageLocation, String path, int depth, boolean dirsOnly) throws StorageObjectNotFoundException {
         String relativePath = relativizePath(storageLocation, path);
-        return jadeHttpClient.listStorageContent(storageLocation, relativePath, depth, subjectKey, authToken)
+        return jadeHttpClient.listStorageContent(storageLocation, relativePath, depth, dirsOnly, subjectKey, authToken)
                 .stream()
                 // We're only interested in descendants, so filter out the blank relative path which represents the
                 // root object, or any path which is the same as the path we asked for.
@@ -103,7 +105,7 @@ public class JadeStorageService {
         String relativePath = relativizePath(storageLocation, path);
         String contentURL = storageLocation.getStorageURLForRelativePath(relativePath);
         LOG.debug("exists requesting "+contentURL);
-        return jadeHttpClient.exists(contentURL, subjectKey, authToken);
+        return jadeHttpClient.exists(contentURL, subjectKey, authToken, storageLocation.getStorageAttributes());
     }
 
     /**
@@ -116,7 +118,7 @@ public class JadeStorageService {
         String relativePath = relativizePath(storageLocation, path);
         String contentURL = storageLocation.getStorageURLForRelativePath(relativePath);
         LOG.debug("getContent requesting "+contentURL);
-        return jadeHttpClient.getStorageContent(contentURL, subjectKey, authToken);
+        return jadeHttpClient.getStorageContent(contentURL, subjectKey, authToken, storageLocation.getStorageAttributes());
     }
 
     /**
@@ -129,21 +131,8 @@ public class JadeStorageService {
         String relativePath = relativizePath(storageLocation, path);
         String contentURL = storageLocation.getStorageURLForRelativePath(relativePath);
         LOG.debug("getContentAsString requesting "+contentURL);
-        InputStream stream = jadeHttpClient.getStorageContent(contentURL, subjectKey, authToken);
+        InputStream stream = jadeHttpClient.getStorageContent(contentURL, subjectKey, authToken, storageLocation.getStorageAttributes());
         return IOUtils.toString(stream, StandardCharsets.UTF_8);
-    }
-
-    /**
-     * Returns the size in bytes of the given object.
-     * @param storageLocation location of the object
-     * @param path path to the object, either absolute or relative to the storageLocation
-     * @return stream of the content in the given object
-     */
-    public long getContentLength(StorageLocation storageLocation, String path) {
-        String relativePath = relativizePath(storageLocation, path);
-        String contentURL = storageLocation.getStorageURLForRelativePath(relativePath);
-        LOG.debug("getContentLength requesting "+contentURL);
-        return  jadeHttpClient.getContentLength(contentURL, subjectKey, authToken);
     }
 
     /**
@@ -156,7 +145,7 @@ public class JadeStorageService {
         String relativePath = relativizePath(storageLocation, path);
         String contentURL = storageLocation.getStorageURLForRelativePath(relativePath);
         LOG.debug("setContent for "+contentURL);
-        jadeHttpClient.setStorageContent(contentURL, subjectKey, authToken, inputStream);
+        jadeHttpClient.setStorageContent(contentURL, subjectKey, authToken, storageLocation.getStorageAttributes(), inputStream);
     }
 
     /**
@@ -168,8 +157,6 @@ public class JadeStorageService {
      */
     public N5TreeNode getN5Tree(StorageLocation storageLocation, String path) throws StorageObjectNotFoundException {
         throw new UnsupportedOperationException("This isn't supported yet");
-//        String relativePath = relativizePath(storageLocation, path);
-//        return jadeHttpClient.getN5Tree(storageLocation, relativePath, subjectKey, authToken);
     }
 
     /**

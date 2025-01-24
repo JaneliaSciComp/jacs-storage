@@ -5,15 +5,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
 
 import java.math.BigInteger;
 import java.util.Date;
 
 public class DataNodeInfo {
     private String storageId;
+    private String storageType;
     private String storageRootLocation;
-    private StoragePathURI storageRootPathURI;
+    private String storageRootBinding;
     private String nodeAccessURL;
     private String nodeInfoURL;
     private String nodeRelativePath; // node path relative to the root
@@ -40,6 +40,14 @@ public class DataNodeInfo {
         this.storageId = storageId.toString();
     }
 
+    public String getStorageType() {
+        return storageType;
+    }
+
+    public void setStorageType(String storageType) {
+        this.storageType = storageType;
+    }
+
     public String getStorageRootLocation() {
         return storageRootLocation;
     }
@@ -48,32 +56,13 @@ public class DataNodeInfo {
         this.storageRootLocation = storageRootLocation;
     }
 
-    /**
-     * @deprecated use {@link #getStorageRootLocation()}
-     * @return
-     */
-    @Deprecated
-    @JsonProperty("rootLocation")
-    String getRootLocation() {
-        return this.storageRootLocation;
+    @JsonProperty("storageRootPathURI")
+    public String getStorageRootBinding() {
+        return storageRootBinding;
     }
 
-    public StoragePathURI getStorageRootPathURI() {
-        return storageRootPathURI;
-    }
-
-    public void setStorageRootPathURI(StoragePathURI storageRootPathURI) {
-        this.storageRootPathURI = storageRootPathURI;
-    }
-
-    /**
-     * @deprecated use {@link #getStorageRootPathURI()}
-     * @return
-     */
-    @Deprecated
-    @JsonProperty("rootPrefix")
-    public String getStorageRootVirtualDir() {
-        return this.storageRootPathURI.getStoragePath();
+    public void setStorageRootBinding(String storageRootBinding) {
+        this.storageRootBinding = storageRootBinding;
     }
 
     public String getNodeAccessURL() {
@@ -153,7 +142,7 @@ public class DataNodeInfo {
                 .append(collectionFlag, that.collectionFlag)
                 .append(storageId, that.storageId)
                 .append(storageRootLocation, that.storageRootLocation)
-                .append(storageRootPathURI, that.storageRootPathURI)
+                .append(storageRootBinding, that.storageRootBinding)
                 .append(nodeAccessURL, that.nodeAccessURL)
                 .append(nodeInfoURL, that.nodeInfoURL)
                 .append(nodeRelativePath, that.nodeRelativePath)
@@ -168,7 +157,7 @@ public class DataNodeInfo {
         return new HashCodeBuilder(17, 37)
                 .append(storageId)
                 .append(storageRootLocation)
-                .append(storageRootPathURI)
+                .append(storageRootBinding)
                 .append(nodeAccessURL)
                 .append(nodeInfoURL)
                 .append(nodeRelativePath)
@@ -184,7 +173,7 @@ public class DataNodeInfo {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("storageRootLocation", storageRootLocation)
-                .append("storageRootPathURI", storageRootPathURI)
+                .append("storageRootPathURI", storageRootBinding)
                 .append("nodeRelativePath", nodeRelativePath)
                 .append("size", size)
                 .append("mimeType", mimeType)

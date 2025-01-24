@@ -1,51 +1,40 @@
 package org.janelia.jacsstorage.rest;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.EnumSet;
+import java.util.Set;
+
+import javax.ws.rs.core.Response;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.app.JAXAgentStorageApp;
-import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
-import org.janelia.jacsstorage.helper.StorageResourceHelper;
-import org.janelia.jacsstorage.io.ContentFilterParams;
-import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
+import org.janelia.jacsstorage.service.ContentAccessParams;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolumeBuilder;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
-import org.janelia.jacsstorage.service.StorageContentReader;
+import org.janelia.jacsstorage.service.ContentGetter;
+import org.janelia.jacsstorage.service.DataContentService;
 import org.janelia.jacsstorage.service.StorageVolumeManager;
 import org.janelia.jacsstorage.testrest.AbstractCdiInjectedResourceTest;
 import org.janelia.jacsstorage.testrest.TestAgentStorageDependenciesProducer;
 import org.janelia.jacsstorage.testrest.TestResourceBinder;
-import org.jcodings.specific.UTF8Encoding;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URLEncoder;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.EnumSet;
-import java.util.Set;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({PathBasedAgentStorageResource.class, StorageResourceHelper.class, PathUtils.class})
 public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResourceTest {
 
     private TestAgentStorageDependenciesProducer dependenciesProducer = new TestAgentStorageDependenciesProducer();
@@ -81,66 +70,63 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
 
     @Test
     public void retrieveDataStreamUsingDataPathRelativeToVolumeRoot() throws IOException {
-        String testPath = "/volRoot/testPath";
-        StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath", JADEOptions.create());
+        DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
+        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testDataURI.getJadeStorage()))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
-                                .storageVirtualPath("/volPrefix")
+                                .storageVirtualPath("/volBinding")
                                 .storageRootTemplate("/volRoot")
                                 .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
                                 .build()
                         )
                 );
         String testData = "Test data";
-        PowerMockito.mockStatic(Files.class);
-        PowerMockito.mockStatic(PathUtils.class);
-        Path expectedDataPath = Paths.get("/volRoot/testPath");
-        Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
-        Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
-        JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
-        when(storageContentReader.estimateDataEntrySize(eq(expectedDataPath), eq(""), eq(testFormat), any(ContentFilterParams.class)))
-                .then(invocation -> (long) testData.length());
-        when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(ContentFilterParams.class), any(OutputStream.class)))
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(storageContentReader.getDataContent(eq(testDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(3);
-                    out.write(testData.getBytes());
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testData.getBytes());
                     return (long) testData.length();
                 });
-        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(StoragePathURI.createAbsolutePathURI(testPath).toString()).request().get();
+        Response response = target()
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path("storage_path/data_content")
+                .path(testDataURI.getJadeStorage())
+                .request()
+                .get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
     }
 
     @Test
-    public void retrieveDataStreamUsingDataPathRelativeToVolumePrefix() throws IOException {
-        String testPath = "/volPrefix/testPath";
-        StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
+    public void retrieveDataStreamUsingDataPathRelativeToVolumeBindingPath() throws IOException {
+        String testPath = "/volBinding/testPath";
+        DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath", JADEOptions.create());
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
-                                .storageVirtualPath("/volPrefix")
+                                .storageVirtualPath("/volBinding")
                                 .storageRootTemplate("/volRoot")
                                 .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
                                 .build()
                         )
                 );
-        PowerMockito.mockStatic(Files.class);
-        PowerMockito.mockStatic(PathUtils.class);
         String testData = "Test data";
-        Path expectedDataPath = Paths.get("/volRoot/testPath");
-        Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
-        Mockito.when(Files.exists(eq(Paths.get("/volPrefix", "testPath")))).thenReturn(false);
-        Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
-        JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
-        when(storageContentReader.estimateDataEntrySize(eq(expectedDataPath), eq(""), eq(testFormat), any(ContentFilterParams.class)))
-                .then(invocation -> (long) testData.length());
-        when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(ContentFilterParams.class), any(OutputStream.class)))
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(storageContentReader.getDataContent(eq(testDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(3);
-                    out.write(testData.getBytes());
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testData.getBytes());
                     return (long) testData.length();
                 });
         Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(testPath).request().get();
@@ -149,36 +135,32 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
     }
 
     @Test
-    public void retrieveDataStreamUsingDataPathURIRelativeToVolumePrefix() throws IOException {
+    public void retrieveDataStreamUsingDataPathURIRelativeToVolumeBindingPath() throws IOException {
         String[] testPaths = new String[] {
-                "jade://volPrefix/testPath",
-                "jade:///volPrefix/testPath"
+                "jade://volBinding/testPath",
+                "jade:///volBinding/testPath"
         };
-        StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
+        DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
-        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/volPrefix/testPath"))))
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI("/volRoot/testPath", JADEOptions.create());
+        when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath("/volBinding/testPath"))))
                 .thenReturn(ImmutableList.of(
                         new JacsStorageVolumeBuilder()
-                                .storageVirtualPath("/volPrefix")
+                                .storageVirtualPath("/volBinding")
                                 .storageRootTemplate("/volRoot")
                                 .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
                                 .build()
                         )
                 );
-        PowerMockito.mockStatic(Files.class);
-        PowerMockito.mockStatic(PathUtils.class);
         String testData = "Test data";
-        Path expectedDataPath = Paths.get("/volRoot/testPath");
-        Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
-        Mockito.when(Files.exists(eq(Paths.get("/volPrefix", "testPath")))).thenReturn(false);
-        Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
-        JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
-        when(storageContentReader.estimateDataEntrySize(eq(expectedDataPath), eq(""), eq(testFormat), any(ContentFilterParams.class)))
-                .then(invocation -> (long) testData.length());
-        when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(ContentFilterParams.class), any(OutputStream.class)))
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(storageContentReader.getDataContent(eq(testDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(3);
-                    out.write(testData.getBytes());
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testData.getBytes());
                     return (long) testData.length();
                 });
         for (String testPath : testPaths) {
@@ -191,34 +173,104 @@ public class PathBasedAgentStorageResourceTest extends AbstractCdiInjectedResour
     @Test
     public void retrieveDataStreamUsingDataPathWithCharsThatShouldBeEscaped() throws IOException {
         String testPath = "/volRoot/testPath/c1/c2-5%/testFile";
-        String urlEncodedPath = StringUtils.replace(testPath, "%", "%25");
-        StorageContentReader storageContentReader = dependenciesProducer.getDataStorageService();
+        String testPathURLEncoded = StringUtils.replace(testPath, "%", "%25");
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI(testPath, JADEOptions.create());
+        DataContentService storageContentReader = dependenciesProducer.getDataContentService();
         StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
         when(storageVolumeManager.findVolumes(eq(new StorageQuery().setDataStoragePath(testPath))))
                 .thenReturn(ImmutableList.of(
                                 new JacsStorageVolumeBuilder()
-                                        .storageVirtualPath("/volPrefix")
+                                        .storageVirtualPath("/volBinding")
                                         .storageRootTemplate("/volRoot")
                                         .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
                                         .build()
                         )
                 );
         String testData = "Test data";
-        PowerMockito.mockStatic(Files.class);
-        PowerMockito.mockStatic(PathUtils.class);
-        Path expectedDataPath = Paths.get(testPath);
-        Mockito.when(Files.exists(eq(expectedDataPath))).thenReturn(true);
-        Mockito.when(Files.isRegularFile(eq(expectedDataPath))).thenReturn(true);
-        JacsStorageFormat testFormat = JacsStorageFormat.SINGLE_DATA_FILE;
-        when(storageContentReader.estimateDataEntrySize(eq(expectedDataPath), eq(""), eq(testFormat), any(ContentFilterParams.class)))
-                .then(invocation -> (long) testData.length());
-        when(storageContentReader.retrieveDataStream(eq(expectedDataPath), eq(testFormat), any(ContentFilterParams.class), any(OutputStream.class)))
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(storageContentReader.getDataContent(eq(testDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
                 .then(invocation -> {
-                    OutputStream out = invocation.getArgument(3);
-                    out.write(testData.getBytes());
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testData.getBytes());
                     return (long) testData.length();
                 });
-        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(urlEncodedPath).request().get();
+        Response response = target().path(Constants.AGENTSTORAGE_URI_PATH).path("storage_path/data_content").path(testPathURLEncoded).request().get();
+        assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
+        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
+    }
+
+    @Test
+    public void retrieveDataStreamFromS3UsingAWSS3URI() throws IOException {
+        String testPath = "s3://testBucket/testPrefix/test.key";
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI(testPath, JADEOptions.create());
+        DataContentService storageContentReader = dependenciesProducer.getDataContentService();
+        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        when(storageVolumeManager.findVolumes(
+                eq(new StorageQuery().setStorageType(JacsStorageType.S3).setDataStoragePath(testPath))))
+                .thenReturn(ImmutableList.of(
+                                new JacsStorageVolumeBuilder()
+                                        .storageType(JacsStorageType.S3)
+                                        .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
+                                        .build()
+                        )
+                );
+        String testData = "Test data";
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(storageContentReader.getDataContent(eq(testDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
+                .then(invocation -> {
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testData.getBytes());
+                    return (long) testData.length();
+                });
+        Response response = target()
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path("storage_path/data_content")
+                .path(testDataURI.getJadeStorage())
+                .request()
+                .get();
+        assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
+        assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
+    }
+
+    @Test
+    public void retrieveDataStreamFromS3UsingEndpointURI() throws IOException {
+        String testPath = "https://user:secret@testEndpoint/testBucket/testPrefix/test.key";
+        String testPathParam = "https://testEndpoint/testBucket/testPrefix/test.key"; // no authentication fields
+        DataContentService storageContentReader = dependenciesProducer.getDataContentService();
+        StorageVolumeManager storageVolumeManager = dependenciesProducer.getStorageVolumeManager();
+        JADEStorageURI testDataURI = JADEStorageURI.createStoragePathURI(testPath, JADEOptions.create());
+        when(storageVolumeManager.findVolumes(
+                eq(new StorageQuery().setStorageType(JacsStorageType.S3).setDataStoragePath(testPathParam))))
+                .thenReturn(ImmutableList.of(
+                                new JacsStorageVolumeBuilder()
+                                        .storageType(JacsStorageType.S3)
+                                        .volumePermissions(EnumSet.of(JacsStoragePermission.READ))
+                                        .build()
+                        )
+                );
+        String testData = "Test data";
+        ContentGetter testContentGetter = mock(ContentGetter.class);
+        when(storageContentReader.getDataContent(eq(testDataURI), any(ContentAccessParams.class)))
+                .thenReturn(testContentGetter);
+        when(testContentGetter.estimateContentSize()).thenReturn((long) testData.length());
+        when(testContentGetter.streamContent(any(OutputStream.class)))
+                .then(invocation -> {
+                    OutputStream os = invocation.getArgument(0);
+                    os.write(testData.getBytes());
+                    return (long) testData.length();
+                });
+        Response response = target()
+                .path(Constants.AGENTSTORAGE_URI_PATH)
+                .path("storage_path/data_content")
+                .path(testDataURI.getJadeStorage())
+                .request()
+                .get();
         assertEquals(String.valueOf(testData.length()), response.getHeaderString("Content-Length"));
         assertArrayEquals(testData.getBytes(), ByteStreams.toByteArray(response.readEntity(InputStream.class)));
     }

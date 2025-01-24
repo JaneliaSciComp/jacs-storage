@@ -7,6 +7,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 
 public class StorageQuery {
     private Number id;
@@ -17,6 +19,7 @@ public class StorageQuery {
     private List<String> storageAgentIds;
     private List<String> storageAgentURLs;
     private String storageName;
+    private JacsStorageType storageType;
     private String storageVirtualPath;
     private List<String> storageTags;
     private Long minAvailableSpaceInBytes;
@@ -108,6 +111,15 @@ public class StorageQuery {
 
     public StorageQuery setStorageName(String storageName) {
         this.storageName = storageName;
+        return this;
+    }
+
+    public JacsStorageType getStorageType() {
+        return storageType;
+    }
+
+    public StorageQuery setStorageType(JacsStorageType storageType) {
+        this.storageType = storageType;
         return this;
     }
 
@@ -211,6 +223,7 @@ public class StorageQuery {
                 .append("storageAgentIds", storageAgentIds)
                 .append("storageAgentURLs", storageAgentURLs)
                 .append("storageName", storageName)
+                .append("storageType", storageType)
                 .append("storageVirtualPath", storageVirtualPath)
                 .append("storageTags", storageTags)
                 .append("minAvailableSpaceInBytes", minAvailableSpaceInBytes)

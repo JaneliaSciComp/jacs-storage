@@ -1,5 +1,8 @@
 package org.janelia.jacsstorage.clients.api;
 
+import java.util.Collections;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -11,25 +14,39 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 public class StorageLocation {
 
     private String storageURL;
+    private String storageType;
     private String pathPrefix;
     private String virtualPath;
+    private JadeStorageAttributes storageAttributes;
 
-    StorageLocation(String storageURL, String pathPrefix, String virtualPath) {
+    StorageLocation(String storageURL, String storageType, String pathPrefix, String virtualPath, JadeStorageAttributes storageAttributes) {
         this.storageURL = storageURL;
+        this.storageType = storageType;
         this.pathPrefix = StringUtils.appendIfMissing(pathPrefix, "/");
         this.virtualPath = StringUtils.appendIfMissing(virtualPath, "/");
+        this.storageAttributes = storageAttributes;
     }
 
     /**
      * Base URL to this storage location.
+     *
      * @return
      */
     public String getStorageURL() {
         return storageURL;
     }
 
+    public String getStorageType() {
+        return storageType;
+    }
+
+    public boolean isFileSystemStorage() {
+        return storageType == null || "FILE_SYSTEM".equals(storageType);
+    }
+
     /**
      * Prefix for all paths in this StorageLocation.
+     *
      * @return
      */
     public String getPathPrefix() {
@@ -38,6 +55,7 @@ public class StorageLocation {
 
     /**
      * Given an absolute JADE path, generate the storage URL for the content.
+     *
      * @param absolutePath
      * @return
      */
@@ -48,6 +66,7 @@ public class StorageLocation {
 
     /**
      * Given a JADE path relative to this StorageLocation, generate a storage URL for the content.
+     *
      * @param relativePath
      * @return
      */
@@ -57,45 +76,60 @@ public class StorageLocation {
 
     /**
      * Given an absolute JADE path, generate the path relative to this StorageLocation.
+     *
      * @param absolutePath
      * @return
      */
     public String getRelativePath(String absolutePath) {
-        if (absolutePath.startsWith(pathPrefix)) {
+        if (StringUtils.startsWith(absolutePath, pathPrefix)) {
             return absolutePath.replaceFirst(pathPrefix, "");
-        }
-        else if (absolutePath.startsWith(virtualPath)) {
+        } else if (StringUtils.startsWith(absolutePath, virtualPath)) {
             return absolutePath.replaceFirst(virtualPath, "");
-        }
-        else if (!absolutePath.startsWith("/")) {
-            throw new IllegalArgumentException("Not an absolute path: "+absolutePath);
-        }
-        else {
+        } else if (StringUtils.equals(storageType, "S3")) {
+            return absolutePath;
+        } else if (!absolutePath.startsWith("/")) {
+            throw new IllegalArgumentException("Not an absolute path: " + absolutePath);
+        } else {
             throw new IllegalArgumentException("Given absolute path (" + absolutePath + ") does not exist in storage location with prefix " + pathPrefix);
         }
     }
 
     /**
      * Given a relative JADE path, generate the full absolute path.
+     *
      * @param relativePath
      * @return
      */
     public String getAbsolutePath(String relativePath) {
-        return pathPrefix + relativePath;
+        return StringUtils.isNotBlank(pathPrefix)
+                ? pathPrefix + relativePath
+                : relativePath;
     }
 
     /**
      * Given a relative JADE path, generate the full absolute virtual path.
+     *
      * @param relativePath
      * @return
      */
     public String getVirtualPath(String relativePath) {
-        return virtualPath + relativePath;
+        return StringUtils.isNotBlank(virtualPath)
+                ? virtualPath + relativePath
+                : relativePath;
+    }
+
+    JadeStorageAttributes getStorageAttributes() {
+        return storageAttributes;
+    }
+
+    Map<String, Object> getStorageAttributesAsMap() {
+        return storageAttributes != null ? storageAttributes.getAsMap() : Collections.emptyMap();
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("storageType", storageType)
                 .append("pathPrefix", pathPrefix)
                 .append("virtualPath", virtualPath)
                 .append("storageURL", storageURL)

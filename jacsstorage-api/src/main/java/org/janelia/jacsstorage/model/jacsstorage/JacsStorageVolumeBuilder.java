@@ -27,6 +27,11 @@ public class JacsStorageVolumeBuilder {
         return this;
     }
 
+    public JacsStorageVolumeBuilder storageType(JacsStorageType v) {
+        jacsStorageVolume.setStorageType(v);
+        return this;
+    }
+
     public JacsStorageVolumeBuilder storageVirtualPath(String v) {
         jacsStorageVolume.setStorageVirtualPath(v);
         return this;

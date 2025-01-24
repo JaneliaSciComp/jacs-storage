@@ -1,23 +1,21 @@
 package org.janelia.jacsstorage.datarequest;
 
+import java.net.URI;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundle;
 import org.janelia.jacsstorage.model.jacsstorage.JacsBundleBuilder;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageFormat;
-import org.janelia.jacsstorage.model.jacsstorage.StoragePathURI;
-
-import java.net.URI;
-import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @ApiModel(
         value = "Storage information"
@@ -30,7 +28,7 @@ public class DataStorageInfo {
     private String dataVirtualPath;
     private Set<String> readersKeys = new HashSet<>();
     private Set<String> writersKeys = new HashSet<>();
-    private StoragePathURI storageRootPathURI;
+    private String storageRootPathURI;
     private String storageRootDir;
     private String storageAgentId;
     private List<String> storageTags;
@@ -38,7 +36,6 @@ public class DataStorageInfo {
     private JacsStorageFormat storageFormat;
     private Long requestedSpaceInBytes;
     private String checksum;
-    private Map<String, Object> metadata = new LinkedHashMap<>();
 
     public static DataStorageInfo fromBundle(JacsBundle dataBundle) {
         DataStorageInfo dsi = new DataStorageInfo()
@@ -51,15 +48,15 @@ public class DataStorageInfo {
                 .setWritersKeys(dataBundle.getWritersKeys())
                 .setRequestedSpaceInBytes(dataBundle.getUsedSpaceInBytes())
                 .setChecksum(dataBundle.getChecksum())
-                .addMetadata(dataBundle.getMetadata())
                 ;
         dataBundle.getStorageVolume()
                 .ifPresent(sv -> {
+                    JADEStorageURI volumeRootStorageURI = sv.getVolumeStorageRootURI();
                     dsi.setStorageAgentId(sv.getStorageAgentId());
                     dsi.setStorageTags(sv.getStorageTags());
-                    dsi.setStorageRootDir(sv.evalStorageRootDir(dataBundle.asStorageContext()));
+                    dsi.setStorageRootDir(sv.evalStorageRoot(dataBundle.asStorageContext()));
                     dsi.setDataVirtualPath(Paths.get(sv.getStorageVirtualPath(), dataBundle.getId().toString()).toString());
-                    dsi.setStorageRootPathURI(sv.getStorageURI());
+                    dsi.setStorageRootPathURI(volumeRootStorageURI != null ? volumeRootStorageURI.getJadeStorage() : null);
                     dsi.setConnectionURL(sv.getStorageServiceURL());
                 });
         return dsi;
@@ -173,11 +170,11 @@ public class DataStorageInfo {
         return this;
     }
 
-    public StoragePathURI getStorageRootPathURI() {
+    public String getStorageRootPathURI() {
         return storageRootPathURI;
     }
 
-    public DataStorageInfo setStorageRootPathURI(StoragePathURI storageRootPathURI) {
+    public DataStorageInfo setStorageRootPathURI(String storageRootPathURI) {
         this.storageRootPathURI = storageRootPathURI;
         return this;
     }
@@ -273,20 +270,6 @@ public class DataStorageInfo {
         return this;
     }
 
-    public Map<String, Object> getMetadata() {
-        return metadata;
-    }
-
-    public DataStorageInfo setMetadata(Map<String, Object> metadata) {
-        this.metadata = metadata;
-        return this;
-    }
-
-    public DataStorageInfo addMetadata(Map<String, Object> metadata) {
-        this.metadata.putAll(metadata);
-        return this;
-    }
-
     public JacsBundle asDataBundle() {
         return new JacsBundleBuilder()
                 .name(this.name)
@@ -296,9 +279,7 @@ public class DataStorageInfo {
                 .writersKeys(this.writersKeys)
                 .usedSpaceInBytes(this.requestedSpaceInBytes)
                 .checksum(this.checksum)
-                .metadata(this.metadata)
                 .storageAgentId(this.storageAgentId)
-                .storageRootPath(this.storageRootDir)
                 .storageTagsAsList(this.storageTags)
                 .build();
     }

@@ -9,13 +9,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMap;
-
 import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.dao.JacsStorageVolumeDao;
 import org.janelia.jacsstorage.datarequest.PageRequest;
 import org.janelia.jacsstorage.datarequest.PageResult;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStoragePermission;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
 import org.junit.After;
@@ -54,7 +54,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
 
     @Test
     public void saveTestEntity() {
-        JacsStorageVolume te = persistEntity(testDao, createTestEntity("127.0.0.1", 100, "testVol", "/tmp", "/tmp", 100L));
+        JacsStorageVolume te = persistEntity(testDao, createTestEntity("127.0.0.1", 100, "testVol", JacsStorageType.FILE_SYSTEM, "/tmp", "/tmp", 100L));
         te.setVolumePermissions(new HashSet<>(EnumSet.of(JacsStoragePermission.READ, JacsStoragePermission.WRITE)));
         JacsStorageVolume retrievedTe = testDao.findById(te.getId());
         assertThat(retrievedTe.getName(), equalTo(te.getName()));
@@ -63,7 +63,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
 
     @Test
     public void updateTestEntity() {
-        JacsStorageVolume te = persistEntity(testDao, createTestEntity("127.0.0.1", 100, "testVol", "/tmp", "/tmp",100L));
+        JacsStorageVolume te = persistEntity(testDao, createTestEntity("127.0.0.1", 100, "testVol", JacsStorageType.FILE_SYSTEM, "/tmp", "/tmp",100L));
         Set<JacsStoragePermission> volumePermissions = EnumSet.of(JacsStoragePermission.READ, JacsStoragePermission.WRITE);
         JacsStorageVolume updatedEntity = testDao.update(te.getId(), ImmutableMap.of("volumePermissions", new SetFieldValueHandler<>(volumePermissions)));
         JacsStorageVolume retrievedTe = testDao.findById(te.getId());
@@ -74,7 +74,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
 
     @Test
     public void saveTestEntityWithNoHost() {
-        JacsStorageVolume te = persistEntity(testDao, createTestEntity(null, 0, "testVol", "/tmp", "/tmp",100L));
+        JacsStorageVolume te = persistEntity(testDao, createTestEntity(null, 0, "testVol", JacsStorageType.FILE_SYSTEM,"/tmp", "/tmp",100L));
         JacsStorageVolume retrievedTe = testDao.findById(te.getId());
         assertThat(retrievedTe.getName(), equalTo(te.getName()));
         assertNull(retrievedTe.getStorageAgentId());
@@ -86,29 +86,31 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
         class TestInputData {
             private final String testHost;
             private final String testName;
+            private final JacsStorageType storageType;
 
-            private TestInputData(String testHost, String testName) {
+            private TestInputData(String testHost, JacsStorageType storageType, String testName) {
                 this.testHost = testHost;
                 this.testName = testName;
+                this.storageType = storageType;
             }
         }
         TestInputData[] testInputData = new TestInputData[] {
-                new TestInputData(null, "testVol"),
-                new TestInputData("127.0.0.1", "testVol"),
-                new TestInputData("127.0.0.2", "testVol"),
-                new TestInputData(null, "testVol1"),
-                new TestInputData("127.0.0.1", "testVol1"),
-                new TestInputData("127.0.0.2", "testVol1")
+                new TestInputData(null, JacsStorageType.S3, "testVol"),
+                new TestInputData("127.0.0.1", null, "testVol"),
+                new TestInputData("127.0.0.2", JacsStorageType.FILE_SYSTEM, "testVol"),
+                new TestInputData(null, null, "testVol1"),
+                new TestInputData("127.0.0.1", JacsStorageType.FILE_SYSTEM, "testVol1"),
+                new TestInputData("127.0.0.2", JacsStorageType.FILE_SYSTEM, "testVol1")
         };
         for (TestInputData td : testInputData) {
-            JacsStorageVolume justCreated = testDao.createStorageVolumeIfNotFound(td.testName, td.testHost);
+            JacsStorageVolume justCreated = testDao.createStorageVolumeIfNotFound(td.testName, td.storageType, td.testHost);
             assertNotNull(justCreated);
             testData.add(justCreated);
             JacsStorageVolume retrievedTe = testDao.findById(justCreated.getId());
             assertNotNull(retrievedTe);
             assertThat(retrievedTe.getName(), equalTo(justCreated.getName()));
             assertNotSame(justCreated, retrievedTe);
-            JacsStorageVolume again = testDao.createStorageVolumeIfNotFound(td.testName, td.testHost);
+            JacsStorageVolume again = testDao.createStorageVolumeIfNotFound(td.testName, td.storageType, td.testHost);
             assertNotNull(again);
             assertNotSame(justCreated, again);
             assertEquals(justCreated.getId(), again.getId());
@@ -128,8 +130,8 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
     public void searchExistingVolumeByLocationAndCheckNoNewOneIsCreated() {
         String testHost = "127.0.0.1";
         String testVolumeName = "testVol";
-        JacsStorageVolume te = persistEntity(testDao, createTestEntity(testHost, 100, testVolumeName, "/tmp", "/tmp", 100L));
-        JacsStorageVolume existingVolume = testDao.createStorageVolumeIfNotFound(testVolumeName, testHost);
+        JacsStorageVolume te = persistEntity(testDao, createTestEntity(testHost, 100, testVolumeName, JacsStorageType.FILE_SYSTEM,"/tmp", "/tmp", 100L));
+        JacsStorageVolume existingVolume = testDao.createStorageVolumeIfNotFound(testVolumeName, JacsStorageType.FILE_SYSTEM, testHost);
         assertNotNull(existingVolume);
         assertNotSame(te, existingVolume);
         PageResult<JacsStorageVolume> allVolumes = testDao.findAll(new PageRequest());
@@ -139,13 +141,13 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
     @Test
     public void searchForMatchingVolumes() {
         // shared volumes
-        persistEntity(testDao, createTestEntity(null, 0, "sv1", "/sv1/folder", "/p1",10L));
-        persistEntity(testDao, createTestEntity(null, 0, "sv2", "/sv2/${username}", "/p2",20L));
-        persistEntity(testDao, createTestEntity(null, 0, "sv3", "/sv3", "/p3",30L));
+        persistEntity(testDao, createTestEntity(null, 0, "sv1", JacsStorageType.FILE_SYSTEM, "/sv1/folder", "/p1",10L));
+        persistEntity(testDao, createTestEntity(null, 0, "sv2", JacsStorageType.FILE_SYSTEM, "/sv2/${username}", "/p2",20L));
+        persistEntity(testDao, createTestEntity(null, 0, "sv3", null, "/sv3", "/p3",30L));
         // local volumes
-        persistEntity(testDao, createTestEntity("h1", 10, "v1", "/v1", "/lp1",10L));
-        persistEntity(testDao, createTestEntity("h2", 10, "v2", "/v2", "/lp2",20L));
-        persistEntity(testDao, createTestEntity("h3", 10, "v3", "/v3", "/lp3",30L));
+        persistEntity(testDao, createTestEntity("h1", 10, "v1", null, "/v1", "/lp1",10L));
+        persistEntity(testDao, createTestEntity("h2", 10, "v2", null, "/v2", "/lp2",20L));
+        persistEntity(testDao, createTestEntity("h3", 10, "v3", null, "/v3", "/lp3",30L));
         Map<StorageQuery, String[]> queriesWithExpectedResults =
                 ImmutableMap.<StorageQuery, String[]>builder()
                         .put(new StorageQuery().setShared(true), // local doesn't matter if shared is true
@@ -191,6 +193,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
                         "h1",
                         10,
                         "v1",
+                        JacsStorageType.FILE_SYSTEM,
                         "/v1",
                         "/p1",
                         10L));
@@ -200,6 +203,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
                         "h2",
                         10,
                         "v2",
+                        JacsStorageType.FILE_SYSTEM,
                         "/v2",
                         "/p2",
                         20L));
@@ -208,6 +212,7 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
                         "h3",
                         10,
                         "v3",
+                        JacsStorageType.FILE_SYSTEM,
                         "/v3",
                         "/p3",
                         30L));
@@ -232,12 +237,14 @@ public class JacsStorageVolumeMongoDaoITest extends AbstractMongoDaoITest {
     }
 
     private JacsStorageVolume createTestEntity(String host, int port, String volumeName,
+                                               JacsStorageType storageType,
                                                String storageRootTemplate,
                                                String storageVirtualPath,
                                                Long available) {
         JacsStorageVolume v = new JacsStorageVolume();
         if (host != null) v.setStorageAgentId(host + ":" + port);
         v.setName(volumeName);
+        v.setStorageType(storageType);
         v.setStorageRootTemplate(storageRootTemplate);
         v.setStorageVirtualPath(storageVirtualPath);
         if (StringUtils.isNotBlank(host)) {

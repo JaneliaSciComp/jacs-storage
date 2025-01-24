@@ -20,7 +20,6 @@ public abstract class AbstractJAXApp extends Application {
                         JacksonJaxbXMLProvider.class,
                         AuthFilter.class,
                         CORSResponseFilter.class,
-                        DataAlreadyExistRequestHandler.class,
                         InvalidArgumentRequestHandler.class,
                         IllegalAccessRequestHandler.class,
                         IllegalStateRequestHandler.class,

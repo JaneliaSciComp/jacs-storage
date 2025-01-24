@@ -34,6 +34,7 @@ import org.janelia.jacsstorage.datarequest.SortCriteria;
 import org.janelia.jacsstorage.datarequest.SortDirection;
 import org.janelia.jacsstorage.datarequest.StorageQuery;
 import org.janelia.jacsstorage.expr.ExprHelper;
+import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageVolume;
 import org.janelia.jacsstorage.model.support.EntityFieldValueHandler;
 import org.janelia.jacsstorage.model.support.SetFieldValueHandler;
@@ -80,7 +81,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         Iterable<JacsStorageVolume> storageVolumesItr = aggregateIterable(
                 createMatchingPipeline(storageQuery),
                 createBsonSortCriteria(ImmutableList.of(
-                        new SortCriteria("storageVirtualPath", SortDirection.DESC)),
+                                new SortCriteria("storageVirtualPath", SortDirection.DESC)),
                         pageRequest.getSortCriteria()),
                 pageRequest.getOffset(),
                 pageRequest.getPageSize(),
@@ -90,12 +91,15 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             storageVolumesItr.forEach(results::add);
         } else {
             StreamSupport.stream(storageVolumesItr.spliterator(), false)
-                    .filter(sv -> ExprHelper.match(
-                            StringUtils.appendIfMissing(sv.getStorageVirtualPath(), "/"),
-                            StringUtils.appendIfMissing(storageQuery.getDataStoragePath(), "/")).isMatchFound() ||
-                            ExprHelper.match(
-                                    StringUtils.appendIfMissing(sv.getStorageRootTemplate(), "/"),
-                                    StringUtils.appendIfMissing(storageQuery.getDataStoragePath(), "/")).isMatchFound()
+                    .filter(sv -> sv.getStorageType() == JacsStorageType.S3 && sv.getStorageRootTemplate() == null && sv.getStorageVirtualPath() == null ||
+                                  sv.getStorageRootTemplate() != null && (
+                                          ExprHelper.match(
+                                                  StringUtils.appendIfMissing(sv.getStorageVirtualPath(), "/"),
+                                                  StringUtils.appendIfMissing(storageQuery.getDataStoragePath(), "/")).isMatchFound() ||
+                                          ExprHelper.match(
+                                            StringUtils.appendIfMissing(sv.getStorageRootTemplate(), "/"),
+                                            StringUtils.appendIfMissing(storageQuery.getDataStoragePath(), "/")).isMatchFound()
+                                  )
                     )
                     .forEach(results::add);
         }
@@ -137,6 +141,17 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
         if (StringUtils.isNotBlank(storageQuery.getStorageName())) {
             filtersBuilder.add(Filters.eq("name", storageQuery.getStorageName()));
         }
+        if (storageQuery.getStorageType() == JacsStorageType.S3) {
+            filtersBuilder.add(Filters.eq("storageType", JacsStorageType.S3));
+        } else {
+            filtersBuilder.add(
+                    Filters.or(
+                            Filters.eq("storageType", JacsStorageType.FILE_SYSTEM),
+                            Filters.exists("storageType", false),
+                            Filters.eq("storageType", null)
+                    )
+            );
+        }
         if (StringUtils.isNotBlank(storageQuery.getDataStoragePath())) {
             // the way this filter works is by checking if the current storage root directory (or virtual path)
             // are a prefix of the given argument.
@@ -160,7 +175,17 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
                             )
                     )
             ));
-            filtersBuilder.add(Filters.eq("dataStoragePath", storageQuery.getDataStoragePath()));
+            if (storageQuery.getStorageType() == JacsStorageType.S3) {
+                filtersBuilder.add(
+                        Filters.or(
+                                Filters.eq("dataStoragePath", storageQuery.getDataStoragePath()),
+                                Filters.eq("storageRootTemplate", null),
+                                Filters.exists("storageRootTemplate", false)
+                        )
+                );
+            } else {
+                filtersBuilder.add(Filters.eq("dataStoragePath", storageQuery.getDataStoragePath()));
+            }
         }
         if (StringUtils.isNotBlank(storageQuery.getStorageVirtualPath())) {
             filtersBuilder.add(Filters.eq("storageVirtualPath", storageQuery.getStorageVirtualPath()));
@@ -197,7 +222,7 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
     }
 
     @Override
-    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, String agentId) {
+    public JacsStorageVolume createStorageVolumeIfNotFound(String volumeName, JacsStorageType storageType, String agentId) {
         Preconditions.checkArgument(StringUtils.isNotBlank(volumeName));
 
         FindOneAndUpdateOptions updateOptions = new FindOneAndUpdateOptions();
@@ -217,7 +242,17 @@ public class JacsStorageVolumeMongoDao extends AbstractMongoDao<JacsStorageVolum
             filtersBuilder.add(Filters.eq("storageAgentId", agentId));
         }
         filtersBuilder.add(Filters.eq("name", volumeName));
-
+        if (storageType == JacsStorageType.S3) {
+            filtersBuilder.add(Filters.eq("storageType", JacsStorageType.S3));
+        } else {
+            filtersBuilder.add(
+                    Filters.or(
+                            Filters.eq("storageType", JacsStorageType.FILE_SYSTEM),
+                            Filters.exists("storageType", false),
+                            Filters.eq("storageType", null)
+                    )
+            );
+        }
         Date changedTimestamp = new Date();
         Bson fieldsToInsert = Updates.combine(
                 Updates.setOnInsert("_id", idGenerator.generateId()),

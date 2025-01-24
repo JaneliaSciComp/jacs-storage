@@ -3,30 +3,27 @@ allprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'idea'
     group = 'org.janelia.jacs-storage'
-    version = '1.21.1.RELEASE'
+    version = '1.22.0.RC4'
 }
 
 subprojects {
 
+    sourceSets {
+        integrationTest {
+            compileClasspath += sourceSets.main.output + sourceSets.test.output
+            runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+        }
+        perf
+    }
+
     configurations {
         integrationTestImplementation.extendsFrom(implementation, testImplementation)
-        integrationTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+        integrationTestRuntimeOnly.extendsFrom(runtimeOnly, testRuntimeOnly)
 
         perfApi.extendsFrom(api)
         perfImplementation.extendsFrom(perfApi, implementation)
         perfRuntimeOnly.extendsFrom(runtimeOnly)
         perfRuntimeElements.extendsFrom(perfImplementation, perfRuntimeOnly)
-    }
-
-    sourceSets {
-        perf {
-            compileClasspath += main.output
-            runtimeClasspath += main.output
-        }
-        integrationTest {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
-        }
     }
 
     apply from: "${rootDir}/deps.gradle"
@@ -36,13 +33,13 @@ subprojects {
             mavenLocal()
             mavenCentral()
             maven {
-                url "https://nexus.janelia.org/repository/maven-releases"
+                url = "https://nexus.janelia.org/repository/maven-releases"
             }
             maven {
-                url "https://nexus.janelia.org/repository/maven-snapshots"
+                url = "https://nexus.janelia.org/repository/maven-snapshots"
             }
             maven {
-                url "https://maven.scijava.org/content/groups/public"
+                url = "https://maven.scijava.org/content/groups/public"
             }
         }
 
@@ -107,10 +104,7 @@ subprojects {
         archiveClassifier.set('perf')
     }
 
-    tasks.register('integrationTest', Test) {
-        testClassesDirs += sourceSets.integrationTest.output.classesDirs
-        classpath = sourceSets.integrationTest.runtimeClasspath
-    }
+    tasks.register('integrationTest', Test)
 
     artifacts {
         perfRuntimeElements perfJar
@@ -143,8 +137,8 @@ subprojects {
                 def snapshotsRepoUrl = 'https://nexus.janelia.org/repository/maven-snapshots'
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
                 credentials {
-                    username "${mavenRepoUser}"
-                    password "${mavenRepoPassword}"
+                    username = mavenRepoUser
+                    password = mavenRepoPassword
                 }
             }
         }
@@ -152,12 +146,12 @@ subprojects {
 }
 
 tasks.register('updateWrapper', Wrapper) {
-    gradleVersion = "8.9"
+    gradleVersion = "8.10"
 }
 
 tasks.register('printVersion') {
     doLast {
-        println project.version
+        println(project.version)
     }
 }
 

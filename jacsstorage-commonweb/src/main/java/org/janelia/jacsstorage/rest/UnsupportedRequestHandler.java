@@ -23,9 +23,7 @@ public class UnsupportedRequestHandler implements ExceptionMapper<UnsupportedOpe
         LOG.error("Illegal access response for {}", request.getRequestURI(), exception);
         Response.ResponseBuilder responseBuilder = Response
                 .status(Response.Status.BAD_REQUEST);
-        if (StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
-            responseBuilder.header("Content-Length", 0);
-        } else {
+        if (!StringUtils.equalsAnyIgnoreCase("HEAD", request.getMethod())) {
             String errorMessage = StringUtils.defaultIfBlank(exception.getMessage(), "Unsupported operation");
             responseBuilder
                     .entity(new ErrorResponse(errorMessage))
