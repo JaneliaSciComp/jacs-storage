@@ -1,6 +1,5 @@
 package org.janelia.jacsstorage.service.impl;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
