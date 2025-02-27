@@ -343,7 +343,7 @@ public class S3StorageServiceTest {
             long nbytes = storageService.streamContentToOutput(td.contentLocation, retrievedStream);
             assertEquals(td.expectedSize, nbytes);
             double accessTime = (System.currentTimeMillis() - startTime) / 1000.;
-            LOG.info("Finished sync processing stream after {} secs", accessTime);
+            LOG.info("Finished processing stream after {} secs", accessTime);
         }
     }
 

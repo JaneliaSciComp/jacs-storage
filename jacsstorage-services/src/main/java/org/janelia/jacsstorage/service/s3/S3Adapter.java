@@ -49,7 +49,8 @@ public class S3Adapter {
                 .multipartConfiguration(cfg ->
                         cfg.apiCallBufferSizeInBytes(16 * MB)
                                 .minimumPartSizeInBytes(MB)
-                                .thresholdInBytes(MB));
+                                .thresholdInBytes(MB)
+                );
         if (StringUtils.isNotBlank(s3Options.getAWSRegion())) {
             Region s3Region = Region.of(s3Options.getAWSRegion());
             asyncS3ClientBuilder.region(s3Region);

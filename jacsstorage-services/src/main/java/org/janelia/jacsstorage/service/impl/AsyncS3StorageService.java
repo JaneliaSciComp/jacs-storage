@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.janelia.jacsstorage.coreutils.ComparatorUtils;
@@ -23,6 +24,7 @@ import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
 import software.amazon.awssdk.core.async.BlockingInputStreamAsyncRequestBody;
+import software.amazon.awssdk.core.async.ResponsePublisher;
 import software.amazon.awssdk.services.s3.model.CommonPrefix;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
@@ -223,13 +225,20 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
                 .s3Client(s3Adapter.getAsyncS3Client())
                 .build();
 
-        Download<ResponseBytes<GetObjectResponse>> download = transferManager.download(
+        Download<ResponsePublisher<GetObjectResponse>> download = transferManager.download(
                 DownloadRequest.builder()
-                        .getObjectRequest(b -> b.bucket(s3Adapter.getBucket()).key(s3Location))
-                        .responseTransformer(AsyncResponseTransformer.toBytes())
+                        .getObjectRequest(b -> b
+                                .bucket(s3Adapter.getBucket())
+                                .key(s3Location))
+                        .responseTransformer(AsyncResponseTransformer.toPublisher())
                         .build());
-        CompletedDownload<ResponseBytes<GetObjectResponse>> completedDownload = download.completionFuture().join();
-        return IOStreamUtils.copyFrom(completedDownload.result().asByteArray(), outputStream);    }
+        CompletedDownload<ResponsePublisher<GetObjectResponse>> completedDownload = download.completionFuture().join();
+        ResponsePublisher<GetObjectResponse> responsePublisher = completedDownload.result();
+        AtomicLong nbytes = new AtomicLong();
+        CompletableFuture<Void> drainPublisherFuture = responsePublisher.subscribe(buffer -> nbytes.addAndGet(IOStreamUtils.copyFrom(buffer.array(), outputStream)));
+        drainPublisherFuture.join();
+        return nbytes.get();
+    }
 
     @Override
     public long writeContent(String contentLocation, InputStream inputStream) {
