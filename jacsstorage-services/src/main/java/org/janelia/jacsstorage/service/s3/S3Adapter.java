@@ -44,7 +44,12 @@ public class S3Adapter {
     }
 
     private S3AsyncClient createAsyncClient(String endpoint, AwsCredentialsProvider credentialsProvider, JADEOptions s3Options) {
-        S3AsyncClientBuilder asyncS3ClientBuilder = S3AsyncClient.builder().multipartEnabled(true);
+        S3AsyncClientBuilder asyncS3ClientBuilder = S3AsyncClient.builder()
+                .multipartEnabled(true)
+                .multipartConfiguration(cfg ->
+                        cfg.apiCallBufferSizeInBytes(16 * MB)
+                                .minimumPartSizeInBytes(MB)
+                                .thresholdInBytes(MB));
         if (StringUtils.isNotBlank(s3Options.getAWSRegion())) {
             Region s3Region = Region.of(s3Options.getAWSRegion());
             asyncS3ClientBuilder.region(s3Region);

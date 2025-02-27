@@ -31,6 +31,7 @@ project(":jacsstorage-services") {
                            exclude(group: 'software.amazon.awssdk.crt')
                        },
                        AWS_S3_LIB,
+                       AWS_S3_TRANSFER_LIB,
                        AWS_CRT_LIB)
 
         perfAnnotationProcessor BENCHMARK_ANN_PROCESSOR_LIB
