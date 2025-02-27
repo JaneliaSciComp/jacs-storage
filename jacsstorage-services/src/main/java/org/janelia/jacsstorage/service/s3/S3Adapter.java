@@ -44,7 +44,7 @@ public class S3Adapter {
     }
 
     private S3AsyncClient createAsyncClient(String endpoint, AwsCredentialsProvider credentialsProvider, JADEOptions s3Options) {
-        S3AsyncClientBuilder asyncS3ClientBuilder = S3AsyncClient.builder();
+        S3AsyncClientBuilder asyncS3ClientBuilder = S3AsyncClient.builder().multipartEnabled(true);
         if (StringUtils.isNotBlank(s3Options.getAWSRegion())) {
             Region s3Region = Region.of(s3Options.getAWSRegion());
             asyncS3ClientBuilder.region(s3Region);
@@ -57,7 +57,6 @@ public class S3Adapter {
         return asyncS3ClientBuilder
                 .crossRegionAccessEnabled(true)
                 .forcePathStyle(s3Options.getPathStyleBucket())
-                .multipartEnabled(true)
                 .build();
     }
 
