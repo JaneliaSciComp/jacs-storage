@@ -17,7 +17,6 @@ import org.janelia.jacsstorage.service.ContentStorageService;
 import org.janelia.jacsstorage.service.s3.S3Adapter;
 import org.janelia.jacsstorage.service.s3.S3AdapterProvider;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,9 +26,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class S3StorageServiceTest {
+public class S3StorageServiceITest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(S3StorageServiceTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(S3StorageServiceITest.class);
 
     private static S3AdapterProvider s3AdapterProvider;
 
@@ -299,7 +298,7 @@ public class S3StorageServiceTest {
         }
     }
 
-    @Ignore
+    @Test
     public void readContentFromPublicBucketInDifferentRegion() {
         class TestData {
             final String bucket;
@@ -343,7 +342,7 @@ public class S3StorageServiceTest {
             long nbytes = storageService.streamContentToOutput(td.contentLocation, retrievedStream);
             assertEquals(td.expectedSize, nbytes);
             double accessTime = (System.currentTimeMillis() - startTime) / 1000.;
-            LOG.info("Finished processing stream after {} secs", accessTime);
+            LOG.info("Finished processing {} stream after {} secs", td.contentLocation, accessTime);
         }
     }
 

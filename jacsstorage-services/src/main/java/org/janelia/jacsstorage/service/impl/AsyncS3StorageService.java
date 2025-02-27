@@ -5,7 +5,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.janelia.jacsstorage.coreutils.ComparatorUtils;
@@ -116,10 +115,10 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
                 .flatMap(indexedResponse -> Flux.concat(
                         // add requested prefix if this is the first time it is seen
                         indexedResponse.getT1() == 0 && level == 0 &&
-                        (!indexedResponse.getT2().commonPrefixes().isEmpty() || !indexedResponse.getT2().contents().isEmpty()) &&
-                        prefix.endsWith("/") &&
-                        contentAccessParams.checkDepth(getPathDepth(basePrefix, prefix)) &&
-                        contentAccessParams.matchEntry(prefix)
+                                (!indexedResponse.getT2().commonPrefixes().isEmpty() || !indexedResponse.getT2().contents().isEmpty()) &&
+                                prefix.endsWith("/") &&
+                                contentAccessParams.checkDepth(getPathDepth(basePrefix, prefix)) &&
+                                contentAccessParams.matchEntry(prefix)
                                 ? Flux.just(createPrefixNode(prefix)) // check if the current prefix ends with '/' and if doesn't create a node for it
                                 : Flux.empty(),
                         // add sub-folders
@@ -171,28 +170,28 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
                         List<S3Object> sortedS3Objects = new ArrayList<>(s3Objects1);
                         sortedS3Objects.sort((s1, s2) -> ComparatorUtils.naturalCompare(s1.key(), s2.key(), true));
                         return Flux.concat(
-                        // add requested prefix if this is the first time it is seen
-                        indexedResponse.getT1() == 0 && level == 0 &&
+                                // add requested prefix if this is the first time it is seen
+                                indexedResponse.getT1() == 0 && level == 0 &&
                                         (!indexedResponse.getT2().commonPrefixes().isEmpty() || !sortedS3Objects.isEmpty()) &&
-                                prefix.endsWith("/") &&
-                                contentAccessParams.checkDepth(getPathDepth(basePrefix, prefix)) &&
-                                contentAccessParams.matchEntry(prefix)
-                                ? Flux.just(createPrefixNode(prefix)) // check if the current prefix ends with '/' and if doesn't create a node for it
-                                : Flux.empty(),
-                        // add sub-folders
-                        Flux.fromIterable(indexedResponse.getT2().commonPrefixes())
-                                .map(CommonPrefix::prefix)
-                                .filter(contentAccessParams::matchEntry)
-                                .map(this::createPrefixNode),
-                        // add objects
+                                        prefix.endsWith("/") &&
+                                        contentAccessParams.checkDepth(getPathDepth(basePrefix, prefix)) &&
+                                        contentAccessParams.matchEntry(prefix)
+                                        ? Flux.just(createPrefixNode(prefix)) // check if the current prefix ends with '/' and if doesn't create a node for it
+                                        : Flux.empty(),
+                                // add sub-folders
+                                Flux.fromIterable(indexedResponse.getT2().commonPrefixes())
+                                        .map(CommonPrefix::prefix)
+                                        .filter(contentAccessParams::matchEntry)
+                                        .map(this::createPrefixNode),
+                                // add objects
                                 Flux.fromIterable(sortedS3Objects)
-                                .filter(o -> contentAccessParams.matchEntry(o.key()))
-                                .map(this::createObjectNode),
-                        // recurse into subfolders
-                        Flux.fromIterable(indexedResponse.getT2().commonPrefixes())
-                                .map(CommonPrefix::prefix)
-                                .filter(p -> contentAccessParams.checkDepth(getPathDepth(basePrefix, p)))
-                                .flatMap(p -> processAllNodes(basePrefix, p, contentAccessParams, level + 1))
+                                        .filter(o -> contentAccessParams.matchEntry(o.key()))
+                                        .map(this::createObjectNode),
+                                // recurse into subfolders
+                                Flux.fromIterable(indexedResponse.getT2().commonPrefixes())
+                                        .map(CommonPrefix::prefix)
+                                        .filter(p -> contentAccessParams.checkDepth(getPathDepth(basePrefix, p)))
+                                        .flatMap(p -> processAllNodes(basePrefix, p, contentAccessParams, level + 1))
                         );
                     }
 
@@ -204,40 +203,39 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
         String s3Location = adjustLocation(contentLocation);
         LOG.debug("Get content {}:{}", s3Adapter.getBucket(), s3Location);
 
-        S3TransferManager transferManager = S3TransferManager.builder()
+        try (S3TransferManager transferManager = S3TransferManager.builder()
                 .s3Client(s3Adapter.getAsyncS3Client())
-                .build();
-
-        Download<ResponseBytes<GetObjectResponse>> download = transferManager.download(
-                DownloadRequest.builder()
-                        .getObjectRequest(b -> b.bucket(s3Adapter.getBucket()).key(s3Location))
-                        .responseTransformer(AsyncResponseTransformer.toBytes())
-                        .build());
-        CompletedDownload<ResponseBytes<GetObjectResponse>> completedDownload = download.completionFuture().join();
-        return completedDownload.result().asInputStream();    }
+                .build()) {
+            Download<ResponseBytes<GetObjectResponse>> download = transferManager.download(
+                    DownloadRequest.builder()
+                            .getObjectRequest(b -> b.bucket(s3Adapter.getBucket()).key(s3Location))
+                            .responseTransformer(AsyncResponseTransformer.toBytes())
+                            .build());
+            CompletedDownload<ResponseBytes<GetObjectResponse>> completedDownload = download.completionFuture().join();
+            return completedDownload.result().asInputStream();
+        }
+    }
 
     @Override
     public long streamContentToOutput(String contentLocation, OutputStream outputStream) {
         String s3Location = adjustLocation(contentLocation);
         LOG.debug("Stream from {}:{} to another output stream", s3Adapter.getBucket(), s3Location);
 
-        S3TransferManager transferManager = S3TransferManager.builder()
+        try (S3TransferManager transferManager = S3TransferManager.builder()
                 .s3Client(s3Adapter.getAsyncS3Client())
-                .build();
-
-        Download<ResponsePublisher<GetObjectResponse>> download = transferManager.download(
-                DownloadRequest.builder()
-                        .getObjectRequest(b -> b
-                                .bucket(s3Adapter.getBucket())
-                                .key(s3Location))
-                        .responseTransformer(AsyncResponseTransformer.toPublisher())
-                        .build());
-        CompletedDownload<ResponsePublisher<GetObjectResponse>> completedDownload = download.completionFuture().join();
-        ResponsePublisher<GetObjectResponse> responsePublisher = completedDownload.result();
-        AtomicLong nbytes = new AtomicLong();
-        CompletableFuture<Void> drainPublisherFuture = responsePublisher.subscribe(buffer -> nbytes.addAndGet(IOStreamUtils.copyFrom(buffer.array(), outputStream)));
-        drainPublisherFuture.join();
-        return nbytes.get();
+                .build()) {
+            Download<ResponsePublisher<GetObjectResponse>> download = transferManager.download(
+                    DownloadRequest.builder()
+                            .getObjectRequest(b -> b
+                                    .bucket(s3Adapter.getBucket())
+                                    .key(s3Location))
+                            .responseTransformer(AsyncResponseTransformer.toPublisher())
+                            .build());
+            return Flux.from(download.completionFuture().join().result())
+                    .map(buf -> IOStreamUtils.copyFrom(buf.array(), outputStream))
+                    .reduce(0L, Long::sum)
+                    .block();
+        }
     }
 
     @Override
