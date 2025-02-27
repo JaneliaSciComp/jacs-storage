@@ -35,7 +35,7 @@ public class S3Adapter {
         this.endpoint = endpoint;
         this.s3Options = s3Options;
         AwsCredentialsProvider credentialsProvider = createCredentialsProvider(s3Options);
-        this.asyncS3Client = createCrtAsyncClient(endpoint, credentialsProvider, s3Options);
+        this.asyncS3Client = createDefaultAsyncClient(endpoint, credentialsProvider, s3Options);
         this.syncS3Client = createSyncClient(endpoint, credentialsProvider, s3Options);
     }
 
@@ -72,6 +72,7 @@ public class S3Adapter {
                 .crossRegionAccessEnabled(true)
                 .forcePathStyle(s3Options.getPathStyleBucket())
                 .multipartEnabled(true)
+                .multipartConfiguration(cfg -> cfg.apiCallBufferSizeInBytes(16 * MB))
                 .build();
     }
 

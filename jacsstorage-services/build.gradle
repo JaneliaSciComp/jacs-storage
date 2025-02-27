@@ -1,6 +1,6 @@
 plugins {
-    id 'application'
-    id 'distribution'
+    id('application')
+    id('distribution')
 }
 
 application {
@@ -31,6 +31,7 @@ project(':jacsstorage-services') {
                            exclude(group: 'software.amazon.awssdk.crt')
                        },
                        AWS_S3_LIB,
+                       AWS_S3_TRANSFER_LIB,
                        AWS_CRT_LIB)
 
         perfAnnotationProcessor(BENCHMARK_ANN_PROCESSOR_LIB)
@@ -69,9 +70,7 @@ project(':jacsstorage-services') {
 
         // include all tests
         useJUnitPlatform() {
-            if (System.getProperty("includeSlow")) {
-                includeTags("slow")
-            } else {
+            if (!System.getProperty("includeSlow")) {
                 excludeTags("slow")
             }
         }

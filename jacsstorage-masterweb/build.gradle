@@ -3,14 +3,14 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.netflix.nebula.ospackage:com.netflix.nebula.ospackage.gradle.plugin:11.10.1'
+        classpath 'com.netflix.nebula.ospackage:com.netflix.nebula.ospackage.gradle.plugin:11.11.1'
     }
 }
 
 plugins {
-    id 'application'
-    id 'distribution'
-    id 'com.netflix.nebula.ospackage' version '11.10.1'
+    id('application')
+    id('distribution')
+    id('com.netflix.nebula.ospackage') version('11.11.1')
 }
 
 application {

@@ -94,8 +94,9 @@ dependencies {
 
         // AWS SDK
         AWS_SDK_PLATFORM = "software.amazon.awssdk:bom:2.30.19"
-        AWS_CRT_LIB = "software.amazon.awssdk.crt:aws-crt:0.34.1"
+        AWS_CRT_LIB = "software.amazon.awssdk.crt:aws-crt:0.35.0"
         AWS_S3_LIB = "software.amazon.awssdk:s3"
+        AWS_S3_TRANSFER_LIB = "software.amazon.awssdk:s3-transfer-manager"
 
         // testing
         JUNIT4_LIB = "junit:junit:4.13.1"
