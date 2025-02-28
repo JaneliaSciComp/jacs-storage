@@ -81,7 +81,7 @@ public class DirectContentAccess implements ContentAccess {
                 entry.setSize(contentNode.getSize());
                 archiveOutputStream.putArchiveEntry(entry);
                 if (contentNode.isNotCollection()) {
-                    IOStreamUtils.copyFrom(contentObjectReader.getContentInputStream(contentNode.getObjectKey()), archiveOutputStream);
+                    contentObjectReader.streamContentToOutput(contentNode.getObjectKey(), archiveOutputStream);
                 }
                 archiveOutputStream.closeArchiveEntry();
             }

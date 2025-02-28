@@ -7,7 +7,6 @@ import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProviderChain;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
@@ -15,18 +14,15 @@ import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvide
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
-import software.amazon.awssdk.identity.spi.AwsCredentialsIdentity;
-import software.amazon.awssdk.identity.spi.IdentityProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3AsyncClientBuilder;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
-import software.amazon.awssdk.services.s3.S3CrtAsyncClientBuilder;
 
 public class S3Adapter {
-    private static final long MB = 1024L * 1024L * 1024L;
+    private static final long MiB = 1024L * 1024L;
 
     private final String bucket;
     private final String endpoint;
@@ -34,23 +30,25 @@ public class S3Adapter {
     private final S3Client syncS3Client;
     private final S3AsyncClient asyncS3Client;
 
-    S3Adapter(String bucket, String endpoint, JADEOptions s3Options) {
+    S3Adapter(String bucket, String endpoint, JADEOptions s3Options,
+              int apiBufferSizeInMiB, int minPartSizeInMiB) {
         this.bucket = bucket;
         this.endpoint = endpoint;
         this.s3Options = s3Options;
         AwsCredentialsProvider credentialsProvider = createCredentialsProvider(s3Options);
-        this.asyncS3Client = createAsyncClient(endpoint, credentialsProvider, s3Options);
+        this.asyncS3Client = createAsyncClient(endpoint, credentialsProvider, s3Options, apiBufferSizeInMiB, minPartSizeInMiB);
         this.syncS3Client = createSyncClient(endpoint, credentialsProvider, s3Options);
     }
 
-    private S3AsyncClient createAsyncClient(String endpoint, AwsCredentialsProvider credentialsProvider, JADEOptions s3Options) {
+    private S3AsyncClient createAsyncClient(String endpoint, AwsCredentialsProvider credentialsProvider, JADEOptions s3Options,
+                                            int apiBufferSizeInMiB, int minPartSizeInMiB) {
         S3AsyncClientBuilder asyncS3ClientBuilder = S3AsyncClient.builder()
                 .multipartEnabled(true)
                 .multipartConfiguration(cfg ->
-                        cfg.apiCallBufferSizeInBytes(16 * MB)
-                                .minimumPartSizeInBytes(MB)
-                                .thresholdInBytes(MB)
-                );
+                        cfg.apiCallBufferSizeInBytes(apiBufferSizeInMiB * MiB)
+                                .minimumPartSizeInBytes(minPartSizeInMiB * MiB)
+                )
+                ;
         if (StringUtils.isNotBlank(s3Options.getAWSRegion())) {
             Region s3Region = Region.of(s3Options.getAWSRegion());
             asyncS3ClientBuilder.region(s3Region);

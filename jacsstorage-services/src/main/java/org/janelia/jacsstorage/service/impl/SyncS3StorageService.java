@@ -208,6 +208,7 @@ public class SyncS3StorageService extends AbstractS3StorageService {
     @Override
     public InputStream getContentInputStream(String contentLocation) {
         String s3Location = adjustLocation(contentLocation);
+        LOG.debug("Get sync content {}:{}", s3Adapter.getBucket(), s3Location);
 
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(s3Adapter.getBucket())
@@ -221,6 +222,7 @@ public class SyncS3StorageService extends AbstractS3StorageService {
     @Override
     public long streamContentToOutput(String contentLocation, OutputStream outputStream) {
         String s3Location = adjustLocation(contentLocation);
+        LOG.info("Stream sync from {}:{} to another output stream", s3Adapter.getBucket(), s3Location);
 
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(s3Adapter.getBucket())

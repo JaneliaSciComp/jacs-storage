@@ -19,16 +19,22 @@ class ContentStorageServiceProvider {
     private final String defaultAWSRegion;
     private final boolean defaultAsyncAccess;
     private final boolean tryAnonymousAccessFirst;
+    private final int apiBufferSizeInMiB;
+    private final int minPartSizeInMiB;
 
     @Inject
     ContentStorageServiceProvider(S3AdapterProvider s3AdapterProvider,
                                   @PropertyValue(name = "AWS.Region.Default", defaultValue = "us-east-1") String defaultAWSRegion,
                                   @PropertyValue(name = "AWS.AsyncAccess.Default", defaultValue = "false") boolean defaultAsyncAccess,
-                                  @PropertyValue(name = "AWS.TryAnonymousAccessFirstIfNoCredentialsProvided.Default", defaultValue = "false") boolean tryAnonymousAccessFirst) {
+                                  @PropertyValue(name = "AWS.TryAnonymousAccessFirstIfNoCredentialsProvided.Default", defaultValue = "false") boolean tryAnonymousAccessFirst,
+                                  @PropertyValue(name = "AWS.ApiCallBufferInMiB.Default", defaultValue = "1024") int apiBufferSizeInMiB,
+                                  @PropertyValue(name = "AWS.MinPartSizeInMiB.Default", defaultValue = "384") int minPartSizeInMiB) {
         this.s3AdapterProvider = s3AdapterProvider;
         this.defaultAWSRegion = defaultAWSRegion;
         this.defaultAsyncAccess = defaultAsyncAccess;
         this.tryAnonymousAccessFirst = tryAnonymousAccessFirst;
+        this.apiBufferSizeInMiB = apiBufferSizeInMiB;
+        this.minPartSizeInMiB = minPartSizeInMiB;
     }
 
     @Nullable ContentStorageService getStorageService(@Nullable JADEStorageURI storageURI) {
@@ -38,11 +44,11 @@ class ContentStorageServiceProvider {
         } else if (storageURI.getStorageType() == JacsStorageType.S3) {
             return createS3StorageServiceInstance(storageURI);
         } else {
-            return createFileStorageServiceInstance(storageURI);
+            return createFileStorageServiceInstance();
         }
     }
 
-    private ContentStorageService createFileStorageServiceInstance(JADEStorageURI storageURI) {
+    private ContentStorageService createFileStorageServiceInstance() {
         return new FileSystemStorageService();
     }
 
@@ -56,7 +62,9 @@ class ContentStorageServiceProvider {
                             .setDefaultAWSRegion(defaultAWSRegion)
                             .setDefaultPathStyleBucket(false)
                             .setDefaultAsyncAccess(defaultAsyncAccess)
-                            .setDefaultTryAnonymousAccessFirst(tryAnonymousAccessFirst)
+                            .setDefaultTryAnonymousAccessFirst(tryAnonymousAccessFirst),
+                    apiBufferSizeInMiB,
+                    minPartSizeInMiB
             );
             return createS3StorageServiceInstance(s3Adapter, storageURI.getStorageOptions().getAsyncAccess());
         } else if (storageURI.getStorageScheme() == JADEStorageURI.JADEStorageScheme.HTTP) {
@@ -69,7 +77,9 @@ class ContentStorageServiceProvider {
                             .setDefaultAWSRegion(defaultAWSRegion)
                             .setDefaultPathStyleBucket(true)
                             .setDefaultAsyncAccess(defaultAsyncAccess)
-                            .setDefaultTryAnonymousAccessFirst(tryAnonymousAccessFirst)
+                            .setDefaultTryAnonymousAccessFirst(tryAnonymousAccessFirst),
+                    apiBufferSizeInMiB,
+                    minPartSizeInMiB
             );
             return createS3StorageServiceInstance(s3Adapter, storageURI.getStorageOptions().getAsyncAccess());
         } else {

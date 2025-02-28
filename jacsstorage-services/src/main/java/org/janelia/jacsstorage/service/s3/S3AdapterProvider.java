@@ -12,11 +12,12 @@ import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
 public class S3AdapterProvider {
     private static final ConcurrentMap<String, S3Adapter> S3_ADAPTERS = new ConcurrentHashMap<>();
 
-    public S3Adapter getS3Adapter(String bucket, String endpoint, JADEOptions s3Options) {
+    public S3Adapter getS3Adapter(String bucket, String endpoint, JADEOptions s3Options,
+                                  int apiBufferSizeInMiB, int minPartSizeInMiB) {
         return S3_ADAPTERS.computeIfAbsent(makeAdapterKey(bucket, endpoint, s3Options), (k) -> {
             // extract bucket and endpoint from the key
             String[] parts = k.split("#");
-            return new S3Adapter(parts[0], parts[1], s3Options);
+            return new S3Adapter(parts[0], parts[1], s3Options, apiBufferSizeInMiB, minPartSizeInMiB);
         });
     }
 

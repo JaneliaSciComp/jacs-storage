@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.janelia.jacsstorage.coreutils.ComparatorUtils;
@@ -19,13 +20,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
 import software.amazon.awssdk.core.async.BlockingInputStreamAsyncRequestBody;
 import software.amazon.awssdk.services.s3.model.CommonPrefix;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
@@ -34,10 +34,6 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.paginators.ListObjectsV2Publisher;
-import software.amazon.awssdk.transfer.s3.S3TransferManager;
-import software.amazon.awssdk.transfer.s3.model.CompletedDownload;
-import software.amazon.awssdk.transfer.s3.model.Download;
-import software.amazon.awssdk.transfer.s3.model.DownloadRequest;
 
 public class AsyncS3StorageService extends AbstractS3StorageService {
 
@@ -200,39 +196,30 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
     @Override
     public InputStream getContentInputStream(String contentLocation) {
         String s3Location = adjustLocation(contentLocation);
-        LOG.debug("Get content {}:{}", s3Adapter.getBucket(), s3Location);
+        LOG.debug("Get async content {}:{}", s3Adapter.getBucket(), s3Location);
 
-        try (S3TransferManager transferManager = S3TransferManager.builder()
-                .s3Client(s3Adapter.getAsyncS3Client())
-                .build()) {
-            Download<ResponseBytes<GetObjectResponse>> download = transferManager.download(
-                    DownloadRequest.builder()
-                            .getObjectRequest(b -> b.bucket(s3Adapter.getBucket()).key(s3Location))
-                            .responseTransformer(AsyncResponseTransformer.toBytes())
-                            .build());
-            CompletedDownload<ResponseBytes<GetObjectResponse>> completedDownload = download.completionFuture().join();
-            return completedDownload.result().asInputStream();
-        }
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(s3Adapter.getBucket())
+                .key(s3Location)
+                .build();
+        return s3Adapter.getAsyncS3Client().getObject(getObjectRequest, AsyncResponseTransformer.toBlockingInputStream())
+                .join();
     }
 
     @Override
     public long streamContentToOutput(String contentLocation, OutputStream outputStream) {
         String s3Location = adjustLocation(contentLocation);
-        LOG.debug("Stream from {}:{} to another output stream", s3Adapter.getBucket(), s3Location);
+        LOG.debug("Stream async from {}:{} to another output stream", s3Adapter.getBucket(), s3Location);
 
-        try (S3TransferManager transferManager = S3TransferManager.builder()
-                .s3Client(s3Adapter.getAsyncS3Client())
-                .build()) {
-            Download<ResponseBytes<GetObjectResponse>> download = transferManager.download(
-                    DownloadRequest.builder()
-                            .getObjectRequest(b -> b
-                                    .bucket(s3Adapter.getBucket())
-                                    .key(s3Location))
-                            .responseTransformer(AsyncResponseTransformer.toBytes())
-                            .build());
-            CompletedDownload<ResponseBytes<GetObjectResponse>> completedDownload = download.completionFuture().join();
-            return IOStreamUtils.copyFrom(completedDownload.result().asByteArray(), outputStream);
-        }
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(s3Adapter.getBucket())
+                .key(s3Location)
+                .build();
+        AtomicLong nbytes = new AtomicLong(0L);
+        s3Adapter.getAsyncS3Client().getObject(getObjectRequest, AsyncResponseTransformer.toPublisher())
+                .thenCompose(pub -> pub.subscribe(buf -> nbytes.addAndGet(IOStreamUtils.copyFrom(buf.array(), outputStream))))
+                .join();
+        return nbytes.get();
     }
 
     @Override

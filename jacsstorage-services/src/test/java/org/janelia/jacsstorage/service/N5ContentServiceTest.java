@@ -25,7 +25,7 @@ public class N5ContentServiceTest {
     @Test
     public void readN5TreeFromS3() {
         N5ContentService testService = new N5ContentService(
-                new N5ReaderProvider(s3AdapterProvider, "us-east-1", true),
+                new N5ReaderProvider(s3AdapterProvider, "us-east-1", true, 512, 128),
                 Executors.newSingleThreadExecutor()
         );
         N5TreeNode node = testService.getN5Container(JADEStorageURI.createStoragePathURI(

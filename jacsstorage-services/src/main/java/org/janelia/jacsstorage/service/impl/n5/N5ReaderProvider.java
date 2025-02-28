@@ -14,14 +14,20 @@ public class N5ReaderProvider {
     private final S3AdapterProvider s3AdapterProvider;
     private final String defaultAWSRegion;
     private final boolean defaultAsyncAccess;
+    private final int apiBufferSizeInMiB;
+    private final int minPartSizeInMiB;
 
     @Inject
     public N5ReaderProvider(S3AdapterProvider s3AdapterProvider,
                             @PropertyValue(name = "AWS.Region.Default", defaultValue = "us-east-1") String defaultAWSRegion,
-                            @PropertyValue(name = "AWS.AsyncAccess.Default", defaultValue = "false") boolean defaultAsyncAccess) {
+                            @PropertyValue(name = "AWS.AsyncAccess.Default", defaultValue = "false") boolean defaultAsyncAccess,
+                            @PropertyValue(name = "AWS.ApiCallBufferInMiB.Default", defaultValue = "1024") int apiBufferSizeInMiB,
+                            @PropertyValue(name = "AWS.MinPartSizeInMiB.Default", defaultValue = "384") int minPartSizeInMiB) {
         this.s3AdapterProvider = s3AdapterProvider;
         this.defaultAWSRegion = defaultAWSRegion;
         this.defaultAsyncAccess = defaultAsyncAccess;
+        this.apiBufferSizeInMiB = apiBufferSizeInMiB;
+        this.minPartSizeInMiB = minPartSizeInMiB;
     }
 
     public N5Reader getN5Reader(JADEStorageURI storageURI) {
@@ -48,7 +54,9 @@ public class N5ReaderProvider {
                             storageURI.getStorageOptions()
                                     .setDefaultAWSRegion(defaultAWSRegion)
                                     .setDefaultPathStyleBucket(false)
-                                    .setDefaultAsyncAccess(defaultAsyncAccess)
+                                    .setDefaultAsyncAccess(defaultAsyncAccess),
+                            apiBufferSizeInMiB,
+                            minPartSizeInMiB
                     ),
                     storageURI.getContentKey());
         } else if (storageURI.getStorageScheme() == JADEStorageURI.JADEStorageScheme.HTTP) {
@@ -59,7 +67,9 @@ public class N5ReaderProvider {
                             storageURI.getStorageOptions()
                                     .setDefaultAWSRegion(defaultAWSRegion)
                                     .setDefaultPathStyleBucket(true)
-                                    .setDefaultAsyncAccess(false)
+                                    .setDefaultAsyncAccess(false),
+                            apiBufferSizeInMiB,
+                            minPartSizeInMiB
                     ),
                     storageURI.getContentKey());
         } else {
