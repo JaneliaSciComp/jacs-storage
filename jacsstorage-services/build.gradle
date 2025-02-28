@@ -46,6 +46,12 @@ project(":jacsstorage-services") {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 
+    integrationTest {
+        // s3 tests require a lot of memory because it's trying to read large zarr chunks
+        minHeapSize = '1g'
+        maxHeapSize = '2g'
+    }
+
     tasks.register('createStorageRetrieveBenchmark', CreateStartScripts) {
         dependsOn(perfJar, startScripts)
 

@@ -104,7 +104,12 @@ subprojects {
         archiveClassifier.set('perf')
     }
 
-    tasks.register('integrationTest', Test)
+    tasks.register('integrationTest', Test) {
+        testClassesDirs = sourceSets.integrationTest.output.classesDirs
+        classpath = sourceSets.integrationTest.runtimeClasspath
+        shouldRunAfter test
+
+    }
 
     artifacts {
         perfRuntimeElements perfJar

@@ -23,7 +23,6 @@ import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
 import software.amazon.awssdk.core.async.BlockingInputStreamAsyncRequestBody;
-import software.amazon.awssdk.core.async.ResponsePublisher;
 import software.amazon.awssdk.services.s3.model.CommonPrefix;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
@@ -224,17 +223,15 @@ public class AsyncS3StorageService extends AbstractS3StorageService {
         try (S3TransferManager transferManager = S3TransferManager.builder()
                 .s3Client(s3Adapter.getAsyncS3Client())
                 .build()) {
-            Download<ResponsePublisher<GetObjectResponse>> download = transferManager.download(
+            Download<ResponseBytes<GetObjectResponse>> download = transferManager.download(
                     DownloadRequest.builder()
                             .getObjectRequest(b -> b
                                     .bucket(s3Adapter.getBucket())
                                     .key(s3Location))
-                            .responseTransformer(AsyncResponseTransformer.toPublisher())
+                            .responseTransformer(AsyncResponseTransformer.toBytes())
                             .build());
-            return Flux.from(download.completionFuture().join().result())
-                    .map(buf -> IOStreamUtils.copyFrom(buf.array(), outputStream))
-                    .reduce(0L, Long::sum)
-                    .block();
+            CompletedDownload<ResponseBytes<GetObjectResponse>> completedDownload = download.completionFuture().join();
+            return IOStreamUtils.copyFrom(completedDownload.result().asByteArray(), outputStream);
         }
     }
 
