@@ -19,7 +19,8 @@ public class ContentNodeHelper {
     public static String commonPrefix(List<ContentNode> contentNodes) {
         StringBuilder commonPrefix = new StringBuilder();
         String[][] prefixes = contentNodes.stream()
-                .map(n -> n.getPrefix().split("/"))
+                .map(ContentNode::getObjectKey)
+                .map(n -> n.split("/"))
                 .toArray(String[][]::new);
 
         for (int j = 0; j < prefixes[0].length; j++) {

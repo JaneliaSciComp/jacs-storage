@@ -10,6 +10,7 @@ import com.google.common.base.Splitter;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
+import org.apache.commons.lang3.StringUtils;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
@@ -75,8 +76,8 @@ public class DirectContentAccess implements ContentAccess {
             String commonPrefix = ContentNodeHelper.commonPrefix(contentNodes);
             LOG.info("Archiving {} content nodes; common prefix: {}", contentNodes.size(), commonPrefix);
             for (ContentNode contentNode : contentNodes) {
-                String entryPrefix = commonPrefix.isEmpty() ? contentNode.getPrefix() : commonPrefix;
-                String entryName = adjustEntryName(entryPrefix.isEmpty() ? contentNode.getName() : entryPrefix + "/" + contentNode.getName());
+                String entryName = adjustEntryName(StringUtils.removeStart(contentNode.getObjectKey(), "/" + (commonPrefix.isEmpty() ? "" : commonPrefix)));
+                LOG.debug("Create entry {} for {}", entryName, contentNode.getObjectKey());
                 TarArchiveEntry entry = new TarArchiveEntry(entryName);
                 entry.setSize(contentNode.getSize());
                 archiveOutputStream.putArchiveEntry(entry);
@@ -95,7 +96,7 @@ public class DirectContentAccess implements ContentAccess {
     }
 
     private String adjustEntryName(String entryName) {
-        return Splitter.on('/').splitToList(entryName).stream()
+        String modifiedName = Splitter.on('/').splitToList(entryName).stream()
                 .map(s -> {
                     if (s.length() > 20) {
                         int sHash = s.hashCode();
@@ -105,6 +106,9 @@ public class DirectContentAccess implements ContentAccess {
                     }
                 })
                 .collect(Collectors.joining("/"));
+        return StringUtils.startsWith(modifiedName, "/")
+                ? "." + modifiedName
+                : modifiedName;
     }
 
     private long estimateArchiveSize(List<ContentNode> contentNodes) {
