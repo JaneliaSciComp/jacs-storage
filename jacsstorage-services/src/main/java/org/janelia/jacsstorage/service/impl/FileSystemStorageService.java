@@ -147,8 +147,8 @@ public class FileSystemStorageService implements ContentStorageService {
 
     @Override
     public long streamContentToOutput(String contentLocation, OutputStream outputStream) {
-        try {
-            return IOStreamUtils.copyFrom(getContentInputStream(contentLocation), outputStream);
+        try (InputStream is = getContentInputStream(contentLocation)) {
+            return IOStreamUtils.copyFrom(is, outputStream);
         } catch (Exception e) {
             throw new ContentException(e);
         }

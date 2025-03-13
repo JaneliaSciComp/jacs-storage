@@ -55,13 +55,16 @@ public class S3StorageServiceITest {
                 ),
                 true);
         assertTrue(storageService.canAccess("scicompsoft/flynp/pipeline_info/software_versions.yml"));
-        InputStream contentStream = storageService.getContentInputStream("scicompsoft/flynp/pipeline_info/software_versions.yml");
-        String content = new String(ByteStreams.toByteArray(contentStream));
-        assertTrue(content.length() > 0);
+        try (InputStream contentStream = storageService.getContentInputStream("scicompsoft/flynp/pipeline_info/software_versions.yml")) {
+            String content = new String(ByteStreams.toByteArray(contentStream));
+            assertFalse(content.isEmpty());
+        }
         List<ContentNode> contentNodes = storageService.listContentNodes("/scicompsoft/flynp/pipeline_info/software_versions.yml", new ContentAccessParams());
         assertEquals(1, contentNodes.size());
-        String nodeContent = new String(ByteStreams.toByteArray(storageService.getContentInputStream(contentNodes.get(0).getObjectKey())));
-        assertTrue(nodeContent.length() > 0);
+        try (InputStream contentStream = storageService.getContentInputStream(contentNodes.get(0).getObjectKey())) {
+            String nodeContent = new String(ByteStreams.toByteArray(contentStream));
+            assertFalse(nodeContent.isEmpty());
+        }
     }
 
     @Test
@@ -102,9 +105,11 @@ public class S3StorageServiceITest {
                 new ContentAccessParams()
                         .setEntryNamePattern("config.json")
                         .setMaxDepth(1));
-        assertTrue(nodes.size() == 1);
-        String nodeContent = new String(ByteStreams.toByteArray(storageService.getContentInputStream(nodes.get(0).getObjectKey())));
-        assertNotNull(nodeContent);
+        assertEquals(1, nodes.size());
+        try (InputStream contentStream = storageService.getContentInputStream(nodes.get(0).getObjectKey())) {
+            String nodeContent = new String(ByteStreams.toByteArray(contentStream));
+            assertNotNull(nodeContent);
+        }
     }
 
     @Test
@@ -415,12 +420,14 @@ public class S3StorageServiceITest {
                 true);
         String testContent = "This is some test content";
         long l = storageService.writeContent("myTest.txt", new ByteArrayInputStream(testContent.getBytes()));
-        assertTrue(l == testContent.length());
+        assertEquals(l, testContent.length());
         List<ContentNode> nodesAfterWrite = storageService.listContentNodes("myTest.txt", new ContentAccessParams());
-        assertTrue(nodesAfterWrite.size() == 1);
+        assertEquals(1, nodesAfterWrite.size());
         assertTrue(storageService.canAccess("myTest.txt"));
-        String nodeContent = new String(ByteStreams.toByteArray(storageService.getContentInputStream(nodesAfterWrite.get(0).getObjectKey())));
-        assertEquals(testContent, nodeContent);
+        try (InputStream contentStream = storageService.getContentInputStream(nodesAfterWrite.get(0).getObjectKey())) {
+            String nodeContent = new String(ByteStreams.toByteArray(contentStream));
+            assertEquals(testContent, nodeContent);
+        }
         storageService.deleteContent("myTest.txt");
         List<ContentNode> nodesAfterDelete = storageService.listContentNodes("myTest.txt", new ContentAccessParams());
         assertTrue(nodesAfterDelete.size() == 0);
