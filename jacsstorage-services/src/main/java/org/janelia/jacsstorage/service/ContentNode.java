@@ -94,7 +94,10 @@ public class ContentNode {
     public String getObjectKey() {
         StringBuilder objectKeyBuilder = new StringBuilder();
         if (StringUtils.isNotBlank(prefix)) {
-            objectKeyBuilder.append('/').append(prefix);
+            if (!StringUtils.startsWith(prefix, "/")) {
+                objectKeyBuilder.append('/');
+            }
+            objectKeyBuilder.append(prefix);
         }
         objectKeyBuilder.append('/').append(name);
         return objectKeyBuilder.toString();
