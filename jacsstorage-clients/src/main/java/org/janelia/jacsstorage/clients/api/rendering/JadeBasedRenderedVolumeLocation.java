@@ -98,7 +98,7 @@ public class JadeBasedRenderedVolumeLocation extends JadeBasedDataLocation imple
             response.close();
             return result;
         } catch (Exception e) {
-            LOG.error("Error listing images from URI {}, volume path {}, level {} returned status {}", getDataStorageURI(), getBaseDataStoragePath(), level, e);
+            LOG.error("Error listing images from URI {}, volume path {}, level {}", getDataStorageURI(), getBaseDataStoragePath(), level, e);
             throw new IllegalStateException(e);
         } finally {
             httpClient.close();
@@ -128,7 +128,7 @@ public class JadeBasedRenderedVolumeLocation extends JadeBasedDataLocation imple
             response.close();
             return renderedImageInfo;
         } catch (Exception e) {
-            LOG.warn("Error retrieving content info from URI {}, volume path {}, tile path {} returned status {}", getDataStorageURI(), getBaseDataStoragePath(), tileRelativePath, e);
+            LOG.warn("Error retrieving content info from URI {}, volume path {}, tile path {}", getDataStorageURI(), getBaseDataStoragePath(), tileRelativePath, e);
             throw new IllegalStateException(e);
         } finally {
             LOG.info("Read tile info for {} in {} ms", tileRelativePath, System.currentTimeMillis() - startTime);
