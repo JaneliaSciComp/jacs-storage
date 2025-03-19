@@ -3,7 +3,7 @@ allprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'idea'
     group = 'org.janelia.jacs-storage'
-    version = '1.22.2'
+    version = '1.22.4'
 }
 
 subprojects {
