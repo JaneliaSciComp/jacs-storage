@@ -27,6 +27,7 @@ import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
 import org.janelia.jacsstorage.service.NoContentFoundException;
 import org.janelia.jacsstorage.service.StorageCapacity;
+import org.janelia.rendering.utils.ImageUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,11 +133,7 @@ public class FileSystemStorageService implements ContentStorageService {
 
         if (Files.exists(contentPath)) {
             if (Files.isRegularFile(contentPath)) {
-                try {
-                    return Files.newInputStream(contentPath);
-                } catch (IOException e) {
-                    throw new ContentException(e);
-                }
+                return ImageUtils.openSeekableStream(contentPath);
             } else {
                 throw new ContentException("Content found at " + contentLocation + " is not a regular file");
             }
