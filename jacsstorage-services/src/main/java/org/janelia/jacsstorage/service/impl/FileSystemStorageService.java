@@ -147,7 +147,7 @@ public class FileSystemStorageService implements ContentStorageService {
         try (InputStream is = getContentInputStream(contentLocation)) {
             return IOStreamUtils.copyFrom(is, outputStream);
         } catch (Exception e) {
-            throw new ContentException(e);
+            throw new ContentException("Error streaming " + contentLocation, e);
         }
     }
 
