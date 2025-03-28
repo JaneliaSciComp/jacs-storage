@@ -42,14 +42,13 @@ public class DirectContentAccess implements ContentAccess {
 
     @Override
     public long estimateContentSize(List<ContentNode> contentNodes, ContentAccessParams contentAccessParams, ContentStreamReader contentObjectReader) {
+        if (contentNodes.isEmpty()) {
+            return 0L;
+        }
         if (alwaysArchive || contentNodes.size() > 1) {
             return estimateArchiveSize(contentNodes);
-        } else {
-            if (contentNodes.isEmpty()) {
-                return 0;
-            } else { // contentNodes.size() == 1
-                return contentNodes.get(0).getSize();
-            }
+        } else { // single node
+            return contentNodes.get(0).getSize();
         }
     }
 

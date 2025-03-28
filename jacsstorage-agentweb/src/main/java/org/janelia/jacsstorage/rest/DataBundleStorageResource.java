@@ -212,7 +212,7 @@ public class DataBundleStorageResource {
         JADEStorageURI storageURI = dataBundle.getStorageURI().resolve(dataEntryPathParam);
         ContentAccessParams contentAccessParams = ContentAccessRequestHelper.createContentAccessParamsFromQuery(requestURI.getQueryParameters());
         ContentGetter contentGetter = dataContentService.getDataContent(storageURI, contentAccessParams);
-        long contentSize = contentGetter.estimateContentSize();
+        long contentSize = contentAccessParams.isEstimateSizeDisabled() ? -1 : contentGetter.estimateContentSize();
         StreamingOutput bundleStream = output -> contentGetter.streamContent(output);
         return Response
                 .ok(bundleStream, MediaType.APPLICATION_OCTET_STREAM)

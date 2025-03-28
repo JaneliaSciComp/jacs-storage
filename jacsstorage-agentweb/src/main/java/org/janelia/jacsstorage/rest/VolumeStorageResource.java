@@ -161,7 +161,7 @@ public class VolumeStorageResource {
                     .map(resolvedContentURI -> {
                         long startTime = System.currentTimeMillis();
                         ContentGetter contentGetter = dataContentService.getDataContent(resolvedContentURI, contentAccessParams);
-                        long contentSize = contentGetter.estimateContentSize();
+                        long contentSize = contentAccessParams.isEstimateSizeDisabled() ? -1 : contentGetter.estimateContentSize();
                         LOG.debug("Retrieved {} size ({}) in {} secs", resolvedContentURI, contentSize, (System.currentTimeMillis()-startTime)/1000.);
                         StreamingOutput outputStream = output -> {
                             contentGetter.streamContent(output);

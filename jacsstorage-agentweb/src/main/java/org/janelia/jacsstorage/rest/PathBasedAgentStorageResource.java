@@ -176,7 +176,7 @@ public class PathBasedAgentStorageResource {
                     .flatMap(aStorageVolume -> aStorageVolume.setStorageOptions(storageOptions).resolveAbsoluteLocationURI(contentURI))
                     .map(resolvedContentURI -> {
                         ContentGetter contentGetter = dataContentService.getDataContent(resolvedContentURI, contentAccessParams);
-                        long contentSize = contentGetter.estimateContentSize();
+                        long contentSize = contentAccessParams.isEstimateSizeDisabled() ? -1 : contentGetter.estimateContentSize();
                         StreamingOutput outputStream = output -> {
                             contentGetter.streamContent(output);
                             output.flush();
