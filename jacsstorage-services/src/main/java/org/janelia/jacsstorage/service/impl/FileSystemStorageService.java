@@ -116,7 +116,7 @@ public class FileSystemStorageService implements ContentStorageService {
             BasicFileAttributes fa = Files.readAttributes(p, BasicFileAttributes.class);
             Path parent = p.getParent();
             return new ContentNode(JacsStorageType.FILE_SYSTEM, JADEStorageURI.createStoragePathURI("", JADEOptions.create()))
-                    .setName(p.getFileName().toString())
+                    .setName(p.getFileName().toString() + (Files.isDirectory(p) ? "/" : ""))
                     .setPrefix(parent != null ? parent.toString() : "")
                     .setSize(Files.isDirectory(p) ? 0 : fa.size())
                     .setLastModified(new Date(fa.lastModifiedTime().toMillis()))
