@@ -28,8 +28,9 @@ public class N5ContentServiceTest {
                 new N5ReaderProvider(s3AdapterProvider, "us-east-1", true, 512, 128),
                 Executors.newSingleThreadExecutor()
         );
+        // this test is a bit flaky because I don't control this location so it may disappear
         N5TreeNode node = testService.getN5Container(JADEStorageURI.createStoragePathURI(
-                "s3://janelia-bigstitcher-spark/Stitching/dataset.n5/setup0/timepoint0",
+                "s3://janelia-bigstitcher-spark/IP/dataset.n5/setup0/timepoint18",
                 JADEOptions.create()));
         assertNotNull(node);
         assertFalse(node.childrenList().isEmpty());
