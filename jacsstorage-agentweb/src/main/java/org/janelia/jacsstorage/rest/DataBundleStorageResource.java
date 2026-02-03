@@ -308,6 +308,7 @@ public class DataBundleStorageResource {
                 ;
         // not handling any conflict - the new entry will override an existing one
         JADEStorageURI dataEntryStorageURI = dataBundle.getStorageURI().resolve(dataEntryPathParam);
+        LOG.info("Create bundle content at {}", dataEntryStorageURI);
         long newFileEntrySize = dataContentService.writeDataStream(dataEntryStorageURI, contentStream);
         storageAllocatorService.updateStorage(
                 new JacsBundleBuilder()

@@ -19,9 +19,9 @@ import java.util.stream.Stream;
 import org.janelia.jacsstorage.coreutils.IOStreamUtils;
 import org.janelia.jacsstorage.coreutils.PathUtils;
 import org.janelia.jacsstorage.model.jacsstorage.JADEOptions;
-import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.model.jacsstorage.JADEStorageURI;
 import org.janelia.jacsstorage.model.jacsstorage.JacsStorageType;
+import org.janelia.jacsstorage.service.ContentAccessParams;
 import org.janelia.jacsstorage.service.ContentException;
 import org.janelia.jacsstorage.service.ContentNode;
 import org.janelia.jacsstorage.service.ContentStorageService;
@@ -153,6 +153,7 @@ public class FileSystemStorageService implements ContentStorageService {
 
     @Override
     public long writeContent(String contentLocation, InputStream inputStream) {
+        LOG.info("Write content to {}", contentLocation);
         Path contentPath = Paths.get(contentLocation);
 
         if (Files.exists(contentPath)) {
@@ -163,7 +164,12 @@ public class FileSystemStorageService implements ContentStorageService {
             }
         }
         try {
-            Files.createDirectories(contentPath.getParent());
+            // Resolve contentPath by finding the first existing ancestor and resolving any symlinks
+            Path parentPath = contentPath.getParent();
+            if (parentPath != null && !Files.exists(parentPath)) {
+                LOG.info("Create directory {}", parentPath);
+                Files.createDirectories(parentPath);
+            }
             return Files.copy(inputStream, contentPath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new ContentException(e);
