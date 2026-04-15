@@ -1,7 +1,6 @@
 # JADE Storage Engine
 
 [![Java CI with Gradle](https://github.com/JaneliaSciComp/jacs-storage/actions/workflows/gradle.yml/badge.svg)](https://github.com/JaneliaSciComp/jacs-storage/actions/workflows/gradle.yml)
-[![DOI](https://zenodo.org/badge/103445945.svg)](https://doi.org/10.5281/zenodo.14341280)
 
 ## General Notes
 
