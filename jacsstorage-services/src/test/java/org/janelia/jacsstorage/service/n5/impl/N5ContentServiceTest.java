@@ -30,7 +30,7 @@ public class N5ContentServiceTest {
                 Executors.newSingleThreadExecutor()
         );
         N5TreeNode node = testService.getN5Container(JADEStorageURI.createStoragePathURI(
-                "s3://janelia-bigstitcher-spark/Stitching/dataset.n5/setup0/timepoint0",
+                "s3://janelia-bigstitcher-spark/IP/dataset.n5/setup0/timepoint18", // this must point at the multiscale group
                 JADEOptions.create()));
         assertNotNull(node);
         assertFalse(node.childrenList().isEmpty());

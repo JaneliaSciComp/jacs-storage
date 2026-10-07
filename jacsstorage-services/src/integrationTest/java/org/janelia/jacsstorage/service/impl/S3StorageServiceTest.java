@@ -271,12 +271,12 @@ public class S3StorageServiceTest {
                         "aind-open-data",
                         "us-west-2", // region must match if credentials are available
                         "/exaSPIM_653158_2023-06-01_20-41-38_fusion_2023-06-12_11-58-05",
-                        1, 0, 7),
+                        1, 0, 12),
                 new TestData(
                         "aind-open-data",
                         "us-west-2", // region must match if credentials are available
                         "/exaSPIM_653158_2023-06-01_20-41-38_fusion_2023-06-12_11-58-05/",
-                        1, 0, 7),
+                        1, 0, 12),
         };
         for (TestData td : testData) {
             ContentStorageService storageService = getS3StorageService(

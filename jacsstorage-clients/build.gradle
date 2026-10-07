@@ -10,7 +10,7 @@ buildscript {
 plugins {
     id('application')
     id('distribution')
-    id('com.netflix.nebula.ospackage') version('11.11.1')
+    id('com.netflix.nebula.ospackage') version('12.3.0')
 }
 
 project(':jacsstorage-clients') {
@@ -100,7 +100,9 @@ project(':jacsstorage-clients') {
         from ('src/main/install/scripts') {
             into 'bin'
             filter(org.apache.tools.ant.filters.ExpandProperties, project: filteringProperties(installEnv))
-            fileMode = 0755
+            filePermissions {
+                unix('rwxr-xr-x')
+            }
         }
 
         from ('src/main/install/etc') {

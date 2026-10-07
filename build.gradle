@@ -6,7 +6,38 @@ allprojects {
     version = '1.23.0.RC1'
 }
 
+// On macOS the JNA path does not include the Homebrew prefix, so blosc is reported as
+// missing even when it is installed. List the usual native library directories and keep the ones
+// that actually exist. Override with -PjnaLibraryPath=/dir1:/dir2
+ext.jnaLibraryPath = findProperty('jnaLibraryPath') ?:
+        ['/opt/homebrew/lib', '/usr/local/lib', '/usr/lib64']
+                .findAll { new File(it).directory }
+                .join(File.pathSeparator)
+
 subprojects {
+    // Helper used by the distribution and rpm tasks to build an ant Project that carries the
+    // jacs.runtime.env.* placeholders for the ExpandProperties filter.
+    // Declared as an extra property on every subproject so that each build script resolves it
+    // directly, rather than relying on implicit method lookup in the root project, which Gradle
+    // deprecated and removes in Gradle 10.
+    ext.filteringProperties = { otherProperties ->
+        org.apache.tools.ant.Project tmpProject = new org.apache.tools.ant.Project()
+        tmpProject.initProperties()
+        // convert the build config to ant properties to be used with the ant ExpandProperties
+        // these come from the root project because they are typically passed in with -P
+        rootProject.ext.properties.each { k, v ->
+            if (k.startsWith("jacs.runtime.env.")) {
+                tmpProject.setProperty("${k}", "${v}")
+            }
+        }
+        otherProperties.each { k, v ->
+            if (k.startsWith("jacs.runtime.env.")) {
+                tmpProject.setProperty("${k}", "${v}")
+            }
+        }
+        tmpProject
+    }
+
     repositories {
         mavenLocal()
         mavenCentral()
@@ -109,6 +140,13 @@ subprojects {
         jvmArgs("-javaagent:${mockitoAgentRef.asPath}", "-Xshare:off")
     }
 
+    // applies to test, integrationTest and allIntegrationTests
+    tasks.withType(Test).configureEach {
+        if (rootProject.jnaLibraryPath) {
+            systemProperty('jna.library.path', rootProject.jnaLibraryPath)
+        }
+    }
+
     tasks.register('perfJar', Jar) {
         dependsOn(configurations.perfRuntimeElements)
 
@@ -164,28 +202,11 @@ subprojects {
 }
 
 tasks.register('updateWrapper', Wrapper) {
-    gradleVersion = "8.12"
+    gradleVersion = "9.6.1"
 }
 
 tasks.register('printVersion') {
     doLast {
         println project.version
     }
-}
-
-def filteringProperties(otherProperties) {
-        org.apache.tools.ant.Project tmpProject = new org.apache.tools.ant.Project()
-        tmpProject.initProperties()
-        // convert the build config to ant properties to be used with the ant ExpandProperties
-        project.ext.properties.each { k,v ->
-                if (k.startsWith("jacs.runtime.env.")) {
-                        tmpProject.setProperty("${k}", "${v}")
-                }
-        }
-        otherProperties.each { k,v ->
-                if (k.startsWith("jacs.runtime.env.")) {
-                        tmpProject.setProperty("${k}", "${v}")
-                }
-        }
-        tmpProject
 }
